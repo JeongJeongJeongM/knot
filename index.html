@@ -745,14 +745,8 @@
 
             <!-- Interpretation Lenses -->
             <div class="axes-section">
-                <div class="section-title">해석 렌즈 (Interpretation Lenses)</div>
+                <div class="section-title">프로필 분석 (Profile Analysis)</div>
                 <div id="lenses" class="lenses-section"></div>
-            </div>
-
-            <!-- Overall Analysis -->
-            <div class="axes-section">
-                <div class="section-title">종합 분석 (Overall Analysis)</div>
-                <div class="overall-analysis" id="overallAnalysis"></div>
             </div>
 
             <!-- Ideal Partner Recommendations -->
@@ -1708,36 +1702,44 @@
             });
             document.getElementById('structuralAxes').innerHTML = structHTML;
 
-            // 렌즈 분석: LLM 결과 우선, fallback으로 로컬 분석
+            // 프로필 분석: LLM 10섹션 결과 우선, fallback으로 7렌즈 로컬 분석
             let lensesHTML = '';
-            const llmLenses = profile.llmResult && profile.llmResult.lenses;
-            for (const [lensName, lensFunc] of Object.entries(LENSES)) {
-                const narrative = (llmLenses && llmLenses[lensName]) ? llmLenses[lensName] : lensFunc(axes);
-                const isLLM = llmLenses && llmLenses[lensName];
-                lensesHTML += `
-                    <div class="lens-card">
-                        <div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')">
-                            <span class="lens-title">${lensName}${isLLM ? ' <span style="font-size:10px;color:var(--ac);font-weight:400;">AI</span>' : ''}</span>
-                            <span class="lens-toggle">▼</span>
+            const llmSections = profile.llmResult && profile.llmResult.sections;
+            if (llmSections) {
+                // LLM 10-섹션 출력
+                const sectionNames = [
+                    '전반적 인상', '감정 표현과 정서 처리', '사고와 해석 방식',
+                    '대화 스타일', '관계에서 중요한 가치', '호감 형성 리듬',
+                    '함께할 때 예상 분위기', '어려워질 수 있는 지점', '매력 포인트', '세 문장 요약'
+                ];
+                sectionNames.forEach((name, idx) => {
+                    const content = llmSections[name] || '';
+                    const isOpen = idx === 0 ? ' active' : '';
+                    lensesHTML += `
+                        <div class="lens-card">
+                            <div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')">
+                                <span class="lens-title">${name} <span style="font-size:10px;color:var(--ac);font-weight:400;">AI</span></span>
+                                <span class="lens-toggle">▼</span>
+                            </div>
+                            <div class="lens-content${isOpen}">${content}</div>
                         </div>
-                        <div class="lens-content">${narrative}</div>
-                    </div>
-                `;
+                    `;
+                });
+            } else {
+                // Fallback: 기존 7렌즈 로컬 분석
+                for (const [lensName, lensFunc] of Object.entries(LENSES)) {
+                    lensesHTML += `
+                        <div class="lens-card">
+                            <div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')">
+                                <span class="lens-title">${lensName}</span>
+                                <span class="lens-toggle">▼</span>
+                            </div>
+                            <div class="lens-content">${lensFunc(axes)}</div>
+                        </div>
+                    `;
+                }
             }
             document.getElementById('lenses').innerHTML = lensesHTML;
-
-            // 종합 분석: LLM 결과 우선, fallback으로 로컬 분석
-            const llmOverall = profile.llmResult && profile.llmResult.overall;
-            let overallHTML;
-            if (llmOverall) {
-                overallHTML = `<b>핵심 관계 정체성</b> <span style="font-size:10px;color:var(--ac);">AI</span><br>${llmOverall.identity}`;
-                overallHTML += `<br><br><b>관계 운영 방식</b><br>${llmOverall.operation}`;
-                overallHTML += `<br><br><b>잠재적 위험 패턴</b><br>${llmOverall.risks}`;
-                overallHTML += `<br><br><b>성장 방향</b><br>${llmOverall.growth}`;
-            } else {
-                overallHTML = generateOverallAnalysis(axes);
-            }
-            document.getElementById('overallAnalysis').innerHTML = overallHTML;
 
             const profileCode = btoa(unescape(encodeURIComponent(JSON.stringify({
                 intensity: axes.intensity,
