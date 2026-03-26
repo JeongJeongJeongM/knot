@@ -8,7 +8,7 @@
     <style>
         :root {
             --bg: #08080D;
-            --ac: #F5A623;
+            --ac: #F5A623;h
             --text: #E8E8E8;
             --text-dim: #999;
             --border: #333;
@@ -1527,7 +1527,7 @@
             const sample = messages.length > maxCount
                 ? messages.filter((_, i) => i % Math.ceil(messages.length / maxCount) === 0).slice(0, maxCount)
                 : messages;
-            return sample.map((m, i) => `[${i+1}] ${(m.role || 'user').toUpperCase()}: ${(m.text || m.content || '').substring(0, 200)}`).join('\n');
+            return sample.map((m, i) => { const text = typeof m === 'string' ? m : (m.text || m.content || ''); return `[${i+1}] ${typeof m === 'string' ? 'USER' : (m.role || 'user').toUpperCase()}: ${text.substring(0, 200)}`; }).join('\n');
         }
 
         // 7개 렌즈 요약을 사전 계산 (Worker에 전달)
