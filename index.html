@@ -342,6 +342,42 @@
             margin-bottom: 4px;
         }
 
+        /* Feedback Survey Styles */
+        .feedback-survey { padding: 15px 0; }
+        .feedback-stars { display: flex; gap: 8px; margin: 12px 0; }
+        .feedback-star {
+            font-size: 28px; cursor: pointer; opacity: 0.3;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .feedback-star:hover, .feedback-star.active { opacity: 1; transform: scale(1.15); }
+        .feedback-q { margin: 18px 0 8px; font-size: 13px; font-weight: 600; color: var(--fg); }
+        .feedback-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+        .feedback-chip {
+            padding: 6px 14px; border-radius: 20px; font-size: 12px;
+            border: 1px solid var(--border); cursor: pointer;
+            background: transparent; color: var(--fg); transition: all 0.2s;
+        }
+        .feedback-chip:hover { border-color: var(--ac); }
+        .feedback-chip.selected { background: var(--ac); color: #000; border-color: var(--ac); }
+        .feedback-text {
+            width: 100%; padding: 10px; border-radius: 8px;
+            border: 1px solid var(--border); background: rgba(255,255,255,0.05);
+            color: var(--fg); font-size: 13px; resize: vertical; min-height: 60px;
+            margin: 8px 0;
+        }
+        .feedback-text::placeholder { color: rgba(255,255,255,0.3); }
+        .feedback-submit {
+            padding: 10px 24px; border-radius: 8px; border: none;
+            background: var(--ac); color: #000; font-weight: 600;
+            cursor: pointer; font-size: 13px; margin-top: 12px;
+            transition: opacity 0.2s;
+        }
+        .feedback-submit:hover { opacity: 0.85; }
+        .feedback-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+        .feedback-thanks {
+            text-align: center; padding: 20px; font-size: 14px; color: var(--ac);
+        }
+
         .export-section {
             background-color: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
@@ -917,6 +953,12 @@
             <div class="axes-section">
                 <div class="section-title">이상적 파트너 유형</div>
                 <div id="partnerRecommendations"></div>
+            </div>
+
+            <!-- Feedback Survey -->
+            <div class="axes-section" id="feedbackSection" style="display:none;">
+                <div class="section-title">분석 품질 평가</div>
+                <div id="feedbackContent"></div>
             </div>
 
             <!-- Export Section -->
@@ -2411,7 +2453,120 @@
             }))));
             document.getElementById('profileCode').textContent = profileCode;
 
+            // 피드백 설문 렌더링
+            renderFeedbackSurvey();
+
             showScreen('result');
+        }
+
+        // ============ FEEDBACK SURVEY ============
+        let feedbackState = { rating: 0, accuracy: null, useful: null, issues: [], text: '' };
+
+        function renderFeedbackSurvey() {
+            const section = document.getElementById('feedbackSection');
+            const content = document.getElementById('feedbackContent');
+            section.style.display = '';
+            feedbackState = { rating: 0, accuracy: null, useful: null, issues: [], text: '' };
+
+            content.innerHTML = `
+                <div class="feedback-survey" id="feedbackForm">
+                    <div class="feedback-q">전체 만족도</div>
+                    <div class="feedback-stars" id="feedbackStars">
+                        ${[1,2,3,4,5].map(n => `<span class="feedback-star" data-n="${n}" onclick="setFeedbackRating(${n})">★</span>`).join('')}
+                    </div>
+
+                    <div class="feedback-q">분석이 나를 정확히 설명한다고 느꼈나요?</div>
+                    <div class="feedback-options" id="fbAccuracy">
+                        ${['매우 정확', '대체로 맞음', '반반', '별로', '전혀 아님'].map(v =>
+                            `<span class="feedback-chip" onclick="setFeedbackChip('accuracy','${v}',this)">${v}</span>`
+                        ).join('')}
+                    </div>
+
+                    <div class="feedback-q">결과가 연애/관계 맥락에서 유용했나요?</div>
+                    <div class="feedback-options" id="fbUseful">
+                        ${['매우 유용', '어느 정도', '보통', '별로', '전혀'].map(v =>
+                            `<span class="feedback-chip" onclick="setFeedbackChip('useful','${v}',this)">${v}</span>`
+                        ).join('')}
+                    </div>
+
+                    <div class="feedback-q">아쉬웠던 점이 있다면? (복수 선택 가능)</div>
+                    <div class="feedback-options" id="fbIssues">
+                        ${['내용이 너무 일반적', '내 발화가 그대로 나옴', '연애 맥락이 부족', '톤이 딱딱함', '분량이 부족', '신뢰성이 낮음'].map(v =>
+                            `<span class="feedback-chip" onclick="toggleFeedbackIssue('${v}',this)">${v}</span>`
+                        ).join('')}
+                    </div>
+
+                    <div class="feedback-q">자유 의견 (선택)</div>
+                    <textarea class="feedback-text" id="fbText" placeholder="개선 아이디어, 느낀 점 등 자유롭게..." oninput="feedbackState.text=this.value"></textarea>
+
+                    <button class="feedback-submit" id="fbSubmit" onclick="submitFeedback()" disabled>평가 제출</button>
+                </div>
+            `;
+        }
+
+        function setFeedbackRating(n) {
+            feedbackState.rating = n;
+            document.querySelectorAll('#feedbackStars .feedback-star').forEach(s => {
+                s.classList.toggle('active', parseInt(s.dataset.n) <= n);
+            });
+            checkFeedbackReady();
+        }
+
+        function setFeedbackChip(field, value, el) {
+            feedbackState[field] = value;
+            el.parentElement.querySelectorAll('.feedback-chip').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            checkFeedbackReady();
+        }
+
+        function toggleFeedbackIssue(value, el) {
+            const idx = feedbackState.issues.indexOf(value);
+            if (idx >= 0) {
+                feedbackState.issues.splice(idx, 1);
+                el.classList.remove('selected');
+            } else {
+                feedbackState.issues.push(value);
+                el.classList.add('selected');
+            }
+        }
+
+        function checkFeedbackReady() {
+            const ready = feedbackState.rating > 0 && feedbackState.accuracy && feedbackState.useful;
+            document.getElementById('fbSubmit').disabled = !ready;
+        }
+
+        async function submitFeedback() {
+            const btn = document.getElementById('fbSubmit');
+            btn.disabled = true;
+            btn.textContent = '제출 중...';
+
+            const payload = {
+                ...feedbackState,
+                axes: currentProfile?.axes || null,
+                type: currentProfile?.type || null,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                const resp = await fetch(WORKER_URL + '/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!resp.ok) throw new Error('서버 오류');
+            } catch(e) {
+                // 오프라인 저장 (localStorage fallback)
+                const saved = JSON.parse(localStorage.getItem('knot_feedback') || '[]');
+                saved.push(payload);
+                localStorage.setItem('knot_feedback', JSON.stringify(saved));
+            }
+
+            document.getElementById('feedbackForm').innerHTML = `
+                <div class="feedback-thanks">
+                    감사합니다! 피드백이 기록되었습니다 ✓<br>
+                    <span style="font-size:12px;opacity:0.6;">더 나은 분석을 위해 활용할게요</span>
+                </div>
+            `;
         }
 
         // ============ ENHANCED MATCHING ============
