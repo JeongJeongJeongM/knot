@@ -1522,12 +1522,12 @@
             }
         }
 
-        function extractMessagesSample(messages, maxCount = 20) {
+        function extractMessagesSample(messages, maxCount = 50) {
             if (!messages || messages.length === 0) return '(메시지 없음)';
             const sample = messages.length > maxCount
                 ? messages.filter((_, i) => i % Math.ceil(messages.length / maxCount) === 0).slice(0, maxCount)
                 : messages;
-            return sample.map((m, i) => `[${i+1}] ${(m.role || 'user').toUpperCase()}: ${(m.text || m.content || '').substring(0, 100)}`).join('\n');
+            return sample.map((m, i) => `[${i+1}] ${(m.role || 'user').toUpperCase()}: ${(m.text || m.content || '').substring(0, 200)}`).join('\n');
         }
 
         // 7개 렌즈 요약을 사전 계산 (Worker에 전달)
