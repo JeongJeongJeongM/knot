@@ -885,25 +885,25 @@
 
             <!-- Diagnostics Panel -->
             <div class="axes-section">
-                <div class="section-title">해상도 & 진단 (Resolution & Diagnostics)</div>
+                <div class="section-title">분석 신뢰도</div>
                 <div id="diagnosticsPanel"></div>
             </div>
 
             <!-- Temporal Analysis -->
             <div class="axes-section" id="temporalSection" style="display:none;">
-                <div class="section-title">시간 흐름 분석 (Temporal Analysis)</div>
+                <div class="section-title">시간에 따른 변화</div>
                 <div id="temporalPanel"></div>
             </div>
 
             <!-- Intensity Axes -->
             <div class="axes-section">
-                <div class="section-title">강도축 (Intensity Axes)</div>
+                <div class="section-title">성향 강도</div>
                 <div id="intensityAxes"></div>
             </div>
 
             <!-- Structural Axes -->
             <div class="axes-section">
-                <div class="section-title">구조축 (Structural Axes)</div>
+                <div class="section-title">행동 패턴</div>
                 <div class="structural-axes" id="structuralAxes"></div>
             </div>
 
@@ -1014,9 +1014,23 @@
             A7: 'var(--a7)', A8: 'var(--a8)', A9: 'var(--a9)', A10: 'var(--a10)', A11: 'var(--a11)'
         };
 
+        // 구조축 영어→한국어 번역
+        const STRUCT_LABELS = {
+            // A7 상호작용
+            initiator: '주도형', responder: '반응형', balanced: '균형형',
+            // A8 갈등
+            confrontational: '직면형', repair: '회복형', avoidant: '회피형', boundary: '선긋기형',
+            // A9 감정
+            expressive: '표출형', analytical: '분석형', suppressive: '억제형', externalized: '행동전환형',
+            // A10 친밀감
+            surface_locked: '표면유지형', slow_burn: '천천히형', depth_seeker: '깊이추구형', fast_opener: '빠른개방형',
+            // A11 상호성
+            giver: '주는 편', taker: '받는 편'
+        };
+
         const AXIS_LABELS = {
-            A1: '몰입도', A2: '수용성', A3: '단호함', A4: '감정 표현', A5: '협력성', A6: '안정성',
-            A7: '상호작용 성향', A8: '갈등 조절', A9: '감정 처리', A10: '친밀감 기울기', A11: '상호성'
+            A1: '관심도', A2: '공감력', A3: '주장성', A4: '감정 개방', A5: '서포트', A6: '일관성',
+            A7: '대화 주도', A8: '갈등 대처', A9: '감정 처리', A10: '거리 조절', A11: '주고받기'
         };
 
         const CONFLICT_MATRIX = {
@@ -1911,27 +1925,27 @@
             const sharpness = computeProfileSharpness(profile);
             const reasons = [];
 
-            if ((profile?.rates?.totalMsgs || 0) < 12) reasons.push('표본 수 적음');
-            if ((d.sessionCount || 0) < 2) reasons.push('세션 다양성 낮음');
-            if ((d.fillerRate || 0) > 0.32) reasons.push('짧은 반응 비중 높음');
-            if ((d.consistencyScore || 0) < 0.45) reasons.push('상황별 톤 변화 큼');
-            if ((d.coverageScore || 0) < 0.50) reasons.push('표본 폭 제한');
+            if ((profile?.rates?.totalMsgs || 0) < 12) reasons.push('메시지 수 적음');
+            if ((d.sessionCount || 0) < 2) reasons.push('대화 횟수 적음');
+            if ((d.fillerRate || 0) > 0.32) reasons.push('짧은 반응 많음');
+            if ((d.consistencyScore || 0) < 0.45) reasons.push('말투 변화 큼');
+            if ((d.coverageScore || 0) < 0.50) reasons.push('데이터 부족');
 
             let label = '낮음', key = 'low';
-            let scope = '반복되는 큰 방향은 참고할 수 있지만, 세부 축과 타입은 과신하지 않는 편이 정확합니다.';
-            let usefulFor = '문체의 대략적 방향, 경계/요구/수용의 상대적 무게';
-            let notFor = '상대의 진짜 감정, 관계의 객관적 진실, 특정 사건의 옳고 그름';
+            let scope = '대략적인 방향은 참고할 수 있지만, 세부 결과는 실제와 다를 수 있어요.';
+            let usefulFor = '대화 스타일의 큰 방향';
+            let notFor = '상대의 진짜 감정, 관계의 객관적 판단';
 
             if (score >= 0.78) {
                 label = '높음'; key = 'high';
-                scope = '자기표현 패턴이 비교적 선명하게 반복돼서, 관여 방식·경계 스타일·개방 속도를 읽기 좋습니다.';
-                usefulFor = '반복되는 관여 방식, 경계·복구 패턴, 자기노출 속도, 타입 윤곽';
-                notFor = '상대방 심리 추정, 인간관계 전체의 객관 판정';
+                scope = '대화 패턴이 선명해서 성향 분석 결과를 꽤 신뢰할 수 있어요.';
+                usefulFor = '대화 습관, 감정 표현 방식, 관계 스타일';
+                notFor = '상대방 심리, 관계 전체의 판단';
             } else if (score >= 0.58) {
                 label = '보통'; key = 'medium';
-                scope = '핵심 패턴은 보이지만 일부 축은 데이터의 시기·상황 영향을 더 받을 수 있습니다.';
-                usefulFor = '반복되는 자기표현 방향과 큰 구조축';
-                notFor = '미세한 추세 변화, 단일 발화 하나의 의미 과대해석';
+                scope = '주요 패턴은 보이지만, 상황에 따라 달라질 수 있는 부분도 있어요.';
+                usefulFor = '전반적인 대화 성향과 행동 패턴';
+                notFor = '미세한 변화 해석, 한 마디에 의미 부여';
             }
 
             return { score, label, key, scope, usefulFor, notFor, reasons, sharpness,
@@ -1944,11 +1958,11 @@
             const d = profile?.rates?.diagnostics || {};
             const score = clamp01(profile?.rates?.confidence || 0);
 
-            if ((profile?.rates?.totalMsgs || 0) < 12) flags.push('사용자 발화 수가 적어 유형보다 큰 방향성 위주로 보는 편이 맞습니다.');
-            if ((d.sessionCount || 0) < 2) flags.push('세션이 적어 특정 시기의 말투가 전체 성향처럼 반영될 수 있습니다.');
-            if ((d.fillerRate || 0) > 0.32) flags.push('짧은 반응 비중이 높아 무관심과 간결한 습관을 완전히 분리할 수 없습니다.');
-            if ((d.consistencyScore || 0) < 0.45) flags.push('상황별 톤 변화가 커서 하나의 고정 캐릭터보다 컨텍스트 의존성이 큽니다.');
-            if (score < 0.58) flags.push('이 값은 정확도 보증이 아니라, 반복 패턴이 얼마나 또렷한지를 보는 지표입니다.');
+            if ((profile?.rates?.totalMsgs || 0) < 12) flags.push('메시지가 적어서 큰 방향만 참고하는 게 좋아요.');
+            if ((d.sessionCount || 0) < 2) flags.push('대화가 적어서 특정 시기 말투가 전체처럼 보일 수 있어요.');
+            if ((d.fillerRate || 0) > 0.32) flags.push('짧은 반응이 많아서 무관심인지 원래 스타일인지 구분이 어려워요.');
+            if ((d.consistencyScore || 0) < 0.45) flags.push('상황마다 말투가 많이 달라져서 하나의 성격으로 정리하기 어려워요.');
+            if (score < 0.58) flags.push('신뢰도가 낮아서 대략적인 방향만 참고하세요.');
             return flags;
         }
 
@@ -1957,16 +1971,16 @@
             const summary = getResolutionSummary(profile);
 
             const cards = [
-                { label: '해상도', value: `${summary.label} · ${formatPercent(summary.score)}`, hint: '반복 패턴 선명도' },
-                { label: '표본 폭', value: formatPercent(d.coverageScore), hint: `${profile?.rates?.totalMsgs || 0} 메시지 · ${d.sessionCount || 0} 세션` },
-                { label: '메시지 밀도', value: formatPercent(d.densityScore), hint: `실질 발화 ${formatPercent(d.substantiveRate)} · 평균 ${d.avgLen || 0}자` },
-                { label: '패턴 일관성', value: formatPercent(d.consistencyScore), hint: '길이·톤·세션별 변화 반영' },
-                { label: '프로필 선명도', value: formatPercent(summary.sharpness), hint: '주 구조축이 얼마나 또렷한지' },
-                { label: '질문/탐색', value: formatPercent(d.questionMsgRate), hint: '관여와 탐색 신호' },
-                { label: '자기노출', value: formatPercent(d.deepDisclosureRate), hint: '깊은 개인 서사·내면 언급' },
-                { label: '짧은 반응', value: formatPercent(d.fillerRate), hint: '축약어·단문 비중' },
-                { label: '개시 톤', value: formatPercent(d.startActivation), hint: '세션 첫 메시지의 주도성' },
-                { label: '응답 톤', value: formatPercent(d.responseToneRate), hint: '답장형·수용형 말투 비중' }
+                { label: '신뢰도', value: `${summary.label} · ${formatPercent(summary.score)}`, hint: '분석 결과를 얼마나 믿을 수 있나' },
+                { label: '데이터 양', value: formatPercent(d.coverageScore), hint: `${profile?.rates?.totalMsgs || 0}개 메시지 · ${d.sessionCount || 0}개 대화` },
+                { label: '내용 충실도', value: formatPercent(d.densityScore), hint: `의미있는 발화 ${formatPercent(d.substantiveRate)} · 평균 ${d.avgLen || 0}자` },
+                { label: '말투 일관성', value: formatPercent(d.consistencyScore), hint: '상황별 말투 차이가 얼마나 큰지' },
+                { label: '성격 뚜렷함', value: formatPercent(summary.sharpness), hint: '행동 패턴이 얼마나 선명한지' },
+                { label: '질문 비율', value: formatPercent(d.questionMsgRate), hint: '궁금해하고 물어보는 빈도' },
+                { label: '속마음 공유', value: formatPercent(d.deepDisclosureRate), hint: '개인적인 이야기·내면 언급' },
+                { label: '짧은 반응', value: formatPercent(d.fillerRate), hint: '"ㅋㅋ", "ㅇㅇ" 같은 단문 비중' },
+                { label: '대화 시작', value: formatPercent(d.startActivation), hint: '먼저 말 거는 빈도' },
+                { label: '맞장구', value: formatPercent(d.responseToneRate), hint: '"그치", "맞아" 같은 호응 비중' }
             ];
 
             const flags = buildQualityFlags(profile);
@@ -1975,16 +1989,16 @@
                 <div class="reliability-summary ${summary.key}">
                     <div class="reliability-top">
                         <div>
-                            <div class="reliability-title">해상도</div>
+                            <div class="reliability-title">분석 신뢰도</div>
                             <div class="reliability-value">${summary.label} · ${formatPercent(summary.score)}</div>
-                            <div class="reliability-explain">${summary.scope}<br>${summary.meaning}</div>
+                            <div class="reliability-explain">${summary.scope}<br>이 수치는 정답률이 아니라, 대화에서 반복 패턴이 얼마나 선명하게 잡히는지를 나타내요.</div>
                         </div>
                         <div class="reliability-chip">로컬 분석 · 원문 미노출</div>
                     </div>
                     <div class="quality-flags">
-                        <div class="quality-flag ${summary.key === 'high' ? 'good' : ''}"><strong>잘 보는 것</strong><br>${summary.usefulFor}</div>
-                        <div class="quality-flag"><strong>과신하면 안 되는 것</strong><br>${summary.notFor}</div>
-                        ${summary.reasons.length ? `<div class="quality-flag"><strong>해상도를 깎은 이유</strong><br>${summary.reasons.join(' · ')}</div>` : '<div class="quality-flag good"><strong>해상도를 지지하는 조건</strong><br>표본 폭, 메시지 밀도, 패턴 일관성이 모두 비교적 충분합니다.</div>'}
+                        <div class="quality-flag ${summary.key === 'high' ? 'good' : ''}"><strong>믿을 수 있는 것</strong><br>${summary.usefulFor}</div>
+                        <div class="quality-flag"><strong>너무 믿으면 안 되는 것</strong><br>${summary.notFor}</div>
+                        ${summary.reasons.length ? `<div class="quality-flag"><strong>신뢰도가 깎인 이유</strong><br>${summary.reasons.join(' · ')}</div>` : '<div class="quality-flag good"><strong>신뢰도를 높인 조건</strong><br>데이터 양, 내용 충실도, 말투 일관성이 모두 충분해요.</div>'}
                     </div>
                 </div>
                 <div class="diag-grid">
@@ -1997,7 +2011,7 @@
                     `).join('')}
                 </div>
                 <div class="quality-flags">
-                    ${flags.length ? flags.map(flag => `<div class="quality-flag">${flag}</div>`).join('') : '<div class="quality-flag good">반복 패턴이 비교적 선명해 축과 타입 해석을 적극적으로 참고할 수 있습니다.</div>'}
+                    ${flags.length ? flags.map(flag => `<div class="quality-flag">${flag}</div>`).join('') : '<div class="quality-flag good">대화 패턴이 선명해서 분석 결과를 적극적으로 참고할 수 있어요.</div>'}
                 </div>
             `;
         }
@@ -2018,31 +2032,31 @@
                 <div class="temporal-title">변화 추세</div>
                 <div class="diag-grid">
                     <div class="diag-card">
-                        <div class="diag-label">자기노출</div>
+                        <div class="diag-label">속마음 공유</div>
                         <div class="diag-value">${trendBadge(trends.sharingTrend)}</div>
-                        <div class="diag-hint">초반→후반 공유 변화</div>
+                        <div class="diag-hint">시간 지나면서 더 열었나</div>
                     </div>
                     <div class="diag-card">
-                        <div class="diag-label">친밀감 깊이</div>
+                        <div class="diag-label">친해지는 속도</div>
                         <div class="diag-value">${trendBadge(trends.intimacyTrend)}</div>
-                        <div class="diag-hint">초반→후반 깊이 변화</div>
+                        <div class="diag-hint">대화가 점점 깊어졌나</div>
                     </div>
                     <div class="diag-card">
                         <div class="diag-label">감정 표현</div>
                         <div class="diag-value">${trendBadge(trends.emotionTrend)}</div>
-                        <div class="diag-hint">초반→후반 감정 변화</div>
+                        <div class="diag-hint">감정을 점점 더 드러냈나</div>
                     </div>
                     <div class="diag-card">
-                        <div class="diag-label">경계 설정</div>
+                        <div class="diag-label">선 긋기</div>
                         <div class="diag-value">${trendBadge(summarizeTrend(0, trends.boundaryDelta))}</div>
-                        <div class="diag-hint">초반→후반 경계 변화</div>
+                        <div class="diag-hint">경계를 더 세웠나 풀었나</div>
                     </div>
                 </div>`;
 
             // Temporal averages if enough data
             if (temporal) {
                 const labels = temporal.labels;
-                html += `<div class="temporal-title" style="margin-top:12px;">구간별 평균 비교</div>
+                html += `<div class="temporal-title" style="margin-top:12px;">시기별 비교</div>
                     <div style="overflow-x:auto;">
                     <table style="width:100%;font-size:12px;border-collapse:collapse;">
                         <tr style="color:var(--text-dim);border-bottom:1px solid var(--border);">
@@ -2224,7 +2238,7 @@
             document.getElementById('typeCode').textContent = type.code;
             document.getElementById('typeName').textContent = type.name;
             const resolution = getResolutionSummary(profile);
-            document.getElementById('typeDesc').textContent = `${type.desc} · 해상도 ${resolution.label} (${formatPercent(resolution.score)})`;
+            document.getElementById('typeDesc').textContent = `${type.desc} · 신뢰도 ${resolution.label} (${formatPercent(resolution.score)})`;
 
             // Diagnostics panel
             document.getElementById('diagnosticsPanel').innerHTML = renderDiagnosticsPanel(profile);
@@ -2295,12 +2309,12 @@
 
             let intensityHTML = '';
             const intensityAxes = [
-                { id: 'A1', label: AXIS_LABELS.A1, value: axes.intensity.A1, desc: '새로운 것에 얼마나 적극적인가' },
-                { id: 'A2', label: AXIS_LABELS.A2, value: axes.intensity.A2, desc: '상대를 받아주는 정도' },
-                { id: 'A3', label: AXIS_LABELS.A3, value: axes.intensity.A3, desc: '자신의 의견을 전하는 정도' },
-                { id: 'A4', label: AXIS_LABELS.A4, value: axes.intensity.A4, desc: '감정을 드러내는 수준' },
-                { id: 'A5', label: AXIS_LABELS.A5, value: axes.intensity.A5, desc: '협력과 지원의 성향' },
-                { id: 'A6', label: AXIS_LABELS.A6, value: axes.intensity.A6, desc: '일관성과 예측 가능성' }
+                { id: 'A1', label: AXIS_LABELS.A1, value: axes.intensity.A1, desc: '상대나 주제에 얼마나 적극적으로 반응하나' },
+                { id: 'A2', label: AXIS_LABELS.A2, value: axes.intensity.A2, desc: '상대 감정을 얼마나 받아주나' },
+                { id: 'A3', label: AXIS_LABELS.A3, value: axes.intensity.A3, desc: '자기 의견을 얼마나 직접 말하나' },
+                { id: 'A4', label: AXIS_LABELS.A4, value: axes.intensity.A4, desc: '기분이나 감정을 얼마나 드러내나' },
+                { id: 'A5', label: AXIS_LABELS.A5, value: axes.intensity.A5, desc: '상대를 얼마나 챙기고 도와주나' },
+                { id: 'A6', label: AXIS_LABELS.A6, value: axes.intensity.A6, desc: '말투와 태도가 얼마나 일정한가' }
             ];
 
             intensityAxes.forEach(axis => {
@@ -2342,7 +2356,7 @@
                 structHTML += `
                     <div class="struct-item">
                         <div class="struct-label">${axis.id} ${axis.label}</div>
-                        <div class="primary-style">${axis.data.primary}</div>
+                        <div class="primary-style">${STRUCT_LABELS[axis.data.primary] || axis.data.primary}</div>
                         <div class="mix-ratio-bar">${mixHTML}</div>
                     </div>
                 `;
