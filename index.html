@@ -1488,15 +1488,15 @@
         const WORKER_URL = 'https://knot-exodia.ashirmallo.workers.dev';
         let USE_LLM = true; // LLM 분석 사용 여부 (Worker 연결 실패시 자동 fallback)
 
-        async function callWorkerAnalyze(axes, rates, messagesSample) {
+        async function callWorkerAnalyze(axes, rates, messagesSample, lensSummary) {
             try {
                 const response = await fetch(WORKER_URL + '/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         axes,
-                        rates,
-                        messages_sample: messagesSample
+                        messages_sample: messagesSample,
+                        lens_summary: lensSummary
                     })
                 });
                 if (!response.ok) throw new Error(`Worker error: ${response.status}`);
@@ -1522,12 +1522,23 @@
             }
         }
 
-        function extractMessagesSample(messages, maxCount = 50) {
+        function extractMessagesSample(messages, maxCount = 20) {
             if (!messages || messages.length === 0) return '(메시지 없음)';
             const sample = messages.length > maxCount
                 ? messages.filter((_, i) => i % Math.ceil(messages.length / maxCount) === 0).slice(0, maxCount)
                 : messages;
-            return sample.map((m, i) => `[${i+1}] ${(m.role || 'user').toUpperCase()}: ${(m.text || m.content || '').substring(0, 200)}`).join('\n');
+            return sample.map((m, i) => `[${i+1}] ${(m.role || 'user').toUpperCase()}: ${(m.text || m.content || '').substring(0, 100)}`).join('\n');
+        }
+
+        // 7개 렌즈 요약을 사전 계산 (Worker에 전달)
+        function buildLensSummary(axes) {
+            const parts = [];
+            for (const [name, fn] of Object.entries(LENSES)) {
+                const result = fn(axes);
+                const text = result.replace(/<[^>]+>/g, '').substring(0, 100);
+                parts.push(name + ': ' + text);
+            }
+            return parts.join('\n');
         }
 
 
@@ -1560,7 +1571,8 @@
                 if (USE_LLM) {
                     updateProgress('AI 심층 분석 중... (10~20초 소요)');
                     const messagesSample = extractMessagesSample(messages);
-                    llmResult = await callWorkerAnalyze(axes, rates, messagesSample);
+                    const lensSummary = buildLensSummary(axes);
+                    llmResult = await callWorkerAnalyze(axes, rates, messagesSample, lensSummary);
                 }
 
                 currentProfile = {
