@@ -374,6 +374,67 @@
             color: var(--text);
         }
 
+        /* Share Card Overlay */
+        .share-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(8px);
+        }
+        .share-overlay.active { display: flex; }
+        .share-modal {
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        .share-modal canvas {
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .share-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .share-actions button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .share-download {
+            background: var(--ac) !important;
+            color: #000 !important;
+        }
+        .share-close {
+            background: rgba(255,255,255,0.1) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--border) !important;
+        }
+        .share-hint {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 12px;
+            line-height: 1.5;
+        }
+        .share-card-btn {
+            background: linear-gradient(135deg, #E1306C, #F77737, #FCAF45) !important;
+            color: #fff !important;
+            border: none !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.5px;
+        }
+
         /* Feedback Survey Styles */
         .feedback-survey { padding: 15px 0; }
         .feedback-stars { display: flex; gap: 8px; margin: 12px 0; }
@@ -1003,6 +1064,12 @@
                 <div id="feedbackContent"></div>
             </div>
 
+            <!-- Share Card Section -->
+            <div class="export-section" style="margin-top: 20px;">
+                <div class="export-title">공유하기</div>
+                <button class="share-card-btn" onclick="generateShareCard()">📸 인스타그램 카드 만들기</button>
+            </div>
+
             <!-- Export Section -->
             <div class="export-section">
                 <div class="export-title">프로필 코드</div>
@@ -1011,6 +1078,18 @@
                 <button class="secondary-btn" onclick="switchToMatch()">매칭 시작</button>
                 <button class="secondary-btn" onclick="goToLanding()">새 분석</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Share Card Overlay -->
+    <div class="share-overlay" id="shareOverlay" onclick="if(event.target===this)closeShareOverlay()">
+        <div class="share-modal">
+            <canvas id="shareCanvas" width="1080" height="1350"></canvas>
+            <div class="share-actions">
+                <button class="share-download" onclick="downloadShareCard()">이미지 저장</button>
+                <button class="share-close" onclick="closeShareOverlay()">닫기</button>
+            </div>
+            <div class="share-hint">이미지를 저장한 후 인스타그램에 업로드하세요</div>
         </div>
     </div>
 
@@ -2945,6 +3024,233 @@
                 loadMatchFile(e.target.files[0]);
             }
         });
+
+        // ============ INSTAGRAM SHARE CARD ============
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+            const chars = text.split('');
+            let line = '';
+            let ty = y;
+            for (let i = 0; i < chars.length; i++) {
+                const testLine = line + chars[i];
+                if (ctx.measureText(testLine).width > maxWidth && line.length > 0) {
+                    ctx.fillText(line, x, ty);
+                    line = chars[i];
+                    ty += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            ctx.fillText(line, x, ty);
+        }
+
+        function downloadShareCard() {
+            const canvas = document.getElementById('shareCanvas');
+            const link = document.createElement('a');
+            link.download = 'KNOT-' + (currentProfile?.type?.code || 'result') + '.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function closeShareOverlay() {
+            document.getElementById('shareOverlay').classList.remove('active');
+        }
+
+        function generateShareCard() {
+            if (!currentProfile) return;
+            const canvas = document.getElementById('shareCanvas');
+            const ctx = canvas.getContext('2d');
+            const W = 1080, H = 1350;
+            canvas.width = W; canvas.height = H;
+            const profile = currentProfile;
+            const type = profile.type;
+            const axes = profile.axes;
+            const BG = '#08080D', AC = '#F5A623', TEXT = '#E8E8E8', DIM = '#777';
+            const axisColors = ['#F5A623','#60A5FA','#F87171','#A78BFA','#4ADE80','#38BDF8'];
+
+            // Background + gradient
+            ctx.fillStyle = BG;
+            ctx.fillRect(0, 0, W, H);
+            const grd = ctx.createRadialGradient(W/2, 300, 0, W/2, 300, 700);
+            grd.addColorStop(0, 'rgba(245,166,35,0.06)');
+            grd.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grd;
+            ctx.fillRect(0, 0, W, H);
+
+            // Top decorative line
+            const lineGrd = ctx.createLinearGradient(100, 0, W-100, 0);
+            lineGrd.addColorStop(0, 'rgba(245,166,35,0)');
+            lineGrd.addColorStop(0.5, 'rgba(245,166,35,0.4)');
+            lineGrd.addColorStop(1, 'rgba(245,166,35,0)');
+            ctx.strokeStyle = lineGrd;
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(100, 80); ctx.lineTo(W-100, 80); ctx.stroke();
+
+            // KNOT Logo
+            ctx.fillStyle = AC;
+            ctx.font = '900 52px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('KNOT', W/2, 140);
+            ctx.fillStyle = DIM;
+            ctx.font = '400 22px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillText('AI 대화 행동 분석', W/2, 175);
+
+            // Emoji
+            ctx.font = '120px serif';
+            ctx.fillText(type.emoji, W/2, 310);
+
+            // Type code badge
+            ctx.fillStyle = 'rgba(245,166,35,0.15)';
+            ctx.font = '700 28px -apple-system, BlinkMacSystemFont, monospace';
+            const codeW = ctx.measureText(type.code).width + 40;
+            roundRect(ctx, W/2 - codeW/2, 335, codeW, 44, 22); ctx.fill();
+            ctx.fillStyle = AC; ctx.textAlign = 'center';
+            ctx.fillText(type.code, W/2, 365);
+
+            // Type name + desc
+            ctx.fillStyle = TEXT;
+            ctx.font = '800 48px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillText(type.name, W/2, 440);
+            ctx.fillStyle = DIM;
+            ctx.font = '400 24px -apple-system, BlinkMacSystemFont, sans-serif';
+            wrapText(ctx, type.desc, W/2, 485, W - 160, 34);
+
+            // Divider
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(120, 540); ctx.lineTo(W-120, 540); ctx.stroke();
+
+            // Intensity bars section
+            ctx.fillStyle = DIM;
+            ctx.font = '600 20px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('성향 강도', 100, 585);
+
+            const barData = [
+                { label: '관심도', value: axes.intensity.A1, color: axisColors[0] },
+                { label: '공감력', value: axes.intensity.A2, color: axisColors[1] },
+                { label: '주장성', value: axes.intensity.A3, color: axisColors[2] },
+                { label: '감정 개방', value: axes.intensity.A4, color: axisColors[3] },
+                { label: '서포트', value: axes.intensity.A5, color: axisColors[4] },
+                { label: '일관성', value: axes.intensity.A6, color: axisColors[5] }
+            ];
+
+            let barY = 620;
+            barData.forEach(item => {
+                ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                ctx.font = '400 20px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(item.label, 100, barY);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = item.color;
+                ctx.font = '600 20px -apple-system, BlinkMacSystemFont, monospace';
+                ctx.fillText(Math.round(item.value * 100) + '%', W - 100, barY);
+                const barX = 240, barW = W - 100 - barX - 70, barH = 10, barCY = barY - 5;
+                ctx.fillStyle = 'rgba(255,255,255,0.06)';
+                roundRect(ctx, barX, barCY, barW, barH, 5); ctx.fill();
+                const fillW = Math.max(barW * item.value, 5);
+                const bGrd = ctx.createLinearGradient(barX, 0, barX + fillW, 0);
+                bGrd.addColorStop(0, item.color); bGrd.addColorStop(1, item.color + '88');
+                ctx.fillStyle = bGrd;
+                roundRect(ctx, barX, barCY, fillW, barH, 5); ctx.fill();
+                barY += 48;
+            });
+
+            // Divider
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.beginPath(); ctx.moveTo(120, barY+10); ctx.lineTo(W-120, barY+10); ctx.stroke();
+
+            // Structural traits
+            const sLabels = {
+                initiator:'주도형', responder:'반응형', balanced:'균형형',
+                confrontational:'직면형', repair:'회복형', avoidant:'회피형', boundary:'선긋기형',
+                expressive:'표출형', analytical:'분석형', suppressive:'억제형', externalized:'행동전환형',
+                surface_locked:'표면유지형', slow_burn:'천천히형', depth_seeker:'깊이추구형', fast_opener:'빠른개방형',
+                giver:'주는 편', taker:'받는 편'
+            };
+            ctx.fillStyle = DIM;
+            ctx.font = '600 20px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('행동 패턴', 100, barY+55);
+
+            const traits = [
+                { label:'대화 주도', value: sLabels[axes.structural.A7.primary]||axes.structural.A7.primary },
+                { label:'갈등 대처', value: sLabels[axes.structural.A8.primary]||axes.structural.A8.primary },
+                { label:'감정 처리', value: sLabels[axes.structural.A9.primary]||axes.structural.A9.primary },
+                { label:'거리 조절', value: sLabels[axes.structural.A10.primary]||axes.structural.A10.primary },
+                { label:'주고받기', value: sLabels[axes.structural.A11.primary]||axes.structural.A11.primary }
+            ];
+            let chipX = 100, chipY = barY + 80;
+            traits.forEach(t => {
+                const chipText = t.label + '  ' + t.value;
+                ctx.font = '500 20px -apple-system, BlinkMacSystemFont, sans-serif';
+                const tw = ctx.measureText(chipText).width + 32;
+                if (chipX + tw > W - 100) { chipX = 100; chipY += 50; }
+                ctx.fillStyle = 'rgba(245,166,35,0.08)';
+                roundRect(ctx, chipX, chipY, tw, 38, 19); ctx.fill();
+                ctx.strokeStyle = 'rgba(245,166,35,0.2)'; ctx.lineWidth = 1;
+                roundRect(ctx, chipX, chipY, tw, 38, 19); ctx.stroke();
+                ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.textAlign = 'left';
+                ctx.font = '400 18px -apple-system, BlinkMacSystemFont, sans-serif';
+                const lw = ctx.measureText(t.label + '  ').width;
+                ctx.fillText(t.label, chipX+16, chipY+25);
+                ctx.fillStyle = '#F5A623';
+                ctx.font = '600 18px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.fillText(t.value, chipX+16+lw, chipY+25);
+                chipX += tw + 14;
+            });
+
+            // LLM Summary
+            const llmSections = profile.llmResult && profile.llmResult.sections;
+            let summaryText = '';
+            if (llmSections) {
+                summaryText = llmSections['세 문장 요약'] || llmSections['매력 포인트'] || '';
+                summaryText = summaryText.replace(/<[^>]*>/g, '').trim();
+            }
+            if (summaryText) {
+                const sY = chipY + 80;
+                ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+                ctx.beginPath(); ctx.moveTo(120, sY-15); ctx.lineTo(W-120, sY-15); ctx.stroke();
+                ctx.fillStyle = 'rgba(245,166,35,0.3)';
+                ctx.font = '700 60px Georgia, serif'; ctx.textAlign = 'left';
+                ctx.fillText('\u201C', 90, sY+40);
+                ctx.fillStyle = 'rgba(255,255,255,0.65)';
+                ctx.font = '400 22px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                if (summaryText.length > 120) summaryText = summaryText.substring(0, 117) + '...';
+                wrapText(ctx, summaryText, W/2, sY+35, W-200, 32);
+            }
+
+            // Bottom branding
+            const bGrd = ctx.createLinearGradient(100, 0, W-100, 0);
+            bGrd.addColorStop(0, 'rgba(245,166,35,0)');
+            bGrd.addColorStop(0.5, 'rgba(245,166,35,0.3)');
+            bGrd.addColorStop(1, 'rgba(245,166,35,0)');
+            ctx.strokeStyle = bGrd; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(100, H-80); ctx.lineTo(W-100, H-80); ctx.stroke();
+            ctx.fillStyle = 'rgba(245,166,35,0.5)';
+            ctx.font = '700 20px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('KNOT \u2014 AI 대화 행동 분석', W/2, H-45);
+            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            ctx.font = '400 16px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillText('jeongjeongjeongm.github.io/knot', W/2, H-22);
+
+            document.getElementById('shareOverlay').classList.add('active');
+        }
+
     </script>
 </body>
 </html>
