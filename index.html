@@ -434,6 +434,75 @@
             font-weight: 700 !important;
             letter-spacing: 0.5px;
         }
+        .share-url-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2) !important;
+            color: #fff !important;
+            border: none !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.5px;
+            margin-top: 8px;
+        }
+        .share-url-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed !important;
+        }
+        .share-url-result {
+            margin-top: 10px;
+            padding: 10px 14px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+        .share-url-result.active { display: flex; }
+        .share-url-result input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 12px;
+            font-family: monospace;
+            outline: none;
+        }
+        .share-url-result button {
+            padding: 6px 12px !important;
+            font-size: 11px !important;
+            background: var(--ac) !important;
+            color: #000 !important;
+            border: none !important;
+            border-radius: 6px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            white-space: nowrap;
+        }
+        .share-multi-cards {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 10px 0;
+            scrollbar-width: thin;
+        }
+        .share-multi-cards canvas {
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .share-multi-cards canvas:hover { transform: scale(1.02); }
+        .share-page-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .share-page-dots span {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+        }
+        .share-page-dots span.active { background: var(--ac); }
 
         /* Feedback Survey Styles */
         .feedback-survey { padding: 15px 0; }
@@ -1067,7 +1136,12 @@
             <!-- Share Card Section -->
             <div class="export-section" style="margin-top: 20px;">
                 <div class="export-title">공유하기</div>
-                <button class="share-card-btn" onclick="generateShareCard()">📸 인스타그램 카드 만들기</button>
+                <button class="share-card-btn" onclick="generateMultiShareCards()">📸 인스타그램 카드 만들기 (여러 장)</button>
+                <button class="share-url-btn" id="shareUrlBtn" onclick="generateShareURL()">🔗 공유 링크 만들기</button>
+                <div class="share-url-result" id="shareUrlResult">
+                    <input type="text" id="shareUrlInput" readonly>
+                    <button onclick="copyShareURL()">복사</button>
+                </div>
             </div>
 
             <!-- Export Section -->
@@ -1083,13 +1157,14 @@
 
     <!-- Share Card Overlay -->
     <div class="share-overlay" id="shareOverlay" onclick="if(event.target===this)closeShareOverlay()">
-        <div class="share-modal">
-            <canvas id="shareCanvas" width="1080" height="1350"></canvas>
+        <div class="share-modal" style="max-width: 90vw; width: 500px;">
+            <div class="share-multi-cards" id="shareCardsContainer"></div>
+            <div class="share-page-dots" id="sharePageDots"></div>
             <div class="share-actions">
-                <button class="share-download" onclick="downloadShareCard()">이미지 저장</button>
+                <button class="share-download" onclick="downloadAllShareCards()">전체 저장 📥</button>
                 <button class="share-close" onclick="closeShareOverlay()">닫기</button>
             </div>
-            <div class="share-hint">이미지를 저장한 후 인스타그램에 업로드하세요</div>
+            <div class="share-hint">인스타그램 → 새 게시물 → 여러 장 선택 → 업로드</div>
         </div>
     </div>
 
@@ -3251,6 +3326,359 @@
             document.getElementById('shareOverlay').classList.add('active');
         }
 
+
+        // ===== Share URL =====
+        async function generateShareURL() {
+            if (!currentProfile) return;
+            const btn = document.getElementById('shareUrlBtn');
+            btn.disabled = true;
+            btn.textContent = '\u23f3 \uc0dd\uc131 \uc911...';
+            try {
+                const shareData = {
+                    type: currentProfile.type,
+                    axes: currentProfile.axes,
+                    rates: currentProfile.rates,
+                    llmResult: currentProfile.llmResult,
+                    timestamp: currentProfile.timestamp
+                };
+                const resp = await fetch(WORKER_URL + '/share', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(shareData)
+                });
+                if (!resp.ok) throw new Error('\uc11c\ubc84 \uc624\ub958');
+                const result = await resp.json();
+                document.getElementById('shareUrlInput').value = result.shareUrl;
+                document.getElementById('shareUrlResult').classList.add('active');
+                btn.textContent = '\u2705 \ub9c1\ud06c \uc0dd\uc131 \uc644\ub8cc';
+                setTimeout(() => { btn.textContent = '\ud83d\udd17 \uacf5\uc720 \ub9c1\ud06c \ub9cc\ub4e4\uae30'; btn.disabled = false; }, 3000);
+            } catch (e) {
+                alert('\uacf5\uc720 \ub9c1\ud06c \uc0dd\uc131 \uc2e4\ud328: ' + e.message);
+                btn.textContent = '\ud83d\udd17 \uacf5\uc720 \ub9c1\ud06c \ub9cc\ub4e4\uae30';
+                btn.disabled = false;
+            }
+        }
+
+        function copyShareURL() {
+            const input = document.getElementById('shareUrlInput');
+            input.select();
+            navigator.clipboard.writeText(input.value).then(() => {
+                const btn = input.nextElementSibling;
+                btn.textContent = '\u2713 \ubcf5\uc0ac\ub428';
+                setTimeout(() => btn.textContent = '\ubcf5\uc0ac', 1500);
+            });
+        }
+
+        // ===== Multi-Card Helpers =====
+        function createCard(w, h) {
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            return c;
+        }
+        function drawCardBg(ctx, W, H, BG) {
+            ctx.fillStyle = BG;
+            ctx.fillRect(0, 0, W, H);
+            const grd = ctx.createRadialGradient(W/2, 300, 0, W/2, 300, 700);
+            grd.addColorStop(0, 'rgba(245,166,35,0.05)');
+            grd.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grd;
+            ctx.fillRect(0, 0, W, H);
+        }
+        function drawCardHeader(ctx, W, AC, DIM, type, title) {
+            ctx.fillStyle = AC;
+            ctx.font = '800 36px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('KNOT', W/2, 80);
+            ctx.font = '60px serif';
+            ctx.fillText(type.emoji, W/2 - 80, 180);
+            ctx.fillStyle = AC;
+            ctx.font = '700 30px -apple-system, BlinkMacSystemFont, monospace';
+            ctx.fillText(type.code, W/2 + 30, 170);
+            ctx.fillStyle = DIM;
+            ctx.font = '400 22px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillText(type.name, W/2 + 30, 200);
+            drawDivider(ctx, W, 240, AC);
+            ctx.fillStyle = '#fff';
+            ctx.font = '700 32px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(title, W/2, 300);
+        }
+        function drawDivider(ctx, W, y, AC) {
+            const grd = ctx.createLinearGradient(100, 0, W-100, 0);
+            grd.addColorStop(0, 'rgba(245,166,35,0)');
+            grd.addColorStop(0.5, 'rgba(245,166,35,0.3)');
+            grd.addColorStop(1, 'rgba(245,166,35,0)');
+            ctx.strokeStyle = grd; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(100, y); ctx.lineTo(W-100, y); ctx.stroke();
+        }
+        function drawBranding(ctx, W, H, AC) {
+            drawDivider(ctx, W, H - 80, AC);
+            ctx.fillStyle = 'rgba(245,166,35,0.5)';
+            ctx.font = '700 20px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('KNOT — AI 대화 행동 분석', W/2, H - 45);
+            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            ctx.font = '400 16px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillText('jeongjeongjeongm.github.io/knot', W/2, H - 22);
+        }
+        function wrapTextLines(text, ctx, maxWidth) {
+            const chars = text.split('');
+            const lines = []; let line = '';
+            for (let i = 0; i < chars.length; i++) {
+                const t = line + chars[i];
+                if (ctx.measureText(t).width > maxWidth && line.length > 0) { lines.push(line); line = chars[i]; }
+                else { line = t; }
+            }
+            if (line) lines.push(line);
+            return lines;
+        }
+        function downloadAllShareCards() {
+            if (!window._shareCanvases) return;
+            window._shareCanvases.forEach((canvas, i) => {
+                const link = document.createElement('a');
+                link.download = 'KNOT-' + (currentProfile?.type?.code || 'card') + '-' + (i + 1) + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        // ===== Multi-Card Instagram Carousel =====
+        function generateMultiShareCards() {
+            if (!currentProfile) return;
+            const container = document.getElementById('shareCardsContainer');
+            const dotsContainer = document.getElementById('sharePageDots');
+            container.innerHTML = '';
+            dotsContainer.innerHTML = '';
+            const profile = currentProfile;
+            const type = profile.type;
+            const axes = profile.axes;
+            const BG = '#08080D', AC = '#F5A623', TEXT = '#E8E8E8', DIM = '#777';
+            const axisColors = ['#F5A623','#60A5FA','#F87171','#A78BFA','#4ADE80','#38BDF8'];
+            const W = 1080, H = 1350;
+            const canvases = [];
+            const llmSections = profile.llmResult && profile.llmResult.sections;
+
+            // ---- Card 1: Profile Overview ----
+            const c1 = createCard(W, H);
+            const ctx1 = c1.getContext('2d');
+            drawCardBg(ctx1, W, H, BG);
+            ctx1.fillStyle = AC;
+            ctx1.font = '900 56px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx1.textAlign = 'center';
+            ctx1.fillText('KNOT', W/2, 150);
+            ctx1.fillStyle = DIM;
+            ctx1.font = '400 24px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx1.fillText('AI 대화 행동 분석', W/2, 190);
+            ctx1.font = '160px serif';
+            ctx1.fillText(type.emoji, W/2, 420);
+            ctx1.fillStyle = 'rgba(245,166,35,0.15)';
+            ctx1.font = '700 36px -apple-system, BlinkMacSystemFont, monospace';
+            const codeW = ctx1.measureText(type.code).width + 50;
+            roundRect(ctx1, W/2 - codeW/2, 460, codeW, 56, 28); ctx1.fill();
+            ctx1.fillStyle = AC; ctx1.textAlign = 'center';
+            ctx1.fillText(type.code, W/2, 498);
+            ctx1.fillStyle = TEXT;
+            ctx1.font = '800 60px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx1.fillText(type.name, W/2, 600);
+            ctx1.fillStyle = DIM;
+            ctx1.font = '400 28px -apple-system, BlinkMacSystemFont, sans-serif';
+            wrapText(ctx1, type.desc, W/2, 660, W - 160, 40);
+            drawDivider(ctx1, W, 780, AC);
+            let summaryText = '';
+            if (llmSections) {
+                summaryText = llmSections['세 문장 요약'] || llmSections['매력 포인트'] || '';
+                summaryText = summaryText.replace(/<[^>]*>/g, '').trim();
+            }
+            if (summaryText) {
+                ctx1.fillStyle = 'rgba(245,166,35,0.3)';
+                ctx1.font = '700 72px Georgia, serif';
+                ctx1.textAlign = 'left';
+                ctx1.fillText('\u201c', 90, 860);
+                ctx1.fillStyle = 'rgba(255,255,255,0.7)';
+                ctx1.font = '400 26px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx1.textAlign = 'center';
+                if (summaryText.length > 160) summaryText = summaryText.substring(0, 157) + '...';
+                wrapText(ctx1, summaryText, W/2, 860, W - 200, 38);
+            }
+            drawBranding(ctx1, W, H, AC);
+            canvases.push(c1);
+
+            // ---- Card 2: Intensity Bars ----
+            const c2 = createCard(W, H);
+            const ctx2 = c2.getContext('2d');
+            drawCardBg(ctx2, W, H, BG);
+            drawCardHeader(ctx2, W, AC, DIM, type, '성향 강도');
+            const barData = [
+                { label: '관심도', value: axes.intensity.A1, color: axisColors[0] },
+                { label: '공감력', value: axes.intensity.A2, color: axisColors[1] },
+                { label: '주장성', value: axes.intensity.A3, color: axisColors[2] },
+                { label: '감정 개방', value: axes.intensity.A4, color: axisColors[3] },
+                { label: '서포트', value: axes.intensity.A5, color: axisColors[4] },
+                { label: '일관성', value: axes.intensity.A6, color: axisColors[5] }
+            ];
+            const descMap = { '관심도':'대화 참여 열정과 반응 빈도', '공감력':'상대 감정에 대한 이해와 반영', '주장성':'자기 의견 표현의 강도', '감정 개방':'내면 감정을 드러내는 정도', '서포트':'상대를 지지하고 격려하는 성향', '일관성':'대화 패턴의 안정성과 예측 가능성' };
+            let barY = 380;
+            barData.forEach(item => {
+                ctx2.fillStyle = 'rgba(255,255,255,0.6)';
+                ctx2.font = '500 28px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx2.textAlign = 'left';
+                ctx2.fillText(item.label, 100, barY);
+                ctx2.textAlign = 'right'; ctx2.fillStyle = item.color;
+                ctx2.font = '700 28px -apple-system, BlinkMacSystemFont, monospace';
+                ctx2.fillText(Math.round(item.value * 100) + '%', W - 100, barY);
+                const barX = 280, barW = W - 100 - barX - 80, barH = 16;
+                ctx2.fillStyle = 'rgba(255,255,255,0.06)';
+                roundRect(ctx2, barX, barY - 10, barW, barH, 8); ctx2.fill();
+                const fillW = Math.max(barW * item.value, 5);
+                const barGrd = ctx2.createLinearGradient(barX, 0, barX + fillW, 0);
+                barGrd.addColorStop(0, item.color); barGrd.addColorStop(1, item.color + '88');
+                ctx2.fillStyle = barGrd;
+                roundRect(ctx2, barX, barY - 10, fillW, barH, 8); ctx2.fill();
+                ctx2.fillStyle = 'rgba(255,255,255,0.25)';
+                ctx2.font = '400 20px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx2.textAlign = 'left';
+                ctx2.fillText(descMap[item.label] || '', 100, barY + 35);
+                barY += 120;
+            });
+            drawBranding(ctx2, W, H, AC);
+            canvases.push(c2);
+
+
+            // ---- Card 3: Behavioral Patterns ----
+            const c3 = createCard(W, H);
+            const ctx3 = c3.getContext('2d');
+            drawCardBg(ctx3, W, H, BG);
+            drawCardHeader(ctx3, W, AC, DIM, type, '행동 패턴');
+            const structLabels = {
+                initiator:'주도형', responder:'반응형', balanced:'균형형',
+                confrontational:'직면형', repair:'회복형', avoidant:'회피형', boundary:'선긋기형',
+                expressive:'표출형', analytical:'분석형', suppressive:'억제형', externalized:'행동전환형',
+                surface_locked:'표면유지형', slow_burn:'천천히형', depth_seeker:'깊이추구형', fast_opener:'빠른개방형',
+                giver:'주는 편', taker:'받는 편'
+            };
+            const traits = [
+                { label:'대화 주도', value: structLabels[axes.structural.A7.primary] || axes.structural.A7.primary, icon:'💬' },
+                { label:'갈등 대처', value: structLabels[axes.structural.A8.primary] || axes.structural.A8.primary, icon:'⚡' },
+                { label:'감정 처리', value: structLabels[axes.structural.A9.primary] || axes.structural.A9.primary, icon:'🧠' },
+                { label:'거리 조절', value: structLabels[axes.structural.A10.primary] || axes.structural.A10.primary, icon:'📏' },
+                { label:'주고받기', value: structLabels[axes.structural.A11.primary] || axes.structural.A11.primary, icon:'🤝' }
+            ];
+            let ty = 380;
+            traits.forEach(t => {
+                ctx3.fillStyle = 'rgba(245,166,35,0.06)';
+                roundRect(ctx3, 80, ty - 10, W - 160, 70, 16); ctx3.fill();
+                ctx3.strokeStyle = 'rgba(245,166,35,0.15)'; ctx3.lineWidth = 1;
+                roundRect(ctx3, 80, ty - 10, W - 160, 70, 16); ctx3.stroke();
+                ctx3.font = '32px serif'; ctx3.textAlign = 'left';
+                ctx3.fillText(t.icon, 110, ty + 34);
+                ctx3.fillStyle = 'rgba(255,255,255,0.5)';
+                ctx3.font = '500 24px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx3.fillText(t.label, 160, ty + 32);
+                ctx3.fillStyle = AC;
+                ctx3.font = '700 26px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx3.textAlign = 'right';
+                ctx3.fillText(t.value, W - 110, ty + 32);
+                ty += 90;
+            });
+            if (llmSections) {
+                drawDivider(ctx3, W, ty + 20, AC); ty += 60;
+                Object.keys(llmSections).slice(0, 3).forEach(key => {
+                    if (key === '세 문장 요약') return;
+                    ctx3.fillStyle = AC;
+                    ctx3.font = '700 24px -apple-system, BlinkMacSystemFont, sans-serif';
+                    ctx3.textAlign = 'left';
+                    ctx3.fillText('• ' + key, 100, ty);
+                    let st = llmSections[key].replace(/<[^>]*>/g, '').trim();
+                    if (st.length > 80) st = st.substring(0, 77) + '...';
+                    ctx3.fillStyle = 'rgba(255,255,255,0.55)';
+                    ctx3.font = '400 22px -apple-system, BlinkMacSystemFont, sans-serif';
+                    wrapText(ctx3, st, 120, ty + 35, W - 240, 30);
+                    ty += 100;
+                });
+            }
+            drawBranding(ctx3, W, H, AC);
+            canvases.push(c3);
+
+            // ---- Card 4: LLM Deep Analysis ----
+            if (llmSections) {
+                const c4 = createCard(W, H);
+                const ctx4 = c4.getContext('2d');
+                drawCardBg(ctx4, W, H, BG);
+                drawCardHeader(ctx4, W, AC, DIM, type, 'AI 심층 분석');
+                let sy = 380;
+                Object.keys(llmSections).filter(k => k !== '세 문장 요약').forEach(key => {
+                    if (sy > H - 150) return;
+                    ctx4.fillStyle = AC;
+                    ctx4.font = '700 26px -apple-system, BlinkMacSystemFont, sans-serif';
+                    ctx4.textAlign = 'left';
+                    ctx4.fillText(key, 100, sy);
+                    let txt = llmSections[key].replace(/<[^>]*>/g, '').trim();
+                    if (txt.length > 200) txt = txt.substring(0, 197) + '...';
+                    ctx4.fillStyle = 'rgba(255,255,255,0.6)';
+                    ctx4.font = '400 22px -apple-system, BlinkMacSystemFont, sans-serif';
+                    const lines = wrapTextLines(txt, ctx4, W - 200);
+                    lines.forEach((line, i) => {
+                        if (sy + 38 + i * 30 < H - 120) ctx4.fillText(line, 100, sy + 38 + i * 30);
+                    });
+                    sy += 50 + lines.length * 30;
+                });
+                drawBranding(ctx4, W, H, AC);
+                canvases.push(c4);
+            }
+
+            // ---- Card 5: Ideal Partners ----
+            const partners = getIdealPartners(type.code);
+            if (partners.ideal.length > 0 || partners.good.length > 0) {
+                const c5 = createCard(W, H);
+                const ctx5 = c5.getContext('2d');
+                drawCardBg(ctx5, W, H, BG);
+                drawCardHeader(ctx5, W, AC, DIM, type, '이상적 파트너');
+                let py = 380;
+                const renderPartners = (list, color, label) => {
+                    if (list.length === 0 || py > H - 200) return;
+                    ctx5.fillStyle = color;
+                    ctx5.font = '700 26px -apple-system, BlinkMacSystemFont, sans-serif';
+                    ctx5.textAlign = 'left';
+                    ctx5.fillText(label, 100, py); py += 50;
+                    list.forEach(p => {
+                        if (py > H - 120) return;
+                        const td = TYPE_DEFINITIONS[p.code];
+                        if (!td) return;
+                        ctx5.fillStyle = color.replace('1)', '0.08)').replace('#4ADE80','rgba(74,222,128,0.08)').replace('#60A5FA','rgba(96,165,250,0.08)');
+                        roundRect(ctx5, 80, py - 10, W - 160, 80, 14); ctx5.fill();
+                        ctx5.font = '40px serif'; ctx5.textAlign = 'left';
+                        ctx5.fillText(td.emoji, 110, py + 42);
+                        ctx5.fillStyle = TEXT;
+                        ctx5.font = '700 26px -apple-system, BlinkMacSystemFont, sans-serif';
+                        ctx5.fillText(p.code + ' ' + p.name, 170, py + 28);
+                        ctx5.fillStyle = DIM;
+                        ctx5.font = '400 20px -apple-system, BlinkMacSystemFont, sans-serif';
+                        let reason = p.reason || '';
+                        if (reason.length > 50) reason = reason.substring(0, 47) + '...';
+                        ctx5.fillText(reason, 170, py + 55);
+                        py += 100;
+                    });
+                    py += 20;
+                };
+                renderPartners(partners.ideal, '#4ADE80', '💚 최고의 궁합');
+                renderPartners(partners.good, '#60A5FA', '💙 좋은 궁합');
+                drawBranding(ctx5, W, H, AC);
+                canvases.push(c5);
+            }
+
+            // Render all canvases into overlay
+            canvases.forEach((c, i) => {
+                c.style.width = '280px';
+                c.style.height = '350px';
+                c.style.flexShrink = '0';
+                container.appendChild(c);
+                const dot = document.createElement('span');
+                if (i === 0) dot.className = 'active';
+                dotsContainer.appendChild(dot);
+            });
+            window._shareCanvases = canvases;
+            document.getElementById('shareOverlay').classList.add('active');
+        }
     </script>
 </body>
 </html>
