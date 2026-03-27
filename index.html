@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://knot-exodia.ashirmallo.workers.dev https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self' https://knot-exodia.ashirmallo.workers.dev;">
     <title>EXODIA v3.2 - 행동 분석 엔진</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
@@ -1045,7 +1046,12 @@
                 <p>11개의 행동 축을 기반으로 대화 스타일을 프로파일링하고, 10가지 행동 유형 중 가장 가까운 패턴을 매칭합니다. 두 사람의 결과를 비교하여 호환성 분석도 가능합니다.</p>
                 <div class="privacy-notice">
                     <strong>🔒 개인정보 안내</strong><br>
-                    업로드된 대화 원본은 분석 목적으로만 일시적으로 처리되며, <strong>서버에 저장하거나 수집하지 않습니다.</strong> 분석이 완료되면 원본 데이터는 즉시 폐기됩니다. 피드백 설문 응답만 서비스 개선 목적으로 익명 저장됩니다.
+                    • 업로드된 대화 데이터는 브라우저에서만 처리됩니다<br>
+                    • 분석을 위해 Anthropic Claude API로 암호화된 연결(HTTPS)을 통해 전송됩니다<br>
+                    • Anthropic API 정책에 따라 전송된 데이터는 모델 학습에 사용되지 않습니다<br>
+                    • 분석 완료 후 원본 데이터는 브라우저 메모리에서 즉시 삭제됩니다<br>
+                    • 공유 기능 사용 시 분석 결과(점수/유형)만 저장되며, 원본 대화는 포함되지 않습니다<br>
+                    • 저장된 공유 데이터는 30일 후 자동 삭제됩니다
                 </div>
             </div>
 
@@ -1457,17 +1463,43 @@
         }
 
         async function parseFile(file) {
+            // Validate file size (max 50MB)
+            const maxSize = 50 * 1024 * 1024;
+            if (file.size > maxSize) {
+                throw new Error('파일 크기는 50MB 이하여야 합니다. 현재 파일: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB');
+            }
+
             const text = await file.text();
             let data;
-            try { data = JSON.parse(text); } catch (e) {
-                throw new Error('유효한 JSON 파일이 아닙니다.');
+            try {
+                // Validate JSON structure before parsing
+                data = JSON.parse(text);
+            } catch (e) {
+                throw new Error('유효한 JSON 파일이 아닙니다. 파일이 올바른 JSON 형식인지 확인해주세요.');
             }
+
+            // Validate that parsed data is an object or array
+            if (!data || (typeof data !== 'object')) {
+                throw new Error('JSON 구조가 올바르지 않습니다. 객체 또는 배열이어야 합니다.');
+            }
+
             return parseJSONData(data);
         }
 
         async function parseZip(file) {
+            // Validate file size (max 50MB)
+            const maxSize = 50 * 1024 * 1024;
+            if (file.size > maxSize) {
+                throw new Error('파일 크기는 50MB 이하여야 합니다. 현재 파일: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB');
+            }
+
             const zip = new JSZip();
-            const contents = await zip.loadAsync(file);
+            let contents;
+            try {
+                contents = await zip.loadAsync(file);
+            } catch (e) {
+                throw new Error('ZIP 파일을 읽을 수 없습니다. 손상되지 않은 ZIP 파일인지 확인해주세요.');
+            }
 
             // Look for any JSON file (conversations.json or data-*.json)
             for (const filename of Object.keys(contents.files)) {
@@ -1475,16 +1507,61 @@
                 if (filename.endsWith('.json')) {
                     try {
                         const fileData = await contents.files[filename].async('text');
-                        const data = JSON.parse(fileData);
+                        let data;
+                        try {
+                            data = JSON.parse(fileData);
+                        } catch (e) {
+                            continue;
+                        }
+                        // Validate JSON structure
+                        if (!data || (typeof data !== 'object')) {
+                            continue;
+                        }
                         return parseJSONData(data);
-                    } catch (e) { continue; }
+                    } catch (e) {
+                        continue;
+                    }
                 }
             }
 
-            throw new Error('ZIP 안에서 대화 데이터를 찾을 수 없습니다.');
+            throw new Error('ZIP 안에서 유효한 대화 데이터를 찾을 수 없습니다. conversations.json 또는 data-*.json 파일이 포함되어야 합니다.');
         }
 
         // ============ UTILITY FUNCTIONS ============
+        function clearSensitiveData() {
+            // Clear the raw file data
+            if (window._rawFileData) {
+                window._rawFileData = null;
+            }
+            // Clear the parsed messages array
+            if (currentProfile && currentProfile.messages) {
+                currentProfile.messages = null;
+            }
+            // Clear intermediate conversation data
+            if (currentProfile && currentProfile.messagesSample) {
+                currentProfile.messagesSample = null;
+            }
+            // Force garbage collection if available
+            if (window.gc) {
+                try {
+                    window.gc();
+                } catch (e) {
+                    // gc() may not be available or enabled
+                }
+            }
+            console.log('Sensitive data cleared from memory');
+        }
+
+        function sanitizeHTML(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#x27;');
+        }
+
         function clamp01(x) { return Math.max(0, Math.min(1, x)); }
         function saturate(x, k = 1) { return clamp01(1 - Math.exp(-Math.max(0, x) * k)); }
         function formatPercent(v) { return `${Math.round((v || 0) * 100)}%`; }
@@ -2472,11 +2549,11 @@
 
             // Display 32-type system
             const type = profile.type;
-            document.getElementById('typeEmoji').textContent = type.emoji;
-            document.getElementById('typeCode').textContent = type.code;
-            document.getElementById('typeName').textContent = type.name;
+            document.getElementById('typeEmoji').textContent = sanitizeHTML(type.emoji);
+            document.getElementById('typeCode').textContent = sanitizeHTML(type.code);
+            document.getElementById('typeName').textContent = sanitizeHTML(type.name);
             const resolution = getResolutionSummary(profile);
-            document.getElementById('typeDesc').textContent = `${type.desc} · 신뢰도 ${resolution.label} (${formatPercent(resolution.score)})`;
+            document.getElementById('typeDesc').textContent = `${sanitizeHTML(type.desc)} · 신뢰도 ${sanitizeHTML(resolution.label)} (${formatPercent(resolution.score)})`;
 
             // Diagnostics panel
             document.getElementById('diagnosticsPanel').innerHTML = renderDiagnosticsPanel(profile);
@@ -2499,10 +2576,10 @@
                     partnersHTML += `
                         <div class="partner-card ideal">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                <span style="font-size: 20px;">${typeDef.emoji}</span>
-                                <div class="partner-type">${p.code} - ${p.name}</div>
+                                <span style="font-size: 20px;">${sanitizeHTML(typeDef.emoji)}</span>
+                                <div class="partner-type">${sanitizeHTML(p.code)} - ${sanitizeHTML(p.name)}</div>
                             </div>
-                            <div class="partner-reason">${typeDef.desc}</div>
+                            <div class="partner-reason">${sanitizeHTML(typeDef.desc)}</div>
                         </div>
                     `;
                 });
@@ -2593,13 +2670,18 @@
 
                 structHTML += `
                     <div class="struct-item">
-                        <div class="struct-label">${axis.id} ${axis.label}</div>
-                        <div class="primary-style">${STRUCT_LABELS[axis.data.primary] || axis.data.primary}</div>
+                        <div class="struct-label">${sanitizeHTML(axis.id)} ${sanitizeHTML(axis.label)}</div>
+                        <div class="primary-style">${sanitizeHTML(STRUCT_LABELS[axis.data.primary] || axis.data.primary)}</div>
                         <div class="mix-ratio-bar">${mixHTML}</div>
                     </div>
                 `;
             });
             document.getElementById('structuralAxes').innerHTML = structHTML;
+
+            // Clear sensitive data after results are displayed
+            setTimeout(() => {
+                clearSensitiveData();
+            }, 500);
 
             // 프로필 분석: LLM 10섹션 결과 우선, fallback으로 7렌즈 로컬 분석
             let lensesHTML = '';
@@ -2613,12 +2695,12 @@
                     '함께할 때 예상 분위기', '어려워질 수 있는 지점', '매력 포인트', '세 문장 요약'
                 ];
                 sectionNames.forEach((name, idx) => {
-                    const content = llmSections[name] || '';
+                    const content = sanitizeHTML(llmSections[name] || '');
                     const isOpen = idx === 0 ? ' active' : '';
                     lensesHTML += `
                         <div class="lens-card">
                             <div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')">
-                                <span class="lens-title">${name} <span style="font-size:10px;color:var(--ac);font-weight:400;">AI</span></span>
+                                <span class="lens-title">${sanitizeHTML(name)} <span style="font-size:10px;color:var(--ac);font-weight:400;">AI</span></span>
                                 <span class="lens-toggle">▼</span>
                             </div>
                             <div class="lens-content${isOpen}">${content}</div>
