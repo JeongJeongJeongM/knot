@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EXODIA v3.2 - 행동 분석 엔진</title>
+    <title>EXODIA v3.2 - íë ë¶ì ìì§</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root {
@@ -1018,7 +1018,7 @@
         }
 
         .analysis-list li:before {
-            content: '→';
+            content: 'â';
             position: absolute;
             left: 0;
             color: var(--ac);
@@ -1037,34 +1037,34 @@
     <div class="screen landing active">
         <div class="container">
             <div class="logo">KNOT</div>
-            <div class="subtitle">AI 대화 행동 분석</div>
+            <div class="subtitle">AI ëí íë ë¶ì</div>
 
             <div class="about-section">
-                <h2>KNOT이란?</h2>
-                <p>KNOT은 AI 챗봇과의 대화 기록을 분석하여, 사용자의 <strong style="color:var(--ac)">대화 행동 패턴</strong>을 다각도로 시각화하는 도구입니다.</p>
-                <p>11개의 행동 축을 기반으로 대화 스타일을 프로파일링하고, 10가지 행동 유형 중 가장 가까운 패턴을 매칭합니다. 두 사람의 결과를 비교하여 호환성 분석도 가능합니다.</p>
+                <h2>KNOTì´ë?</h2>
+                <p>KNOTì AI ì±ë´ê³¼ì ëí ê¸°ë¡ì ë¶ìíì¬, ì¬ì©ìì <strong style="color:var(--ac)">ëí íë í¨í´</strong>ì ë¤ê°ëë¡ ìê°ííë ëêµ¬ìëë¤.</p>
+                <p>11ê°ì íë ì¶ì ê¸°ë°ì¼ë¡ ëí ì¤íì¼ì íë¡íì¼ë§íê³ , 10ê°ì§ íë ì í ì¤ ê°ì¥ ê°ê¹ì´ í¨í´ì ë§¤ì¹­í©ëë¤. ë ì¬ëì ê²°ê³¼ë¥¼ ë¹êµíì¬ í¸íì± ë¶ìë ê°ë¥í©ëë¤.</p>
                 <div class="privacy-notice">
-                    <strong>🔒 개인정보 안내</strong><br>
-                    업로드된 대화 원본은 분석 목적으로만 일시적으로 처리되며, <strong>서버에 저장하거나 수집하지 않습니다.</strong> 분석이 완료되면 원본 데이터는 즉시 폐기됩니다. 피드백 설문 응답만 서비스 개선 목적으로 익명 저장됩니다.
+                    <strong>ð ê°ì¸ì ë³´ ìë´</strong><br>
+                    ìë¡ëë ëí ìë³¸ì ë¶ì ëª©ì ì¼ë¡ë§ ì¼ìì ì¼ë¡ ì²ë¦¬ëë©°, <strong>ìë²ì ì ì¥íê±°ë ìì§íì§ ììµëë¤.</strong> ë¶ìì´ ìë£ëë©´ ìë³¸ ë°ì´í°ë ì¦ì íê¸°ë©ëë¤. í¼ëë°± ì¤ë¬¸ ìëµë§ ìë¹ì¤ ê°ì  ëª©ì ì¼ë¡ ìµëª ì ì¥ë©ëë¤.
                 </div>
             </div>
 
             <div class="upload-zone" id="uploadZone">
-                <div class="upload-icon">📤</div>
-                <div class="upload-text">JSON 또는 ZIP 파일 드래그 &amp; 드롭</div>
-                <div class="text-dim" style="font-size: 12px;">또는 클릭하여 파일 선택</div>
+                <div class="upload-icon">ð¤</div>
+                <div class="upload-text">JSON ëë ZIP íì¼ ëëê·¸ &amp; ëë¡­</div>
+                <div class="text-dim" style="font-size: 12px;">ëë í´ë¦­íì¬ íì¼ ì í</div>
                 <input type="file" id="fileInput" accept=".json,.zip">
             </div>
 
             <div class="instructions">
-                <strong>지원하는 형식:</strong>
+                <strong>ì§ìíë íì:</strong>
                 <ol>
-                    <li><strong>Claude</strong> — chat_messages 배열 형식</li>
-                    <li><strong>ChatGPT</strong> — mapping 객체 형식</li>
-                    <li><strong>ZIP</strong> — conversations.json 포함</li>
+                    <li><strong>Claude</strong> â chat_messages ë°°ì´ íì</li>
+                    <li><strong>ChatGPT</strong> â mapping ê°ì²´ íì</li>
+                    <li><strong>ZIP</strong> â conversations.json í¬í¨</li>
                 </ol>
                 <div style="margin-top: 15px;">
-                    <strong>분석 항목:</strong> 11개 행동축 + 10개 프로필 분석 + 호환성 매칭
+                    <strong>ë¶ì í­ëª©:</strong> 11ê° íëì¶ + 10ê° íë¡í ë¶ì + í¸íì± ë§¤ì¹­
                 </div>
             </div>
         </div>
@@ -1074,8 +1074,8 @@
     <div class="screen analyzing">
         <div class="container">
             <div class="spinner"></div>
-            <div>대화 분석 중...</div>
-            <div class="progress-stage" id="progressStage">파일 파싱...</div>
+            <div>ëí ë¶ì ì¤...</div>
+            <div class="progress-stage" id="progressStage">íì¼ íì±...</div>
         </div>
     </div>
 
@@ -1084,73 +1084,73 @@
         <div class="container">
             <div class="result-header">
                 <div class="type-badge">
-                    <div class="type-emoji" id="typeEmoji">🔮</div>
+                    <div class="type-emoji" id="typeEmoji">ð®</div>
                     <div class="type-code" id="typeCode">-</div>
-                    <div class="type-name" id="typeName">분석 중...</div>
-                    <div class="type-desc" id="typeDesc">로딩 중...</div>
+                    <div class="type-name" id="typeName">ë¶ì ì¤...</div>
+                    <div class="type-desc" id="typeDesc">ë¡ë© ì¤...</div>
                 </div>
             </div>
 
             <!-- Diagnostics Panel -->
             <div class="axes-section">
-                <div class="section-title">분석 신뢰도</div>
+                <div class="section-title">ë¶ì ì ë¢°ë</div>
                 <div id="diagnosticsPanel"></div>
             </div>
 
             <!-- Temporal Analysis -->
             <div class="axes-section" id="temporalSection" style="display:none;">
-                <div class="section-title">시간에 따른 변화</div>
+                <div class="section-title">ìê°ì ë°ë¥¸ ë³í</div>
                 <div id="temporalPanel"></div>
             </div>
 
             <!-- Intensity Axes -->
             <div class="axes-section">
-                <div class="section-title">성향 강도</div>
+                <div class="section-title">ì±í¥ ê°ë</div>
                 <div id="intensityAxes"></div>
             </div>
 
             <!-- Structural Axes -->
             <div class="axes-section">
-                <div class="section-title">행동 패턴</div>
+                <div class="section-title">íë í¨í´</div>
                 <div class="structural-axes" id="structuralAxes"></div>
             </div>
 
             <!-- Interpretation Lenses -->
             <div class="axes-section">
-                <div class="section-title">프로필 분석 (Profile Analysis)</div>
+                <div class="section-title">íë¡í ë¶ì (Profile Analysis)</div>
                 <div id="lenses" class="lenses-section"></div>
             </div>
 
             <!-- Ideal Partner Recommendations -->
             <div class="axes-section">
-                <div class="section-title">이상적 파트너 유형</div>
+                <div class="section-title">ì´ìì  íí¸ë ì í</div>
                 <div id="partnerRecommendations"></div>
             </div>
 
             <!-- Feedback Survey -->
             <div class="axes-section" id="feedbackSection" style="display:none;">
-                <div class="section-title">분석 품질 평가</div>
+                <div class="section-title">ë¶ì íì§ íê°</div>
                 <div id="feedbackContent"></div>
             </div>
 
             <!-- Share Card Section -->
             <div class="export-section" style="margin-top: 20px;">
-                <div class="export-title">공유하기</div>
-                <button class="share-card-btn" onclick="generateMultiShareCards()">📸 인스타그램 카드 만들기 (여러 장)</button>
-                <button class="share-url-btn" id="shareUrlBtn" onclick="generateShareURL()">🔗 공유 링크 만들기</button>
+                <div class="export-title">ê³µì íê¸°</div>
+                <button class="share-card-btn" onclick="generateMultiShareCards()">ð¸ ì¸ì¤íê·¸ë¨ ì¹´ë ë§ë¤ê¸° (ì¬ë¬ ì¥)</button>
+                <button class="share-url-btn" id="shareUrlBtn" onclick="generateShareURL()">ð ê³µì  ë§í¬ ë§ë¤ê¸°</button>
                 <div class="share-url-result" id="shareUrlResult">
                     <input type="text" id="shareUrlInput" readonly>
-                    <button onclick="copyShareURL()">복사</button>
+                    <button onclick="copyShareURL()">ë³µì¬</button>
                 </div>
             </div>
 
             <!-- Export Section -->
             <div class="export-section">
-                <div class="export-title">프로필 코드</div>
-                <div class="profile-code" id="profileCode">생성 중...</div>
-                <button onclick="copyProfileCode()">코드 복사</button>
-                <button class="secondary-btn" onclick="switchToMatch()">매칭 시작</button>
-                <button class="secondary-btn" onclick="goToLanding()">새 분석</button>
+                <div class="export-title">íë¡í ì½ë</div>
+                <div class="profile-code" id="profileCode">ìì± ì¤...</div>
+                <button onclick="copyProfileCode()">ì½ë ë³µì¬</button>
+                <button class="secondary-btn" onclick="switchToMatch()">ë§¤ì¹­ ìì</button>
+                <button class="secondary-btn" onclick="goToLanding()">ì ë¶ì</button>
             </div>
         </div>
     </div>
@@ -1161,10 +1161,10 @@
             <div class="share-multi-cards" id="shareCardsContainer"></div>
             <div class="share-page-dots" id="sharePageDots"></div>
             <div class="share-actions">
-                <button class="share-download" onclick="downloadAllShareCards()">전체 저장 📥</button>
-                <button class="share-close" onclick="closeShareOverlay()">닫기</button>
+                <button class="share-download" onclick="downloadAllShareCards()">ì ì²´ ì ì¥ ð¥</button>
+                <button class="share-close" onclick="closeShareOverlay()">ë«ê¸°</button>
             </div>
-            <div class="share-hint">인스타그램 → 새 게시물 → 여러 장 선택 → 업로드</div>
+            <div class="share-hint">ì¸ì¤íê·¸ë¨ â ì ê²ìë¬¼ â ì¬ë¬ ì¥ ì í â ìë¡ë</div>
         </div>
     </div>
 
@@ -1172,75 +1172,75 @@
     <div class="screen match">
         <div class="container">
             <div class="match-header">
-                <div class="match-title">호환성 분석</div>
+                <div class="match-title">í¸íì± ë¶ì</div>
                 <div style="margin-bottom: 15px;">
-                    <button class="secondary-btn" onclick="goToResult()">← 돌아가기</button>
+                    <button class="secondary-btn" onclick="goToResult()">â ëìê°ê¸°</button>
                 </div>
                 <div class="compatibility-score" id="compatScore">-</div>
-                <div class="compatibility-label">호환성 점수</div>
+                <div class="compatibility-label">í¸íì± ì ì</div>
             </div>
 
             <div class="match-upload">
                 <div style="margin-bottom: 15px;">
-                    <div style="font-size: 13px; margin-bottom: 10px;">두 번째 프로필 업로드</div>
-                    <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 15px;">파일 또는 프로필 코드 붙여넣기</div>
+                    <div style="font-size: 13px; margin-bottom: 10px;">ë ë²ì§¸ íë¡í ìë¡ë</div>
+                    <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 15px;">íì¼ ëë íë¡í ì½ë ë¶ì¬ë£ê¸°</div>
                     <input type="file" id="matchFileInput" accept=".json,.zip">
-                    <button onclick="document.getElementById('matchFileInput').click()">파일 선택</button>
-                    <div style="margin: 15px 0;">또는</div>
-                    <textarea id="matchCodeInput" placeholder="프로필 코드 입력..." style="width: 100%; height: 80px; padding: 10px; background-color: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 11px; resize: none;"></textarea>
-                    <button onclick="loadProfileFromCode()" style="margin-top: 10px;">코드에서 로드</button>
+                    <button onclick="document.getElementById('matchFileInput').click()">íì¼ ì í</button>
+                    <div style="margin: 15px 0;">ëë</div>
+                    <textarea id="matchCodeInput" placeholder="íë¡í ì½ë ìë ¥..." style="width: 100%; height: 80px; padding: 10px; background-color: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 11px; resize: none;"></textarea>
+                    <button onclick="loadProfileFromCode()" style="margin-top: 10px;">ì½ëìì ë¡ë</button>
                 </div>
             </div>
 
             <div id="matchResultsContainer" class="hidden">
                 <!-- Type Comparison -->
                 <div class="match-types-section">
-                    <div class="section-title">유형 비교</div>
+                    <div class="section-title">ì í ë¹êµ</div>
                     <div class="type-comparison">
                         <div class="type-card">
-                            <div class="type-card-emoji" id="matchType1Emoji">🔮</div>
+                            <div class="type-card-emoji" id="matchType1Emoji">ð®</div>
                             <div class="type-card-code" id="matchType1Code">-</div>
-                            <div class="type-card-name" id="matchType1Name">로딩 중...</div>
+                            <div class="type-card-name" id="matchType1Name">ë¡ë© ì¤...</div>
                         </div>
                         <div class="type-card">
-                            <div class="type-card-emoji" id="matchType2Emoji">🔮</div>
+                            <div class="type-card-emoji" id="matchType2Emoji">ð®</div>
                             <div class="type-card-code" id="matchType2Code">-</div>
-                            <div class="type-card-name" id="matchType2Name">로딩 중...</div>
+                            <div class="type-card-name" id="matchType2Name">ë¡ë© ì¤...</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="friction-visualization">
-                    <div class="section-title">축별 마찰도</div>
+                    <div class="section-title">ì¶ë³ ë§ì°°ë</div>
                     <div id="frictionAxes"></div>
                 </div>
 
                 <!-- Enhanced Matching Analysis -->
                 <div class="match-analysis-section">
-                    <div class="section-title">향상된 호환성 분석</div>
+                    <div class="section-title">í¥ìë í¸íì± ë¶ì</div>
 
                     <div class="analysis-subsection">
-                        <div class="analysis-title">강점</div>
+                        <div class="analysis-title">ê°ì </div>
                         <ul class="analysis-list" id="matchStrengths"></ul>
                     </div>
 
                     <div class="analysis-subsection">
-                        <div class="analysis-title">위험 요소</div>
+                        <div class="analysis-title">ìí ìì</div>
                         <ul class="analysis-list" id="matchRisks"></ul>
                     </div>
 
                     <div class="analysis-subsection">
-                        <div class="analysis-title">성장 방향</div>
+                        <div class="analysis-title">ì±ì¥ ë°©í¥</div>
                         <p class="analysis-paragraph" id="matchGrowth"></p>
                     </div>
 
                     <div class="analysis-subsection">
-                        <div class="analysis-title">장기 전망</div>
+                        <div class="analysis-title">ì¥ê¸° ì ë§</div>
                         <p class="analysis-paragraph" id="matchOutlook"></p>
                     </div>
                 </div>
 
-                <button class="secondary-btn mt-30" onclick="goToLanding()">새 분석</button>
+                <button class="secondary-btn mt-30" onclick="goToLanding()">ì ë¶ì</button>
             </div>
         </div>
     </div>
@@ -1252,23 +1252,23 @@
             A7: 'var(--a7)', A8: 'var(--a8)', A9: 'var(--a9)', A10: 'var(--a10)', A11: 'var(--a11)'
         };
 
-        // 구조축 영어→한국어 번역
+        // êµ¬ì¡°ì¶ ìì´âíêµ­ì´ ë²ì­
         const STRUCT_LABELS = {
-            // A7 상호작용
-            initiator: '주도형', responder: '반응형', balanced: '균형형',
-            // A8 갈등
-            confrontational: '직면형', repair: '회복형', avoidant: '회피형', boundary: '선긋기형',
-            // A9 감정
-            expressive: '표출형', analytical: '분석형', suppressive: '억제형', externalized: '행동전환형',
-            // A10 친밀감
-            surface_locked: '표면유지형', slow_burn: '천천히형', depth_seeker: '깊이추구형', fast_opener: '빠른개방형',
-            // A11 상호성
-            giver: '주는 편', taker: '받는 편'
+            // A7 ìí¸ìì©
+            initiator: 'ì£¼ëí', responder: 'ë°ìí', balanced: 'ê· íí',
+            // A8 ê°ë±
+            confrontational: 'ì§ë©´í', repair: 'íë³µí', avoidant: 'íí¼í', boundary: 'ì ê¸ê¸°í',
+            // A9 ê°ì 
+            expressive: 'íì¶í', analytical: 'ë¶ìí', suppressive: 'ìµì í', externalized: 'íëì íí',
+            // A10 ì¹ë°ê°
+            surface_locked: 'íë©´ì ì§í', slow_burn: 'ì²ì²íí', depth_seeker: 'ê¹ì´ì¶êµ¬í', fast_opener: 'ë¹ ë¥¸ê°ë°©í',
+            // A11 ìí¸ì±
+            giver: 'ì£¼ë í¸', taker: 'ë°ë í¸'
         };
 
         const AXIS_LABELS = {
-            A1: '관심도', A2: '공감력', A3: '주장성', A4: '감정 개방', A5: '서포트', A6: '일관성',
-            A7: '대화 주도', A8: '갈등 대처', A9: '감정 처리', A10: '거리 조절', A11: '주고받기'
+            A1: 'ê´ì¬ë', A2: 'ê³µê°ë ¥', A3: 'ì£¼ì¥ì±', A4: 'ê°ì  ê°ë°©', A5: 'ìí¬í¸', A6: 'ì¼ê´ì±',
+            A7: 'ëí ì£¼ë', A8: 'ê°ë± ëì²', A9: 'ê°ì  ì²ë¦¬', A10: 'ê±°ë¦¬ ì¡°ì ', A11: 'ì£¼ê³ ë°ê¸°'
         };
 
         const CONFLICT_MATRIX = {
@@ -1281,38 +1281,38 @@
 
         // ============ 32-TYPE SYSTEM ============
         const TYPE_DEFINITIONS = {
-            'S-CS': { emoji: '🗡️', name: '고독한 수호자', desc: '갈등을 직면하되, 천천히 마음을 여는 보호자' },
-            'S-CF': { emoji: '🌋', name: '열린 전사', desc: '거침없이 부딪히고, 거침없이 다가가는 뜨거운 수용자' },
-            'S-CL': { emoji: '🏰', name: '철벽 파수꾼', desc: '선을 지키며 표면에서 싸우는 단단한 방어자' },
-            'S-CD': { emoji: '⚔️', name: '깊은 투사', desc: '진짜 연결을 위해 갈등도 불사하는 전사형 수용자' },
-            'S-BS': { emoji: '🌿', name: '조용한 정원사', desc: '경계를 세우며 천천히 관계를 가꾸는 사람' },
-            'S-BF': { emoji: '🌻', name: '따뜻한 문지기', desc: '선은 확실하지만 문은 활짝 여는 환대자' },
-            'S-BL': { emoji: '🧱', name: '현실적 건축가', desc: '경계와 거리를 정밀하게 설계하는 구조주의자' },
-            'S-BD': { emoji: '🔮', name: '선택적 현자', desc: '깊이를 추구하되 자기 영역은 명확히 지키는 사람' },
-            'S-AS': { emoji: '🌫️', name: '안개 속 은둔자', desc: '갈등을 피하고 천천히, 조심스럽게 다가가는 사람' },
-            'S-AF': { emoji: '🎭', name: '밝은 회피자', desc: '겉으론 열리지만 진짜 갈등에선 사라지는 이중성' },
-            'S-AL': { emoji: '🐚', name: '조개 속 진주', desc: '갈등도 피하고 깊이도 피하는 가장 단단한 껍질' },
-            'S-AD': { emoji: '🌊', name: '깊은 바다의 조류', desc: '깊이를 원하면서도 마찰은 절대 원하지 않는 모순' },
-            'S-RS': { emoji: '🕊️', name: '인내의 치유사', desc: '관계를 복구하면서 천천히 신뢰를 쌓아가는 사람' },
-            'S-RF': { emoji: '☀️', name: '따뜻한 복원자', desc: '열린 마음으로 관계를 치유하는 태양 같은 존재' },
-            'S-RL': { emoji: '🩹', name: '표면의 응급사', desc: '관계를 고치려 하지만 정작 깊이는 허용하지 않는 역설' },
-            'S-RD': { emoji: '💎', name: '깊은 치유자', desc: '진정한 회복과 깊은 연결을 동시에 추구하는 희귀한 유형' },
-            'Y-CS': { emoji: '🦅', name: '전략적 사냥꾼', desc: '목표를 향해 직진하되, 접근은 신중한 계산가' },
-            'Y-CF': { emoji: '🔥', name: '불꽃 정복자', desc: '원하는 것을 정면 돌파로 얻어내는 가장 직선적 유형' },
-            'Y-CL': { emoji: '🗼', name: '고립된 지배자', desc: '강하게 부딪히지만 내면은 절대 보여주지 않는 요새' },
-            'Y-CD': { emoji: '🐉', name: '심연의 용', desc: '깊이 파고들며 원하는 것을 쟁취하는 강렬한 존재' },
-            'Y-BS': { emoji: '🏹', name: '냉정한 궁수', desc: '거리를 유지하며 정확히 원하는 것만 겨냥하는 사람' },
-            'Y-BF': { emoji: '🎪', name: '매력적 협상가', desc: '열린 태도로 다가가되 거래의 조건은 명확한 전략가' },
-            'Y-BL': { emoji: '🧊', name: '빙하 설계자', desc: '모든 것이 계산된, 차갑지만 정교한 관계 운영자' },
-            'Y-BD': { emoji: '🔭', name: '선별적 탐험가', desc: '깊이 있는 연결을 원하되 자기 조건은 양보 없는 사람' },
-            'Y-AS': { emoji: '🦊', name: '조용한 여우', desc: '원하는 건 분명하지만 갈등은 우회하는 영리한 전략가' },
-            'Y-AF': { emoji: '🎈', name: '가벼운 쾌락주의자', desc: '열려 있고 자유로우며 마찰 없이 욕구를 추구하는 사람' },
-            'Y-AL': { emoji: '🕶️', name: '미스터리 수집가', desc: '원하는 건 챙기되 자신은 절대 드러내지 않는 포커페이스' },
-            'Y-AD': { emoji: '🌑', name: '그림자 탐색자', desc: '깊이를 갈구하면서도 위험은 피하는 복잡한 모순체' },
-            'Y-RS': { emoji: '🦉', name: '현명한 중재자', desc: '관계를 관리하면서 자신의 이익도 놓치지 않는 균형감' },
-            'Y-RF': { emoji: '🌅', name: '매혹적 재건자', desc: '부서진 것을 고치면서 원하는 방향으로 이끄는 사람' },
-            'Y-RL': { emoji: '⚙️', name: '시스템 정비사', desc: '관계를 고치되 자기 내면의 문은 열지 않는 기술자' },
-            'Y-RD': { emoji: '🌌', name: '우주적 설계자', desc: '깊은 연결과 복원력을 가진, 가장 야망 있는 관계 건설자' }
+            'S-CS': { emoji: 'ð¡ï¸', name: 'ê³ ëí ìí¸ì', desc: 'ê°ë±ì ì§ë©´íë, ì²ì²í ë§ìì ì¬ë ë³´í¸ì' },
+            'S-CF': { emoji: 'ð', name: 'ì´ë¦° ì ì¬', desc: 'ê±°ì¹¨ìì´ ë¶ëªíê³ , ê±°ì¹¨ìì´ ë¤ê°ê°ë ë¨ê±°ì´ ìì©ì' },
+            'S-CL': { emoji: 'ð°', name: 'ì² ë²½ íìê¾¼', desc: 'ì ì ì§í¤ë©° íë©´ìì ì¸ì°ë ë¨ë¨í ë°©ì´ì' },
+            'S-CD': { emoji: 'âï¸', name: 'ê¹ì í¬ì¬', desc: 'ì§ì§ ì°ê²°ì ìí´ ê°ë±ë ë¶ì¬íë ì ì¬í ìì©ì' },
+            'S-BS': { emoji: 'ð¿', name: 'ì¡°ì©í ì ìì¬', desc: 'ê²½ê³ë¥¼ ì¸ì°ë©° ì²ì²í ê´ê³ë¥¼ ê°ê¾¸ë ì¬ë' },
+            'S-BF': { emoji: 'ð»', name: 'ë°ë»í ë¬¸ì§ê¸°', desc: 'ì ì íì¤íì§ë§ ë¬¸ì íì§ ì¬ë íëì' },
+            'S-BL': { emoji: 'ð§±', name: 'íì¤ì  ê±´ì¶ê°', desc: 'ê²½ê³ì ê±°ë¦¬ë¥¼ ì ë°íê² ì¤ê³íë êµ¬ì¡°ì£¼ìì' },
+            'S-BD': { emoji: 'ð®', name: 'ì íì  íì', desc: 'ê¹ì´ë¥¼ ì¶êµ¬íë ìê¸° ìì­ì ëªíí ì§í¤ë ì¬ë' },
+            'S-AS': { emoji: 'ð«ï¸', name: 'ìê° ì ìëì', desc: 'ê°ë±ì í¼íê³  ì²ì²í, ì¡°ì¬ì¤ë½ê² ë¤ê°ê°ë ì¬ë' },
+            'S-AF': { emoji: 'ð­', name: 'ë°ì íí¼ì', desc: 'ê²ì¼ë¡  ì´ë¦¬ì§ë§ ì§ì§ ê°ë±ìì  ì¬ë¼ì§ë ì´ì¤ì±' },
+            'S-AL': { emoji: 'ð', name: 'ì¡°ê° ì ì§ì£¼', desc: 'ê°ë±ë í¼íê³  ê¹ì´ë í¼íë ê°ì¥ ë¨ë¨í ê»ì§' },
+            'S-AD': { emoji: 'ð', name: 'ê¹ì ë°ë¤ì ì¡°ë¥', desc: 'ê¹ì´ë¥¼ ìíë©´ìë ë§ì°°ì ì ë ìíì§ ìë ëª¨ì' },
+            'S-RS': { emoji: 'ðï¸', name: 'ì¸ë´ì ì¹ì ì¬', desc: 'ê´ê³ë¥¼ ë³µêµ¬íë©´ì ì²ì²í ì ë¢°ë¥¼ ììê°ë ì¬ë' },
+            'S-RF': { emoji: 'âï¸', name: 'ë°ë»í ë³µìì', desc: 'ì´ë¦° ë§ìì¼ë¡ ê´ê³ë¥¼ ì¹ì íë íì ê°ì ì¡´ì¬' },
+            'S-RL': { emoji: 'ð©¹', name: 'íë©´ì ìê¸ì¬', desc: 'ê´ê³ë¥¼ ê³ ì¹ë ¤ íì§ë§ ì ì ê¹ì´ë íì©íì§ ìë ì­ì¤' },
+            'S-RD': { emoji: 'ð', name: 'ê¹ì ì¹ì ì', desc: 'ì§ì í íë³µê³¼ ê¹ì ì°ê²°ì ëìì ì¶êµ¬íë í¬ê·í ì í' },
+            'Y-CS': { emoji: 'ð¦', name: 'ì ëµì  ì¬ë¥ê¾¼', desc: 'ëª©íë¥¼ í¥í´ ì§ì§íë, ì ê·¼ì ì ì¤í ê³ì°ê°' },
+            'Y-CF': { emoji: 'ð¥', name: 'ë¶ê½ ì ë³µì', desc: 'ìíë ê²ì ì ë©´ ëíë¡ ì»ì´ë´ë ê°ì¥ ì§ì ì  ì í' },
+            'Y-CL': { emoji: 'ð¼', name: 'ê³ ë¦½ë ì§ë°°ì', desc: 'ê°íê² ë¶ëªíì§ë§ ë´ë©´ì ì ë ë³´ì¬ì£¼ì§ ìë ìì' },
+            'Y-CD': { emoji: 'ð', name: 'ì¬ì°ì ì©', desc: 'ê¹ì´ íê³ ë¤ë©° ìíë ê²ì ìì·¨íë ê°ë ¬í ì¡´ì¬' },
+            'Y-BS': { emoji: 'ð¹', name: 'ëì í ê¶ì', desc: 'ê±°ë¦¬ë¥¼ ì ì§íë©° ì íí ìíë ê²ë§ ê²¨ë¥íë ì¬ë' },
+            'Y-BF': { emoji: 'ðª', name: 'ë§¤ë ¥ì  íìê°', desc: 'ì´ë¦° íëë¡ ë¤ê°ê°ë ê±°ëì ì¡°ê±´ì ëªíí ì ëµê°' },
+            'Y-BL': { emoji: 'ð§', name: 'ë¹í ì¤ê³ì', desc: 'ëª¨ë  ê²ì´ ê³ì°ë, ì°¨ê°ì§ë§ ì êµí ê´ê³ ì´ìì' },
+            'Y-BD': { emoji: 'ð­', name: 'ì ë³ì  ííê°', desc: 'ê¹ì´ ìë ì°ê²°ì ìíë ìê¸° ì¡°ê±´ì ìë³´ ìë ì¬ë' },
+            'Y-AS': { emoji: 'ð¦', name: 'ì¡°ì©í ì¬ì°', desc: 'ìíë ê±´ ë¶ëªíì§ë§ ê°ë±ì ì°ííë ìë¦¬í ì ëµê°' },
+            'Y-AF': { emoji: 'ð', name: 'ê°ë²¼ì´ ì¾ë½ì£¼ìì', desc: 'ì´ë ¤ ìê³  ìì ë¡ì°ë©° ë§ì°° ìì´ ìêµ¬ë¥¼ ì¶êµ¬íë ì¬ë' },
+            'Y-AL': { emoji: 'ð¶ï¸', name: 'ë¯¸ì¤í°ë¦¬ ìì§ê°', desc: 'ìíë ê±´ ì±ê¸°ë ìì ì ì ë ëë¬ë´ì§ ìë í¬ì»¤íì´ì¤' },
+            'Y-AD': { emoji: 'ð', name: 'ê·¸ë¦¼ì íìì', desc: 'ê¹ì´ë¥¼ ê°êµ¬íë©´ìë ìíì í¼íë ë³µì¡í ëª¨ìì²´' },
+            'Y-RS': { emoji: 'ð¦', name: 'íëªí ì¤ì¬ì', desc: 'ê´ê³ë¥¼ ê´ë¦¬íë©´ì ìì ì ì´ìµë ëì¹ì§ ìë ê· íê°' },
+            'Y-RF': { emoji: 'ð', name: 'ë§¤í¹ì  ì¬ê±´ì', desc: 'ë¶ìì§ ê²ì ê³ ì¹ë©´ì ìíë ë°©í¥ì¼ë¡ ì´ëë ì¬ë' },
+            'Y-RL': { emoji: 'âï¸', name: 'ìì¤í ì ë¹ì¬', desc: 'ê´ê³ë¥¼ ê³ ì¹ë ìê¸° ë´ë©´ì ë¬¸ì ì´ì§ ìë ê¸°ì ì' },
+            'Y-RD': { emoji: 'ð', name: 'ì°ì£¼ì  ì¤ê³ì', desc: 'ê¹ì ì°ê²°ê³¼ ë³µìë ¥ì ê°ì§, ê°ì¥ ì¼ë§ ìë ê´ê³ ê±´ì¤ì' }
         };
 
         function computeType(axes) {
@@ -1333,7 +1333,7 @@
             const intimacy = intimacyMap[A10.primary] || 'S';
 
             const typeCode = drive + '-' + conflict + intimacy;
-            const typeDef = TYPE_DEFINITIONS[typeCode] || { emoji: '🔮', name: '미분류', desc: '분석 불가' };
+            const typeDef = TYPE_DEFINITIONS[typeCode] || { emoji: 'ð®', name: 'ë¯¸ë¶ë¥', desc: 'ë¶ì ë¶ê°' };
 
             return { code: typeCode, ...typeDef };
         }
@@ -1453,14 +1453,14 @@
                 }
             }
 
-            throw new Error('지원하지 않는 형식입니다. Claude 또는 ChatGPT의 conversations.json 파일을 업로드해주세요.');
+            throw new Error('ì§ìíì§ ìë íììëë¤. Claude ëë ChatGPTì conversations.json íì¼ì ìë¡ëí´ì£¼ì¸ì.');
         }
 
         async function parseFile(file) {
             const text = await file.text();
             let data;
             try { data = JSON.parse(text); } catch (e) {
-                throw new Error('유효한 JSON 파일이 아닙니다.');
+                throw new Error('ì í¨í JSON íì¼ì´ ìëëë¤.');
             }
             return parseJSONData(data);
         }
@@ -1481,7 +1481,7 @@
                 }
             }
 
-            throw new Error('ZIP 안에서 대화 데이터를 찾을 수 없습니다.');
+            throw new Error('ZIP ììì ëí ë°ì´í°ë¥¼ ì°¾ì ì ììµëë¤.');
         }
 
         // ============ UTILITY FUNCTIONS ============
@@ -1491,9 +1491,9 @@
         function mean(arr) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0; }
         function summarizeTrend(early, late) {
             const delta = late - early;
-            if (delta > 0.12) return '상승';
-            if (delta < -0.12) return '하락';
-            return '유지';
+            if (delta > 0.12) return 'ìì¹';
+            if (delta < -0.12) return 'íë½';
+            return 'ì ì§';
         }
 
         // ============ BEHAVIORAL RATE COMPUTATION ============
@@ -1514,18 +1514,18 @@
             const avgLen = msgLengths.reduce((a, b) => a + b, 0) / totalMsgs;
             const volatility = Math.sqrt(msgLengths.reduce((a, m) => a + Math.pow(m - avgLen, 2), 0) / totalMsgs) / (avgLen + 1);
 
-            const interests = /(what|how|why|interesting|curious|tell me|explain|question|\?|궁금|설명해|뭐야|어떻게|왜|흥미)/gi;
-            const sharing = /(i think|i feel|my|me|i've|i'm|personally|내가|나는|내 생각|내 감정|나는)/gi;
-            const empathy = /(understand|sorry|feel you|support|help|care|공감|미안|도와줄|힘내|응원)/gi;
-            const feedbackPos = /(great|good|awesome|nice|thank|love|correct|agree|맞아|좋아|잘했|고마워|완벽)/gi;
-            const feedbackNeg = /(wrong|bad|disagree|no|hate|negative|criticism|틀렸|안 돼|싫어|비판)/gi;
-            const disinterest = /^(ok|no|yeah|maybe|\.{2,}|ㅋ|ㅎ|ㅜ|어)$/gi;
-            const hostile = /(angry|hate|damn|hell|fuck|stupid|ugh|짜증|화나|죽겠|빡쳐|개새끼|시|ㅡㅡ)/gi;
-            const distress = /(sad|depressed|overwhelmed|stressed|tired|alone|외로|힘들|우울|피곤)/gi;
-            const taskAssign = /(need to|should|must|have to|do|make|create|해야|해줄|만들어|해|ㄱ)/gi;
-            const boundary = /(no|stop|don't|can't|refuse|limit|못|안 돼|싫어|말고|하지마)/gi;
-            const statusUpdate = /(did|done|finished|completed|working on|완료|했어|끝났|작업중)/gi;
-            const availability = /(available|ready|let me|can|willing|ok|괜찮아|할게|됐어)/gi;
+            const interests = /(what|how|why|interesting|curious|tell me|explain|question|\?|ê¶ê¸|ì¤ëªí´|ë­ì¼|ì´ë»ê²|ì|í¥ë¯¸)/gi;
+            const sharing = /(i think|i feel|my|me|i've|i'm|personally|ë´ê°|ëë|ë´ ìê°|ë´ ê°ì |ëë)/gi;
+            const empathy = /(understand|sorry|feel you|support|help|care|ê³µê°|ë¯¸ì|ëìì¤|íë´|ìì)/gi;
+            const feedbackPos = /(great|good|awesome|nice|thank|love|correct|agree|ë§ì|ì¢ì|ìí|ê³ ë§ì|ìë²½)/gi;
+            const feedbackNeg = /(wrong|bad|disagree|no|hate|negative|criticism|íë ¸|ì ë¼|ì«ì´|ë¹í)/gi;
+            const disinterest = /^(ok|no|yeah|maybe|\.{2,}|ã|ã|ã|ì´)$/gi;
+            const hostile = /(angry|hate|damn|hell|fuck|stupid|ugh|ì§ì¦|íë|ì£½ê² |ë¹¡ì³|ê°ìë¼|ì|ã¡ã¡)/gi;
+            const distress = /(sad|depressed|overwhelmed|stressed|tired|alone|ì¸ë¡|íë¤|ì°ì¸|í¼ê³¤)/gi;
+            const taskAssign = /(need to|should|must|have to|do|make|create|í´ì¼|í´ì¤|ë§ë¤ì´|í´|ã±)/gi;
+            const boundary = /(no|stop|don't|can't|refuse|limit|ëª»|ì ë¼|ì«ì´|ë§ê³ |íì§ë§)/gi;
+            const statusUpdate = /(did|done|finished|completed|working on|ìë£|íì´|ëë¬|ììì¤)/gi;
+            const availability = /(available|ready|let me|can|willing|ok|ê´ì°®ì|í ê²|ëì´)/gi;
 
             const countMatches = (pattern, str) => (str.match(pattern) || []).length;
 
@@ -1556,20 +1556,20 @@
             const longMsgs = messages.filter(m => m.length > 80).length;
             const shortMsgRate = shortMsgs / totalMsgs;
             const longMsgRate = longMsgs / totalMsgs;
-            const fillerPattern = /^(ㅋ+|ㅎ+|ㅜ+|ㅠ+|ok|ㅇㅇ|ㅇㅋ|ㄱㄱ|ㄴㄴ|ㅇ|어|응|네|넵|ㅎㅎ|ㅋㅋ|\.{2,}|wow|lol|haha)$/i;
+            const fillerPattern = /^(ã+|ã+|ã+|ã +|ok|ãã|ãã|ã±ã±|ã´ã´|ã|ì´|ì|ë¤|ëµ|ãã|ãã|\.{2,}|wow|lol|haha)$/i;
             const fillerMsgs = messages.filter(m => fillerPattern.test(m.trim())).length;
             const fillerRate = fillerMsgs / totalMsgs;
             const substantiveMsgs = messages.filter(m => m.length > 15 && !fillerPattern.test(m.trim())).length;
             const substantiveRate = substantiveMsgs / totalMsgs;
 
             // Question rate
-            const questionMsgs = messages.filter(m => /\?|궁금|뭐|어떻|왜|어디|누가|언제/.test(m)).length;
+            const questionMsgs = messages.filter(m => /\?|ê¶ê¸|ë­|ì´ë»|ì|ì´ë|ëê°|ì¸ì /.test(m)).length;
             const questionMsgRate = questionMsgs / totalMsgs;
 
             // Exclaim/laughter rates
-            const exclaimMsgs = messages.filter(m => /!|시발|씨발|진짜|대박|헐/.test(m)).length;
+            const exclaimMsgs = messages.filter(m => /!|ìë°|ì¨ë°|ì§ì§|ëë°|í/.test(m)).length;
             const exclaimMsgRate = exclaimMsgs / totalMsgs;
-            const laughterMsgs = messages.filter(m => /ㅋ|ㅎ|haha|lol|😂|🤣/.test(m)).length;
+            const laughterMsgs = messages.filter(m => /ã|ã|haha|lol|ð|ð¤£/.test(m)).length;
             const laughterMsgRate = laughterMsgs / totalMsgs;
 
             // Lexical diversity (unique words / total words)
@@ -1593,8 +1593,8 @@
 
             // Tone volatility (sentiment swing between adjacent msgs)
             let toneSwings = 0;
-            const posPattern = /좋|감사|ㅋㅋ|ㅎㅎ|great|good|nice|love|맞아|완벽/i;
-            const negPattern = /싫|짜증|ㅡㅡ|bad|hate|wrong|안돼|시발/i;
+            const posPattern = /ì¢|ê°ì¬|ãã|ãã|great|good|nice|love|ë§ì|ìë²½/i;
+            const negPattern = /ì«|ì§ì¦|ã¡ã¡|bad|hate|wrong|ìë¼|ìë°/i;
             for (let i = 1; i < messages.length; i++) {
                 const prevPos = posPattern.test(messages[i-1]);
                 const prevNeg = negPattern.test(messages[i-1]);
@@ -1612,7 +1612,7 @@
             }
             const sessionVectors = sessionChunks.map(chunk => ({
                 avgLen: mean(chunk.map(m => m.length)),
-                sharingRate: chunk.filter(m => /내가|나는|내 |나의|i |my |i'm/i.test(m)).length / chunk.length,
+                sharingRate: chunk.filter(m => /ë´ê°|ëë|ë´ |ëì|i |my |i'm/i.test(m)).length / chunk.length,
                 questionRate: chunk.filter(m => /\?/.test(m)).length / chunk.length
             }));
             let sessionShiftVolatility = 0;
@@ -1626,7 +1626,7 @@
             }
 
             // Deep disclosure detection
-            const deepMsgs = messages.filter(m => /사실은|솔직히|고백|비밀|아무한테도|처음으로|actually|honestly|never told|secret/i.test(m)).length;
+            const deepMsgs = messages.filter(m => /ì¬ì¤ì|ìì§í|ê³ ë°±|ë¹ë°|ìë¬´ííë|ì²ìì¼ë¡|actually|honestly|never told|secret/i.test(m)).length;
             const deepDisclosureRate = clamp01(deepMsgs / totalMsgs * 5);
 
             // Start activation (first msg in each "session chunk" being proactive)
@@ -1634,7 +1634,7 @@
             const startActivation = clamp01(startMsgs.filter(m => m.length > 20 || /\?/.test(m)).length / Math.max(1, startMsgs.length));
 
             // Response tone rate
-            const responseToneMsgs = messages.filter(m => /ㅇㅇ|응|네|맞아|그치|알겠|okay|yes|right|agreed/i.test(m)).length;
+            const responseToneMsgs = messages.filter(m => /ãã|ì|ë¤|ë§ì|ê·¸ì¹|ìê² |okay|yes|right|agreed/i.test(m)).length;
             const responseToneRate = clamp01(responseToneMsgs / totalMsgs);
 
             // === Coverage Score ===
@@ -1684,10 +1684,10 @@
             function computeSegmentRates(segment) {
                 const seg = segment.join(' ').toLowerCase();
                 const segLen = segment.length || 1;
-                const sharingR = clamp01((seg.match(/내가|나는|내 |i |my |i'm|나의/gi) || []).length / (segLen * 0.5));
-                const deepR = clamp01(segment.filter(m => /사실은|솔직히|고백|비밀|처음으로|honestly/i.test(m)).length / segLen * 5);
-                const emotionR = clamp01((seg.match(/ㅋ|ㅎ|!|시발|진짜|대박|😂|🤣|좋아|싫어|힘들|우울/gi) || []).length / (segLen * 0.5));
-                const boundaryR = clamp01((seg.match(/못|안 돼|싫어|말고|하지마|stop|don't/gi) || []).length / (segLen * 0.4));
+                const sharingR = clamp01((seg.match(/ë´ê°|ëë|ë´ |i |my |i'm|ëì/gi) || []).length / (segLen * 0.5));
+                const deepR = clamp01(segment.filter(m => /ì¬ì¤ì|ìì§í|ê³ ë°±|ë¹ë°|ì²ìì¼ë¡|honestly/i.test(m)).length / segLen * 5);
+                const emotionR = clamp01((seg.match(/ã|ã|!|ìë°|ì§ì§|ëë°|ð|ð¤£|ì¢ì|ì«ì´|íë¤|ì°ì¸/gi) || []).length / (segLen * 0.5));
+                const boundaryR = clamp01((seg.match(/ëª»|ì ë¼|ì«ì´|ë§ê³ |íì§ë§|stop|don't/gi) || []).length / (segLen * 0.4));
                 return { sharing: sharingR, deep: deepR, emotion: emotionR, boundary: boundaryR };
             }
 
@@ -1721,11 +1721,11 @@
                     recentHalf: recentHalfRates,
                     recentTenth: recentTenthRates,
                     labels: totalMsgs >= 500
-                        ? ['전체 평균', '최근 절반', '최근 10%']
-                        : ['전체 평균', '후반부', '최근']
+                        ? ['ì ì²´ íê· ', 'ìµê·¼ ì ë°', 'ìµê·¼ 10%']
+                        : ['ì ì²´ íê· ', 'íë°ë¶', 'ìµê·¼']
                 };
 
-                // Check if high variance → bias toward recent data
+                // Check if high variance â bias toward recent data
                 const sharingVariance = Math.abs(fullRates.sharing - recentTenthRates.sharing);
                 const emotionVariance = Math.abs(fullRates.emotion - recentTenthRates.emotion);
                 temporalAverages.highVariance = (sharingVariance > 0.15 || emotionVariance > 0.15);
@@ -1878,31 +1878,31 @@
             const intim = ax.structural.A10.primary;
             const engage = A1;
             let n = '';
-            // 투자 패턴
+            // í¬ì í¨í´
             if (recip === 'giver') {
-                n += `너의 관계 투자 패턴은 명확하게 '선제적 기여형'이야. 상대가 요구하기 전에 먼저 주는 행동이 대화 전반에 걸쳐 반복돼. 이건 수용 욕구가 강하다는 신호인데, 쉽게 말하면 "내가 이만큼 줬으니 나를 받아줘"라는 무의식적 교환 구조가 깔려 있어. 문제는 상대가 이 교환을 인식하지 못할 때 축적된 기대가 원망으로 전환된다는 거야. 네가 주는 행위 자체에서 만족을 느끼는 건지, 아니면 되돌아올 것을 전제로 주는 건지를 구분해야 해.`;
+                n += `ëì ê´ê³ í¬ì í¨í´ì ëªííê² 'ì ì ì  ê¸°ì¬í'ì´ì¼. ìëê° ìêµ¬íê¸° ì ì ë¨¼ì  ì£¼ë íëì´ ëí ì ë°ì ê±¸ì³ ë°ë³µë¼. ì´ê±´ ìì© ìêµ¬ê° ê°íë¤ë ì í¸ì¸ë°, ì½ê² ë§íë©´ "ë´ê° ì´ë§í¼ ì¤¬ì¼ë ëë¥¼ ë°ìì¤"ë¼ë ë¬´ììì  êµí êµ¬ì¡°ê° ê¹ë ¤ ìì´. ë¬¸ì ë ìëê° ì´ êµíì ì¸ìíì§ ëª»í  ë ì¶ì ë ê¸°ëê° ìë§ì¼ë¡ ì íëë¤ë ê±°ì¼. ë¤ê° ì£¼ë íì ìì²´ìì ë§ì¡±ì ëë¼ë ê±´ì§, ìëë©´ ëëìì¬ ê²ì ì ì ë¡ ì£¼ë ê±´ì§ë¥¼ êµ¬ë¶í´ì¼ í´.`;
             } else if (recip === 'taker') {
-                n += `너의 관계 투자 패턴은 '욕망 중심 수렴형'이야. 대화에서 네가 필요한 것을 요청하고, 상대의 반응을 기대하고, 그 기대가 충족되는지를 지속적으로 확인하는 루프가 보여. 이건 본질적으로 나쁜 게 아냐. 자기 욕구를 명확히 아는 건 관계에서 오히려 건강한 출발점이거든. 다만 상대의 기여를 인식하고 명시적으로 인정하는 빈도가 낮으면, 장기 관계에서 상대의 소진을 유발할 수 있어.`;
+                n += `ëì ê´ê³ í¬ì í¨í´ì 'ìë§ ì¤ì¬ ìë ´í'ì´ì¼. ëíìì ë¤ê° íìí ê²ì ìì²­íê³ , ìëì ë°ìì ê¸°ëíê³ , ê·¸ ê¸°ëê° ì¶©ì¡±ëëì§ë¥¼ ì§ìì ì¼ë¡ íì¸íë ë£¨íê° ë³´ì¬. ì´ê±´ ë³¸ì§ì ì¼ë¡ ëì ê² ìë. ìê¸° ìêµ¬ë¥¼ ëªíí ìë ê±´ ê´ê³ìì ì¤íë ¤ ê±´ê°í ì¶ë°ì ì´ê±°ë . ë¤ë§ ìëì ê¸°ì¬ë¥¼ ì¸ìíê³  ëªìì ì¼ë¡ ì¸ì íë ë¹ëê° ë®ì¼ë©´, ì¥ê¸° ê´ê³ìì ìëì ìì§ì ì ë°í  ì ìì´.`;
             } else {
-                n += `너의 관계 투자 패턴은 '균형 탐색형'이야. 주는 것과 받는 것 사이에서 무의식적으로 저울질하는 행동이 관찰돼. 이건 관계를 공정하게 유지하려는 전략인데, 장점은 번아웃이 적다는 거고, 단점은 때로 계산적으로 보일 수 있다는 거야. 관계 초기에 이 균형감이 신뢰 형성에 유리하지만, 깊어지는 과정에서는 균형을 깨는 용기가 필요할 수도 있어.`;
+                n += `ëì ê´ê³ í¬ì í¨í´ì 'ê· í íìí'ì´ì¼. ì£¼ë ê²ê³¼ ë°ë ê² ì¬ì´ìì ë¬´ììì ì¼ë¡ ì ì¸ì§íë íëì´ ê´ì°°ë¼. ì´ê±´ ê´ê³ë¥¼ ê³µì íê² ì ì§íë ¤ë ì ëµì¸ë°, ì¥ì ì ë²ììì´ ì ë¤ë ê±°ê³ , ë¨ì ì ëë¡ ê³ì°ì ì¼ë¡ ë³´ì¼ ì ìë¤ë ê±°ì¼. ê´ê³ ì´ê¸°ì ì´ ê· íê°ì´ ì ë¢° íì±ì ì ë¦¬íì§ë§, ê¹ì´ì§ë ê³¼ì ììë ê· íì ê¹¨ë ì©ê¸°ê° íìí  ìë ìì´.`;
             }
-            // 친밀감 추구 방식
+            // ì¹ë°ê° ì¶êµ¬ ë°©ì
             n += ' ';
             if (intim === 'depth_seeker') {
-                n += `친밀감 측면에서 넌 깊이를 갈구해. 표면적 대화에서 빠르게 본질적 주제로 이동하려는 경향이 있고, 상대가 피상적으로 반응하면 불만족이 드러나. 이건 관계에서 진정한 연결을 추구한다는 의미지만, 상대의 준비 속도를 존중하지 않으면 압박이 돼.`;
+                n += `ì¹ë°ê° ì¸¡ë©´ìì ë ê¹ì´ë¥¼ ê°êµ¬í´. íë©´ì  ëíìì ë¹ ë¥´ê² ë³¸ì§ì  ì£¼ì ë¡ ì´ëíë ¤ë ê²½í¥ì´ ìê³ , ìëê° í¼ìì ì¼ë¡ ë°ìíë©´ ë¶ë§ì¡±ì´ ëë¬ë. ì´ê±´ ê´ê³ìì ì§ì í ì°ê²°ì ì¶êµ¬íë¤ë ìë¯¸ì§ë§, ìëì ì¤ë¹ ìëë¥¼ ì¡´ì¤íì§ ìì¼ë©´ ìë°ì´ ë¼.`;
             } else if (intim === 'fast_opener') {
-                n += `친밀감 형성이 빨라. 초반부터 개인적 이야기나 감정 공유가 자연스럽게 나오는데, 이게 상대에게 매력적으로 작용할 수도 있고, 부담이 될 수도 있어. 핵심은 네가 빨리 여는 만큼 상대도 같은 속도를 원한다고 가정하지 않는 거야.`;
+                n += `ì¹ë°ê° íì±ì´ ë¹¨ë¼. ì´ë°ë¶í° ê°ì¸ì  ì´ì¼ê¸°ë ê°ì  ê³µì ê° ìì°ì¤ë½ê² ëì¤ëë°, ì´ê² ìëìê² ë§¤ë ¥ì ì¼ë¡ ìì©í  ìë ìê³ , ë¶ë´ì´ ë  ìë ìì´. íµì¬ì ë¤ê° ë¹¨ë¦¬ ì¬ë ë§í¼ ìëë ê°ì ìëë¥¼ ìíë¤ê³  ê°ì íì§ ìë ê±°ì¼.`;
             } else if (intim === 'surface_locked') {
-                n += `친밀감 형성에 명확한 천장이 있어. 일정 수준까지는 편하게 교류하지만, 그 이상 깊어지는 걸 회피하는 패턴이 반복돼. 이건 방어 기제일 수 있고, 단순히 감정적 깊이에 대한 필요가 낮은 것일 수도 있어. 중요한 건 네가 이걸 선택하고 있는 건지, 두려워서 못 하는 건지야.`;
+                n += `ì¹ë°ê° íì±ì ëªíí ì²ì¥ì´ ìì´. ì¼ì  ìì¤ê¹ì§ë í¸íê² êµë¥íì§ë§, ê·¸ ì´ì ê¹ì´ì§ë ê±¸ íí¼íë í¨í´ì´ ë°ë³µë¼. ì´ê±´ ë°©ì´ ê¸°ì ì¼ ì ìê³ , ë¨ìí ê°ì ì  ê¹ì´ì ëí íìê° ë®ì ê²ì¼ ìë ìì´. ì¤ìí ê±´ ë¤ê° ì´ê±¸ ì ííê³  ìë ê±´ì§, ëë ¤ìì ëª» íë ê±´ì§ì¼.`;
             } else {
-                n += `친밀감이 점진적으로 쌓여가는 패턴이야. 급하지 않게, 하지만 꾸준히 신뢰를 축적하는 방식인데, 장기 관계에서 가장 안정적인 형태 중 하나야. 다만 상대가 더 빠른 진전을 원할 때 답답함을 줄 수 있어.`;
+                n += `ì¹ë°ê°ì´ ì ì§ì ì¼ë¡ ìì¬ê°ë í¨í´ì´ì¼. ê¸íì§ ìê², íì§ë§ ê¾¸ì¤í ì ë¢°ë¥¼ ì¶ì íë ë°©ìì¸ë°, ì¥ê¸° ê´ê³ìì ê°ì¥ ìì ì ì¸ íí ì¤ íëì¼. ë¤ë§ ìëê° ë ë¹ ë¥¸ ì§ì ì ìí  ë ëµëµí¨ì ì¤ ì ìì´.`;
             }
-            // 몰입도와의 교차
+            // ëª°ìëìì êµì°¨
             n += ' ';
             if (engage > 0.6) {
-                n += `관계에 투입하는 에너지 자체가 높아서 상대 입장에선 "이 사람은 나한테 진심이구나"라는 인상을 받기 쉬워. 하지만 그 에너지가 수용(나를 받아달라)에서 오는 건지 욕망(내가 원하는 걸 얻겠다)에서 오는 건지에 따라 관계의 질이 완전히 달라져.`;
+                n += `ê´ê³ì í¬ìíë ìëì§ ìì²´ê° ëìì ìë ìì¥ìì  "ì´ ì¬ëì ëíí ì§ì¬ì´êµ¬ë"ë¼ë ì¸ìì ë°ê¸° ì¬ì. íì§ë§ ê·¸ ìëì§ê° ìì©(ëë¥¼ ë°ìë¬ë¼)ìì ì¤ë ê±´ì§ ìë§(ë´ê° ìíë ê±¸ ì»ê² ë¤)ìì ì¤ë ê±´ì§ì ë°ë¼ ê´ê³ì ì§ì´ ìì í ë¬ë¼ì ¸.`;
             } else {
-                n += `관계에 투입하는 에너지가 절제된 편이라, 상대가 너의 관심도를 오판할 수 있어. 실제로는 관심이 있어도 행동적으로 드러나지 않으면 상대는 무관심으로 해석하거든. 의도와 표현 사이의 간극을 인식할 필요가 있어.`;
+                n += `ê´ê³ì í¬ìíë ìëì§ê° ì ì ë í¸ì´ë¼, ìëê° ëì ê´ì¬ëë¥¼ ì¤íí  ì ìì´. ì¤ì ë¡ë ê´ì¬ì´ ìì´ë íëì ì¼ë¡ ëë¬ëì§ ìì¼ë©´ ìëë ë¬´ê´ì¬ì¼ë¡ í´ìíê±°ë . ìëì íí ì¬ì´ì ê°ê·¹ì ì¸ìí  íìê° ìì´.`;
             }
             return n;
         }
@@ -1911,30 +1911,30 @@
             const {A2,A4} = ax.intensity;
             const emoProc = ax.structural.A9.primary;
             let n = '';
-            // 감정 표현 기조
+            // ê°ì  íí ê¸°ì¡°
             if (A4 > 0.6) {
-                n += `감정 표현 강도가 높아. 대화에서 기쁨, 불만, 좌절, 흥분 등이 직접적으로 드러나고, 이걸 숨기려는 시도가 거의 없어. 이건 관계에서 양날의 검이야. 상대가 너의 상태를 즉시 파악할 수 있다는 건 소통 효율성 측면에서 좋지만, 감정의 진폭이 크면 상대가 감정적 피로를 느낄 수 있거든. `;
+                n += `ê°ì  íí ê°ëê° ëì. ëíìì ê¸°ì¨, ë¶ë§, ì¢ì , í¥ë¶ ë±ì´ ì§ì ì ì¼ë¡ ëë¬ëê³ , ì´ê±¸ ì¨ê¸°ë ¤ë ìëê° ê±°ì ìì´. ì´ê±´ ê´ê³ìì ìë ì ê²ì´ì¼. ìëê° ëì ìíë¥¼ ì¦ì íìí  ì ìë¤ë ê±´ ìíµ í¨ì¨ì± ì¸¡ë©´ìì ì¢ì§ë§, ê°ì ì ì§í­ì´ í¬ë©´ ìëê° ê°ì ì  í¼ë¡ë¥¼ ëë ì ìê±°ë . `;
             } else if (A4 > 0.3) {
-                n += `감정 표현이 상황에 따라 조절돼. 필요할 때 드러내고, 불필요할 때 억제하는 선택적 표현 패턴이야. 이건 감정 조절 능력이 있다는 의미지만, 동시에 상대가 "진짜 감정"을 읽기 어려울 수도 있어. `;
+                n += `ê°ì  ííì´ ìí©ì ë°ë¼ ì¡°ì ë¼. íìí  ë ëë¬ë´ê³ , ë¶íìí  ë ìµì íë ì íì  íí í¨í´ì´ì¼. ì´ê±´ ê°ì  ì¡°ì  ë¥ë ¥ì´ ìë¤ë ìë¯¸ì§ë§, ëìì ìëê° "ì§ì§ ê°ì "ì ì½ê¸° ì´ë ¤ì¸ ìë ìì´. `;
             } else {
-                n += `감정 표현이 상당히 억제돼 있어. 대화에서 감정적 단어, 감탄사, 정서적 반응의 빈도가 낮아. 이건 감정이 없다는 뜻이 아니라 표현 채널이 좁다는 거야. 상대 입장에서는 네가 무엇을 느끼는지 추측해야 하는 부담이 생기고, 이게 장기적으로 관계의 친밀감 형성을 저해할 수 있어. `;
+                n += `ê°ì  ííì´ ìë¹í ìµì ë¼ ìì´. ëíìì ê°ì ì  ë¨ì´, ê°íì¬, ì ìì  ë°ìì ë¹ëê° ë®ì. ì´ê±´ ê°ì ì´ ìë¤ë ë»ì´ ìëë¼ íí ì±ëì´ ì¢ë¤ë ê±°ì¼. ìë ìì¥ììë ë¤ê° ë¬´ìì ëë¼ëì§ ì¶ì¸¡í´ì¼ íë ë¶ë´ì´ ìê¸°ê³ , ì´ê² ì¥ê¸°ì ì¼ë¡ ê´ê³ì ì¹ë°ê° íì±ì ì í´í  ì ìì´. `;
             }
-            // 수용성과의 교차: 감정 수지
+            // ìì©ì±ê³¼ì êµì°¨: ê°ì  ìì§
             if (A2 > 0.6 && A4 > 0.5) {
-                n += `감정적 기여와 수용이 동시에 높아서, 감정 교환의 총량이 큰 관계를 형성해. 주고받는 감정의 밀도가 높다는 건 관계가 풍요롭다는 의미이기도 하지만, 감정적 소모도 크다는 뜻이야. `;
+                n += `ê°ì ì  ê¸°ì¬ì ìì©ì´ ëìì ëìì, ê°ì  êµíì ì´ëì´ í° ê´ê³ë¥¼ íì±í´. ì£¼ê³ ë°ë ê°ì ì ë°ëê° ëë¤ë ê±´ ê´ê³ê° íìë¡­ë¤ë ìë¯¸ì´ê¸°ë íì§ë§, ê°ì ì  ìëª¨ë í¬ë¤ë ë»ì´ì¼. `;
             } else if (A2 > 0.6 && A4 <= 0.5) {
-                n += `상대의 감정은 잘 받아주면서 자신의 감정 표현은 적은, 일종의 "감정 적자" 상태야. 이건 단기적으로는 좋은 경청자처럼 보이지만, 장기적으로 네 안에 해소되지 않은 감정이 쌓이면서 갑작스러운 폭발이나 번아웃으로 이어질 수 있어. `;
+                n += `ìëì ê°ì ì ì ë°ìì£¼ë©´ì ìì ì ê°ì  ííì ì ì, ì¼ì¢ì "ê°ì  ì ì" ìíì¼. ì´ê±´ ë¨ê¸°ì ì¼ë¡ë ì¢ì ê²½ì²­ìì²ë¼ ë³´ì´ì§ë§, ì¥ê¸°ì ì¼ë¡ ë¤ ìì í´ìëì§ ìì ê°ì ì´ ìì´ë©´ì ê°ìì¤ë¬ì´ í­ë°ì´ë ë²ììì¼ë¡ ì´ì´ì§ ì ìì´. `;
             } else if (A2 <= 0.5 && A4 > 0.5) {
-                n += `자신의 감정은 잘 표현하면서 상대의 감정 수용은 낮은, "감정 흑자" 상태야. 표현은 활발하지만 상대의 감정적 필요에 대한 반응이 약해서, 일방적 관계로 흐를 위험이 있어. `;
+                n += `ìì ì ê°ì ì ì íííë©´ì ìëì ê°ì  ìì©ì ë®ì, "ê°ì  íì" ìíì¼. ííì íë°íì§ë§ ìëì ê°ì ì  íìì ëí ë°ìì´ ì½í´ì, ì¼ë°©ì  ê´ê³ë¡ íë¥¼ ìíì´ ìì´. `;
             } else {
-                n += `감정 표현과 수용 모두 낮아서 관계의 감정적 밀도 자체가 희박해. 이건 효율적 관계에선 문제가 안 되지만, 깊은 유대를 원하는 상대에겐 벽처럼 느껴질 수 있어. `;
+                n += `ê°ì  ííê³¼ ìì© ëª¨ë ë®ìì ê´ê³ì ê°ì ì  ë°ë ìì²´ê° í¬ë°í´. ì´ê±´ í¨ì¨ì  ê´ê³ìì  ë¬¸ì ê° ì ëì§ë§, ê¹ì ì ëë¥¼ ìíë ìëìê² ë²½ì²ë¼ ëê»´ì§ ì ìì´. `;
             }
-            // 감정 처리 방식
+            // ê°ì  ì²ë¦¬ ë°©ì
             const procMap = {
-                expressive: `감정 처리 방식은 즉시 방출형이야. 느끼는 즉시 표현하고 해소하는 방식인데, 처리 속도는 빠르지만 주변 사람에게 예측 불가능한 인상을 줄 수 있어. 특히 부정적 감정이 여과 없이 나올 때 관계에 충격파를 보내게 돼.`,
-                analytical: `감정을 인지적으로 처리하는 타입이야. 감정을 느끼더라도 먼저 "왜 이런 감정이 드는 거지?"를 분석하고, 그 원인을 논리적으로 파악한 뒤에야 반응해. 이 과정에서 감정의 즉시성이 사라지기 때문에 상대에게 차가워 보일 수 있지만, 감정적 판단 오류는 적어.`,
-                suppressive: `감정을 내부에 가두는 타입이야. 느끼지 못하는 게 아니라 표현을 억제하는 건데, 이게 습관화되면 자기 감정 인식 자체가 둔해질 수 있어. 관계에서 "넌 뭘 생각하는지 모르겠다"는 피드백을 받기 쉽고, 억압된 감정이 신체화되거나 갑작스러운 관계 단절로 표출될 수 있어.`,
-                externalized: `감정을 외부 행동으로 전환하는 타입이야. 화가 나면 직접 말하기보다 행동으로 보여주고, 슬프면 침묵하거나 회피해. 이 방식은 상대가 네 행동의 "감정적 의미"를 해독해야 하는 부담을 만들고, 오해의 여지가 커.`
+                expressive: `ê°ì  ì²ë¦¬ ë°©ìì ì¦ì ë°©ì¶íì´ì¼. ëë¼ë ì¦ì íííê³  í´ìíë ë°©ìì¸ë°, ì²ë¦¬ ìëë ë¹ ë¥´ì§ë§ ì£¼ë³ ì¬ëìê² ìì¸¡ ë¶ê°ë¥í ì¸ìì ì¤ ì ìì´. í¹í ë¶ì ì  ê°ì ì´ ì¬ê³¼ ìì´ ëì¬ ë ê´ê³ì ì¶©ê²©íë¥¼ ë³´ë´ê² ë¼.`,
+                analytical: `ê°ì ì ì¸ì§ì ì¼ë¡ ì²ë¦¬íë íìì´ì¼. ê°ì ì ëë¼ëë¼ë ë¨¼ì  "ì ì´ë° ê°ì ì´ ëë ê±°ì§?"ë¥¼ ë¶ìíê³ , ê·¸ ìì¸ì ë¼ë¦¬ì ì¼ë¡ íìí ë¤ìì¼ ë°ìí´. ì´ ê³¼ì ìì ê°ì ì ì¦ìì±ì´ ì¬ë¼ì§ê¸° ëë¬¸ì ìëìê² ì°¨ê°ì ë³´ì¼ ì ìì§ë§, ê°ì ì  íë¨ ì¤ë¥ë ì ì´.`,
+                suppressive: `ê°ì ì ë´ë¶ì ê°ëë íìì´ì¼. ëë¼ì§ ëª»íë ê² ìëë¼ ííì ìµì íë ê±´ë°, ì´ê² ìµê´íëë©´ ìê¸° ê°ì  ì¸ì ìì²´ê° ëí´ì§ ì ìì´. ê´ê³ìì "ë ë­ ìê°íëì§ ëª¨ë¥´ê² ë¤"ë í¼ëë°±ì ë°ê¸° ì½ê³ , ìµìë ê°ì ì´ ì ì²´íëê±°ë ê°ìì¤ë¬ì´ ê´ê³ ë¨ì ë¡ íì¶ë  ì ìì´.`,
+                externalized: `ê°ì ì ì¸ë¶ íëì¼ë¡ ì ííë íìì´ì¼. íê° ëë©´ ì§ì  ë§íê¸°ë³´ë¤ íëì¼ë¡ ë³´ì¬ì£¼ê³ , ì¬íë©´ ì¹¨ë¬µíê±°ë íí¼í´. ì´ ë°©ìì ìëê° ë¤ íëì "ê°ì ì  ìë¯¸"ë¥¼ í´ëí´ì¼ íë ë¶ë´ì ë§ë¤ê³ , ì¤í´ì ì¬ì§ê° ì»¤.`
             };
             n += procMap[emoProc] || procMap.analytical;
             return n;
@@ -1945,23 +1945,23 @@
             const style = ax.structural.A8.primary;
             let n = '';
             const base = {
-                confrontational: `너의 갈등 면역 체계는 "즉시 대응형"이야. 불만이나 마찰이 감지되면 회피하지 않고 정면으로 다뤄. 이 방식의 가장 큰 장점은 문제가 곪지 않는다는 거야. 갈등이 발생하면 즉시 테이블 위에 올리고, 해결될 때까지 놓지 않아. 하지만 이 과정에서 상대의 감정적 준비 상태를 고려하지 않는 경향이 있고, 네가 "해결"이라고 생각하는 것이 실은 "내 입장의 관철"인 경우가 많아. `,
-                repair: `너의 갈등 면역 체계는 "복구 우선형"이야. 갈등이 발생하면 가장 먼저 관계의 손상을 최소화하려고 해. 상대의 입장을 이해하려 하고, 감정을 수습하고, 합의점을 찾으려 해. 이건 관계 유지에 매우 효과적이지만, 치명적인 약점이 있어. 매번 네가 복구 비용을 부담하면서 정작 네 불만은 제대로 전달되지 않아. `,
-                avoidant: `너의 갈등 면역 체계는 "회피형"이야. 마찰의 신호가 감지되면 본능적으로 거리를 두거나, 주제를 전환하거나, 아예 반응하지 않아. 이건 단기적으로 평화를 유지하지만, 장기적으로는 가장 파괴적인 패턴이야. 회피된 갈등은 사라지지 않아. 지하에서 계속 자라다가 예상치 못한 순간에 전혀 다른 형태로 폭발해. `,
-                boundary: `너의 갈등 면역 체계는 "경계 설정형"이야. 갈등 상황에서 싸우지도, 도망가지도 않고, 명확한 선을 긋는 방식을 택해. "여기까지는 괜찮지만 이건 안 돼"라는 메시지를 전달하는 데 능숙해. 이건 성숙한 갈등 처리 방식이고, 장기 관계에서 가장 지속 가능한 형태 중 하나야. `
+                confrontational: `ëì ê°ë± ë©´ì­ ì²´ê³ë "ì¦ì ëìí"ì´ì¼. ë¶ë§ì´ë ë§ì°°ì´ ê°ì§ëë©´ íí¼íì§ ìê³  ì ë©´ì¼ë¡ ë¤ë¤. ì´ ë°©ìì ê°ì¥ í° ì¥ì ì ë¬¸ì ê° ê³ªì§ ìëë¤ë ê±°ì¼. ê°ë±ì´ ë°ìíë©´ ì¦ì íì´ë¸ ìì ì¬ë¦¬ê³ , í´ê²°ë  ëê¹ì§ ëì§ ìì. íì§ë§ ì´ ê³¼ì ìì ìëì ê°ì ì  ì¤ë¹ ìíë¥¼ ê³ ë ¤íì§ ìë ê²½í¥ì´ ìê³ , ë¤ê° "í´ê²°"ì´ë¼ê³  ìê°íë ê²ì´ ì¤ì "ë´ ìì¥ì ê´ì² "ì¸ ê²½ì°ê° ë§ì. `,
+                repair: `ëì ê°ë± ë©´ì­ ì²´ê³ë "ë³µêµ¬ ì°ì í"ì´ì¼. ê°ë±ì´ ë°ìíë©´ ê°ì¥ ë¨¼ì  ê´ê³ì ììì ìµìííë ¤ê³  í´. ìëì ìì¥ì ì´í´íë ¤ íê³ , ê°ì ì ììµíê³ , í©ìì ì ì°¾ì¼ë ¤ í´. ì´ê±´ ê´ê³ ì ì§ì ë§¤ì° í¨ê³¼ì ì´ì§ë§, ì¹ëªì ì¸ ì½ì ì´ ìì´. ë§¤ë² ë¤ê° ë³µêµ¬ ë¹ì©ì ë¶ë´íë©´ì ì ì ë¤ ë¶ë§ì ì ëë¡ ì ë¬ëì§ ìì. `,
+                avoidant: `ëì ê°ë± ë©´ì­ ì²´ê³ë "íí¼í"ì´ì¼. ë§ì°°ì ì í¸ê° ê°ì§ëë©´ ë³¸ë¥ì ì¼ë¡ ê±°ë¦¬ë¥¼ ëê±°ë, ì£¼ì ë¥¼ ì ííê±°ë, ìì ë°ìíì§ ìì. ì´ê±´ ë¨ê¸°ì ì¼ë¡ ííë¥¼ ì ì§íì§ë§, ì¥ê¸°ì ì¼ë¡ë ê°ì¥ íê´´ì ì¸ í¨í´ì´ì¼. íí¼ë ê°ë±ì ì¬ë¼ì§ì§ ìì. ì§íìì ê³ì ìë¼ë¤ê° ììì¹ ëª»í ìê°ì ì í ë¤ë¥¸ ííë¡ í­ë°í´. `,
+                boundary: `ëì ê°ë± ë©´ì­ ì²´ê³ë "ê²½ê³ ì¤ì í"ì´ì¼. ê°ë± ìí©ìì ì¸ì°ì§ë, ëë§ê°ì§ë ìê³ , ëªíí ì ì ê¸ë ë°©ìì íí´. "ì¬ê¸°ê¹ì§ë ê´ì°®ì§ë§ ì´ê±´ ì ë¼"ë¼ë ë©ìì§ë¥¼ ì ë¬íë ë° ë¥ìí´. ì´ê±´ ì±ìí ê°ë± ì²ë¦¬ ë°©ìì´ê³ , ì¥ê¸° ê´ê³ìì ê°ì¥ ì§ì ê°ë¥í íí ì¤ íëì¼. `
             };
             n += base[style] || base.boundary;
-            // 안정성과의 교차
+            // ìì ì±ê³¼ì êµì°¨
             if (A6 > 0.6) {
-                n += `안정성 지수가 높아서 갈등 상황에서도 감정적 동요가 크지 않아. 이건 갈등 해결에 유리한 조건이야. 감정에 휘둘리지 않고 문제의 본질에 집중할 수 있거든. `;
+                n += `ìì ì± ì§ìê° ëìì ê°ë± ìí©ììë ê°ì ì  ëìê° í¬ì§ ìì. ì´ê±´ ê°ë± í´ê²°ì ì ë¦¬í ì¡°ê±´ì´ì¼. ê°ì ì íëë¦¬ì§ ìê³  ë¬¸ì ì ë³¸ì§ì ì§ì¤í  ì ìê±°ë . `;
             } else {
-                n += `다만 안정성 지수가 낮아서, 갈등이 촉발되면 감정적 진폭이 커지는 패턴이 있어. 갈등의 내용보다 갈등이 주는 감정적 충격에 더 강하게 반응할 수 있어. `;
+                n += `ë¤ë§ ìì ì± ì§ìê° ë®ìì, ê°ë±ì´ ì´ë°ëë©´ ê°ì ì  ì§í­ì´ ì»¤ì§ë í¨í´ì´ ìì´. ê°ë±ì ë´ì©ë³´ë¤ ê°ë±ì´ ì£¼ë ê°ì ì  ì¶©ê²©ì ë ê°íê² ë°ìí  ì ìì´. `;
             }
-            // 주장성과의 교차
+            // ì£¼ì¥ì±ê³¼ì êµì°¨
             if (A3 > 0.6) {
-                n += `주장성이 높아서 자신의 입장을 명확히 전달하는 데 주저함이 없어. 이게 갈등 해결의 속도를 높이지만, 상대가 방어적으로 변하게 만들 수도 있어. 핵심은 "나의 입장 전달"과 "상대 입장의 수용" 사이에서 균형을 잡는 거야.`;
+                n += `ì£¼ì¥ì±ì´ ëìì ìì ì ìì¥ì ëªíí ì ë¬íë ë° ì£¼ì í¨ì´ ìì´. ì´ê² ê°ë± í´ê²°ì ìëë¥¼ ëì´ì§ë§, ìëê° ë°©ì´ì ì¼ë¡ ë³íê² ë§ë¤ ìë ìì´. íµì¬ì "ëì ìì¥ ì ë¬"ê³¼ "ìë ìì¥ì ìì©" ì¬ì´ìì ê· íì ì¡ë ê±°ì¼.`;
             } else {
-                n += `주장성이 낮은 편이라, 갈등 상황에서 자신의 불만을 충분히 전달하지 못할 수 있어. 관계를 보호하려는 의도지만, 전달되지 않은 불만은 결국 관계를 잠식해. 불편함을 말로 꺼내는 연습이 필요해 보여.`;
+                n += `ì£¼ì¥ì±ì´ ë®ì í¸ì´ë¼, ê°ë± ìí©ìì ìì ì ë¶ë§ì ì¶©ë¶í ì ë¬íì§ ëª»í  ì ìì´. ê´ê³ë¥¼ ë³´í¸íë ¤ë ìëì§ë§, ì ë¬ëì§ ìì ë¶ë§ì ê²°êµ­ ê´ê³ë¥¼ ì ìí´. ë¶í¸í¨ì ë§ë¡ êº¼ë´ë ì°ìµì´ íìí´ ë³´ì¬.`;
             }
             return n;
         }
@@ -1972,25 +1972,25 @@
             const orient = ax.structural.A7.primary;
             let n = '';
             const intimMap = {
-                slow_burn: `너의 친밀감 지형은 "점진적 개방형"이야. 관계 초기에 자기 공개가 극히 제한적이고, 시간이 지나면서 조금씩 문을 여는 패턴이야. 이건 신뢰 기반 친밀감 형성이라 한번 열리면 깊지만, 상대 입장에서 초기에 "이 사람이 나한테 관심이 있긴 한 건가?"라는 의문을 가질 수 있어. 특히 빠른 친밀감을 기대하는 상대와는 초기 단계에서 심각한 온도 차가 발생해. `,
-                fast_opener: `너의 친밀감 지형은 "즉시 개방형"이야. 관계 초기부터 개인적 이야기, 감정, 취약한 부분을 비교적 쉽게 공유해. 이건 빠른 유대 형성에 유리하지만, 두 가지 리스크가 있어. 첫째, 상대가 같은 속도로 열리지 않을 때 비대칭이 생기고, 둘째, 초기에 너무 많이 보여줘서 나중에 관계의 "새로움"이 빨리 소진될 수 있어. `,
-                surface_locked: `너의 친밀감 지형에는 명확한 천장이 있어. 일정 수준의 사교적 친밀감까지는 자연스럽지만, 그 이상 깊어지는 것에 대한 무의식적 저항이 관찰돼. 이건 과거 깊은 관계에서 상처받은 경험의 흔적일 수도 있고, 단순히 정서적 깊이에 대한 필요가 낮은 것일 수도 있어. 중요한 건 이 천장이 너의 선택인지, 아니면 너도 모르게 작동하는 방어 기제인지를 아는 거야. `,
-                depth_seeker: `너의 친밀감 지형은 "깊이 탐색형"이야. 피상적 대화에 빠르게 지루해하고, 본질적이고 의미 있는 교류를 적극적으로 추구해. 이건 깊은 관계를 형성할 수 있는 강점이지만, 모든 관계에서 깊이를 기대하면 실망이 반복돼. 대부분의 사회적 관계는 표면적이고, 그건 그대로 괜찮은 거야. `
+                slow_burn: `ëì ì¹ë°ê° ì§íì "ì ì§ì  ê°ë°©í"ì´ì¼. ê´ê³ ì´ê¸°ì ìê¸° ê³µê°ê° ê·¹í ì íì ì´ê³ , ìê°ì´ ì§ëë©´ì ì¡°ê¸ì© ë¬¸ì ì¬ë í¨í´ì´ì¼. ì´ê±´ ì ë¢° ê¸°ë° ì¹ë°ê° íì±ì´ë¼ íë² ì´ë¦¬ë©´ ê¹ì§ë§, ìë ìì¥ìì ì´ê¸°ì "ì´ ì¬ëì´ ëíí ê´ì¬ì´ ìê¸´ í ê±´ê°?"ë¼ë ìë¬¸ì ê°ì§ ì ìì´. í¹í ë¹ ë¥¸ ì¹ë°ê°ì ê¸°ëíë ìëìë ì´ê¸° ë¨ê³ìì ì¬ê°í ì¨ë ì°¨ê° ë°ìí´. `,
+                fast_opener: `ëì ì¹ë°ê° ì§íì "ì¦ì ê°ë°©í"ì´ì¼. ê´ê³ ì´ê¸°ë¶í° ê°ì¸ì  ì´ì¼ê¸°, ê°ì , ì·¨ì½í ë¶ë¶ì ë¹êµì  ì½ê² ê³µì í´. ì´ê±´ ë¹ ë¥¸ ì ë íì±ì ì ë¦¬íì§ë§, ë ê°ì§ ë¦¬ì¤í¬ê° ìì´. ì²«ì§¸, ìëê° ê°ì ìëë¡ ì´ë¦¬ì§ ìì ë ë¹ëì¹­ì´ ìê¸°ê³ , ëì§¸, ì´ê¸°ì ëë¬´ ë§ì´ ë³´ì¬ì¤ì ëì¤ì ê´ê³ì "ìë¡ì"ì´ ë¹¨ë¦¬ ìì§ë  ì ìì´. `,
+                surface_locked: `ëì ì¹ë°ê° ì§íìë ëªíí ì²ì¥ì´ ìì´. ì¼ì  ìì¤ì ì¬êµì  ì¹ë°ê°ê¹ì§ë ìì°ì¤ë½ì§ë§, ê·¸ ì´ì ê¹ì´ì§ë ê²ì ëí ë¬´ììì  ì í­ì´ ê´ì°°ë¼. ì´ê±´ ê³¼ê±° ê¹ì ê´ê³ìì ìì²ë°ì ê²½íì íì ì¼ ìë ìê³ , ë¨ìí ì ìì  ê¹ì´ì ëí íìê° ë®ì ê²ì¼ ìë ìì´. ì¤ìí ê±´ ì´ ì²ì¥ì´ ëì ì íì¸ì§, ìëë©´ ëë ëª¨ë¥´ê² ìëíë ë°©ì´ ê¸°ì ì¸ì§ë¥¼ ìë ê±°ì¼. `,
+                depth_seeker: `ëì ì¹ë°ê° ì§íì "ê¹ì´ íìí"ì´ì¼. í¼ìì  ëíì ë¹ ë¥´ê² ì§ë£¨í´íê³ , ë³¸ì§ì ì´ê³  ìë¯¸ ìë êµë¥ë¥¼ ì ê·¹ì ì¼ë¡ ì¶êµ¬í´. ì´ê±´ ê¹ì ê´ê³ë¥¼ íì±í  ì ìë ê°ì ì´ì§ë§, ëª¨ë  ê´ê³ìì ê¹ì´ë¥¼ ê¸°ëíë©´ ì¤ë§ì´ ë°ë³µë¼. ëë¶ë¶ì ì¬íì  ê´ê³ë íë©´ì ì´ê³ , ê·¸ê±´ ê·¸ëë¡ ê´ì°®ì ê±°ì¼. `
             };
             n += intimMap[intim] || intimMap.slow_burn;
-            // 상호작용 방향과의 교차
+            // ìí¸ìì© ë°©í¥ê³¼ì êµì°¨
             if (orient === 'initiator') {
-                n += `친밀감 형성 과정에서 네가 먼저 신호를 보내는 패턴이야. 질문을 먼저 던지고, 주제를 깊게 파고들고, 관계의 방향을 설정하는 역할을 해. 이건 상대에게 안정감을 줄 수 있지만, 너만 에너지를 쓰고 있다는 피로감으로 이어질 수도 있어. `;
+                n += `ì¹ë°ê° íì± ê³¼ì ìì ë¤ê° ë¨¼ì  ì í¸ë¥¼ ë³´ë´ë í¨í´ì´ì¼. ì§ë¬¸ì ë¨¼ì  ëì§ê³ , ì£¼ì ë¥¼ ê¹ê² íê³ ë¤ê³ , ê´ê³ì ë°©í¥ì ì¤ì íë ì­í ì í´. ì´ê±´ ìëìê² ìì ê°ì ì¤ ì ìì§ë§, ëë§ ìëì§ë¥¼ ì°ê³  ìë¤ë í¼ë¡ê°ì¼ë¡ ì´ì´ì§ ìë ìì´. `;
             } else if (orient === 'responder') {
-                n += `친밀감 형성에서 상대의 신호에 반응하는 방식이야. 상대가 문을 열면 따라 들어가지만, 직접 문을 여는 경우는 드물어. 이건 안전한 전략이지만, 상대가 항상 먼저 다가올 거라는 보장은 없어. `;
+                n += `ì¹ë°ê° íì±ìì ìëì ì í¸ì ë°ìíë ë°©ìì´ì¼. ìëê° ë¬¸ì ì´ë©´ ë°ë¼ ë¤ì´ê°ì§ë§, ì§ì  ë¬¸ì ì¬ë ê²½ì°ë ëë¬¼ì´. ì´ê±´ ìì í ì ëµì´ì§ë§, ìëê° í­ì ë¨¼ì  ë¤ê°ì¬ ê±°ë¼ë ë³´ì¥ì ìì´. `;
             } else {
-                n += `친밀감 형성에서 상황에 따라 주도하기도 하고 반응하기도 하는 유연한 패턴이야. 이건 다양한 유형의 상대와 적응적으로 관계를 형성할 수 있다는 강점이야. `;
+                n += `ì¹ë°ê° íì±ìì ìí©ì ë°ë¼ ì£¼ëíê¸°ë íê³  ë°ìíê¸°ë íë ì ì°í í¨í´ì´ì¼. ì´ê±´ ë¤ìí ì íì ìëì ì ìì ì¼ë¡ ê´ê³ë¥¼ íì±í  ì ìë¤ë ê°ì ì´ì¼. `;
             }
-            // 감정 표현과의 교차
+            // ê°ì  ííê³¼ì êµì°¨
             if (A4 > 0.5) {
-                n += `감정 표현도가 높아서 친밀감이 깊어질수록 감정 공유의 밀도도 함께 올라가. 이건 관계를 풍요롭게 만들지만, 감정적 부하도 함께 증가한다는 걸 의미해.`;
+                n += `ê°ì  ííëê° ëìì ì¹ë°ê°ì´ ê¹ì´ì§ìë¡ ê°ì  ê³µì ì ë°ëë í¨ê» ì¬ë¼ê°. ì´ê±´ ê´ê³ë¥¼ íìë¡­ê² ë§ë¤ì§ë§, ê°ì ì  ë¶íë í¨ê» ì¦ê°íë¤ë ê±¸ ìë¯¸í´.`;
             } else {
-                n += `감정 표현이 절제된 편이라, 친밀감이 깊어져도 감정적 교류의 밀도는 크게 변하지 않아. 상대에 따라 이게 안정감으로 느껴질 수도, 냉담함으로 느껴질 수도 있어.`;
+                n += `ê°ì  ííì´ ì ì ë í¸ì´ë¼, ì¹ë°ê°ì´ ê¹ì´ì ¸ë ê°ì ì  êµë¥ì ë°ëë í¬ê² ë³íì§ ìì. ìëì ë°ë¼ ì´ê² ìì ê°ì¼ë¡ ëê»´ì§ ìë, ëë´í¨ì¼ë¡ ëê»´ì§ ìë ìì´.`;
             }
             return n;
         }
@@ -2000,29 +2000,29 @@
             const orient = ax.structural.A7.primary;
             const recip = ax.structural.A11.primary;
             let n = '';
-            // 가시적 권력
+            // ê°ìì  ê¶ë ¥
             if (A3 > 0.6 && orient === 'initiator') {
-                n += `너는 관계에서 가시적 권력을 행사하는 타입이야. 대화의 주제를 설정하고, 방향을 전환하고, 결정을 주도하는 패턴이 분명해. 이건 리더십으로 읽힐 수도 있고, 지배로 읽힐 수도 있어. 차이는 상대의 의견을 반영하는 빈도에 있어. `;
+                n += `ëë ê´ê³ìì ê°ìì  ê¶ë ¥ì íì¬íë íìì´ì¼. ëíì ì£¼ì ë¥¼ ì¤ì íê³ , ë°©í¥ì ì ííê³ , ê²°ì ì ì£¼ëíë í¨í´ì´ ë¶ëªí´. ì´ê±´ ë¦¬ëì­ì¼ë¡ ì½í ìë ìê³ , ì§ë°°ë¡ ì½í ìë ìì´. ì°¨ì´ë ìëì ìê²¬ì ë°ìíë ë¹ëì ìì´. `;
             } else if (A3 > 0.6 && orient !== 'initiator') {
-                n += `주장성은 높지만 대화를 먼저 이끌지는 않는 패턴이야. 상대가 주제를 꺼내면 거기서 강하게 자기 입장을 관철해. 이건 "숨은 권력"에 가까워. 표면적으로는 따라가는 것 같지만, 실질적 결정에서는 네 의견이 관철되는 구조야. `;
+                n += `ì£¼ì¥ì±ì ëì§ë§ ëíë¥¼ ë¨¼ì  ì´ëì§ë ìë í¨í´ì´ì¼. ìëê° ì£¼ì ë¥¼ êº¼ë´ë©´ ê±°ê¸°ì ê°íê² ìê¸° ìì¥ì ê´ì² í´. ì´ê±´ "ì¨ì ê¶ë ¥"ì ê°ê¹ì. íë©´ì ì¼ë¡ë ë°ë¼ê°ë ê² ê°ì§ë§, ì¤ì§ì  ê²°ì ììë ë¤ ìê²¬ì´ ê´ì² ëë êµ¬ì¡°ì¼. `;
             } else if (A3 <= 0.4 && orient === 'initiator') {
-                n += `대화를 먼저 시작하고 주제를 던지지만, 의견 충돌이 생기면 쉽게 양보하는 패턴이야. 이건 "서비스형 주도권"이라고 볼 수 있어. 관계의 표면을 관리하지만 깊은 수준에서는 상대에게 결정권을 넘기는 형태야. `;
+                n += `ëíë¥¼ ë¨¼ì  ììíê³  ì£¼ì ë¥¼ ëì§ì§ë§, ìê²¬ ì¶©ëì´ ìê¸°ë©´ ì½ê² ìë³´íë í¨í´ì´ì¼. ì´ê±´ "ìë¹ì¤í ì£¼ëê¶"ì´ë¼ê³  ë³¼ ì ìì´. ê´ê³ì íë©´ì ê´ë¦¬íì§ë§ ê¹ì ìì¤ììë ìëìê² ê²°ì ê¶ì ëê¸°ë ííì¼. `;
             } else {
-                n += `관계에서 권력을 적극적으로 행사하지 않는 편이야. 이건 평화로운 관계를 만들 수 있지만, 동시에 상대가 모든 결정을 떠안게 되면서 "결정 피로"를 유발할 수 있어. `;
+                n += `ê´ê³ìì ê¶ë ¥ì ì ê·¹ì ì¼ë¡ íì¬íì§ ìë í¸ì´ì¼. ì´ê±´ ííë¡ì´ ê´ê³ë¥¼ ë§ë¤ ì ìì§ë§, ëìì ìëê° ëª¨ë  ê²°ì ì ë ìê² ëë©´ì "ê²°ì  í¼ë¡"ë¥¼ ì ë°í  ì ìì´. `;
             }
-            // 호혜성과의 교차: 비가시적 권력
+            // í¸íì±ê³¼ì êµì°¨: ë¹ê°ìì  ê¶ë ¥
             if (recip === 'giver') {
-                n += `기여도가 높은데, 이것 자체가 비가시적 권력이야. "내가 이만큼 해줬는데"라는 도덕적 우위가 관계에서 무의식적 레버리지로 작동할 수 있거든. 이건 의도적이지 않지만, 상대는 빚진 감정을 느끼게 되고, 그게 관계의 자유도를 제한해. `;
+                n += `ê¸°ì¬ëê° ëìë°, ì´ê² ìì²´ê° ë¹ê°ìì  ê¶ë ¥ì´ì¼. "ë´ê° ì´ë§í¼ í´ì¤¬ëë°"ë¼ë ëëì  ì°ìê° ê´ê³ìì ë¬´ììì  ë ë²ë¦¬ì§ë¡ ìëí  ì ìê±°ë . ì´ê±´ ìëì ì´ì§ ìì§ë§, ìëë ë¹ì§ ê°ì ì ëë¼ê² ëê³ , ê·¸ê² ê´ê³ì ìì ëë¥¼ ì íí´. `;
             } else if (recip === 'taker') {
-                n += `수혜 비중이 높은데, 이것도 일종의 권력이야. 관계에서 "필요한 쪽"이 되면 상대가 관계 유지를 위해 더 많이 노력하게 되거든. 이 역학이 장기화되면 상대의 소진으로 이어져. `;
+                n += `ìí ë¹ì¤ì´ ëìë°, ì´ê²ë ì¼ì¢ì ê¶ë ¥ì´ì¼. ê´ê³ìì "íìí ìª½"ì´ ëë©´ ìëê° ê´ê³ ì ì§ë¥¼ ìí´ ë ë§ì´ ë¸ë ¥íê² ëê±°ë . ì´ ì­íì´ ì¥ê¸°íëë©´ ìëì ìì§ì¼ë¡ ì´ì´ì ¸. `;
             } else {
-                n += `기여와 수혜의 균형이 잡혀 있어서, 권력의 비대칭이 크지 않아. 이건 가장 지속 가능한 형태야. `;
+                n += `ê¸°ì¬ì ìíì ê· íì´ ì¡í ìì´ì, ê¶ë ¥ì ë¹ëì¹­ì´ í¬ì§ ìì. ì´ê±´ ê°ì¥ ì§ì ê°ë¥í ííì¼. `;
             }
-            // 협력성과의 교차
+            // íë ¥ì±ê³¼ì êµì°¨
             if (A5 > 0.6) {
-                n += `협력 성향이 높아서 권력을 독점하기보다 공유하려는 경향이 있어. 의사결정에서 상대의 참여를 유도하고, 합의를 중시해. 이건 민주적 관계 운영인데, 속도가 느린 대신 결정의 수용도가 높아.`;
+                n += `íë ¥ ì±í¥ì´ ëìì ê¶ë ¥ì ëì íê¸°ë³´ë¤ ê³µì íë ¤ë ê²½í¥ì´ ìì´. ìì¬ê²°ì ìì ìëì ì°¸ì¬ë¥¼ ì ëíê³ , í©ìë¥¼ ì¤ìí´. ì´ê±´ ë¯¼ì£¼ì  ê´ê³ ì´ìì¸ë°, ìëê° ëë¦° ëì  ê²°ì ì ìì©ëê° ëì.`;
             } else {
-                n += `독립적 결정을 선호하는 편이라, 관계에서 의사결정의 속도는 빠르지만 상대의 참여감이 낮아질 수 있어. 효율과 포용 사이의 균형점을 찾는 게 과제야.`;
+                n += `ëë¦½ì  ê²°ì ì ì í¸íë í¸ì´ë¼, ê´ê³ìì ìì¬ê²°ì ì ìëë ë¹ ë¥´ì§ë§ ìëì ì°¸ì¬ê°ì´ ë®ìì§ ì ìì´. í¨ì¨ê³¼ í¬ì© ì¬ì´ì ê· íì ì ì°¾ë ê² ê³¼ì ì¼.`;
             }
             return n;
         }
@@ -2030,24 +2030,24 @@
         function lensSelf(ax) {
             const {A2,A3,A5,A6} = ax.intensity;
             let n = '';
-            // 자아 유지 vs 관계 적응
+            // ìì ì ì§ vs ê´ê³ ì ì
             const selfScore = (A3 + (1-A2) + A6) / 3;
             const adaptScore = (A2 + A5 + (1-A3)) / 3;
             if (selfScore > adaptScore + 0.1) {
-                n += `관계 속에서 너의 자아 유지력은 상당히 높아. 상대의 의견이나 감정에 흔들리지 않고 자신의 입장을 유지하는 패턴이 분명해. 이건 정체성이 단단하다는 의미인데, 동시에 관계 안에서 상대의 영향을 받아 변화하는 것에 대한 저항이 있다는 뜻이기도 해. 건강한 관계는 서로에게 영향을 주고받으며 함께 변하는 과정인데, 너는 그 과정에서 "나"를 지키는 데 에너지의 상당 부분을 쓰고 있어. `;
-                n += `이게 긍정적으로 작용하면 관계에서 중심을 잡아주는 닻 역할을 하지만, 부정적으로 작용하면 상대가 "이 사람은 나 때문에 절대 안 변한다"는 무력감을 느끼게 돼. `;
+                n += `ê´ê³ ììì ëì ìì ì ì§ë ¥ì ìë¹í ëì. ìëì ìê²¬ì´ë ê°ì ì íë¤ë¦¬ì§ ìê³  ìì ì ìì¥ì ì ì§íë í¨í´ì´ ë¶ëªí´. ì´ê±´ ì ì²´ì±ì´ ë¨ë¨íë¤ë ìë¯¸ì¸ë°, ëìì ê´ê³ ììì ìëì ìí¥ì ë°ì ë³ííë ê²ì ëí ì í­ì´ ìë¤ë ë»ì´ê¸°ë í´. ê±´ê°í ê´ê³ë ìë¡ìê² ìí¥ì ì£¼ê³ ë°ì¼ë©° í¨ê» ë³íë ê³¼ì ì¸ë°, ëë ê·¸ ê³¼ì ìì "ë"ë¥¼ ì§í¤ë ë° ìëì§ì ìë¹ ë¶ë¶ì ì°ê³  ìì´. `;
+                n += `ì´ê² ê¸ì ì ì¼ë¡ ìì©íë©´ ê´ê³ìì ì¤ì¬ì ì¡ìì£¼ë ë» ì­í ì íì§ë§, ë¶ì ì ì¼ë¡ ìì©íë©´ ìëê° "ì´ ì¬ëì ë ëë¬¸ì ì ë ì ë³íë¤"ë ë¬´ë ¥ê°ì ëë¼ê² ë¼. `;
             } else if (adaptScore > selfScore + 0.1) {
-                n += `관계 속에서 상대에 맞춰 자신을 조정하는 경향이 강해. 상대의 필요, 기대, 감정에 민감하게 반응하면서 자신의 행동을 수정하는 패턴이야. 이건 관계의 조화를 유지하는 데 효과적이지만, 장기적으로 "관계 속의 나"와 "혼자 있을 때의 나"가 점점 달라지는 자아 분리를 유발할 수 있어. `;
-                n += `특히 위험한 건, 이 적응이 너무 자동화되면 자신이 실제로 원하는 것과 상대가 원한다고 추측하는 것을 구분하지 못하게 된다는 거야. `;
+                n += `ê´ê³ ììì ìëì ë§ì¶° ìì ì ì¡°ì íë ê²½í¥ì´ ê°í´. ìëì íì, ê¸°ë, ê°ì ì ë¯¼ê°íê² ë°ìíë©´ì ìì ì íëì ìì íë í¨í´ì´ì¼. ì´ê±´ ê´ê³ì ì¡°íë¥¼ ì ì§íë ë° í¨ê³¼ì ì´ì§ë§, ì¥ê¸°ì ì¼ë¡ "ê´ê³ ìì ë"ì "í¼ì ìì ëì ë"ê° ì ì  ë¬ë¼ì§ë ìì ë¶ë¦¬ë¥¼ ì ë°í  ì ìì´. `;
+                n += `í¹í ìíí ê±´, ì´ ì ìì´ ëë¬´ ìëíëë©´ ìì ì´ ì¤ì ë¡ ìíë ê²ê³¼ ìëê° ìíë¤ê³  ì¶ì¸¡íë ê²ì êµ¬ë¶íì§ ëª»íê² ëë¤ë ê±°ì¼. `;
             } else {
-                n += `관계 속에서 자아 유지와 적응 사이의 균형이 비교적 잘 잡혀 있어. 상대에게 맞추면서도 자신의 핵심적인 부분은 양보하지 않는 패턴인데, 이건 건강한 관계의 기본 조건이야. `;
-                n += `다만 이 균형이 의식적 선택인지, 아니면 갈등을 피하기 위한 타협인지에 따라 의미가 완전히 달라져. `;
+                n += `ê´ê³ ììì ìì ì ì§ì ì ì ì¬ì´ì ê· íì´ ë¹êµì  ì ì¡í ìì´. ìëìê² ë§ì¶ë©´ìë ìì ì íµì¬ì ì¸ ë¶ë¶ì ìë³´íì§ ìë í¨í´ì¸ë°, ì´ê±´ ê±´ê°í ê´ê³ì ê¸°ë³¸ ì¡°ê±´ì´ì¼. `;
+                n += `ë¤ë§ ì´ ê· íì´ ììì  ì íì¸ì§, ìëë©´ ê°ë±ì í¼íê¸° ìí ííì¸ì§ì ë°ë¼ ìë¯¸ê° ìì í ë¬ë¼ì ¸. `;
             }
-            // 안정성과의 교차
+            // ìì ì±ê³¼ì êµì°¨
             if (A6 > 0.6) {
-                n += `안정성이 높아서 관계 상황에 따라 자신을 쉽게 바꾸지 않아. 이건 예측 가능한 파트너라는 신뢰를 주지만, 상대가 성장이나 변화를 원할 때 걸림돌이 될 수 있어. "변하지 않는 나"가 항상 미덕은 아니야.`;
+                n += `ìì ì±ì´ ëìì ê´ê³ ìí©ì ë°ë¼ ìì ì ì½ê² ë°ê¾¸ì§ ìì. ì´ê±´ ìì¸¡ ê°ë¥í íí¸ëë¼ë ì ë¢°ë¥¼ ì£¼ì§ë§, ìëê° ì±ì¥ì´ë ë³íë¥¼ ìí  ë ê±¸ë¦¼ëì´ ë  ì ìì´. "ë³íì§ ìë ë"ê° í­ì ë¯¸ëì ìëì¼.`;
             } else {
-                n += `안정성이 낮은 편이라 상황에 따라 태도가 변할 수 있어. 이건 유연성의 표현일 수도 있고, 자아가 아직 확립되지 않은 신호일 수도 있어. 관계마다, 상대마다 다른 "나"를 보여주는 패턴이 있다면, 어떤 게 진짜 너인지 스스로 정리할 필요가 있어.`;
+                n += `ìì ì±ì´ ë®ì í¸ì´ë¼ ìí©ì ë°ë¼ íëê° ë³í  ì ìì´. ì´ê±´ ì ì°ì±ì ííì¼ ìë ìê³ , ììê° ìì§ íë¦½ëì§ ìì ì í¸ì¼ ìë ìì´. ê´ê³ë§ë¤, ìëë§ë¤ ë¤ë¥¸ "ë"ë¥¼ ë³´ì¬ì£¼ë í¨í´ì´ ìë¤ë©´, ì´ë¤ ê² ì§ì§ ëì¸ì§ ì¤ì¤ë¡ ì ë¦¬í  íìê° ìì´.`;
             }
             return n;
         }
@@ -2057,26 +2057,26 @@
             const emoProc = ax.structural.A9.primary;
             const intim = ax.structural.A10.primary;
             let n = '';
-            // 변화 방향성 추정
+            // ë³í ë°©í¥ì± ì¶ì 
             if (A6 > 0.65) {
-                n += `대화 패턴의 시간적 변화가 거의 없어. 초반에 보이는 행동 양식이 후반까지 일관되게 유지돼. 이건 안정성의 표현이기도 하지만, 성장의 부재를 의미할 수도 있어. 관계에서 "변하지 않는 사람"이라는 건 신뢰의 근거가 되지만, 동시에 관계가 정체되는 원인이 되기도 해. 상대가 성장과 변화를 중시하는 타입이라면 이 일관성이 답답함으로 느껴질 수 있어. `;
-                n += `네 패턴에서 반복되는 핵심 행동 루프가 있어. 같은 유형의 질문, 같은 방식의 반응, 같은 패턴의 감정 표현이 순환해. 이건 효율적이지만, 관계의 깊이가 더 이상 파고들어지지 않는 "궤도 고정" 상태로 이어질 수 있어. `;
+                n += `ëí í¨í´ì ìê°ì  ë³íê° ê±°ì ìì´. ì´ë°ì ë³´ì´ë íë ììì´ íë°ê¹ì§ ì¼ê´ëê² ì ì§ë¼. ì´ê±´ ìì ì±ì ííì´ê¸°ë íì§ë§, ì±ì¥ì ë¶ì¬ë¥¼ ìë¯¸í  ìë ìì´. ê´ê³ìì "ë³íì§ ìë ì¬ë"ì´ë¼ë ê±´ ì ë¢°ì ê·¼ê±°ê° ëì§ë§, ëìì ê´ê³ê° ì ì²´ëë ìì¸ì´ ëê¸°ë í´. ìëê° ì±ì¥ê³¼ ë³íë¥¼ ì¤ìíë íìì´ë¼ë©´ ì´ ì¼ê´ì±ì´ ëµëµí¨ì¼ë¡ ëê»´ì§ ì ìì´. `;
+                n += `ë¤ í¨í´ìì ë°ë³µëë íµì¬ íë ë£¨íê° ìì´. ê°ì ì íì ì§ë¬¸, ê°ì ë°©ìì ë°ì, ê°ì í¨í´ì ê°ì  ííì´ ìíí´. ì´ê±´ í¨ì¨ì ì´ì§ë§, ê´ê³ì ê¹ì´ê° ë ì´ì íê³ ë¤ì´ì§ì§ ìë "ê¶¤ë ê³ ì " ìíë¡ ì´ì´ì§ ì ìì´. `;
             } else if (A6 < 0.35) {
-                n += `대화 패턴에 상당한 변동이 관찰돼. 초반과 후반의 행동 양식이 다르고, 감정의 진폭도 구간별로 차이가 커. 이건 적응력이 높다는 긍정적 해석도 가능하지만, 관계에서 일관된 정체성을 보여주지 못한다는 리스크도 있어. `;
-                n += `변화의 방향이 중요해. 시간이 지나면서 더 개방적이 되고, 더 깊은 교류를 시도하고, 감정 표현이 풍부해진다면 이건 성장이야. 반대로 점점 위축되고, 표현이 줄고, 방어적이 된다면 관계에서의 소진 신호야. `;
+                n += `ëí í¨í´ì ìë¹í ë³ëì´ ê´ì°°ë¼. ì´ë°ê³¼ íë°ì íë ììì´ ë¤ë¥´ê³ , ê°ì ì ì§í­ë êµ¬ê°ë³ë¡ ì°¨ì´ê° ì»¤. ì´ê±´ ì ìë ¥ì´ ëë¤ë ê¸ì ì  í´ìë ê°ë¥íì§ë§, ê´ê³ìì ì¼ê´ë ì ì²´ì±ì ë³´ì¬ì£¼ì§ ëª»íë¤ë ë¦¬ì¤í¬ë ìì´. `;
+                n += `ë³íì ë°©í¥ì´ ì¤ìí´. ìê°ì´ ì§ëë©´ì ë ê°ë°©ì ì´ ëê³ , ë ê¹ì êµë¥ë¥¼ ìëíê³ , ê°ì  ííì´ íë¶í´ì§ë¤ë©´ ì´ê±´ ì±ì¥ì´ì¼. ë°ëë¡ ì ì  ìì¶ëê³ , ííì´ ì¤ê³ , ë°©ì´ì ì´ ëë¤ë©´ ê´ê³ììì ìì§ ì í¸ì¼. `;
             } else {
-                n += `대화 패턴에 적당한 변동이 있어. 완전히 고정되지도, 널뛰지도 않는 중간 지대인데, 이건 대부분의 건강한 관계에서 나타나는 패턴이야. 상황에 따라 조정하면서도 핵심적인 행동 양식은 유지하는 형태야. `;
+                n += `ëí í¨í´ì ì ë¹í ë³ëì´ ìì´. ìì í ê³ ì ëì§ë, ëë°ì§ë ìë ì¤ê° ì§ëì¸ë°, ì´ê±´ ëë¶ë¶ì ê±´ê°í ê´ê³ìì ëíëë í¨í´ì´ì¼. ìí©ì ë°ë¼ ì¡°ì íë©´ìë íµì¬ì ì¸ íë ììì ì ì§íë ííì¼. `;
             }
-            // 감정처리 + 친밀감과의 교차
+            // ê°ì ì²ë¦¬ + ì¹ë°ê°ê³¼ì êµì°¨
             if (emoProc === 'analytical') {
-                n += `감정 처리가 분석적이라, 시간이 지나면서 관계에 대한 이해도는 높아지지만 감정적 깊이의 변화는 느려. 머리로는 성장하지만 가슴의 변화는 지체되는 패턴이야. `;
+                n += `ê°ì  ì²ë¦¬ê° ë¶ìì ì´ë¼, ìê°ì´ ì§ëë©´ì ê´ê³ì ëí ì´í´ëë ëìì§ì§ë§ ê°ì ì  ê¹ì´ì ë³íë ëë ¤. ë¨¸ë¦¬ë¡ë ì±ì¥íì§ë§ ê°ì´ì ë³íë ì§ì²´ëë í¨í´ì´ì¼. `;
             } else if (emoProc === 'expressive') {
-                n += `감정 표현이 활발해서, 시간에 따른 감정 변화가 명확히 드러나. 관계의 온도 변화를 실시간으로 관찰할 수 있는 타입이야. `;
+                n += `ê°ì  ííì´ íë°í´ì, ìê°ì ë°ë¥¸ ê°ì  ë³íê° ëªíí ëë¬ë. ê´ê³ì ì¨ë ë³íë¥¼ ì¤ìê°ì¼ë¡ ê´ì°°í  ì ìë íìì´ì¼. `;
             }
             if (intim === 'depth_seeker' && A1 > 0.5) {
-                n += `깊이를 추구하면서 몰입도도 높아서, 관계가 진전되면 가속도가 붙는 패턴이야. 이건 관계의 성장 곡선이 가파르다는 뜻인데, 그만큼 기대치도 빠르게 올라가서 현실과의 괴리가 발생할 수 있어.`;
+                n += `ê¹ì´ë¥¼ ì¶êµ¬íë©´ì ëª°ìëë ëìì, ê´ê³ê° ì§ì ëë©´ ê°ìëê° ë¶ë í¨í´ì´ì¼. ì´ê±´ ê´ê³ì ì±ì¥ ê³¡ì ì´ ê°íë¥´ë¤ë ë»ì¸ë°, ê·¸ë§í¼ ê¸°ëì¹ë ë¹ ë¥´ê² ì¬ë¼ê°ì íì¤ê³¼ì ê´´ë¦¬ê° ë°ìí  ì ìì´.`;
             } else if (intim === 'surface_locked') {
-                n += `친밀감의 천장이 있어서, 시간이 지나도 관계의 깊이가 특정 수준 이상으로 발전하지 않는 패턴이 관찰돼. 변화의 궤적이 수평선에 가까워. 이게 의도적 선택이라면 괜찮지만, 무의식적 한계라면 인식하는 것 자체가 변화의 시작이야.`;
+                n += `ì¹ë°ê°ì ì²ì¥ì´ ìì´ì, ìê°ì´ ì§ëë ê´ê³ì ê¹ì´ê° í¹ì  ìì¤ ì´ìì¼ë¡ ë°ì íì§ ìë í¨í´ì´ ê´ì°°ë¼. ë³íì ê¶¤ì ì´ ìíì ì ê°ê¹ì. ì´ê² ìëì  ì íì´ë¼ë©´ ê´ì°®ì§ë§, ë¬´ììì  íê³ë¼ë©´ ì¸ìíë ê² ìì²´ê° ë³íì ììì´ì¼.`;
             }
             return n;
         }
@@ -2090,59 +2090,59 @@
             const orientation = ax.structural.A7.primary;
             let n = '';
 
-            // 1. 핵심 정체성
-            n += `<b>핵심 관계 정체성</b><br>`;
+            // 1. íµì¬ ì ì²´ì±
+            n += `<b>íµì¬ ê´ê³ ì ì²´ì±</b><br>`;
             const dominantDrive = (A1 + A4 + A3) > (A2 + A5 + A6) ? 'desire' : 'acceptance';
             if (dominantDrive === 'desire') {
-                n += `너의 관계 행동은 근본적으로 "욕망 동인"에 더 가까워. 관계에서 내가 원하는 것을 얻겠다는 동기가 상대에게 받아들여지고 싶다는 동기보다 강하게 작용해. 이건 관계에서 주도성과 추진력으로 발현되지만, 상대의 필요보다 내 필요가 우선시되는 구조를 만들기 쉬워. `;
+                n += `ëì ê´ê³ íëì ê·¼ë³¸ì ì¼ë¡ "ìë§ ëì¸"ì ë ê°ê¹ì. ê´ê³ìì ë´ê° ìíë ê²ì ì»ê² ë¤ë ëê¸°ê° ìëìê² ë°ìë¤ì¬ì§ê³  ì¶ë¤ë ëê¸°ë³´ë¤ ê°íê² ìì©í´. ì´ê±´ ê´ê³ìì ì£¼ëì±ê³¼ ì¶ì§ë ¥ì¼ë¡ ë°íëì§ë§, ìëì íìë³´ë¤ ë´ íìê° ì°ì ìëë êµ¬ì¡°ë¥¼ ë§ë¤ê¸° ì¬ì. `;
             } else {
-                n += `너의 관계 행동은 근본적으로 "수용 동인"에 더 가까워. 관계에서 있는 그대로의 나를 인정받고 싶다는 동기가 강하게 작용해. 이건 관계에서 조화와 안정을 추구하는 형태로 나타나지만, 자신의 욕구를 억압하면서까지 수용받으려는 패턴으로 변질될 수 있어. `;
+                n += `ëì ê´ê³ íëì ê·¼ë³¸ì ì¼ë¡ "ìì© ëì¸"ì ë ê°ê¹ì. ê´ê³ìì ìë ê·¸ëë¡ì ëë¥¼ ì¸ì ë°ê³  ì¶ë¤ë ëê¸°ê° ê°íê² ìì©í´. ì´ê±´ ê´ê³ìì ì¡°íì ìì ì ì¶êµ¬íë ííë¡ ëíëì§ë§, ìì ì ìêµ¬ë¥¼ ìµìíë©´ìê¹ì§ ìì©ë°ì¼ë ¤ë í¨í´ì¼ë¡ ë³ì§ë  ì ìì´. `;
             }
 
-            // 2. 관계 운영 방식
-            n += `<br><br><b>관계 운영 방식</b><br>`;
+            // 2. ê´ê³ ì´ì ë°©ì
+            n += `<br><br><b>ê´ê³ ì´ì ë°©ì</b><br>`;
             if (orientation === 'initiator' && A3 > 0.5) {
-                n += `관계를 직접 설계하고 운영하는 타입이야. 대화의 흐름, 관계의 방향, 갈등의 해결까지 네가 주도하려는 패턴이 보여. 이건 강력한 리더십이지만, 상대가 수동적 역할에 고정되면서 관계 안에서의 자율성을 잃을 수 있어. `;
+                n += `ê´ê³ë¥¼ ì§ì  ì¤ê³íê³  ì´ìíë íìì´ì¼. ëíì íë¦, ê´ê³ì ë°©í¥, ê°ë±ì í´ê²°ê¹ì§ ë¤ê° ì£¼ëíë ¤ë í¨í´ì´ ë³´ì¬. ì´ê±´ ê°ë ¥í ë¦¬ëì­ì´ì§ë§, ìëê° ìëì  ì­í ì ê³ ì ëë©´ì ê´ê³ ìììì ìì¨ì±ì ìì ì ìì´. `;
             } else if (orientation === 'responder' && A2 > 0.5) {
-                n += `상대의 리드에 반응하면서 관계를 유지하는 타입이야. 상대의 신호를 민감하게 읽고 적절히 반응하는 능력이 있어. 다만 네가 원하는 방향으로 관계를 이끄는 경험이 부족해서, 능동적 관계 설계 능력을 키울 필요가 있어. `;
+                n += `ìëì ë¦¬ëì ë°ìíë©´ì ê´ê³ë¥¼ ì ì§íë íìì´ì¼. ìëì ì í¸ë¥¼ ë¯¼ê°íê² ì½ê³  ì ì í ë°ìíë ë¥ë ¥ì´ ìì´. ë¤ë§ ë¤ê° ìíë ë°©í¥ì¼ë¡ ê´ê³ë¥¼ ì´ëë ê²½íì´ ë¶ì¡±í´ì, ë¥ëì  ê´ê³ ì¤ê³ ë¥ë ¥ì í¤ì¸ íìê° ìì´. `;
             } else {
-                n += `관계 운영에서 유연한 전환이 가능한 타입이야. 상황에 따라 주도하기도, 반응하기도 해. 이건 적응력이 높다는 강점이지만, "이 관계에서 내가 원하는 게 뭔지"를 명확히 하지 않으면 무방향적으로 흘러갈 수 있어. `;
+                n += `ê´ê³ ì´ììì ì ì°í ì íì´ ê°ë¥í íìì´ì¼. ìí©ì ë°ë¼ ì£¼ëíê¸°ë, ë°ìíê¸°ë í´. ì´ê±´ ì ìë ¥ì´ ëë¤ë ê°ì ì´ì§ë§, "ì´ ê´ê³ìì ë´ê° ìíë ê² ë­ì§"ë¥¼ ëªíí íì§ ìì¼ë©´ ë¬´ë°©í¥ì ì¼ë¡ íë¬ê° ì ìì´. `;
             }
 
-            // 3. 위험 신호
-            n += `<br><br><b>잠재적 위험 패턴</b><br>`;
+            // 3. ìí ì í¸
+            n += `<br><br><b>ì ì¬ì  ìí í¨í´</b><br>`;
             const risks = [];
-            if (A4 > 0.7 && A6 < 0.4) risks.push(`감정 표현은 높은데 안정성이 낮아서, 감정적 폭발과 후회의 반복 사이클에 빠질 위험이 있어.`);
-            if (A2 > 0.7 && A3 < 0.3) risks.push(`수용성은 높은데 주장성이 낮아서, 관계에서 자신의 필요를 계속 뒤로 미루다가 결국 폭발하거나 관계를 갑자기 끊는 패턴이 나타날 수 있어.`);
-            if (conflict === 'avoidant' && intimacy === 'surface_locked') risks.push(`갈등 회피와 친밀감 천장이 동시에 관찰돼. 이 조합은 관계가 일정 수준 이상 발전하지 못하게 만드는 강력한 방어 체계야.`);
-            if (reciprocity === 'giver' && A3 < 0.4) risks.push(`많이 주면서 요구하지 않는 패턴인데, 이게 축적되면 "나는 이만큼 했는데"라는 원망이 폭발적으로 표출될 수 있어.`);
-            if (reciprocity === 'taker' && A2 < 0.4) risks.push(`받는 비중이 높으면서 상대의 감정 수용도가 낮아서, 관계가 일방적으로 흐를 위험이 커.`);
-            if (A1 > 0.7 && intimacy === 'fast_opener') risks.push(`몰입과 개방이 동시에 높아서 관계 초기에 과몰입하고, 현실과 기대의 괴리에 빠르게 실망하는 패턴이 나타날 수 있어.`);
-            if (risks.length === 0) risks.push(`뚜렷한 위험 패턴은 관찰되지 않지만, 너무 안정적인 것 자체가 성장의 정체를 의미할 수 있어. 가끔은 불편한 시도가 관계를 한 단계 끌어올려.`);
+            if (A4 > 0.7 && A6 < 0.4) risks.push(`ê°ì  ííì ëìë° ìì ì±ì´ ë®ìì, ê°ì ì  í­ë°ê³¼ ííì ë°ë³µ ì¬ì´í´ì ë¹ ì§ ìíì´ ìì´.`);
+            if (A2 > 0.7 && A3 < 0.3) risks.push(`ìì©ì±ì ëìë° ì£¼ì¥ì±ì´ ë®ìì, ê´ê³ìì ìì ì íìë¥¼ ê³ì ë¤ë¡ ë¯¸ë£¨ë¤ê° ê²°êµ­ í­ë°íê±°ë ê´ê³ë¥¼ ê°ìê¸° ëë í¨í´ì´ ëíë  ì ìì´.`);
+            if (conflict === 'avoidant' && intimacy === 'surface_locked') risks.push(`ê°ë± íí¼ì ì¹ë°ê° ì²ì¥ì´ ëìì ê´ì°°ë¼. ì´ ì¡°í©ì ê´ê³ê° ì¼ì  ìì¤ ì´ì ë°ì íì§ ëª»íê² ë§ëë ê°ë ¥í ë°©ì´ ì²´ê³ì¼.`);
+            if (reciprocity === 'giver' && A3 < 0.4) risks.push(`ë§ì´ ì£¼ë©´ì ìêµ¬íì§ ìë í¨í´ì¸ë°, ì´ê² ì¶ì ëë©´ "ëë ì´ë§í¼ íëë°"ë¼ë ìë§ì´ í­ë°ì ì¼ë¡ íì¶ë  ì ìì´.`);
+            if (reciprocity === 'taker' && A2 < 0.4) risks.push(`ë°ë ë¹ì¤ì´ ëì¼ë©´ì ìëì ê°ì  ìì©ëê° ë®ìì, ê´ê³ê° ì¼ë°©ì ì¼ë¡ íë¥¼ ìíì´ ì»¤.`);
+            if (A1 > 0.7 && intimacy === 'fast_opener') risks.push(`ëª°ìê³¼ ê°ë°©ì´ ëìì ëìì ê´ê³ ì´ê¸°ì ê³¼ëª°ìíê³ , íì¤ê³¼ ê¸°ëì ê´´ë¦¬ì ë¹ ë¥´ê² ì¤ë§íë í¨í´ì´ ëíë  ì ìì´.`);
+            if (risks.length === 0) risks.push(`ëë ·í ìí í¨í´ì ê´ì°°ëì§ ìì§ë§, ëë¬´ ìì ì ì¸ ê² ìì²´ê° ì±ì¥ì ì ì²´ë¥¼ ìë¯¸í  ì ìì´. ê°ëì ë¶í¸í ìëê° ê´ê³ë¥¼ í ë¨ê³ ëì´ì¬ë ¤.`);
             n += risks.join(' ');
 
-            // 4. 성장 방향
-            n += `<br><br><b>성장 방향</b><br>`;
+            // 4. ì±ì¥ ë°©í¥
+            n += `<br><br><b>ì±ì¥ ë°©í¥</b><br>`;
             if (dominantDrive === 'desire') {
-                n += `상대의 필요에 더 주의를 기울이는 연습이 관계의 질을 높일 거야. "내가 원하는 것"만큼 "상대가 원하는 것"을 같은 비중으로 고려하는 습관을 만들어봐. `;
+                n += `ìëì íìì ë ì£¼ìë¥¼ ê¸°ì¸ì´ë ì°ìµì´ ê´ê³ì ì§ì ëì¼ ê±°ì¼. "ë´ê° ìíë ê²"ë§í¼ "ìëê° ìíë ê²"ì ê°ì ë¹ì¤ì¼ë¡ ê³ ë ¤íë ìµê´ì ë§ë¤ì´ë´. `;
             } else {
-                n += `자신의 욕구를 더 명확히 인식하고 표현하는 연습이 필요해. 상대에게 맞추는 것도 중요하지만, "나는 이걸 원해"라고 말할 수 있는 용기가 장기 관계의 기반이야. `;
+                n += `ìì ì ìêµ¬ë¥¼ ë ëªíí ì¸ìíê³  íííë ì°ìµì´ íìí´. ìëìê² ë§ì¶ë ê²ë ì¤ìíì§ë§, "ëë ì´ê±¸ ìí´"ë¼ê³  ë§í  ì ìë ì©ê¸°ê° ì¥ê¸° ê´ê³ì ê¸°ë°ì´ì¼. `;
             }
-            if (A4 < 0.3) n += `감정 표현의 범위를 조금씩 넓혀보는 것도 추천해. 작은 것부터, 안전한 관계에서부터 시작하면 돼. `;
-            if (conflict === 'avoidant') n += `작은 불만을 바로 표현하는 연습을 해봐. 큰 갈등은 작은 갈등의 축적에서 오거든. `;
-            if (intimacy === 'surface_locked') n += `신뢰할 수 있는 한 사람에게라도 평소보다 조금 더 깊은 이야기를 나눠보는 시도가 친밀감의 천장을 높이는 첫 걸음이야.`;
+            if (A4 < 0.3) n += `ê°ì  ííì ë²ìë¥¼ ì¡°ê¸ì© ëíë³´ë ê²ë ì¶ì²í´. ìì ê²ë¶í°, ìì í ê´ê³ììë¶í° ììíë©´ ë¼. `;
+            if (conflict === 'avoidant') n += `ìì ë¶ë§ì ë°ë¡ íííë ì°ìµì í´ë´. í° ê°ë±ì ìì ê°ë±ì ì¶ì ìì ì¤ê±°ë . `;
+            if (intimacy === 'surface_locked') n += `ì ë¢°í  ì ìë í ì¬ëìê²ë¼ë íìë³´ë¤ ì¡°ê¸ ë ê¹ì ì´ì¼ê¸°ë¥¼ ëë ë³´ë ìëê° ì¹ë°ê°ì ì²ì¥ì ëì´ë ì²« ê±¸ìì´ì¼.`;
 
             return n;
         }
 
         const LENSES = {
-            '사랑의 구조': lensLove,
-            '감정의 수지결산': lensEmotion,
-            '갈등 면역 체계': lensConflict,
-            '친밀감의 지형도': lensIntimacy,
-            '관계 속 권력': lensPower,
-            '관계 속의 나': lensSelf,
-            '변화의 궤적': lensChange
+            'ì¬ëì êµ¬ì¡°': lensLove,
+            'ê°ì ì ìì§ê²°ì°': lensEmotion,
+            'ê°ë± ë©´ì­ ì²´ê³': lensConflict,
+            'ì¹ë°ê°ì ì§íë': lensIntimacy,
+            'ê´ê³ ì ê¶ë ¥': lensPower,
+            'ê´ê³ ìì ë': lensSelf,
+            'ë³íì ê¶¤ì ': lensChange
         };
 
         // ============ RESOLUTION & DIAGNOSTICS ============
@@ -2163,31 +2163,31 @@
             const sharpness = computeProfileSharpness(profile);
             const reasons = [];
 
-            if ((profile?.rates?.totalMsgs || 0) < 12) reasons.push('메시지 수 적음');
-            if ((d.sessionCount || 0) < 2) reasons.push('대화 횟수 적음');
-            if ((d.fillerRate || 0) > 0.32) reasons.push('짧은 반응 많음');
-            if ((d.consistencyScore || 0) < 0.45) reasons.push('말투 변화 큼');
-            if ((d.coverageScore || 0) < 0.50) reasons.push('데이터 부족');
+            if ((profile?.rates?.totalMsgs || 0) < 12) reasons.push('ë©ìì§ ì ì ì');
+            if ((d.sessionCount || 0) < 2) reasons.push('ëí íì ì ì');
+            if ((d.fillerRate || 0) > 0.32) reasons.push('ì§§ì ë°ì ë§ì');
+            if ((d.consistencyScore || 0) < 0.45) reasons.push('ë§í¬ ë³í í¼');
+            if ((d.coverageScore || 0) < 0.50) reasons.push('ë°ì´í° ë¶ì¡±');
 
-            let label = '낮음', key = 'low';
-            let scope = '대략적인 방향은 참고할 수 있지만, 세부 결과는 실제와 다를 수 있어요.';
-            let usefulFor = '대화 스타일의 큰 방향';
-            let notFor = '상대의 진짜 감정, 관계의 객관적 판단';
+            let label = 'ë®ì', key = 'low';
+            let scope = 'ëëµì ì¸ ë°©í¥ì ì°¸ê³ í  ì ìì§ë§, ì¸ë¶ ê²°ê³¼ë ì¤ì ì ë¤ë¥¼ ì ìì´ì.';
+            let usefulFor = 'ëí ì¤íì¼ì í° ë°©í¥';
+            let notFor = 'ìëì ì§ì§ ê°ì , ê´ê³ì ê°ê´ì  íë¨';
 
             if (score >= 0.78) {
-                label = '높음'; key = 'high';
-                scope = '대화 패턴이 선명해서 성향 분석 결과를 꽤 신뢰할 수 있어요.';
-                usefulFor = '대화 습관, 감정 표현 방식, 관계 스타일';
-                notFor = '상대방 심리, 관계 전체의 판단';
+                label = 'ëì'; key = 'high';
+                scope = 'ëí í¨í´ì´ ì ëªí´ì ì±í¥ ë¶ì ê²°ê³¼ë¥¼ ê½¤ ì ë¢°í  ì ìì´ì.';
+                usefulFor = 'ëí ìµê´, ê°ì  íí ë°©ì, ê´ê³ ì¤íì¼';
+                notFor = 'ìëë°© ì¬ë¦¬, ê´ê³ ì ì²´ì íë¨';
             } else if (score >= 0.58) {
-                label = '보통'; key = 'medium';
-                scope = '주요 패턴은 보이지만, 상황에 따라 달라질 수 있는 부분도 있어요.';
-                usefulFor = '전반적인 대화 성향과 행동 패턴';
-                notFor = '미세한 변화 해석, 한 마디에 의미 부여';
+                label = 'ë³´íµ'; key = 'medium';
+                scope = 'ì£¼ì í¨í´ì ë³´ì´ì§ë§, ìí©ì ë°ë¼ ë¬ë¼ì§ ì ìë ë¶ë¶ë ìì´ì.';
+                usefulFor = 'ì ë°ì ì¸ ëí ì±í¥ê³¼ íë í¨í´';
+                notFor = 'ë¯¸ì¸í ë³í í´ì, í ë§ëì ìë¯¸ ë¶ì¬';
             }
 
             return { score, label, key, scope, usefulFor, notFor, reasons, sharpness,
-                meaning: '해상도는 정답률 점수가 아니라, 네 메시지 안에서 반복 패턴이 얼마나 선명하게 잡히는지의 지표입니다.'
+                meaning: 'í´ìëë ì ëµë¥  ì ìê° ìëë¼, ë¤ ë©ìì§ ììì ë°ë³µ í¨í´ì´ ì¼ë§ë ì ëªíê² ì¡íëì§ì ì§íìëë¤.'
             };
         }
 
@@ -2196,11 +2196,11 @@
             const d = profile?.rates?.diagnostics || {};
             const score = clamp01(profile?.rates?.confidence || 0);
 
-            if ((profile?.rates?.totalMsgs || 0) < 12) flags.push('메시지가 적어서 큰 방향만 참고하는 게 좋아요.');
-            if ((d.sessionCount || 0) < 2) flags.push('대화가 적어서 특정 시기 말투가 전체처럼 보일 수 있어요.');
-            if ((d.fillerRate || 0) > 0.32) flags.push('짧은 반응이 많아서 무관심인지 원래 스타일인지 구분이 어려워요.');
-            if ((d.consistencyScore || 0) < 0.45) flags.push('상황마다 말투가 많이 달라져서 하나의 성격으로 정리하기 어려워요.');
-            if (score < 0.58) flags.push('신뢰도가 낮아서 대략적인 방향만 참고하세요.');
+            if ((profile?.rates?.totalMsgs || 0) < 12) flags.push('ë©ìì§ê° ì ì´ì í° ë°©í¥ë§ ì°¸ê³ íë ê² ì¢ìì.');
+            if ((d.sessionCount || 0) < 2) flags.push('ëíê° ì ì´ì í¹ì  ìê¸° ë§í¬ê° ì ì²´ì²ë¼ ë³´ì¼ ì ìì´ì.');
+            if ((d.fillerRate || 0) > 0.32) flags.push('ì§§ì ë°ìì´ ë§ìì ë¬´ê´ì¬ì¸ì§ ìë ì¤íì¼ì¸ì§ êµ¬ë¶ì´ ì´ë ¤ìì.');
+            if ((d.consistencyScore || 0) < 0.45) flags.push('ìí©ë§ë¤ ë§í¬ê° ë§ì´ ë¬ë¼ì ¸ì íëì ì±ê²©ì¼ë¡ ì ë¦¬íê¸° ì´ë ¤ìì.');
+            if (score < 0.58) flags.push('ì ë¢°ëê° ë®ìì ëëµì ì¸ ë°©í¥ë§ ì°¸ê³ íì¸ì.');
             return flags;
         }
 
@@ -2209,16 +2209,16 @@
             const summary = getResolutionSummary(profile);
 
             const cards = [
-                { label: '신뢰도', value: `${summary.label} · ${formatPercent(summary.score)}`, hint: '분석 결과를 얼마나 믿을 수 있나' },
-                { label: '데이터 양', value: formatPercent(d.coverageScore), hint: `${profile?.rates?.totalMsgs || 0}개 메시지 · ${d.sessionCount || 0}개 대화` },
-                { label: '내용 충실도', value: formatPercent(d.densityScore), hint: `의미있는 발화 ${formatPercent(d.substantiveRate)} · 평균 ${d.avgLen || 0}자` },
-                { label: '말투 일관성', value: formatPercent(d.consistencyScore), hint: '상황별 말투 차이가 얼마나 큰지' },
-                { label: '성격 뚜렷함', value: formatPercent(summary.sharpness), hint: '행동 패턴이 얼마나 선명한지' },
-                { label: '질문 비율', value: formatPercent(d.questionMsgRate), hint: '궁금해하고 물어보는 빈도' },
-                { label: '속마음 공유', value: formatPercent(d.deepDisclosureRate), hint: '개인적인 이야기·내면 언급' },
-                { label: '짧은 반응', value: formatPercent(d.fillerRate), hint: '"ㅋㅋ", "ㅇㅇ" 같은 단문 비중' },
-                { label: '대화 시작', value: formatPercent(d.startActivation), hint: '먼저 말 거는 빈도' },
-                { label: '맞장구', value: formatPercent(d.responseToneRate), hint: '"그치", "맞아" 같은 호응 비중' }
+                { label: 'ì ë¢°ë', value: `${summary.label} Â· ${formatPercent(summary.score)}`, hint: 'ë¶ì ê²°ê³¼ë¥¼ ì¼ë§ë ë¯¿ì ì ìë' },
+                { label: 'ë°ì´í° ì', value: formatPercent(d.coverageScore), hint: `${profile?.rates?.totalMsgs || 0}ê° ë©ìì§ Â· ${d.sessionCount || 0}ê° ëí` },
+                { label: 'ë´ì© ì¶©ì¤ë', value: formatPercent(d.densityScore), hint: `ìë¯¸ìë ë°í ${formatPercent(d.substantiveRate)} Â· íê·  ${d.avgLen || 0}ì` },
+                { label: 'ë§í¬ ì¼ê´ì±', value: formatPercent(d.consistencyScore), hint: 'ìí©ë³ ë§í¬ ì°¨ì´ê° ì¼ë§ë í°ì§' },
+                { label: 'ì±ê²© ëë ·í¨', value: formatPercent(summary.sharpness), hint: 'íë í¨í´ì´ ì¼ë§ë ì ëªíì§' },
+                { label: 'ì§ë¬¸ ë¹ì¨', value: formatPercent(d.questionMsgRate), hint: 'ê¶ê¸í´íê³  ë¬¼ì´ë³´ë ë¹ë' },
+                { label: 'ìë§ì ê³µì ', value: formatPercent(d.deepDisclosureRate), hint: 'ê°ì¸ì ì¸ ì´ì¼ê¸°Â·ë´ë©´ ì¸ê¸' },
+                { label: 'ì§§ì ë°ì', value: formatPercent(d.fillerRate), hint: '"ãã", "ãã" ê°ì ë¨ë¬¸ ë¹ì¤' },
+                { label: 'ëí ìì', value: formatPercent(d.startActivation), hint: 'ë¨¼ì  ë§ ê±°ë ë¹ë' },
+                { label: 'ë§ì¥êµ¬', value: formatPercent(d.responseToneRate), hint: '"ê·¸ì¹", "ë§ì" ê°ì í¸ì ë¹ì¤' }
             ];
 
             const flags = buildQualityFlags(profile);
@@ -2227,16 +2227,16 @@
                 <div class="reliability-summary ${summary.key}">
                     <div class="reliability-top">
                         <div>
-                            <div class="reliability-title">분석 신뢰도</div>
-                            <div class="reliability-value">${summary.label} · ${formatPercent(summary.score)}</div>
-                            <div class="reliability-explain">${summary.scope}<br>이 수치는 정답률이 아니라, 대화에서 반복 패턴이 얼마나 선명하게 잡히는지를 나타내요.</div>
+                            <div class="reliability-title">ë¶ì ì ë¢°ë</div>
+                            <div class="reliability-value">${summary.label} Â· ${formatPercent(summary.score)}</div>
+                            <div class="reliability-explain">${summary.scope}<br>ì´ ìì¹ë ì ëµë¥ ì´ ìëë¼, ëíìì ë°ë³µ í¨í´ì´ ì¼ë§ë ì ëªíê² ì¡íëì§ë¥¼ ëíë´ì.</div>
                         </div>
-                        <div class="reliability-chip">로컬 분석 · 원문 미노출</div>
+                        <div class="reliability-chip">ë¡ì»¬ ë¶ì Â· ìë¬¸ ë¯¸ë¸ì¶</div>
                     </div>
                     <div class="quality-flags">
-                        <div class="quality-flag ${summary.key === 'high' ? 'good' : ''}"><strong>믿을 수 있는 것</strong><br>${summary.usefulFor}</div>
-                        <div class="quality-flag"><strong>너무 믿으면 안 되는 것</strong><br>${summary.notFor}</div>
-                        ${summary.reasons.length ? `<div class="quality-flag"><strong>신뢰도가 깎인 이유</strong><br>${summary.reasons.join(' · ')}</div>` : '<div class="quality-flag good"><strong>신뢰도를 높인 조건</strong><br>데이터 양, 내용 충실도, 말투 일관성이 모두 충분해요.</div>'}
+                        <div class="quality-flag ${summary.key === 'high' ? 'good' : ''}"><strong>ë¯¿ì ì ìë ê²</strong><br>${summary.usefulFor}</div>
+                        <div class="quality-flag"><strong>ëë¬´ ë¯¿ì¼ë©´ ì ëë ê²</strong><br>${summary.notFor}</div>
+                        ${summary.reasons.length ? `<div class="quality-flag"><strong>ì ë¢°ëê° ê¹ì¸ ì´ì </strong><br>${summary.reasons.join(' Â· ')}</div>` : '<div class="quality-flag good"><strong>ì ë¢°ëë¥¼ ëì¸ ì¡°ê±´</strong><br>ë°ì´í° ì, ë´ì© ì¶©ì¤ë, ë§í¬ ì¼ê´ì±ì´ ëª¨ë ì¶©ë¶í´ì.</div>'}
                     </div>
                 </div>
                 <div class="diag-grid">
@@ -2249,7 +2249,7 @@
                     `).join('')}
                 </div>
                 <div class="quality-flags">
-                    ${flags.length ? flags.map(flag => `<div class="quality-flag">${flag}</div>`).join('') : '<div class="quality-flag good">대화 패턴이 선명해서 분석 결과를 적극적으로 참고할 수 있어요.</div>'}
+                    ${flags.length ? flags.map(flag => `<div class="quality-flag">${flag}</div>`).join('') : '<div class="quality-flag good">ëí í¨í´ì´ ì ëªí´ì ë¶ì ê²°ê³¼ë¥¼ ì ê·¹ì ì¼ë¡ ì°¸ê³ í  ì ìì´ì.</div>'}
                 </div>
             `;
         }
@@ -2261,68 +2261,68 @@
             if (!trends) return '';
 
             function trendBadge(trend) {
-                if (trend === '상승') return '<span class="trend-badge up">↑ 상승</span>';
-                if (trend === '하락') return '<span class="trend-badge down">↓ 하락</span>';
-                return '<span class="trend-badge stable">— 유지</span>';
+                if (trend === 'ìì¹') return '<span class="trend-badge up">â ìì¹</span>';
+                if (trend === 'íë½') return '<span class="trend-badge down">â íë½</span>';
+                return '<span class="trend-badge stable">â ì ì§</span>';
             }
 
             let html = `<div class="temporal-section">
-                <div class="temporal-title">변화 추세</div>
+                <div class="temporal-title">ë³í ì¶ì¸</div>
                 <div class="diag-grid">
                     <div class="diag-card">
-                        <div class="diag-label">속마음 공유</div>
+                        <div class="diag-label">ìë§ì ê³µì </div>
                         <div class="diag-value">${trendBadge(trends.sharingTrend)}</div>
-                        <div class="diag-hint">시간 지나면서 더 열었나</div>
+                        <div class="diag-hint">ìê° ì§ëë©´ì ë ì´ìë</div>
                     </div>
                     <div class="diag-card">
-                        <div class="diag-label">친해지는 속도</div>
+                        <div class="diag-label">ì¹í´ì§ë ìë</div>
                         <div class="diag-value">${trendBadge(trends.intimacyTrend)}</div>
-                        <div class="diag-hint">대화가 점점 깊어졌나</div>
+                        <div class="diag-hint">ëíê° ì ì  ê¹ì´ì¡ë</div>
                     </div>
                     <div class="diag-card">
-                        <div class="diag-label">감정 표현</div>
+                        <div class="diag-label">ê°ì  íí</div>
                         <div class="diag-value">${trendBadge(trends.emotionTrend)}</div>
-                        <div class="diag-hint">감정을 점점 더 드러냈나</div>
+                        <div class="diag-hint">ê°ì ì ì ì  ë ëë¬ëë</div>
                     </div>
                     <div class="diag-card">
-                        <div class="diag-label">선 긋기</div>
+                        <div class="diag-label">ì  ê¸ê¸°</div>
                         <div class="diag-value">${trendBadge(summarizeTrend(0, trends.boundaryDelta))}</div>
-                        <div class="diag-hint">경계를 더 세웠나 풀었나</div>
+                        <div class="diag-hint">ê²½ê³ë¥¼ ë ì¸ì ë íìë</div>
                     </div>
                 </div>`;
 
             // Temporal averages if enough data
             if (temporal) {
                 const labels = temporal.labels;
-                html += `<div class="temporal-title" style="margin-top:12px;">시기별 비교</div>
+                html += `<div class="temporal-title" style="margin-top:12px;">ìê¸°ë³ ë¹êµ</div>
                     <div style="overflow-x:auto;">
                     <table style="width:100%;font-size:12px;border-collapse:collapse;">
                         <tr style="color:var(--text-dim);border-bottom:1px solid var(--border);">
-                            <td style="padding:6px;">지표</td>
+                            <td style="padding:6px;">ì§í</td>
                             <td style="padding:6px;text-align:center;">${labels[0]}</td>
                             <td style="padding:6px;text-align:center;">${labels[1]}</td>
                             <td style="padding:6px;text-align:center;font-weight:600;color:var(--ac);">${labels[2]}</td>
                         </tr>
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                            <td style="padding:6px;">자기노출</td>
+                            <td style="padding:6px;">ìê¸°ë¸ì¶</td>
                             <td style="padding:6px;text-align:center;">${formatPercent(temporal.full.sharing)}</td>
                             <td style="padding:6px;text-align:center;">${formatPercent(temporal.recentHalf.sharing)}</td>
                             <td style="padding:6px;text-align:center;font-weight:600;">${formatPercent(temporal.recentTenth.sharing)}</td>
                         </tr>
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                            <td style="padding:6px;">깊은 노출</td>
+                            <td style="padding:6px;">ê¹ì ë¸ì¶</td>
                             <td style="padding:6px;text-align:center;">${formatPercent(temporal.full.deep)}</td>
                             <td style="padding:6px;text-align:center;">${formatPercent(temporal.recentHalf.deep)}</td>
                             <td style="padding:6px;text-align:center;font-weight:600;">${formatPercent(temporal.recentTenth.deep)}</td>
                         </tr>
                         <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                            <td style="padding:6px;">감정 표현</td>
+                            <td style="padding:6px;">ê°ì  íí</td>
                             <td style="padding:6px;text-align:center;">${formatPercent(temporal.full.emotion)}</td>
                             <td style="padding:6px;text-align:center;">${formatPercent(temporal.recentHalf.emotion)}</td>
                             <td style="padding:6px;text-align:center;font-weight:600;">${formatPercent(temporal.recentTenth.emotion)}</td>
                         </tr>
                         <tr>
-                            <td style="padding:6px;">경계 설정</td>
+                            <td style="padding:6px;">ê²½ê³ ì¤ì </td>
                             <td style="padding:6px;text-align:center;">${formatPercent(temporal.full.boundary)}</td>
                             <td style="padding:6px;text-align:center;">${formatPercent(temporal.recentHalf.boundary)}</td>
                             <td style="padding:6px;text-align:center;font-weight:600;">${formatPercent(temporal.recentTenth.boundary)}</td>
@@ -2332,21 +2332,21 @@
 
                 if (temporal.highVariance) {
                     html += `<div class="temporal-insight" style="margin-top:8px;color:#F5A623;">
-                        ⚠ 변동폭이 크게 관찰돼서 최근 데이터에 더 가중치를 둔 분석이 적합합니다. 전체 평균보다 최근 구간의 값이 현재 패턴에 가깝습니다.
+                        â  ë³ëí­ì´ í¬ê² ê´ì°°ë¼ì ìµê·¼ ë°ì´í°ì ë ê°ì¤ì¹ë¥¼ ë ë¶ìì´ ì í©í©ëë¤. ì ì²´ íê· ë³´ë¤ ìµê·¼ êµ¬ê°ì ê°ì´ íì¬ í¨í´ì ê°ê¹ìµëë¤.
                     </div>`;
                 }
             }
 
             // Temporal insight text
-            const allStable = trends.sharingTrend === '유지' && trends.intimacyTrend === '유지' && trends.emotionTrend === '유지';
+            const allStable = trends.sharingTrend === 'ì ì§' && trends.intimacyTrend === 'ì ì§' && trends.emotionTrend === 'ì ì§';
             if (allStable) {
-                html += `<div class="temporal-insight">대화 패턴이 시간에 걸쳐 일관됩니다. 분석 결과의 안정성이 높습니다.</div>`;
+                html += `<div class="temporal-insight">ëí í¨í´ì´ ìê°ì ê±¸ì³ ì¼ê´ë©ëë¤. ë¶ì ê²°ê³¼ì ìì ì±ì´ ëìµëë¤.</div>`;
             } else {
                 const changes = [];
-                if (trends.sharingTrend !== '유지') changes.push(`자기노출 ${trends.sharingTrend}`);
-                if (trends.intimacyTrend !== '유지') changes.push(`친밀감 ${trends.intimacyTrend}`);
-                if (trends.emotionTrend !== '유지') changes.push(`감정 ${trends.emotionTrend}`);
-                html += `<div class="temporal-insight">시간에 따른 변화가 감지됨: ${changes.join(', ')}. 후반부 데이터가 현재 상태에 더 가깝습니다.</div>`;
+                if (trends.sharingTrend !== 'ì ì§') changes.push(`ìê¸°ë¸ì¶ ${trends.sharingTrend}`);
+                if (trends.intimacyTrend !== 'ì ì§') changes.push(`ì¹ë°ê° ${trends.intimacyTrend}`);
+                if (trends.emotionTrend !== 'ì ì§') changes.push(`ê°ì  ${trends.emotionTrend}`);
+                html += `<div class="temporal-insight">ìê°ì ë°ë¥¸ ë³íê° ê°ì§ë¨: ${changes.join(', ')}. íë°ë¶ ë°ì´í°ê° íì¬ ìíì ë ê°ê¹ìµëë¤.</div>`;
             }
 
             html += `</div>`;
@@ -2354,9 +2354,9 @@
         }
 
         // ============ WORKER API INTEGRATION ============
-        // TODO: 배포 후 실제 Worker URL로 교체
+        // TODO: ë°°í¬ í ì¤ì  Worker URLë¡ êµì²´
         const WORKER_URL = 'https://knot-exodia.ashirmallo.workers.dev';
-        let USE_LLM = true; // LLM 분석 사용 여부 (Worker 연결 실패시 자동 fallback)
+        let USE_LLM = true; // LLM ë¶ì ì¬ì© ì¬ë¶ (Worker ì°ê²° ì¤í¨ì ìë fallback)
 
         async function callWorkerAnalyze(axes, rates, messagesSample, lensSummary) {
             try {
@@ -2393,7 +2393,7 @@
         }
 
         function extractMessagesSample(messages, maxCount = 20) {
-            if (!messages || messages.length === 0) return '(메시지 없음)';
+            if (!messages || messages.length === 0) return '(ë©ìì§ ìì)';
             const sample = messages.length > maxCount
                 ? messages.filter((_, i) => i % Math.ceil(messages.length / maxCount) === 0).slice(0, maxCount)
                 : messages;
@@ -2404,12 +2404,12 @@
             }).join('\n');
         }
 
-        // 7개 렌즈 요약을 사전 계산 (Worker에 전달)
+        // 7ê° ë ì¦ ìì½ì ì¬ì  ê³ì° (Workerì ì ë¬)
         function buildLensSummary(axes) {
             const parts = [];
             for (const [name, fn] of Object.entries(LENSES)) {
                 const result = fn(axes);
-                // HTML 태그 제거하고 첫 100자만
+                // HTML íê·¸ ì ê±°íê³  ì²« 100ìë§
                 const text = result.replace(/<[^>]+>/g, '').substring(0, 100);
                 parts.push(`${name}: ${text}`);
             }
@@ -2421,7 +2421,7 @@
         // ============ ANALYSIS ORCHESTRATION ============
         async function analyzeConversation(file) {
             showScreen('analyzing');
-            updateProgress('파일 파싱...');
+            updateProgress('íì¼ íì±...');
 
             try {
                 let messages;
@@ -2432,19 +2432,19 @@
                     messages = await parseFile(file);
                 }
 
-                updateProgress('행동 패턴 분석...');
+                updateProgress('íë í¨í´ ë¶ì...');
                 const rates = computeRates(messages);
 
-                updateProgress('축 계산...');
+                updateProgress('ì¶ ê³ì°...');
                 const axes = computeAxes(rates);
 
-                updateProgress('결과 생성...');
+                updateProgress('ê²°ê³¼ ìì±...');
                 const type = computeType(axes);
 
-                // LLM 분석 시도
+                // LLM ë¶ì ìë
                 let llmResult = null;
                 if (USE_LLM) {
-                    updateProgress('AI 심층 분석 중... (10~20초 소요)');
+                    updateProgress('AI ì¬ì¸µ ë¶ì ì¤... (10~20ì´ ìì)');
                     const messagesSample = extractMessagesSample(messages);
                     const lensSummary = buildLensSummary(axes);
                     llmResult = await callWorkerAnalyze(axes, rates, messagesSample, lensSummary);
@@ -2461,7 +2461,7 @@
 
                 displayResult();
             } catch (error) {
-                alert('분석 오류: ' + error.message);
+                alert('ë¶ì ì¤ë¥: ' + error.message);
                 goToLanding();
             }
         }
@@ -2476,7 +2476,7 @@
             document.getElementById('typeCode').textContent = type.code;
             document.getElementById('typeName').textContent = type.name;
             const resolution = getResolutionSummary(profile);
-            document.getElementById('typeDesc').textContent = `${type.desc} · 신뢰도 ${resolution.label} (${formatPercent(resolution.score)})`;
+            document.getElementById('typeDesc').textContent = `${type.desc} Â· ì ë¢°ë ${resolution.label} (${formatPercent(resolution.score)})`;
 
             // Diagnostics panel
             document.getElementById('diagnosticsPanel').innerHTML = renderDiagnosticsPanel(profile);
@@ -2493,7 +2493,7 @@
             let partnersHTML = '';
 
             if (partners.ideal.length > 0) {
-                partnersHTML += '<div style="margin-bottom: 15px;"><div style="font-size: 12px; font-weight: 600; color: #4ADE80; margin-bottom: 10px;">이상적 유형</div>';
+                partnersHTML += '<div style="margin-bottom: 15px;"><div style="font-size: 12px; font-weight: 600; color: #4ADE80; margin-bottom: 10px;">ì´ìì  ì í</div>';
                 partners.ideal.forEach(p => {
                     const typeDef = TYPE_DEFINITIONS[p.code];
                     partnersHTML += `
@@ -2510,7 +2510,7 @@
             }
 
             if (partners.compatible.length > 0) {
-                partnersHTML += '<div style="margin-bottom: 15px;"><div style="font-size: 12px; font-weight: 600; color: #60A5FA; margin-bottom: 10px;">적응 가능 유형</div>';
+                partnersHTML += '<div style="margin-bottom: 15px;"><div style="font-size: 12px; font-weight: 600; color: #60A5FA; margin-bottom: 10px;">ì ì ê°ë¥ ì í</div>';
                 partners.compatible.forEach(p => {
                     const typeDef = TYPE_DEFINITIONS[p.code];
                     partnersHTML += `
@@ -2527,7 +2527,7 @@
             }
 
             if (partners.challenging.length > 0) {
-                partnersHTML += '<div style="margin-bottom: 15px;"><div style="font-size: 12px; font-weight: 600; color: #F87171; margin-bottom: 10px;">도전 유형</div>';
+                partnersHTML += '<div style="margin-bottom: 15px;"><div style="font-size: 12px; font-weight: 600; color: #F87171; margin-bottom: 10px;">ëì  ì í</div>';
                 partners.challenging.forEach(p => {
                     const typeDef = TYPE_DEFINITIONS[p.code];
                     partnersHTML += `
@@ -2547,12 +2547,12 @@
 
             let intensityHTML = '';
             const intensityAxes = [
-                { id: 'A1', label: AXIS_LABELS.A1, value: axes.intensity.A1, desc: '상대나 주제에 얼마나 적극적으로 반응하나' },
-                { id: 'A2', label: AXIS_LABELS.A2, value: axes.intensity.A2, desc: '상대 감정을 얼마나 받아주나' },
-                { id: 'A3', label: AXIS_LABELS.A3, value: axes.intensity.A3, desc: '자기 의견을 얼마나 직접 말하나' },
-                { id: 'A4', label: AXIS_LABELS.A4, value: axes.intensity.A4, desc: '기분이나 감정을 얼마나 드러내나' },
-                { id: 'A5', label: AXIS_LABELS.A5, value: axes.intensity.A5, desc: '상대를 얼마나 챙기고 도와주나' },
-                { id: 'A6', label: AXIS_LABELS.A6, value: axes.intensity.A6, desc: '말투와 태도가 얼마나 일정한가' }
+                { id: 'A1', label: AXIS_LABELS.A1, value: axes.intensity.A1, desc: 'ìëë ì£¼ì ì ì¼ë§ë ì ê·¹ì ì¼ë¡ ë°ìíë' },
+                { id: 'A2', label: AXIS_LABELS.A2, value: axes.intensity.A2, desc: 'ìë ê°ì ì ì¼ë§ë ë°ìì£¼ë' },
+                { id: 'A3', label: AXIS_LABELS.A3, value: axes.intensity.A3, desc: 'ìê¸° ìê²¬ì ì¼ë§ë ì§ì  ë§íë' },
+                { id: 'A4', label: AXIS_LABELS.A4, value: axes.intensity.A4, desc: 'ê¸°ë¶ì´ë ê°ì ì ì¼ë§ë ëë¬ë´ë' },
+                { id: 'A5', label: AXIS_LABELS.A5, value: axes.intensity.A5, desc: 'ìëë¥¼ ì¼ë§ë ì±ê¸°ê³  ëìì£¼ë' },
+                { id: 'A6', label: AXIS_LABELS.A6, value: axes.intensity.A6, desc: 'ë§í¬ì íëê° ì¼ë§ë ì¼ì íê°' }
             ];
 
             intensityAxes.forEach(axis => {
@@ -2601,16 +2601,16 @@
             });
             document.getElementById('structuralAxes').innerHTML = structHTML;
 
-            // 프로필 분석: LLM 10섹션 결과 우선, fallback으로 7렌즈 로컬 분석
+            // íë¡í ë¶ì: LLM 10ì¹ì ê²°ê³¼ ì°ì , fallbackì¼ë¡ 7ë ì¦ ë¡ì»¬ ë¶ì
             let lensesHTML = '';
             const llmSections = profile.llmResult && profile.llmResult.sections;
 
             if (llmSections) {
-                // LLM 10-섹션 출력
+                // LLM 10-ì¹ì ì¶ë ¥
                 const sectionNames = [
-                    '전반적 인상', '감정 표현과 정서 처리', '사고와 해석 방식',
-                    '대화 스타일', '관계에서 중요한 가치', '호감 형성 리듬',
-                    '함께할 때 예상 분위기', '어려워질 수 있는 지점', '매력 포인트', '세 문장 요약'
+                    'ì ë°ì  ì¸ì', 'ê°ì  ííê³¼ ì ì ì²ë¦¬', 'ì¬ê³ ì í´ì ë°©ì',
+                    'ëí ì¤íì¼', 'ê´ê³ìì ì¤ìí ê°ì¹', 'í¸ê° íì± ë¦¬ë¬',
+                    'í¨ê»í  ë ìì ë¶ìê¸°', 'ì´ë ¤ìì§ ì ìë ì§ì ', 'ë§¤ë ¥ í¬ì¸í¸', 'ì¸ ë¬¸ì¥ ìì½'
                 ];
                 sectionNames.forEach((name, idx) => {
                     const content = llmSections[name] || '';
@@ -2619,20 +2619,20 @@
                         <div class="lens-card">
                             <div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')">
                                 <span class="lens-title">${name} <span style="font-size:10px;color:var(--ac);font-weight:400;">AI</span></span>
-                                <span class="lens-toggle">▼</span>
+                                <span class="lens-toggle">â¼</span>
                             </div>
                             <div class="lens-content${isOpen}">${content}</div>
                         </div>
                     `;
                 });
             } else {
-                // Fallback: 기존 7렌즈 로컬 분석
+                // Fallback: ê¸°ì¡´ 7ë ì¦ ë¡ì»¬ ë¶ì
                 for (const [lensName, lensFunc] of Object.entries(LENSES)) {
                     lensesHTML += `
                         <div class="lens-card">
                             <div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')">
                                 <span class="lens-title">${lensName}</span>
-                                <span class="lens-toggle">▼</span>
+                                <span class="lens-toggle">â¼</span>
                             </div>
                             <div class="lens-content">${lensFunc(axes)}</div>
                         </div>
@@ -2649,7 +2649,7 @@
             }))));
             document.getElementById('profileCode').textContent = profileCode;
 
-            // 피드백 설문 렌더링
+            // í¼ëë°± ì¤ë¬¸ ë ëë§
             renderFeedbackSurvey();
 
             showScreen('result');
@@ -2666,36 +2666,36 @@
 
             content.innerHTML = `
                 <div class="feedback-survey" id="feedbackForm">
-                    <div class="feedback-q">전체 만족도</div>
+                    <div class="feedback-q">ì ì²´ ë§ì¡±ë</div>
                     <div class="feedback-stars" id="feedbackStars">
-                        ${[1,2,3,4,5].map(n => `<span class="feedback-star" data-n="${n}" onclick="setFeedbackRating(${n})">★</span>`).join('')}
+                        ${[1,2,3,4,5].map(n => `<span class="feedback-star" data-n="${n}" onclick="setFeedbackRating(${n})">â</span>`).join('')}
                     </div>
 
-                    <div class="feedback-q">분석이 나를 정확히 설명한다고 느꼈나요?</div>
+                    <div class="feedback-q">ë¶ìì´ ëë¥¼ ì íí ì¤ëªíë¤ê³  ëê¼ëì?</div>
                     <div class="feedback-options" id="fbAccuracy">
-                        ${['매우 정확', '대체로 맞음', '반반', '별로', '전혀 아님'].map(v =>
+                        ${['ë§¤ì° ì í', 'ëì²´ë¡ ë§ì', 'ë°ë°', 'ë³ë¡', 'ì í ìë'].map(v =>
                             `<span class="feedback-chip" onclick="setFeedbackChip('accuracy','${v}',this)">${v}</span>`
                         ).join('')}
                     </div>
 
-                    <div class="feedback-q">결과가 연애/관계 맥락에서 유용했나요?</div>
+                    <div class="feedback-q">ê²°ê³¼ê° ì°ì /ê´ê³ ë§¥ë½ìì ì ì©íëì?</div>
                     <div class="feedback-options" id="fbUseful">
-                        ${['매우 유용', '어느 정도', '보통', '별로', '전혀'].map(v =>
+                        ${['ë§¤ì° ì ì©', 'ì´ë ì ë', 'ë³´íµ', 'ë³ë¡', 'ì í'].map(v =>
                             `<span class="feedback-chip" onclick="setFeedbackChip('useful','${v}',this)">${v}</span>`
                         ).join('')}
                     </div>
 
-                    <div class="feedback-q">아쉬웠던 점이 있다면? (복수 선택 가능)</div>
+                    <div class="feedback-q">ìì¬ì ë ì ì´ ìë¤ë©´? (ë³µì ì í ê°ë¥)</div>
                     <div class="feedback-options" id="fbIssues">
-                        ${['내용이 너무 일반적', '내 발화가 그대로 나옴', '연애 맥락이 부족', '톤이 딱딱함', '분량이 부족', '신뢰성이 낮음'].map(v =>
+                        ${['ë´ì©ì´ ëë¬´ ì¼ë°ì ', 'ë´ ë°íê° ê·¸ëë¡ ëì´', 'ì°ì  ë§¥ë½ì´ ë¶ì¡±', 'í¤ì´ ë±ë±í¨', 'ë¶ëì´ ë¶ì¡±', 'ì ë¢°ì±ì´ ë®ì'].map(v =>
                             `<span class="feedback-chip" onclick="toggleFeedbackIssue('${v}',this)">${v}</span>`
                         ).join('')}
                     </div>
 
-                    <div class="feedback-q">자유 의견 (선택)</div>
-                    <textarea class="feedback-text" id="fbText" placeholder="개선 아이디어, 느낀 점 등 자유롭게..." oninput="feedbackState.text=this.value"></textarea>
+                    <div class="feedback-q">ìì  ìê²¬ (ì í)</div>
+                    <textarea class="feedback-text" id="fbText" placeholder="ê°ì  ìì´ëì´, ëë ì  ë± ìì ë¡­ê²..." oninput="feedbackState.text=this.value"></textarea>
 
-                    <button class="feedback-submit" id="fbSubmit" onclick="submitFeedback()" disabled>평가 제출</button>
+                    <button class="feedback-submit" id="fbSubmit" onclick="submitFeedback()" disabled>íê° ì ì¶</button>
                 </div>
             `;
         }
@@ -2734,7 +2734,7 @@
         async function submitFeedback() {
             const btn = document.getElementById('fbSubmit');
             btn.disabled = true;
-            btn.textContent = '제출 중...';
+            btn.textContent = 'ì ì¶ ì¤...';
 
             const payload = {
                 ...feedbackState,
@@ -2749,9 +2749,9 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                if (!resp.ok) throw new Error('서버 오류');
+                if (!resp.ok) throw new Error('ìë² ì¤ë¥');
             } catch(e) {
-                // 오프라인 저장 (localStorage fallback)
+                // ì¤íë¼ì¸ ì ì¥ (localStorage fallback)
                 const saved = JSON.parse(localStorage.getItem('knot_feedback') || '[]');
                 saved.push(payload);
                 localStorage.setItem('knot_feedback', JSON.stringify(saved));
@@ -2759,8 +2759,8 @@
 
             document.getElementById('feedbackForm').innerHTML = `
                 <div class="feedback-thanks">
-                    감사합니다! 피드백이 기록되었습니다 ✓<br>
-                    <span style="font-size:12px;opacity:0.6;">더 나은 분석을 위해 활용할게요</span>
+                    ê°ì¬í©ëë¤! í¼ëë°±ì´ ê¸°ë¡ëììµëë¤ â<br>
+                    <span style="font-size:12px;opacity:0.6;">ë ëì ë¶ìì ìí´ íì©í ê²ì</span>
                 </div>
             `;
         }
@@ -2784,32 +2784,32 @@
 
             // Conflict style analysis
             if ((a8A === 'repair' && a8B === 'repair') || (a8A === 'repair' && a8B === 'boundary') || (a8A === 'boundary' && a8B === 'boundary')) {
-                strengths.push('갈등 해결 방식이 비슷해서 문제 생길 때 침묵의 악순환보다 대화의 기회를 만들기 쉬워.');
+                strengths.push('ê°ë± í´ê²° ë°©ìì´ ë¹ì·í´ì ë¬¸ì  ìê¸¸ ë ì¹¨ë¬µì ììíë³´ë¤ ëíì ê¸°íë¥¼ ë§ë¤ê¸° ì¬ì.');
             }
             if ((a8A === 'confrontational' && a8B === 'avoidant') || (a8A === 'avoidant' && a8B === 'confrontational')) {
-                risks.push('한쪽은 문제를 바로 터뜨리는데 다른 쪽은 피하려고 해. 작은 불만이 폭탄처럼 터질 수 있어.');
+                risks.push('íìª½ì ë¬¸ì ë¥¼ ë°ë¡ í°ë¨ë¦¬ëë° ë¤ë¥¸ ìª½ì í¼íë ¤ê³  í´. ìì ë¶ë§ì´ í­íì²ë¼ í°ì§ ì ìì´.');
             }
             if (a8A === 'avoidant' && a8B === 'avoidant') {
-                risks.push('둘 다 갈등을 회피하려는 경향이 있어. 문제가 쌓여서 나중에 관계 전체를 흔들 수 있어.');
+                risks.push('ë ë¤ ê°ë±ì íí¼íë ¤ë ê²½í¥ì´ ìì´. ë¬¸ì ê° ìì¬ì ëì¤ì ê´ê³ ì ì²´ë¥¼ íë¤ ì ìì´.');
             }
 
             // Intimacy pattern analysis
             if (a10A === 'depth_seeker' && a10B === 'depth_seeker') {
-                strengths.push('둘 다 깊이 있는 연결을 원해서 빠르게 의미 있는 대화로 진입할 수 있어.');
+                strengths.push('ë ë¤ ê¹ì´ ìë ì°ê²°ì ìí´ì ë¹ ë¥´ê² ìë¯¸ ìë ëíë¡ ì§ìí  ì ìì´.');
             }
             if ((a10A === 'fast_opener' && a10B === 'depth_seeker') || (a10A === 'depth_seeker' && a10B === 'fast_opener')) {
-                strengths.push('한쪽이 빠르게 열고 다른 쪽이 깊이를 원하면 자연스럽게 깊은 관계로 진입할 수 있어.');
+                strengths.push('íìª½ì´ ë¹ ë¥´ê² ì´ê³  ë¤ë¥¸ ìª½ì´ ê¹ì´ë¥¼ ìíë©´ ìì°ì¤ë½ê² ê¹ì ê´ê³ë¡ ì§ìí  ì ìì´.');
             }
             if ((a10A === 'fast_opener' && a10B === 'surface_locked') || (a10A === 'surface_locked' && a10B === 'fast_opener')) {
-                risks.push('한쪽은 깊이로 가려고 하는데 다른 쪽은 표면을 유지하려고 해. 한쪽이 계속 거절당하는 기분을 느낄 수 있어.');
+                risks.push('íìª½ì ê¹ì´ë¡ ê°ë ¤ê³  íëë° ë¤ë¥¸ ìª½ì íë©´ì ì ì§íë ¤ê³  í´. íìª½ì´ ê³ì ê±°ì ë¹íë ê¸°ë¶ì ëë ì ìì´.');
             }
 
             // Reciprocity analysis
             if ((a11A === 'giver' && a11B === 'giver') || (a11A === 'taker' && a11B === 'taker')) {
-                risks.push('같은 유형이면 한쪽이 계속 손해 본다고 느끼거나, 한쪽이 계속 뭔가 부족하다고 느낄 수 있어.');
+                risks.push('ê°ì ì íì´ë©´ íìª½ì´ ê³ì ìí´ ë³¸ë¤ê³  ëë¼ê±°ë, íìª½ì´ ê³ì ë­ê° ë¶ì¡±íë¤ê³  ëë ì ìì´.');
             }
             if ((a11A === 'giver' && a11B === 'taker') || (a11A === 'taker' && a11B === 'giver')) {
-                strengths.push('한쪽이 주고 다른 쪽이 받는 구조가 자연스러워. 다만 의식적으로 감사와 인정을 계속 표현해야 해.');
+                strengths.push('íìª½ì´ ì£¼ê³  ë¤ë¥¸ ìª½ì´ ë°ë êµ¬ì¡°ê° ìì°ì¤ë¬ì. ë¤ë§ ììì ì¼ë¡ ê°ì¬ì ì¸ì ì ê³ì ííí´ì¼ í´.');
             }
 
             // Intensity analysis
@@ -2819,46 +2819,46 @@
             const receptiveDiff = Math.abs(intA.A2 - intB.A2);
 
             if (engageDiff < 0.2 && receptiveDiff < 0.2) {
-                strengths.push('관계에서의 에너지 수준이 비슷해서 자연스럽게 호흡이 맞을 거야.');
+                strengths.push('ê´ê³ììì ìëì§ ìì¤ì´ ë¹ì·í´ì ìì°ì¤ë½ê² í¸í¡ì´ ë§ì ê±°ì¼.');
             }
             if (engageDiff > 0.4) {
-                risks.push('한쪽은 관계에 많이 투자하고 싶은데 다른 쪽은 거리를 두려고 해. 이 차이가 축적되면 답답함이 생겨.');
+                risks.push('íìª½ì ê´ê³ì ë§ì´ í¬ìíê³  ì¶ìë° ë¤ë¥¸ ìª½ì ê±°ë¦¬ë¥¼ ëë ¤ê³  í´. ì´ ì°¨ì´ê° ì¶ì ëë©´ ëµëµí¨ì´ ìê²¨.');
             }
 
             // Add generic strengths if needed
             if (strengths.length === 0) {
-                strengths.push('기본적인 호환성 베이스가 있어서 노력하면 관계를 만들 수 있어.');
+                strengths.push('ê¸°ë³¸ì ì¸ í¸íì± ë² ì´ì¤ê° ìì´ì ë¸ë ¥íë©´ ê´ê³ë¥¼ ë§ë¤ ì ìì´.');
             }
 
             // Add generic risks if needed
             if (risks.length === 0) {
-                risks.push('특별히 드러나는 충돌점이 없지만, 인위적인 노력 없이는 자동으로 깊어지지 않을 수 있어.');
+                risks.push('í¹ë³í ëë¬ëë ì¶©ëì ì´ ìì§ë§, ì¸ìì ì¸ ë¸ë ¥ ìì´ë ìëì¼ë¡ ê¹ì´ì§ì§ ìì ì ìì´.');
             }
 
             // Growth direction
             if (a8A === 'avoidant' || a8B === 'avoidant') {
-                growth += '회피하는 쪽이 작은 불편을 감수하고 대화를 시작하는 연습이 가장 도움이 될 거야. 큰 갈등은 작은 갈등의 누적에서 나오거든. ';
+                growth += 'íí¼íë ìª½ì´ ìì ë¶í¸ì ê°ìíê³  ëíë¥¼ ììíë ì°ìµì´ ê°ì¥ ëìì´ ë  ê±°ì¼. í° ê°ë±ì ìì ê°ë±ì ëì ìì ëì¤ê±°ë . ';
             }
             if (a10A === 'surface_locked' || a10B === 'surface_locked') {
-                growth += '표면에 머물고 싶은 쪽이 신뢰하는 사람에게 조금씩 더 깊은 이야기를 나누려고 시도해봐. 관계의 깊이는 한 번에 파고드는 게 아니라 점진적으로 커져. ';
+                growth += 'íë©´ì ë¨¸ë¬¼ê³  ì¶ì ìª½ì´ ì ë¢°íë ì¬ëìê² ì¡°ê¸ì© ë ê¹ì ì´ì¼ê¸°ë¥¼ ëëë ¤ê³  ìëí´ë´. ê´ê³ì ê¹ì´ë í ë²ì íê³ ëë ê² ìëë¼ ì ì§ì ì¼ë¡ ì»¤ì ¸. ';
             }
             if ((a11A === 'giver' && a11B === 'taker') || (a11A === 'taker' && a11B === 'giver')) {
-                growth += '주는 쪽은 의도적으로 감사를 표현하고, 받는 쪽은 의도적으로 되돌려주려는 마음을 보여주면 관계의 균형이 자동으로 맞아.';
+                growth += 'ì£¼ë ìª½ì ìëì ì¼ë¡ ê°ì¬ë¥¼ íííê³ , ë°ë ìª½ì ìëì ì¼ë¡ ëëë ¤ì£¼ë ¤ë ë§ìì ë³´ì¬ì£¼ë©´ ê´ê³ì ê· íì´ ìëì¼ë¡ ë§ì.';
             }
             if (growth === '') {
-                growth = '서로의 차이를 이해하고 인정하는 것에서 성장이 시작돼. 완벽한 호환을 기대하기보다는 차이를 다루는 방식을 배우는 데 집중해봐.';
+                growth = 'ìë¡ì ì°¨ì´ë¥¼ ì´í´íê³  ì¸ì íë ê²ìì ì±ì¥ì´ ììë¼. ìë²½í í¸íì ê¸°ëíê¸°ë³´ë¤ë ì°¨ì´ë¥¼ ë¤ë£¨ë ë°©ìì ë°°ì°ë ë° ì§ì¤í´ë´.';
             }
 
             // Long-term outlook
             const score = compatResult.score;
             if (score > 75) {
-                outlook = '관계가 자연스럽게 깊어질 가능성이 높아. 초기의 화학적 맞음이 있으면, 시간이 지나면서 더 단단해질 거야. 다만 편함에 안주해서 성장을 멈추지 않도록 주의해.';
+                outlook = 'ê´ê³ê° ìì°ì¤ë½ê² ê¹ì´ì§ ê°ë¥ì±ì´ ëì. ì´ê¸°ì ííì  ë§ìì´ ìì¼ë©´, ìê°ì´ ì§ëë©´ì ë ë¨ë¨í´ì§ ê±°ì¼. ë¤ë§ í¸í¨ì ìì£¼í´ì ì±ì¥ì ë©ì¶ì§ ìëë¡ ì£¼ìí´.';
             } else if (score > 50) {
-                outlook = '충분히 관계할 수 있는 기초가 있어. 차이를 다루는 방법만 배우면 오히려 그 차이가 관계를 풍부하게 만들 수 있어. 초기의 어색함을 지나면 더 깊어질 가능성이 있어.';
+                outlook = 'ì¶©ë¶í ê´ê³í  ì ìë ê¸°ì´ê° ìì´. ì°¨ì´ë¥¼ ë¤ë£¨ë ë°©ë²ë§ ë°°ì°ë©´ ì¤íë ¤ ê·¸ ì°¨ì´ê° ê´ê³ë¥¼ íë¶íê² ë§ë¤ ì ìì´. ì´ê¸°ì ì´ìí¨ì ì§ëë©´ ë ê¹ì´ì§ ê°ë¥ì±ì´ ìì´.';
             } else if (score > 25) {
-                outlook = '도전이 있지만 불가능한 건 아니야. 의식적인 노력과 서로에 대한 이해가 필요해. 극복하면 오히려 많은 걸 배울 수 있는 관계가 될 수 있어.';
+                outlook = 'ëì ì´ ìì§ë§ ë¶ê°ë¥í ê±´ ìëì¼. ììì ì¸ ë¸ë ¥ê³¼ ìë¡ì ëí ì´í´ê° íìí´. ê·¹ë³µíë©´ ì¤íë ¤ ë§ì ê±¸ ë°°ì¸ ì ìë ê´ê³ê° ë  ì ìì´.';
             } else {
-                outlook = '상당한 마찰이 예상돼. 관계를 지속하려면 깊은 대화와 타협이 계속 필요할 거야. 다만 최악의 경우를 피하려면 초기에 기대치를 명확히 조율하는 게 중요해.';
+                outlook = 'ìë¹í ë§ì°°ì´ ììë¼. ê´ê³ë¥¼ ì§ìíë ¤ë©´ ê¹ì ëíì ííì´ ê³ì íìí  ê±°ì¼. ë¤ë§ ìµìì ê²½ì°ë¥¼ í¼íë ¤ë©´ ì´ê¸°ì ê¸°ëì¹ë¥¼ ëªíí ì¡°ì¨íë ê² ì¤ìí´.';
             }
 
             return { strengths, risks, growth, outlook };
@@ -2941,8 +2941,8 @@
             document.getElementById('frictionAxes').innerHTML = frictionHTML;
 
             // Display type comparison
-            const typeA = currentProfile.type || { emoji: '🔮', code: '-', name: '-' };
-            const typeB = matchProfile.type || { emoji: '🔮', code: '-', name: '-' };
+            const typeA = currentProfile.type || { emoji: 'ð®', code: '-', name: '-' };
+            const typeB = matchProfile.type || { emoji: 'ð®', code: '-', name: '-' };
 
             document.getElementById('matchType1Emoji').textContent = typeA.emoji;
             document.getElementById('matchType1Code').textContent = typeA.code;
@@ -2952,7 +2952,7 @@
             document.getElementById('matchType2Code').textContent = typeB.code;
             document.getElementById('matchType2Name').textContent = typeB.name;
 
-            // Generate enhanced analysis (LLM 우선, fallback 로컬)
+            // Generate enhanced analysis (LLM ì°ì , fallback ë¡ì»¬)
             let analysis;
             if (USE_LLM) {
                 const llmMatch = await callWorkerMatch(currentProfile, matchProfile, result);
@@ -3006,14 +3006,14 @@
 
                 await displayMatch();
             } catch (error) {
-                alert('프로필 로드 오류: ' + error.message);
+                alert('íë¡í ë¡ë ì¤ë¥: ' + error.message);
             }
         }
 
         async function loadProfileFromCode() {
             const code = document.getElementById('matchCodeInput').value.trim();
             if (!code) {
-                alert('프로필 코드를 입력해주세요');
+                alert('íë¡í ì½ëë¥¼ ìë ¥í´ì£¼ì¸ì');
                 return;
             }
 
@@ -3029,7 +3029,7 @@
                 };
                 await displayMatch();
             } catch (error) {
-                alert('프로필 코드 오류: ' + error.message);
+                alert('íë¡í ì½ë ì¤ë¥: ' + error.message);
             }
         }
 
@@ -3046,7 +3046,7 @@
         function copyProfileCode() {
             const code = document.getElementById('profileCode').textContent;
             navigator.clipboard.writeText(code).then(() => {
-                alert('프로필 코드가 복사되었습니다');
+                alert('íë¡í ì½ëê° ë³µì¬ëììµëë¤');
             });
         }
 
@@ -3181,7 +3181,7 @@
             ctx.fillText('KNOT', W/2, 140);
             ctx.fillStyle = DIM;
             ctx.font = '400 22px -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx.fillText('AI 대화 행동 분석', W/2, 175);
+            ctx.fillText('AI ëí íë ë¶ì', W/2, 175);
 
             // Emoji
             ctx.font = '120px serif';
@@ -3211,15 +3211,15 @@
             ctx.fillStyle = DIM;
             ctx.font = '600 20px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText('성향 강도', 100, 585);
+            ctx.fillText('ì±í¥ ê°ë', 100, 585);
 
             const barData = [
-                { label: '관심도', value: axes.intensity.A1, color: axisColors[0] },
-                { label: '공감력', value: axes.intensity.A2, color: axisColors[1] },
-                { label: '주장성', value: axes.intensity.A3, color: axisColors[2] },
-                { label: '감정 개방', value: axes.intensity.A4, color: axisColors[3] },
-                { label: '서포트', value: axes.intensity.A5, color: axisColors[4] },
-                { label: '일관성', value: axes.intensity.A6, color: axisColors[5] }
+                { label: 'ê´ì¬ë', value: axes.intensity.A1, color: axisColors[0] },
+                { label: 'ê³µê°ë ¥', value: axes.intensity.A2, color: axisColors[1] },
+                { label: 'ì£¼ì¥ì±', value: axes.intensity.A3, color: axisColors[2] },
+                { label: 'ê°ì  ê°ë°©', value: axes.intensity.A4, color: axisColors[3] },
+                { label: 'ìí¬í¸', value: axes.intensity.A5, color: axisColors[4] },
+                { label: 'ì¼ê´ì±', value: axes.intensity.A6, color: axisColors[5] }
             ];
 
             let barY = 620;
@@ -3249,23 +3249,23 @@
 
             // Structural traits
             const sLabels = {
-                initiator:'주도형', responder:'반응형', balanced:'균형형',
-                confrontational:'직면형', repair:'회복형', avoidant:'회피형', boundary:'선긋기형',
-                expressive:'표출형', analytical:'분석형', suppressive:'억제형', externalized:'행동전환형',
-                surface_locked:'표면유지형', slow_burn:'천천히형', depth_seeker:'깊이추구형', fast_opener:'빠른개방형',
-                giver:'주는 편', taker:'받는 편'
+                initiator:'ì£¼ëí', responder:'ë°ìí', balanced:'ê· íí',
+                confrontational:'ì§ë©´í', repair:'íë³µí', avoidant:'íí¼í', boundary:'ì ê¸ê¸°í',
+                expressive:'íì¶í', analytical:'ë¶ìí', suppressive:'ìµì í', externalized:'íëì íí',
+                surface_locked:'íë©´ì ì§í', slow_burn:'ì²ì²íí', depth_seeker:'ê¹ì´ì¶êµ¬í', fast_opener:'ë¹ ë¥¸ê°ë°©í',
+                giver:'ì£¼ë í¸', taker:'ë°ë í¸'
             };
             ctx.fillStyle = DIM;
             ctx.font = '600 20px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText('행동 패턴', 100, barY+55);
+            ctx.fillText('íë í¨í´', 100, barY+55);
 
             const traits = [
-                { label:'대화 주도', value: sLabels[axes.structural.A7.primary]||axes.structural.A7.primary },
-                { label:'갈등 대처', value: sLabels[axes.structural.A8.primary]||axes.structural.A8.primary },
-                { label:'감정 처리', value: sLabels[axes.structural.A9.primary]||axes.structural.A9.primary },
-                { label:'거리 조절', value: sLabels[axes.structural.A10.primary]||axes.structural.A10.primary },
-                { label:'주고받기', value: sLabels[axes.structural.A11.primary]||axes.structural.A11.primary }
+                { label:'ëí ì£¼ë', value: sLabels[axes.structural.A7.primary]||axes.structural.A7.primary },
+                { label:'ê°ë± ëì²', value: sLabels[axes.structural.A8.primary]||axes.structural.A8.primary },
+                { label:'ê°ì  ì²ë¦¬', value: sLabels[axes.structural.A9.primary]||axes.structural.A9.primary },
+                { label:'ê±°ë¦¬ ì¡°ì ', value: sLabels[axes.structural.A10.primary]||axes.structural.A10.primary },
+                { label:'ì£¼ê³ ë°ê¸°', value: sLabels[axes.structural.A11.primary]||axes.structural.A11.primary }
             ];
             let chipX = 100, chipY = barY + 80;
             traits.forEach(t => {
@@ -3291,7 +3291,7 @@
             const llmSections = profile.llmResult && profile.llmResult.sections;
             let summaryText = '';
             if (llmSections) {
-                summaryText = llmSections['세 문장 요약'] || llmSections['매력 포인트'] || '';
+                summaryText = llmSections['ì¸ ë¬¸ì¥ ìì½'] || llmSections['ë§¤ë ¥ í¬ì¸í¸'] || '';
                 summaryText = summaryText.replace(/<[^>]*>/g, '').trim();
             }
             if (summaryText) {
@@ -3318,7 +3318,7 @@
             ctx.fillStyle = 'rgba(245,166,35,0.5)';
             ctx.font = '700 20px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('KNOT \u2014 AI 대화 행동 분석', W/2, H-45);
+            ctx.fillText('KNOT \u2014 AI ëí íë ë¶ì', W/2, H-45);
             ctx.fillStyle = 'rgba(255,255,255,0.25)';
             ctx.font = '400 16px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.fillText('jeongjeongjeongm.github.io/knot', W/2, H-22);
@@ -3416,7 +3416,7 @@
             ctx.fillStyle = 'rgba(245,166,35,0.5)';
             ctx.font = '700 20px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('KNOT — AI 대화 행동 분석', W/2, H - 45);
+            ctx.fillText('KNOT â AI ëí íë ë¶ì', W/2, H - 45);
             ctx.fillStyle = 'rgba(255,255,255,0.25)';
             ctx.font = '400 16px -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.fillText('jeongjeongjeongm.github.io/knot', W/2, H - 22);
@@ -3468,7 +3468,7 @@
             ctx1.fillText('KNOT', W/2, 150);
             ctx1.fillStyle = DIM;
             ctx1.font = '400 24px -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx1.fillText('AI 대화 행동 분석', W/2, 190);
+            ctx1.fillText('AI ëí íë ë¶ì', W/2, 190);
             ctx1.font = '160px serif';
             ctx1.fillText(type.emoji, W/2, 420);
             ctx1.fillStyle = 'rgba(245,166,35,0.15)';
@@ -3486,7 +3486,7 @@
             drawDivider(ctx1, W, 780, AC);
             let summaryText = '';
             if (llmSections) {
-                summaryText = llmSections['세 문장 요약'] || llmSections['매력 포인트'] || '';
+                summaryText = llmSections['ì¸ ë¬¸ì¥ ìì½'] || llmSections['ë§¤ë ¥ í¬ì¸í¸'] || '';
                 summaryText = summaryText.replace(/<[^>]*>/g, '').trim();
             }
             if (summaryText) {
@@ -3507,16 +3507,16 @@
             const c2 = createCard(W, H);
             const ctx2 = c2.getContext('2d');
             drawCardBg(ctx2, W, H, BG);
-            drawCardHeader(ctx2, W, AC, DIM, type, '성향 강도');
+            drawCardHeader(ctx2, W, AC, DIM, type, 'ì±í¥ ê°ë');
             const barData = [
-                { label: '관심도', value: axes.intensity.A1, color: axisColors[0] },
-                { label: '공감력', value: axes.intensity.A2, color: axisColors[1] },
-                { label: '주장성', value: axes.intensity.A3, color: axisColors[2] },
-                { label: '감정 개방', value: axes.intensity.A4, color: axisColors[3] },
-                { label: '서포트', value: axes.intensity.A5, color: axisColors[4] },
-                { label: '일관성', value: axes.intensity.A6, color: axisColors[5] }
+                { label: 'ê´ì¬ë', value: axes.intensity.A1, color: axisColors[0] },
+                { label: 'ê³µê°ë ¥', value: axes.intensity.A2, color: axisColors[1] },
+                { label: 'ì£¼ì¥ì±', value: axes.intensity.A3, color: axisColors[2] },
+                { label: 'ê°ì  ê°ë°©', value: axes.intensity.A4, color: axisColors[3] },
+                { label: 'ìí¬í¸', value: axes.intensity.A5, color: axisColors[4] },
+                { label: 'ì¼ê´ì±', value: axes.intensity.A6, color: axisColors[5] }
             ];
-            const descMap = { '관심도':'대화 참여 열정과 반응 빈도', '공감력':'상대 감정에 대한 이해와 반영', '주장성':'자기 의견 표현의 강도', '감정 개방':'내면 감정을 드러내는 정도', '서포트':'상대를 지지하고 격려하는 성향', '일관성':'대화 패턴의 안정성과 예측 가능성' };
+            const descMap = { 'ê´ì¬ë':'ëí ì°¸ì¬ ì´ì ê³¼ ë°ì ë¹ë', 'ê³µê°ë ¥':'ìë ê°ì ì ëí ì´í´ì ë°ì', 'ì£¼ì¥ì±':'ìê¸° ìê²¬ ííì ê°ë', 'ê°ì  ê°ë°©':'ë´ë©´ ê°ì ì ëë¬ë´ë ì ë', 'ìí¬í¸':'ìëë¥¼ ì§ì§íê³  ê²©ë ¤íë ì±í¥', 'ì¼ê´ì±':'ëí í¨í´ì ìì ì±ê³¼ ìì¸¡ ê°ë¥ì±' };
             let barY = 380;
             barData.forEach(item => {
                 ctx2.fillStyle = 'rgba(255,255,255,0.6)';
@@ -3548,20 +3548,20 @@
             const c3 = createCard(W, H);
             const ctx3 = c3.getContext('2d');
             drawCardBg(ctx3, W, H, BG);
-            drawCardHeader(ctx3, W, AC, DIM, type, '행동 패턴');
+            drawCardHeader(ctx3, W, AC, DIM, type, 'íë í¨í´');
             const structLabels = {
-                initiator:'주도형', responder:'반응형', balanced:'균형형',
-                confrontational:'직면형', repair:'회복형', avoidant:'회피형', boundary:'선긋기형',
-                expressive:'표출형', analytical:'분석형', suppressive:'억제형', externalized:'행동전환형',
-                surface_locked:'표면유지형', slow_burn:'천천히형', depth_seeker:'깊이추구형', fast_opener:'빠른개방형',
-                giver:'주는 편', taker:'받는 편'
+                initiator:'ì£¼ëí', responder:'ë°ìí', balanced:'ê· íí',
+                confrontational:'ì§ë©´í', repair:'íë³µí', avoidant:'íí¼í', boundary:'ì ê¸ê¸°í',
+                expressive:'íì¶í', analytical:'ë¶ìí', suppressive:'ìµì í', externalized:'íëì íí',
+                surface_locked:'íë©´ì ì§í', slow_burn:'ì²ì²íí', depth_seeker:'ê¹ì´ì¶êµ¬í', fast_opener:'ë¹ ë¥¸ê°ë°©í',
+                giver:'ì£¼ë í¸', taker:'ë°ë í¸'
             };
             const traits = [
-                { label:'대화 주도', value: structLabels[axes.structural.A7.primary] || axes.structural.A7.primary, icon:'💬' },
-                { label:'갈등 대처', value: structLabels[axes.structural.A8.primary] || axes.structural.A8.primary, icon:'⚡' },
-                { label:'감정 처리', value: structLabels[axes.structural.A9.primary] || axes.structural.A9.primary, icon:'🧠' },
-                { label:'거리 조절', value: structLabels[axes.structural.A10.primary] || axes.structural.A10.primary, icon:'📏' },
-                { label:'주고받기', value: structLabels[axes.structural.A11.primary] || axes.structural.A11.primary, icon:'🤝' }
+                { label:'ëí ì£¼ë', value: structLabels[axes.structural.A7.primary] || axes.structural.A7.primary, icon:'ð¬' },
+                { label:'ê°ë± ëì²', value: structLabels[axes.structural.A8.primary] || axes.structural.A8.primary, icon:'â¡' },
+                { label:'ê°ì  ì²ë¦¬', value: structLabels[axes.structural.A9.primary] || axes.structural.A9.primary, icon:'ð§ ' },
+                { label:'ê±°ë¦¬ ì¡°ì ', value: structLabels[axes.structural.A10.primary] || axes.structural.A10.primary, icon:'ð' },
+                { label:'ì£¼ê³ ë°ê¸°', value: structLabels[axes.structural.A11.primary] || axes.structural.A11.primary, icon:'ð¤' }
             ];
             let ty = 380;
             traits.forEach(t => {
@@ -3583,11 +3583,11 @@
             if (llmSections) {
                 drawDivider(ctx3, W, ty + 20, AC); ty += 60;
                 Object.keys(llmSections).slice(0, 3).forEach(key => {
-                    if (key === '세 문장 요약') return;
+                    if (key === 'ì¸ ë¬¸ì¥ ìì½') return;
                     ctx3.fillStyle = AC;
                     ctx3.font = '700 24px -apple-system, BlinkMacSystemFont, sans-serif';
                     ctx3.textAlign = 'left';
-                    ctx3.fillText('• ' + key, 100, ty);
+                    ctx3.fillText('â¢ ' + key, 100, ty);
                     let st = llmSections[key].replace(/<[^>]*>/g, '').trim();
                     if (st.length > 80) st = st.substring(0, 77) + '...';
                     ctx3.fillStyle = 'rgba(255,255,255,0.55)';
@@ -3604,9 +3604,9 @@
                 const c4 = createCard(W, H);
                 const ctx4 = c4.getContext('2d');
                 drawCardBg(ctx4, W, H, BG);
-                drawCardHeader(ctx4, W, AC, DIM, type, 'AI 심층 분석');
+                drawCardHeader(ctx4, W, AC, DIM, type, 'AI ì¬ì¸µ ë¶ì');
                 let sy = 380;
-                Object.keys(llmSections).filter(k => k !== '세 문장 요약').forEach(key => {
+                Object.keys(llmSections).filter(k => k !== 'ì¸ ë¬¸ì¥ ìì½').forEach(key => {
                     if (sy > H - 150) return;
                     ctx4.fillStyle = AC;
                     ctx4.font = '700 26px -apple-system, BlinkMacSystemFont, sans-serif';
@@ -3628,11 +3628,11 @@
 
             // ---- Card 5: Ideal Partners ----
             const partners = getIdealPartners(type.code);
-            if (partners.ideal.length > 0 || partners.good.length > 0) {
+            if ((partners.ideal && partners.ideal.length > 0) || (partners.compatible && partners.compatible.length > 0)) {
                 const c5 = createCard(W, H);
                 const ctx5 = c5.getContext('2d');
                 drawCardBg(ctx5, W, H, BG);
-                drawCardHeader(ctx5, W, AC, DIM, type, '이상적 파트너');
+                drawCardHeader(ctx5, W, AC, DIM, type, 'ì´ìì  íí¸ë');
                 let py = 380;
                 const renderPartners = (list, color, label) => {
                     if (list.length === 0 || py > H - 200) return;
@@ -3660,8 +3660,8 @@
                     });
                     py += 20;
                 };
-                renderPartners(partners.ideal, '#4ADE80', '💚 최고의 궁합');
-                renderPartners(partners.good, '#60A5FA', '💙 좋은 궁합');
+                renderPartners(partners.ideal, '#4ADE80', 'ð ìµê³ ì ê¶í©');
+                renderPartners(partners.compatible, '#60A5FA', 'ð ì¢ì ê¶í©');
                 drawBranding(ctx5, W, H, AC);
                 canvases.push(c5);
             }
