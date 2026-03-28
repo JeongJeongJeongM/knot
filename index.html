@@ -3095,6 +3095,25 @@ function displayResult() {
                 clearSensitiveData();
             }, 500);
 
+            // LLM 섹션 텍스트 포맷팅: sanitize → 줄바꿈/불릿 처리
+            function formatLLMContent(raw) {
+                if (!raw || !raw.trim()) return '';
+                let text = sanitizeHTML(raw.trim());
+                // · 또는 • 불릿 → 줄바꿈 + styled bullet
+                text = text.replace(/(?:^|\n)\s*[·•]\s*/g, '\n• ');
+                // 숫자 리스트 (1. 2. 3.) 도 줄바꿈 보장
+                text = text.replace(/(?:^|\n)\s*(\d+)[.)]\s*/g, '\n$1. ');
+                // 쉴표로 구분된 매력 포인트 → 불릿 리스트로 변환
+                if (text.indexOf('\n') === -1 && (text.match(/,/g) || []).length >= 2) {
+                    text = text.split(/\s*,\s*/).map(s => '• ' + s.trim()).join('\n');
+                }
+                // 줄바꿈 → <br>
+                text = text.replace(/\n/g, '<br>');
+                // 앞머리 <br> 제거
+                text = text.replace(/^(<br>\s*)+/, '');
+                return text;
+            }
+
             // 프로필 분석: LLM 10섹션 결과 우선, fallback으로 7렌즈 로컬 분석
             let lensesHTML = '';
             const llmSections = profile.llmResult && profile.llmResult.sections;
@@ -3107,19 +3126,22 @@ function displayResult() {
                     '함께할 때 예상 분위기', '어려워질 수 있는 지점', '매력 포인트', '세 문장 요약'
                 ];
                 sectionNames.forEach((name, idx) => {
-                    const content = sanitizeHTML(llmSections[name] || '');
+                    const content = formatLLMContent(llmSections[name]);
+                    const isEmpty = !content;
                     const isOpen = idx === 0 ? ' active' : '';
+                    const displayContent = isEmpty
+                        ? '<span style="color:var(--dim);font-style:italic;">이 영역은 데이터에서 뚣렷하게 드러나지 않았어요.</span>'
+                        : content;
                     lensesHTML += `
                         <div class="lens-card">
                             <div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')">
                                 <span class="lens-title">${sanitizeHTML(name)} <span style="font-size:10px;color:var(--ac);font-weight:400;">AI</span></span>
                                 <span class="lens-toggle">▼</span>
                             </div>
-                            <div class="lens-content${isOpen}">${content}</div>
+                            <div class="lens-content${isOpen}">${displayContent}</div>
                         </div>
                     `;
-                });
-            } else {
+                });} else {
                 // Fallback: 기존 7렌즈 로컬 분석
                 for (const [lensName, lensFunc] of Object.entries(LENSES)) {
                     lensesHTML += `
