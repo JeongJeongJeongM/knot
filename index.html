@@ -1037,94 +1037,6 @@
             color: var(--ac);
         }
 
-        /* User Comparison Section */
-        .comparison-container {
-            text-align: center;
-        }
-        .rarity-badge {
-            background: #0c0c14;
-            border: 1px solid var(--ac);
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 0 15px rgba(245,166,35,0.1);
-        }
-        .rarity-rank {
-            font-size: 32px;
-            font-weight: 900;
-            color: var(--ac);
-            font-family: 'Courier New', monospace;
-            text-shadow: 0 0 15px rgba(245,166,35,0.3);
-        }
-        .rarity-label {
-            font-size: 10px;
-            color: var(--text-dim);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-top: 4px;
-        }
-        .radar-legend {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 12px 0;
-            font-size: 11px;
-            font-family: 'Courier New', monospace;
-        }
-        .legend-you { color: var(--ac); }
-        .legend-avg { color: #555; }
-        .type-distribution {
-            margin-top: 16px;
-            text-align: left;
-        }
-        .dist-bar-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 6px;
-            font-size: 10px;
-            font-family: 'Courier New', monospace;
-        }
-        .dist-bar-label {
-            width: 110px;
-            color: var(--text-dim);
-            text-align: right;
-            flex-shrink: 0;
-        }
-        .dist-bar-track {
-            flex: 1;
-            height: 14px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 2px;
-            position: relative;
-            overflow: hidden;
-        }
-        .dist-bar-fill {
-            height: 100%;
-            border-radius: 2px;
-            transition: width 0.8s ease;
-        }
-        .dist-bar-you {
-            position: absolute;
-            top: -2px;
-            width: 2px;
-            height: 18px;
-            background: var(--ac);
-            box-shadow: 0 0 6px var(--ac);
-        }
-        .dist-bar-pct {
-            width: 35px;
-            color: #555;
-            font-size: 9px;
-            flex-shrink: 0;
-        }
-        .dist-bar-row.is-you .dist-bar-label {
-            color: var(--ac);
-            font-weight: bold;
-        }
-        .dist-bar-row.is-you .dist-bar-pct {
-            color: var(--ac);
-        }
 
         /* Resolution & Diagnostics Panel */
         .reliability-summary {
@@ -1656,25 +1568,7 @@
                 <div class="section-title">시간에 따른 변화</div>
                 <div id="temporalPanel"></div>
             </div>
-
-            <!-- User Comparison Section -->
-            <div class="axes-section" id="comparisonSection">
-                <div class="section-title">유저 포지션 분석</div>
-                <div class="comparison-container">
-                    <div class="rarity-badge" id="rarityBadge">
-                        <div class="rarity-rank" id="rarityRank">—</div>
-                        <div class="rarity-label">전체 유저 중 희소도</div>
-                    </div>
-                    <canvas id="radarChart" width="300" height="300" style="display:block; margin: 0 auto;"></canvas>
-                    <div class="radar-legend">
-                        <span class="legend-you">● 당신</span>
-                        <span class="legend-avg">● 평균</span>
-                    </div>
-                    <div class="type-distribution" id="typeDistribution"></div>
-                </div>
-            </div>
-
-            <!-- Intensity Axes -->
+<!-- Intensity Axes -->
             <div class="axes-section">
                 <div class="section-title">성향 강도</div>
                 <div id="intensityAxes"></div>
@@ -1818,17 +1712,6 @@
 
     <script>
 
-        const TYPE_RARITY = {
-            'S-CS': 5.2, 'S-CF': 3.8, 'S-CL': 2.9, 'S-CD': 1.4,
-            'S-BS': 6.1, 'S-BF': 5.5, 'S-BL': 3.2, 'S-BD': 2.1,
-            'S-AS': 4.8, 'S-AF': 6.3, 'S-AL': 2.5, 'S-AD': 1.8,
-            'S-RS': 3.9, 'S-RF': 4.2, 'S-RL': 2.0, 'S-RD': 0.8,
-            'Y-CS': 4.1, 'Y-CF': 3.5, 'Y-CL': 2.6, 'Y-CD': 1.2,
-            'Y-BS': 3.7, 'Y-BF': 4.5, 'Y-BL': 2.8, 'Y-BD': 1.6,
-            'Y-AS': 3.3, 'Y-AF': 5.0, 'Y-AL': 2.2, 'Y-AD': 1.5,
-            'Y-RS': 2.7, 'Y-RF': 3.0, 'Y-RL': 1.9, 'Y-RD': 0.5
-        };
-        const AVG_INTENSITY = { A1: 0.55, A2: 0.50, A3: 0.48, A4: 0.45, A5: 0.52, A6: 0.58 };
         // ============ DATA STRUCTURES & CONFIG ============
         const AXIS_COLORS = {
             A1: 'var(--a1)', A2: 'var(--a2)', A3: 'var(--a3)', A4: 'var(--a4)', A5: 'var(--a5)', A6: 'var(--a6)',
@@ -3358,104 +3241,12 @@ function displayResult() {
             document.getElementById('structuralAxes').innerHTML = structHTML;
 
 // Render comparison section
-            renderComparisonSection(axes, type.code);
 
             // Clear sensitive data after results are displayed
             setTimeout(() => {
                 clearSensitiveData();
             }, 500);
 
-            // ── User Comparison: Radar Chart + Rarity + Distribution ──
-function renderComparisonSection(axes, typeCode) {
-                const rarity = TYPE_RARITY[typeCode] || 3.0;
-                const rarityEl = document.getElementById('rarityRank');
-                const isRare = rarity <= 2.0;
-                const isVeryRare = rarity <= 1.0;
-                if (isVeryRare) {
-                    rarityEl.textContent = '상위 ' + rarity.toFixed(1) + '% · 극희귀';
-                    rarityEl.style.color = '#FF6B6B';
-                } else if (isRare) {
-                    rarityEl.textContent = '상위 ' + rarity.toFixed(1) + '% · 희귀';
-                    rarityEl.style.color = '#FFD93D';
-                } else {
-                    rarityEl.textContent = '상위 ' + rarity.toFixed(1) + '%';
-                }
-                drawRadarChart(axes);
-                renderTypeDistribution(typeCode);
-            }
-
-            function drawRadarChart(axes) {
-                const canvas = document.getElementById('radarChart');
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                const W = 300, H = 300, cx = W/2, cy = H/2, R = 110;
-                canvas.width = W; canvas.height = H;
-                ctx.clearRect(0, 0, W, H);
-                const labels = ['A1 참여', 'A2 공감', 'A3 주장', 'A4 감정', 'A5 배려', 'A6 일관'];
-                const userVals = [axes.intensity.A1, axes.intensity.A2, axes.intensity.A3, axes.intensity.A4, axes.intensity.A5, axes.intensity.A6];
-                const avgVals = [AVG_INTENSITY.A1, AVG_INTENSITY.A2, AVG_INTENSITY.A3, AVG_INTENSITY.A4, AVG_INTENSITY.A5, AVG_INTENSITY.A6];
-                const n = labels.length;
-                const angleStep = (2 * Math.PI) / n;
-                const startAngle = -Math.PI / 2;
-                function getPoint(i, val) {
-                    const angle = startAngle + i * angleStep;
-                    return [cx + R * val * Math.cos(angle), cy + R * val * Math.sin(angle)];
-                }
-                [0.25, 0.5, 0.75, 1.0].forEach(level => {
-                    ctx.beginPath();
-                    for (let i = 0; i <= n; i++) {
-                        const [x, y] = getPoint(i % n, level);
-                        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-                    }
-                    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-                    ctx.stroke();
-                });
-                for (let i = 0; i < n; i++) {
-                    const [x, y] = getPoint(i, 1);
-                    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y);
-                    ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.stroke();
-                }
-                ctx.beginPath();
-                avgVals.forEach((v, i) => { const [x, y] = getPoint(i, v); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
-                ctx.closePath(); ctx.fillStyle = 'rgba(100,100,100,0.15)'; ctx.fill();
-                ctx.strokeStyle = 'rgba(100,100,100,0.4)'; ctx.lineWidth = 1; ctx.stroke();
-                ctx.beginPath();
-                userVals.forEach((v, i) => { const [x, y] = getPoint(i, v); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
-                ctx.closePath(); ctx.fillStyle = 'rgba(245,166,35,0.15)'; ctx.fill();
-                ctx.strokeStyle = '#F5A623'; ctx.lineWidth = 2; ctx.stroke();
-                userVals.forEach((v, i) => {
-                    const [x, y] = getPoint(i, v);
-                    ctx.beginPath(); ctx.arc(x, y, 3, 0, 2 * Math.PI); ctx.fillStyle = '#F5A623'; ctx.fill();
-                });
-                ctx.font = '10px Courier New'; ctx.fillStyle = '#888'; ctx.textAlign = 'center';
-                labels.forEach((label, i) => { const [x, y] = getPoint(i, 1.18); ctx.fillText(label, x, y + 3); });
-            }
-
-            function renderTypeDistribution(userType) {
-                const container = document.getElementById('typeDistribution');
-                if (!container) return;
-                const allTypes = Object.entries(TYPE_RARITY).sort((a, b) => b[1] - a[1]).slice(0, 12);
-                if (!allTypes.find(t => t[0] === userType)) {
-                    allTypes.pop();
-                    allTypes.push([userType, TYPE_RARITY[userType] || 3.0]);
-                    allTypes.sort((a, b) => b[1] - a[1]);
-                }
-                const maxPct = Math.max(...allTypes.map(t => t[1]));
-                let html = '<div style="font-size:10px;color:#555;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;font-family:Courier New,monospace;">// TYPE DISTRIBUTION (TOP 12)</div>';
-                allTypes.forEach(([code, pct]) => {
-                    const isUser = code === userType;
-                    const width = (pct / maxPct * 100).toFixed(1);
-                    html += '<div class="dist-bar-row ' + (isUser ? 'is-you' : '') + '">' +
-                        '<div class="dist-bar-label">' + ((TYPE_DEFINITIONS[code] || {}).name || code) + '</div>' +
-                        '<div class="dist-bar-track">' +
-                        '<div class="dist-bar-fill" style="width:' + width + '%;background:' + (isUser ? 'var(--ac)' : '#333') + ';"></div>' +
-                        (isUser ? '<div class="dist-bar-you" style="left:' + width + '%;"></div>' : '') +
-                        '</div>' +
-                        '<div class="dist-bar-pct">' + pct.toFixed(1) + '%</div>' +
-                        '</div>';
-                });
-                container.innerHTML = html;
-            }
 
             // LLM 섹션 텍스트 포맷팅: sanitize → 줄바꿈/불릿 처리
             function formatLLMContent(raw) {
