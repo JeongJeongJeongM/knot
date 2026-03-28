@@ -1817,6 +1817,18 @@
     </div>
 
     <script>
+
+        const TYPE_RARITY = {
+            'S-CS': 5.2, 'S-CF': 3.8, 'S-CL': 2.9, 'S-CD': 1.4,
+            'S-BS': 6.1, 'S-BF': 5.5, 'S-BL': 3.2, 'S-BD': 2.1,
+            'S-AS': 4.8, 'S-AF': 6.3, 'S-AL': 2.5, 'S-AD': 1.8,
+            'S-RS': 3.9, 'S-RF': 4.2, 'S-RL': 2.0, 'S-RD': 0.8,
+            'Y-CS': 4.1, 'Y-CF': 3.5, 'Y-CL': 2.6, 'Y-CD': 1.2,
+            'Y-BS': 3.7, 'Y-BF': 4.5, 'Y-BL': 2.8, 'Y-BD': 1.6,
+            'Y-AS': 3.3, 'Y-AF': 5.0, 'Y-AL': 2.2, 'Y-AD': 1.5,
+            'Y-RS': 2.7, 'Y-RF': 3.0, 'Y-RL': 1.9, 'Y-RD': 0.5
+        };
+        const AVG_INTENSITY = { A1: 0.55, A2: 0.50, A3: 0.48, A4: 0.45, A5: 0.52, A6: 0.58 };
         // ============ DATA STRUCTURES & CONFIG ============
         const AXIS_COLORS = {
             A1: 'var(--a1)', A2: 'var(--a2)', A3: 'var(--a3)', A4: 'var(--a4)', A5: 'var(--a5)', A6: 'var(--a6)',
@@ -3345,19 +3357,7 @@ function displayResult() {
             });
             document.getElementById('structuralAxes').innerHTML = structHTML;
 
-            const TYPE_RARITY = {
-                'S-CS': 5.2, 'S-CF': 3.8, 'S-CL': 2.9, 'S-CD': 1.4,
-                'S-BS': 6.1, 'S-BF': 5.5, 'S-BL': 3.2, 'S-BD': 2.1,
-                'S-AS': 4.8, 'S-AF': 6.3, 'S-AL': 2.5, 'S-AD': 1.8,
-                'S-RS': 3.9, 'S-RF': 4.2, 'S-RL': 2.0, 'S-RD': 0.8,
-                'Y-CS': 4.1, 'Y-CF': 3.5, 'Y-CL': 2.6, 'Y-CD': 1.2,
-                'Y-BS': 3.7, 'Y-BF': 4.5, 'Y-BL': 2.8, 'Y-BD': 1.6,
-                'Y-AS': 3.3, 'Y-AF': 5.0, 'Y-AL': 2.2, 'Y-AD': 1.5,
-                'Y-RS': 2.7, 'Y-RF': 3.0, 'Y-RL': 1.9, 'Y-RD': 0.5
-            };
-            const AVG_INTENSITY = { A1: 0.55, A2: 0.50, A3: 0.48, A4: 0.45, A5: 0.52, A6: 0.58 };
-
-            // Render comparison section
+// Render comparison section
             renderComparisonSection(axes, typeCode);
 
             // Clear sensitive data after results are displayed
