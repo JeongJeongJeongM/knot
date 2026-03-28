@@ -1086,7 +1086,7 @@
             font-family: 'Courier New', monospace;
         }
         .dist-bar-label {
-            width: 50px;
+            width: 110px;
             color: var(--text-dim);
             text-align: right;
             flex-shrink: 0;
@@ -3312,12 +3312,12 @@ function displayResult() {
             ];
 
             intensityAxes.forEach(axis => {
-                const width = Math.max(axis.value * 100, 2);
+                const width = Math.min(Math.max(axis.value * 100, 2), 100);
                 intensityHTML += `
                     <div class="axis-item">
                         <div class="axis-header">
                             <span class="axis-label">${axis.id} ${axis.label}</span>
-                            <span class="axis-value">${(axis.value * 100).toFixed(0)}%</span>
+                            <span class="axis-value">${Math.min(axis.value * 100, 100).toFixed(0)}%</span>
                         </div>
                         <div class="axis-bar-container">
                             <div class="axis-bar" style="width: ${width}%; background-color: ${AXIS_COLORS[axis.id]};"></div>
@@ -3358,7 +3358,7 @@ function displayResult() {
             document.getElementById('structuralAxes').innerHTML = structHTML;
 
 // Render comparison section
-            renderComparisonSection(axes, typeCode);
+            renderComparisonSection(axes, type.code);
 
             // Clear sensitive data after results are displayed
             setTimeout(() => {
@@ -3446,7 +3446,7 @@ function renderComparisonSection(axes, typeCode) {
                     const isUser = code === userType;
                     const width = (pct / maxPct * 100).toFixed(1);
                     html += '<div class="dist-bar-row ' + (isUser ? 'is-you' : '') + '">' +
-                        '<div class="dist-bar-label">' + code + '</div>' +
+                        '<div class="dist-bar-label">' + ((TYPE_DEFINITIONS[code] || {}).name || code) + '</div>' +
                         '<div class="dist-bar-track">' +
                         '<div class="dist-bar-fill" style="width:' + width + '%;background:' + (isUser ? 'var(--ac)' : '#333') + ';"></div>' +
                         (isUser ? '<div class="dist-bar-you" style="left:' + width + '%;"></div>' : '') +
