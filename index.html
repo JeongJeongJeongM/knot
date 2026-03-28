@@ -3099,16 +3099,12 @@ function displayResult() {
             function formatLLMContent(raw) {
                 if (!raw || !raw.trim()) return '';
                 let text = sanitizeHTML(raw.trim());
-                // · 또는 • 불릿 → 줄바꿈 + styled bullet
-                text = text.replace(/(?:^|\n)\s*[·•]\s*/g, '\n• ');
-                // 숫자 리스트 (1. 2. 3.) 도 줄바꿈 보장
-                text = text.replace(/(?:^|\n)\s*(\d+)[.)]\s*/g, '\n$1. ');
-                // 쉴표로 구분된 매력 포인트 → 불릿 리스트로 변환
-                if (text.indexOf('\n') === -1 && (text.match(/,/g) || []).length >= 2) {
-                    text = text.split(/\s*,\s*/).map(s => '• ' + s.trim()).join('\n');
-                }
+                // · • 불릿 마커 완전 제거
+                text = text.replace(/[·•]/g, '');
                 // 줄바꿈 → <br>
                 text = text.replace(/\n/g, '<br>');
+                // 연속 <br> 정리
+                text = text.replace(/(<br>\s*){3,}/g, '<br><br>');
                 // 앞머리 <br> 제거
                 text = text.replace(/^(<br>\s*)+/, '');
                 return text;
