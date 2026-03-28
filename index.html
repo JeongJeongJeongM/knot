@@ -1774,7 +1774,51 @@
             A11: { 'giver_giver': 0.2, 'giver_taker': 0.5, 'giver_balanced': 0.1, 'taker_giver': 0.5, 'taker_taker': 0.7, 'taker_balanced': 0.4, 'balanced_giver': 0.1, 'balanced_taker': 0.4, 'balanced_balanced': 0.25 }
         };
 
-        // ============ 32-TYPE SYSTEM ============
+        // ============ LSM (Language Style Matching) ============
+    // Korean function word categories (Ireland et al. 2011 adapted for Korean)
+    const KOREAN_FUNC_WORDS = {
+      particles: ['은','는','이','가','을','를','에','에서','의','로','으로','와','과','도','만','까지','부터','마다','조차','라도','이나','나','든지','이든지'],
+      pronouns: ['나','너','저','우리','너희','그','그녀','이것','저것','그것','여기','저기','거기','누구','뭐','무엇','어디','언제'],
+      conjunctions: ['그리고','그런데','그래서','하지만','그러나','또','또는','그래도','그러면','왜냐하면','즉','만약','비록','때문에'],
+      adverbs: ['좀','너무','매우','정말','진짜','아주','조금','많이','잘','못','안','다','또','이미','아직','바로','꼭','항상','자주','가끔'],
+      negations: ['안','못','없','아니','절대','전혀','별로','싫','말'],
+      quantifiers: ['모든','각','여러','몇','많은','적은','조금','약간','대부분','전부','다','좀','꽤','상당히'],
+      fillers: ['음','어','그','뭐','아','네','예','응','글쎄','뭐랄까','그냥','일단','아마','혹시']
+    };
+
+    function computeFunctionWordProfile(messages) {
+      if (!messages || messages.length === 0) return null;
+      const userMsgs = messages.filter(m => {
+        const role = (typeof m === 'string') ? 'user' : (m.role || 'user');
+        return role.toLowerCase() === 'user';
+      });
+      const allText = userMsgs.map(m => typeof m === 'string' ? m : (m.text || m.content || '')).join(' ');
+      const totalChars = allText.length || 1;
+      const profile = {};
+      for (const [cat, words] of Object.entries(KOREAN_FUNC_WORDS)) {
+        let count = 0;
+        for (const w of words) {
+          let idx = 0;
+          while ((idx = allText.indexOf(w, idx)) !== -1) { count++; idx += w.length; }
+        }
+        profile[cat] = count / (totalChars / 100);
+      }
+      return profile;
+    }
+
+    function computeLSMSimilarity(fwpA, fwpB) {
+      if (!fwpA || !fwpB) return 0.5;
+      const cats = Object.keys(KOREAN_FUNC_WORDS);
+      let totalLSM = 0;
+      for (const cat of cats) {
+        const a = fwpA[cat] || 0;
+        const b = fwpB[cat] || 0;
+        totalLSM += 1 - Math.abs(a - b) / (a + b + 0.0001);
+      }
+      return totalLSM / cats.length;
+    }
+
+    // ============ 32-TYPE SYSTEM ============
         const TYPE_DEFINITIONS = {
             'S-CS': { emoji: '🗡️', name: '고독한 수호자', desc: '갈등을 직면하되, 천천히 마음을 여는 보호자' },
             'S-CF': { emoji: '🌋', name: '열린 전사', desc: '거침없이 부딪히고, 거침없이 다가가는 뜨거운 수용자' },
@@ -3116,6 +3160,7 @@
                     type,
                     llmResult,
                     messages,
+                    functionWordProfile: computeFunctionWordProfile(messages),
                     timestamp: new Date().toISOString()
                 };
 
@@ -3560,45 +3605,54 @@ function displayResult() {
 
         // ============ MATCHING ============
         function computeCompatibility(profileA, profileB) {
-            const intensities_a = profileA.axes.intensity;
-            const intensities_b = profileB.axes.intensity;
+        const intensities_a = profileA.axes.intensity;
+        const intensities_b = profileB.axes.intensity;
 
-            const intensity_friction = (
-                Math.abs(intensities_a.A1 - intensities_b.A1) +
-                Math.abs(intensities_a.A2 - intensities_b.A2) +
-                Math.abs(intensities_a.A3 - intensities_b.A3) +
-                Math.abs(intensities_a.A4 - intensities_b.A4) +
-                Math.abs(intensities_a.A5 - intensities_b.A5) +
-                Math.abs(intensities_a.A6 - intensities_b.A6)
-            ) / 6;
+        // L6 Intensity similarity (normalized 0-1, lower = more similar)
+        const intensity_friction = (
+            Math.abs(intensities_a.A1 - intensities_b.A1) +
+            Math.abs(intensities_a.A2 - intensities_b.A2) +
+            Math.abs(intensities_a.A3 - intensities_b.A3) +
+            Math.abs(intensities_a.A4 - intensities_b.A4) +
+            Math.abs(intensities_a.A5 - intensities_b.A5) +
+            Math.abs(intensities_a.A6 - intensities_b.A6)
+        ) / 6;
 
-            let structural_friction = 0;
-            let count = 0;
+        // L6 Structural friction via collision matrix
+        let structural_friction = 0;
+        let count = 0;
+        const structKeys = ['A7', 'A8', 'A9', 'A10', 'A11'];
+        structKeys.forEach(axisId => {
+            const styleA = profileA.axes.structural[axisId].primary;
+            const styleB = profileB.axes.structural[axisId].primary;
+            const key = styleA + '_' + styleB;
+            if (CONFLICT_MATRIX[axisId] && CONFLICT_MATRIX[axisId][key] !== undefined) {
+                structural_friction += CONFLICT_MATRIX[axisId][key];
+                count++;
+            }
+        });
+        structural_friction = count > 0 ? structural_friction / count : 0;
 
-            const structKeys = ['A7', 'A8', 'A9', 'A10', 'A11'];
-            structKeys.forEach(axisId => {
-                const styleA = profileA.axes.structural[axisId].primary;
-                const styleB = profileB.axes.structural[axisId].primary;
-                const key = styleA + '_' + styleB;
+        // L6 LSM similarity (0-1, higher = more similar)
+        const lsm_similarity = computeLSMSimilarity(
+            profileA.functionWordProfile,
+            profileB.functionWordProfile
+        );
+        const lsm_friction = 1 - lsm_similarity;
 
-                if (CONFLICT_MATRIX[axisId] && CONFLICT_MATRIX[axisId][key] !== undefined) {
-                    structural_friction += CONFLICT_MATRIX[axisId][key];
-                    count++;
-                }
-            });
+        // L6 weighted formula: 0.40 intensity + 0.40 structural + 0.20 LSM
+        const total_friction = 0.40 * intensity_friction + 0.40 * structural_friction + 0.20 * lsm_friction;
+        const compatibility = (1 - total_friction) * 100;
 
-            structural_friction = count > 0 ? structural_friction / count : 0;
-
-            const total_friction = 0.5 * intensity_friction + 0.5 * structural_friction;
-            const compatibility = (1 - total_friction) * 100;
-
-            return {
-                score: Math.max(0, Math.min(100, compatibility)),
-                intensity_friction,
-                structural_friction,
-                total_friction
-            };
-        }
+        return {
+            score: Math.max(0, Math.min(100, compatibility)),
+            intensity_friction,
+            structural_friction,
+            lsm_similarity,
+            lsm_friction,
+            total_friction
+        };
+    }
 
         async function displayMatch() {
             const result = computeCompatibility(currentProfile, matchProfile);
