@@ -2840,7 +2840,7 @@
                 const rates = computeRates(messages);
 
                 // Show some interesting rate findings
-                const rateKeys = Object.keys(rates);
+                const rateKeys = Object.keys(rates).filter(k => typeof rates[k] === 'number' && !['totalMsgs','totalChars','totalTokens','confidence','volatility'].includes(k));
                 const topRate = rateKeys.reduce((a, b) => rates[a] > rates[b] ? a : b);
                 T.addLine('<span class="dim">[rate]</span> <span class="info">최고 수치 → ' + sanitizeHTML(topRate) + ': ' + (rates[topRate] * 100).toFixed(1) + '%</span>', 250);
                 T.setProgress(30, '축 좌표 계산 중...');
@@ -2851,41 +2851,48 @@
                 // Activate gauges one by one as axes are computed
                 updateProgress('4개 핵심 축의 좌표를 계산하고 있습니다');
                 const axes = computeAxes(rates);
+                const ax = axes.intensity;
+                const cbar = {
+                    C: (ax.A3 - 0.5) * 2,
+                    B: (ax.A6 - 0.5) * 2,
+                    A: (ax.A1 - 0.5) * 2,
+                    R: (ax.A2 - 0.5) * 2
+                };
 
                 // Animate C axis
                 T.activateGauge('C');
                 T.addLine('<span class="dim">[axis]</span> 주도성(C): 측정 중...', 200);
                 await wait(300);
-                T.fillGauge('C', axes.C);
+                T.fillGauge('C', cbar.C);
                 T.completeGauge('C');
-                T.addLine('<span class="dim">[axis]</span> <span class="success">C축 확정 → ' + (axes.C >= 0 ? '+' : '') + axes.C.toFixed(2) + '</span>', 150);
+                T.addLine('<span class="dim">[axis]</span> <span class="success">C축 확정 → ' + (cbar.C >= 0 ? '+' : '') + cbar.C.toFixed(2) + '</span>', 150);
                 T.setProgress(40);
 
                 // Animate B axis
                 T.activateGauge('B');
                 T.addLine('<span class="dim">[axis]</span> 논리성(B): 측정 중...', 200);
                 await wait(300);
-                T.fillGauge('B', axes.B);
+                T.fillGauge('B', cbar.B);
                 T.completeGauge('B');
-                T.addLine('<span class="dim">[axis]</span> <span class="success">B축 확정 → ' + (axes.B >= 0 ? '+' : '') + axes.B.toFixed(2) + '</span>', 150);
+                T.addLine('<span class="dim">[axis]</span> <span class="success">B축 확정 → ' + (cbar.B >= 0 ? '+' : '') + cbar.B.toFixed(2) + '</span>', 150);
                 T.setProgress(50);
 
                 // Animate A axis
                 T.activateGauge('A');
                 T.addLine('<span class="dim">[axis]</span> 개방성(A): 측정 중...', 200);
                 await wait(300);
-                T.fillGauge('A', axes.A);
+                T.fillGauge('A', cbar.A);
                 T.completeGauge('A');
-                T.addLine('<span class="dim">[axis]</span> <span class="success">A축 확정 → ' + (axes.A >= 0 ? '+' : '') + axes.A.toFixed(2) + '</span>', 150);
+                T.addLine('<span class="dim">[axis]</span> <span class="success">A축 확정 → ' + (cbar.A >= 0 ? '+' : '') + cbar.A.toFixed(2) + '</span>', 150);
                 T.setProgress(60);
 
                 // Animate R axis
                 T.activateGauge('R');
                 T.addLine('<span class="dim">[axis]</span> 공감성(R): 측정 중...', 200);
                 await wait(300);
-                T.fillGauge('R', axes.R);
+                T.fillGauge('R', cbar.R);
                 T.completeGauge('R');
-                T.addLine('<span class="dim">[axis]</span> <span class="success">R축 확정 → ' + (axes.R >= 0 ? '+' : '') + axes.R.toFixed(2) + '</span>', 150);
+                T.addLine('<span class="dim">[axis]</span> <span class="success">R축 확정 → ' + (cbar.R >= 0 ? '+' : '') + cbar.R.toFixed(2) + '</span>', 150);
                 T.setProgress(65);
 
                 await wait(200);
