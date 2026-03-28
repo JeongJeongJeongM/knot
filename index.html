@@ -3345,15 +3345,6 @@ function displayResult() {
             });
             document.getElementById('structuralAxes').innerHTML = structHTML;
 
-            // Render comparison section
-            renderComparisonSection(axes, typeCode);
-
-            // Clear sensitive data after results are displayed
-            setTimeout(() => {
-                clearSensitiveData();
-            }, 500);
-
-            // ── User Comparison: Radar Chart + Rarity + Distribution ──
             const TYPE_RARITY = {
                 'S-CS': 5.2, 'S-CF': 3.8, 'S-CL': 2.9, 'S-CD': 1.4,
                 'S-BS': 6.1, 'S-BF': 5.5, 'S-BL': 3.2, 'S-BD': 2.1,
@@ -3366,7 +3357,16 @@ function displayResult() {
             };
             const AVG_INTENSITY = { A1: 0.55, A2: 0.50, A3: 0.48, A4: 0.45, A5: 0.52, A6: 0.58 };
 
-            function renderComparisonSection(axes, typeCode) {
+            // Render comparison section
+            renderComparisonSection(axes, typeCode);
+
+            // Clear sensitive data after results are displayed
+            setTimeout(() => {
+                clearSensitiveData();
+            }, 500);
+
+            // ── User Comparison: Radar Chart + Rarity + Distribution ──
+function renderComparisonSection(axes, typeCode) {
                 const rarity = TYPE_RARITY[typeCode] || 3.0;
                 const rarityEl = document.getElementById('rarityRank');
                 const isRare = rarity <= 2.0;
