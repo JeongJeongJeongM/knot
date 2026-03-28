@@ -666,8 +666,11 @@
 
         .lens-content {
             display: none;
-            padding: 15px;
-            border-top: 1px solid var(--border);
+            padding: 14px 16px;
+            border-top: 1px solid #1a1a2e;
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--text-dim);
             font-size: 13px;
             line-height: 1.6;
             color: var(--text);
@@ -735,13 +738,17 @@
             transition: all 0.2s;
         }
         .share-download {
-            background: var(--ac) !important;
-            color: #000 !important;
+            background: transparent !important;
+            color: var(--ac) !important;
+            border: 1px solid var(--ac) !important;
+        }
+        .share-download:hover {
+            background: rgba(245,166,35,0.1) !important;
         }
         .share-close {
-            background: rgba(255,255,255,0.1) !important;
-            color: var(--text) !important;
-            border: 1px solid var(--border) !important;
+            background: transparent !important;
+            color: var(--text-dim) !important;
+            border: 1px solid #333 !important;
         }
         .share-hint {
             font-size: 11px;
@@ -843,9 +850,10 @@
         .feedback-q { margin: 18px 0 8px; font-size: 13px; font-weight: 600; color: var(--fg); }
         .feedback-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
         .feedback-chip {
-            padding: 6px 14px; border-radius: 20px; font-size: 12px;
-            border: 1px solid var(--border); cursor: pointer;
-            background: transparent; color: var(--fg); transition: all 0.2s;
+            padding: 6px 14px; border-radius: 4px; font-size: 11px;
+            border: 1px solid #1a1a2e; cursor: pointer;
+            background: transparent; color: var(--text-dim); transition: all 0.2s;
+            font-family: 'Courier New', monospace;
         }
         .feedback-chip:hover { border-color: var(--ac); }
         .feedback-chip.selected { background: var(--ac); color: #000; border-color: var(--ac); }
@@ -911,9 +919,13 @@
         }
 
         .match-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             margin-bottom: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'Courier New', monospace;
+            color: var(--ac);
         }
 
         .compatibility-score {
@@ -921,6 +933,8 @@
             font-weight: 900;
             color: var(--ac);
             margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 20px rgba(245,166,35,0.3);
         }
 
         .compatibility-label {
@@ -929,8 +943,8 @@
         }
 
         .match-upload {
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
+            background: #0c0c14;
+            border: 1px solid #1a1a2e;
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
@@ -942,8 +956,8 @@
         }
 
         .friction-visualization {
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
+            background: #0c0c14;
+            border: 1px solid #1a1a2e;
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
@@ -1026,7 +1040,7 @@
 
         /* Resolution & Diagnostics Panel */
         .reliability-summary {
-            border: 1px solid var(--border);
+            border: 1px solid #1a1a2e;
             border-radius: 10px;
             padding: 14px;
             margin-bottom: 12px;
@@ -1081,14 +1095,14 @@
             margin-bottom: 12px;
         }
         .diag-card {
-            background-color: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #1a1a2e;
+            border-radius: 6px;
             padding: 12px;
         }
         .diag-label {
-            font-size: 11px;
-            color: var(--text-dim);
+            font-size: 10px;
+            color: #555;
             margin-bottom: 6px;
             text-transform: uppercase;
             letter-spacing: 0.4px;
@@ -1256,10 +1270,11 @@
         }
 
         .partner-card {
-            background-color: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            padding: 15px;
-            border-left: 4px solid var(--border);
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 6px;
+            padding: 14px;
+            border-left: 3px solid #333;
+            transition: border-color 0.3s;
         }
 
         .partner-card.ideal {
@@ -1278,9 +1293,10 @@
         }
 
         .partner-type {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             margin-bottom: 4px;
+            font-family: 'Courier New', monospace;
         }
 
         .partner-reason {
@@ -1290,8 +1306,8 @@
         }
 
         .match-types-section {
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
+            background: #0c0c14;
+            border: 1px solid #1a1a2e;
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
@@ -1305,8 +1321,8 @@
         }
 
         .type-card {
-            background-color: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #1a1a2e;
             border-radius: 8px;
             padding: 12px;
             text-align: center;
@@ -1318,10 +1334,12 @@
         }
 
         .type-card-code {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: var(--ac);
             margin-bottom: 4px;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
             font-family: 'Monaco', 'Courier New', monospace;
         }
 
@@ -1331,8 +1349,8 @@
         }
 
         .match-analysis-section {
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
+            background: #0c0c14;
+            border: 1px solid #1a1a2e;
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
@@ -1347,10 +1365,13 @@
         }
 
         .analysis-title {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             color: var(--ac);
             margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Courier New', monospace;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
