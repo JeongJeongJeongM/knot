@@ -35,9 +35,26 @@
         body {
             background-color: var(--bg);
             color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+            font-family: 'Courier New', 'Monaco', monospace;
             min-height: 100vh;
             padding: 20px;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(245,166,35,0.03) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(96,165,250,0.02) 0%, transparent 50%);
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 9999;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,0.03) 2px,
+                rgba(0,0,0,0.03) 4px
+            );
         }
 
         .container {
@@ -59,38 +76,94 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Landing Screen */
+        /* Landing Screen — Cyber Terminal */
         .landing {
             text-align: center;
-            padding: 40px 20px;
+            padding: 30px 0;
         }
 
         .logo {
-            font-size: 48px;
+            font-size: 56px;
             font-weight: 900;
-            letter-spacing: 4px;
-            margin-bottom: 10px;
+            letter-spacing: 12px;
+            margin-bottom: 6px;
             color: var(--ac);
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 20px rgba(245,166,35,0.4), 0 0 60px rgba(245,166,35,0.1);
+            position: relative;
+        }
+        .logo::after {
+            content: '_';
+            animation: blink 1s step-end infinite;
         }
 
         .subtitle {
-            font-size: 14px;
+            font-size: 11px;
             color: var(--text-dim);
-            margin-bottom: 40px;
+            margin-bottom: 36px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .landing-panel {
+            background: #0c0c14;
+            border: 1px solid #1a1a2e;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .landing-panel-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: #12121e;
+            border-bottom: 1px solid #1a1a2e;
+        }
+        .landing-panel-bar .terminal-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .landing-panel-bar .terminal-dot.r { background: #ff5f57; }
+        .landing-panel-bar .terminal-dot.y { background: #ffbd2e; }
+        .landing-panel-bar .terminal-dot.g { background: #28c840; }
+        .landing-panel-title {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-left: 8px;
+            font-family: 'Courier New', monospace;
+        }
+        .landing-panel-body {
+            padding: 16px 18px;
+            font-size: 12px;
+            line-height: 1.8;
+            color: var(--text-dim);
         }
 
         .upload-zone {
-            border: 2px dashed var(--border);
-            border-radius: 8px;
-            padding: 40px 20px;
+            background: #0c0c14;
+            border: 1px solid #1a1a2e;
+            border-radius: 10px;
+            padding: 0;
             margin-bottom: 20px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
+            overflow: hidden;
+        }
+        .upload-zone-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: #12121e;
+            border-bottom: 1px solid #1a1a2e;
+        }
+        .upload-zone-body {
+            padding: 30px 20px;
+            text-align: center;
         }
 
         .upload-zone:hover {
             border-color: var(--ac);
-            background-color: rgba(245, 166, 35, 0.05);
+            box-shadow: 0 0 20px rgba(245,166,35,0.08);
         }
 
         .upload-zone input {
@@ -98,13 +171,16 @@
         }
 
         .upload-icon {
-            font-size: 32px;
+            font-size: 28px;
             margin-bottom: 10px;
+            opacity: 0.7;
         }
 
         .upload-text {
-            font-size: 14px;
-            margin-bottom: 20px;
+            font-size: 12px;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-family: 'Courier New', monospace;
         }
 
         .instructions {
@@ -431,16 +507,27 @@
         }
 
         .axes-section {
-            margin-bottom: 30px;
+            background: #0c0c14;
+            border: 1px solid #1a1a2e;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 16px;
         }
 
         .section-title {
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 600;
             color: var(--ac);
-            margin-bottom: 15px;
+            margin-bottom: 16px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #1a1a2e;
+        }
+        .section-title::before {
+            content: '// ';
+            color: #444;
         }
 
         .axis-item {
@@ -460,20 +547,23 @@
         }
 
         .axis-value {
-            color: var(--text-dim);
+            color: var(--ac);
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
         }
 
         .axis-bar-container {
-            background-color: rgba(255, 255, 255, 0.05);
-            height: 6px;
-            border-radius: 3px;
+            background-color: #1a1a2e;
+            height: 4px;
+            border-radius: 2px;
             overflow: hidden;
         }
 
         .axis-bar {
             height: 100%;
-            border-radius: 3px;
-            transition: width 0.3s ease;
+            border-radius: 2px;
+            transition: width 0.6s ease;
+            box-shadow: 0 0 8px currentColor;
         }
 
         .axis-description {
@@ -490,10 +580,14 @@
         }
 
         .struct-item {
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #1a1a2e;
+            border-radius: 8px;
             padding: 12px;
+            transition: border-color 0.3s;
+        }
+        .struct-item:hover {
+            border-color: rgba(245,166,35,0.3);
         }
 
         .struct-label {
@@ -533,34 +627,41 @@
         }
 
         .lens-card {
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #1a1a2e;
             border-radius: 8px;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             overflow: hidden;
+            transition: border-color 0.3s;
+        }
+        .lens-card:hover {
+            border-color: rgba(245,166,35,0.2);
         }
 
         .lens-header {
-            padding: 15px;
+            padding: 13px 16px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: rgba(255, 255, 255, 0.02);
+            background: transparent;
+            transition: background 0.2s;
         }
 
         .lens-header:hover {
-            background-color: rgba(245, 166, 35, 0.1);
+            background: rgba(245, 166, 35, 0.05);
         }
 
         .lens-title {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
+            font-family: 'Courier New', monospace;
         }
 
         .lens-toggle {
-            font-size: 12px;
-            color: var(--text-dim);
+            font-size: 11px;
+            color: var(--ac);
+            font-family: 'Courier New', monospace;
         }
 
         .lens-content {
@@ -592,36 +693,7 @@
             margin-bottom: 4px;
         }
 
-        /* About Section & Privacy Notice */
-        .about-section {
-            text-align: left;
-            font-size: 13px;
-            color: var(--text-dim);
-            margin-bottom: 30px;
-            line-height: 1.8;
-        }
-        .about-section h2 {
-            font-size: 15px;
-            color: var(--text);
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-        .about-section p {
-            margin-bottom: 12px;
-        }
-        .privacy-notice {
-            text-align: left;
-            font-size: 11px;
-            color: var(--text-dim);
-            background-color: rgba(255, 255, 255, 0.03);
-            border-left: 2px solid var(--ac);
-            padding: 12px 15px;
-            border-radius: 0 6px 6px 0;
-            margin-top: 16px;
-            line-height: 1.7;
-        }
-        .privacy-notice strong {
-            color: var(--text);
+        /* About Section — defined above */
         }
 
         /* Share Card Overlay */
@@ -678,19 +750,25 @@
             line-height: 1.5;
         }
         .share-card-btn {
-            background: linear-gradient(135deg, #E1306C, #F77737, #FCAF45) !important;
-            color: #fff !important;
-            border: none !important;
-            font-weight: 700 !important;
-            letter-spacing: 0.5px;
+            background: transparent !important;
+            color: var(--ac) !important;
+            border: 1px solid var(--ac) !important;
+            font-weight: 600 !important;
+            letter-spacing: 1px;
+        }
+        .share-card-btn:hover {
+            background: rgba(245,166,35,0.1) !important;
         }
         .share-url-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2) !important;
-            color: #fff !important;
-            border: none !important;
-            font-weight: 700 !important;
-            letter-spacing: 0.5px;
+            background: transparent !important;
+            color: #60A5FA !important;
+            border: 1px solid #60A5FA !important;
+            font-weight: 600 !important;
+            letter-spacing: 1px;
             margin-top: 8px;
+        }
+        .share-url-btn:hover {
+            background: rgba(96,165,250,0.1) !important;
         }
         .share-url-btn:disabled {
             opacity: 0.5;
@@ -791,29 +869,35 @@
         }
 
         .export-section {
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 30px;
+            background: #0c0c14;
+            border: 1px solid #1a1a2e;
+            border-radius: 10px;
+            padding: 18px;
+            margin-top: 16px;
         }
 
         .export-title {
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 600;
-            margin-bottom: 15px;
+            margin-bottom: 14px;
+            color: var(--ac);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'Courier New', monospace;
         }
 
         .profile-code {
-            background-color: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #1a1a2e;
             padding: 12px;
             border-radius: 6px;
-            font-size: 11px;
+            font-size: 10px;
             word-break: break-all;
-            font-family: 'Monaco', 'Courier New', monospace;
+            font-family: 'Courier New', monospace;
             margin-bottom: 10px;
             max-height: 100px;
             overflow-y: auto;
+            color: var(--text-dim);
         }
 
         /* Match Screen */
@@ -901,38 +985,43 @@
 
         /* Buttons */
         button {
-            background-color: var(--ac);
-            color: var(--bg);
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-size: 13px;
+            background: transparent;
+            color: var(--ac);
+            border: 1px solid var(--ac);
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
             width: 100%;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
 
         button:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
+            background: rgba(245,166,35,0.1);
+            box-shadow: 0 0 12px rgba(245,166,35,0.15);
+            transform: none;
         }
 
         button:disabled {
-            opacity: 0.5;
+            opacity: 0.3;
             cursor: not-allowed;
             transform: none;
         }
 
         .secondary-btn {
-            background-color: transparent;
-            color: var(--ac);
-            border: 1px solid var(--ac);
+            background: transparent;
+            color: var(--text-dim);
+            border: 1px solid #333;
         }
 
         .secondary-btn:hover {
-            background-color: rgba(245, 166, 35, 0.1);
+            border-color: var(--ac);
+            color: var(--ac);
         }
 
         /* Resolution & Diagnostics Panel */
@@ -1110,37 +1199,50 @@
 
         /* Type System Styles */
         .type-badge {
-            background: linear-gradient(135deg, rgba(245,166,35,0.2) 0%, rgba(96,165,250,0.2) 100%);
-            border: 2px solid var(--ac);
-            border-radius: 12px;
-            padding: 20px;
+            background: #0c0c14;
+            border: 1px solid var(--ac);
+            border-radius: 10px;
+            padding: 24px 20px;
             text-align: center;
             margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(245,166,35,0.08);
+        }
+        .type-badge::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--ac), transparent);
         }
 
         .type-emoji {
-            font-size: 48px;
+            font-size: 44px;
             margin-bottom: 10px;
         }
 
         .type-code {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 700;
             color: var(--ac);
-            margin-bottom: 5px;
-            font-family: 'Monaco', 'Courier New', monospace;
+            margin-bottom: 6px;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px rgba(245,166,35,0.3);
         }
 
         .type-name {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             margin-bottom: 8px;
+            letter-spacing: 1px;
         }
 
         .type-desc {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--text-dim);
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
         .partner-section {
@@ -1287,39 +1389,66 @@
     <div class="screen landing active">
         <div class="container">
             <div class="logo">KNOT</div>
-            <div class="subtitle">AI 대화 행동 분석</div>
+            <div class="subtitle">AI Behavioral Analysis Engine</div>
 
-            <div class="about-section">
+            <!-- About Panel -->
+            <div class="landing-panel">
+                <div class="landing-panel-bar">
+                    <div class="terminal-dot r"></div>
+                    <div class="terminal-dot y"></div>
+                    <div class="terminal-dot g"></div>
+                    <span class="landing-panel-title">system.info</span>
+                </div>
+                <div class="landing-panel-body">
+                    <span style="color:var(--ac)">KNOT</span>은 AI 챗봇과의 대화 기록을 분석하여, 사용자의 <span style="color:var(--ac)">대화 행동 패턴</span>을 다각도로 시각화하는 엔진입니다.<br><br>
+                    <span style="color:#555">──</span> 11개 행동축 기반 프로파일링<br>
+                    <span style="color:#555">──</span> 10가지 행동 유형 매칭<br>
+                    <span style="color:#555">──</span> 두 사람 호환성 비교 분석
+                </div>
+            </div>
+
+            <div class="about-section" style="display:none;">
                 <h2>KNOT이란?</h2>
                 <p>KNOT은 AI 챗봇과의 대화 기록을 분석하여, 사용자의 <strong style="color:var(--ac)">대화 행동 패턴</strong>을 다각도로 시각화하는 도구입니다.</p>
                 <p>11개의 행동 축을 기반으로 대화 스타일을 프로파일링하고, 10가지 행동 유형 중 가장 가까운 패턴을 매칭합니다. 두 사람의 결과를 비교하여 호환성 분석도 가능합니다.</p>
-                <div class="privacy-notice">
-                    <strong>🔒 개인정보 안내</strong><br>
-                    • 업로드된 대화 데이터는 브라우저에서만 처리됩니다<br>
-                    • 분석을 위해 Anthropic Claude API로 암호화된 연결(HTTPS)을 통해 전송됩니다<br>
-                    • Anthropic API 정책에 따라 전송된 데이터는 모델 학습에 사용되지 않습니다<br>
-                    • 분석 완료 후 원본 데이터는 브라우저 메모리에서 즉시 삭제됩니다<br>
-                    • 공유 기능 사용 시 분석 결과(점수/유형)만 저장되며, 원본 대화는 포함되지 않습니다<br>
-                    • 저장된 공유 데이터는 30일 후 자동 삭제됩니다
+                <div class="privacy-notice" style="margin-top:20px;">
+                    <strong style="color:#555;">// PRIVACY</strong><br>
+                    <span style="color:#444;">├</span> 대화 데이터는 브라우저에서만 처리<br>
+                    <span style="color:#444;">├</span> Anthropic Claude API — HTTPS 암호화 전송<br>
+                    <span style="color:#444;">├</span> 전송된 데이터는 모델 학습에 미사용<br>
+                    <span style="color:#444;">├</span> 분석 완료 후 원본 데이터 즉시 삭제<br>
+                    <span style="color:#444;">└</span> 공유 데이터 30일 후 자동 삭제
                 </div>
             </div>
 
             <div class="upload-zone" id="uploadZone">
-                <div class="upload-icon">📤</div>
-                <div class="upload-text">JSON 또는 ZIP 파일 드래그 &amp; 드롭</div>
-                <div class="text-dim" style="font-size: 12px;">또는 클릭하여 파일 선택</div>
+                <div class="upload-zone-bar">
+                    <div class="terminal-dot r" style="width:8px;height:8px;border-radius:50%;"></div>
+                    <div class="terminal-dot y" style="width:8px;height:8px;border-radius:50%;"></div>
+                    <div class="terminal-dot g" style="width:8px;height:8px;border-radius:50%;"></div>
+                    <span class="landing-panel-title">file.upload</span>
+                </div>
+                <div class="upload-zone-body">
+                    <div class="upload-icon" style="font-family:'Courier New',monospace;font-size:24px;color:var(--ac);opacity:1;">[DROP]</div>
+                    <div class="upload-text">JSON 또는 ZIP 파일 드래그 &amp; 드롭</div>
+                    <div style="font-size: 10px; color:#555; font-family:'Courier New',monospace;">또는 클릭하여 파일 선택</div>
+                </div>
                 <input type="file" id="fileInput" accept=".json,.zip">
             </div>
 
             <div class="instructions">
-                <strong>지원하는 형식:</strong>
-                <ol>
-                    <li><strong>Claude</strong> — chat_messages 배열 형식</li>
-                    <li><strong>ChatGPT</strong> — mapping 객체 형식</li>
-                    <li><strong>ZIP</strong> — conversations.json 포함</li>
-                </ol>
-                <div style="margin-top: 15px;">
-                    <strong>분석 항목:</strong> 11개 행동축 + 10개 프로필 분석 + 호환성 매칭
+                <div class="landing-panel-bar" style="border-radius:10px 10px 0 0;">
+                    <div class="terminal-dot r" style="width:8px;height:8px;border-radius:50%;"></div>
+                    <div class="terminal-dot y" style="width:8px;height:8px;border-radius:50%;"></div>
+                    <div class="terminal-dot g" style="width:8px;height:8px;border-radius:50%;"></div>
+                    <span class="landing-panel-title">supported.formats</span>
+                </div>
+                <div class="instructions-inner">
+                    <ol>
+                        <li><span style="color:var(--text)">Claude</span> — chat_messages 배열 형식</li>
+                        <li><span style="color:var(--text)">ChatGPT</span> — mapping 객체 형식</li>
+                        <li><span style="color:var(--text)">ZIP</span> — conversations.json 포함</li>
+                    </ol>
                 </div>
             </div>
         </div>
