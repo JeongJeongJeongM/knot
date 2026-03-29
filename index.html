@@ -1451,7 +1451,7 @@
                     <div class="upload-text">JSON 또는 ZIP 파일 드래그 &amp; 드롭</div>
                     <div style="font-size: 10px; color:#555; font-family:'Courier New',monospace;">또는 클릭하여 파일 선택</div>
                 </div>
-                <input type="file" id="fileInput" accept=".json,.zip">
+                <input type="file" id="fileInput" autocomplete="off" accept=".json,.zip">
             </div>
 
             <div class="landing-panel">
@@ -1664,7 +1664,7 @@
                 <div style="margin-bottom: 15px;">
                     <div style="font-size: 13px; margin-bottom: 10px;">두 번째 프로필 업로드</div>
                     <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 15px;">파일 또는 프로필 코드 붙여넣기</div>
-                    <input type="file" id="matchFileInput" accept=".json,.zip">
+                    <input type="file" id="matchFileInput" autocomplete="off" accept=".json,.zip">
                     <button onclick="document.getElementById('matchFileInput').click()">파일 선택</button>
                     <div style="margin: 15px 0;">또는</div>
                     <textarea id="matchCodeInput" placeholder="프로필 코드 입력..." style="width: 100%; height: 80px; padding: 10px; background-color: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 11px; resize: none;"></textarea>
@@ -3930,6 +3930,9 @@ function displayResult() {
             showScreen('match');
             document.getElementById('matchResultsContainer').classList.add('hidden');
         }
+
+        // Reset file inputs to prevent browser form state restoration triggering change events
+        document.querySelectorAll('input[type="file"]').forEach(function(inp) { inp.value = ''; });
 
         // ============ FILE UPLOAD HANDLERS ============
         document.getElementById('fileInput').addEventListener('change', (e) => {
