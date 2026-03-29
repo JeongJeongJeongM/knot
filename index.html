@@ -3209,29 +3209,29 @@
 
 
 function displayResult() {
-            const profile = currentProfile;
-            const axes = profile.axes;
+            var   profile = currentProfile;
+            var   axes = profile.axes;
 
             // Display 32-type system
-            const type = profile.type;
+            var   type = profile.type;
             document.getElementById('typeEmoji').textContent = sanitizeHTML(type.emoji);
             document.getElementById('typeCode').textContent = sanitizeHTML(type.code);
             document.getElementById('typeName').textContent = sanitizeHTML(type.name);
-            const resolution = getResolutionSummary(profile);
+            var   resolution = getResolutionSummary(profile);
             document.getElementById('typeDesc').textContent = `${sanitizeHTML(type.desc)} · 신뢰도 ${sanitizeHTML(resolution.label)} (${formatPercent(resolution.score)})`;
 
             // Diagnostics panel
             document.getElementById('diagnosticsPanel').innerHTML = renderDiagnosticsPanel(profile);
 
             // Temporal panel
-            const temporalHTML = renderTemporalPanel(profile);
+            var   temporalHTML = renderTemporalPanel(profile);
             if (temporalHTML) {
                 document.getElementById('temporalPanel').innerHTML = temporalHTML;
                 document.getElementById('temporalSection').style.display = 'block';
             }
 
             // Display partner recommendations
-            const partners = getIdealPartners(type.code);
+            var   partners = getIdealPartners(type.code);
             let partnersHTML = '';
 
             if (partners.ideal.length > 0) {
@@ -3288,7 +3288,7 @@ function displayResult() {
             document.getElementById('partnerRecommendations').innerHTML = partnersHTML;
 
             let intensityHTML = '';
-            const intensityAxes = [
+            var   intensityAxes = [
                 { id: 'A1', label: AXIS_LABELS.A1, value: axes.intensity.A1, desc: '상대나 주제에 얼마나 적극적으로 반응하나' },
                 { id: 'A2', label: AXIS_LABELS.A2, value: axes.intensity.A2, desc: '상대 감정을 얼마나 받아주나' },
                 { id: 'A3', label: AXIS_LABELS.A3, value: axes.intensity.A3, desc: '자기 의견을 얼마나 직접 말하나' },
@@ -3315,7 +3315,7 @@ function displayResult() {
             document.getElementById('intensityAxes').innerHTML = intensityHTML;
 
             let structHTML = '';
-            const structuralAxes = [
+            var   structuralAxes = [
                 { id: 'A7', label: AXIS_LABELS.A7, data: axes.structural.A7 },
                 { id: 'A8', label: AXIS_LABELS.A8, data: axes.structural.A8 },
                 { id: 'A9', label: AXIS_LABELS.A9, data: axes.structural.A9 },
@@ -3343,7 +3343,7 @@ function displayResult() {
             });
             document.getElementById('structuralAxes').innerHTML = structHTML;
 
-            const TYPE_RARITY = {
+            var   TYPE_RARITY = {
                 'S-CS': 5.2, 'S-CF': 3.8, 'S-CL': 2.9, 'S-CD': 1.4,
                 'S-BS': 6.1, 'S-BF': 5.5, 'S-BL': 3.2, 'S-BD': 2.1,
                 'S-AS': 4.8, 'S-AF': 6.3, 'S-AL': 2.5, 'S-AD': 1.8,
@@ -3363,7 +3363,7 @@ function displayResult() {
             }, 500);
 
             // ── User Comparison: Radar Chart + Rarity + Distribution ──
-            const AVG_INTENSITY = { A1: 0.55, A2: 0.50, A3: 0.48, A4: 0.45, A5: 0.52, A6: 0.58 };
+            var   AVG_INTENSITY = { A1: 0.55, A2: 0.50, A3: 0.48, A4: 0.45, A5: 0.52, A6: 0.58 };
 
             function renderComparisonSection(axes, typeCode) {
                 const rarity = TYPE_RARITY[typeCode] || 3.0;
@@ -3473,7 +3473,7 @@ function displayResult() {
 
             // 프로필 분석: LLM 10섹션 결과 우선, fallback으로 7렌즈 로컬 분석
             let lensesHTML = '';
-            const llmSections = profile.llmResult && profile.llmResult.sections;
+            var   llmSections = profile.llmResult && profile.llmResult.sections;
 
             if (llmSections) {
                 // LLM 10-섹션 출력
@@ -3514,7 +3514,7 @@ function displayResult() {
             }
             document.getElementById('lenses').innerHTML = lensesHTML;
 
-            const profileCode = btoa(unescape(encodeURIComponent(JSON.stringify({
+            var   profileCode = btoa(unescape(encodeURIComponent(JSON.stringify({
                 intensity: axes.intensity,
                 structural: axes.structural,
                 type: type,
