@@ -3966,12 +3966,9 @@ console.warn('showScreen called:', name, new Error().stack);
         });
 
         // ============ FILE UPLOAD HANDLERS ============
-        document.getElementById('fileInput').addEventListener('change', (e) => {
-            if (!_userInteracted) { e.target.value = ''; return; }
-            if (e.target.files[0]) {
-                analyzeConversation(e.target.files[0]);
-            }
-        });
+        setTimeout(function() { document.getElementById('fileInput').addEventListener('change', function(e) {
+            if (e.target.files[0]) { analyzeConversation(e.target.files[0]); }
+        }); }, 8000);
 
         document.getElementById('uploadZone').addEventListener('click', () => {
             document.getElementById('fileInput').click();
@@ -3994,12 +3991,9 @@ console.warn('showScreen called:', name, new Error().stack);
             }
         });
 
-        document.getElementById('matchFileInput').addEventListener('change', (e) => {
-            if (!_userInteracted) { e.target.value = ''; return; }
-            if (e.target.files[0]) {
-                loadMatchFile(e.target.files[0]);
-            }
-        });
+        setTimeout(function() { document.getElementById('matchFileInput').addEventListener('change', function(e) {
+            if (e.target.files[0]) { loadMatchFile(e.target.files[0]); }
+        }); }, 8000);
 
         // ============ INSTAGRAM SHARE CARD ============
         function roundRect(ctx, x, y, w, h, r) {
