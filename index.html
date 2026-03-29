@@ -3113,9 +3113,9 @@
 
                 await wait(200);
                 updateProgress('행동 유형을 결정하고 있습니다');
-                T.addLine('<span class="prompt">$</span> initializing analysis engine', 300)
-                .addLine('<span class="prompt">$</span> syncing conversation data', 300)
-                .addLine('<span class="prompt">$</span> running deep pattern analysis', 300);
+                T.addLine('<span class="prompt">$</span> initializing analysis engine', 300);
+                T.addLine('<span class="prompt">$</span> syncing conversation data', 300);
+                T.addLine('<span class="prompt">$</span> running deep pattern analysis', 300);
                 const type = computeType(axes);
                 T.addLine('<span class="dim">[type]</span> <span class="warn">잠정 대화 유형 도출 완료: ' + sanitizeHTML(type.emoji) + ' ' + sanitizeHTML(type.code) + ' - ' + sanitizeHTML(type.name) + '</span>', 200);
                 T.setProgress(70, 'AI 심층 분석 진행 중...');
