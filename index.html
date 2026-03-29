@@ -1402,9 +1402,9 @@
         }
     </style>
 </head>
-<body style="opacity:1 !important;visibility:visible !important;">
+<body>
     <!-- Landing Screen -->
-    <div class="screen landing active" style="display:block;opacity:1;visibility:visible;">
+    <div class="screen landing active">
         <div class="container">
             <div class="logo">KNOT</div>
             <div class="subtitle">AI Behavioral Analysis & Matching Engine</div>
@@ -1491,7 +1491,7 @@
     
 
         <!-- Analyzing Screen -->
-    <div class="screen analyzing" style="display:none">
+    <div class="screen analyzing">
         <div class="container">
             <div class="analyzing-header">
                 <h2>ANALYZING</h2>
@@ -1561,7 +1561,7 @@
 
 
 <!-- Result Screen -->
-    <div class="screen result" style="display:none">
+    <div class="screen result">
         <div class="container">
             <div class="result-header">
                 <div class="type-badge">
@@ -1649,7 +1649,7 @@
     </div>
 
     <!-- Match Screen -->
-    <div class="screen match" style="display:none">
+    <div class="screen match">
         <div class="container">
             <div class="match-header">
                 <div class="match-title">호환성 분석</div>
@@ -3772,15 +3772,10 @@ function displayResult() {
         function showScreen(name) {
             document.querySelectorAll('.screen').forEach(s => {
                 s.classList.remove('active');
-                s.style.display = 'none';
-                s.style.opacity = '0';
-                s.style.visibility = 'hidden';
+                s.removeAttribute('style');
             });
             const target = document.querySelector('.screen.' + name);
-            target.classList.add('active');
-            target.style.display = 'block';
-            target.style.opacity = '1';
-            target.style.visibility = 'visible';
+            if (target) target.classList.add('active');
         }
 
         function updateProgress(stage) {
@@ -4550,5 +4545,13 @@ function displayResult() {
         }
     </script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-</body>
+<script>
+    (function() {
+        if (!document.querySelector('.screen.active')) {
+            var l = document.querySelector('.screen.landing');
+            if (l) l.classList.add('active');
+        }
+    })();
+    </script>
+    </body>
 </html>
