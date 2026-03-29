@@ -1502,7 +1502,7 @@
         <div class="container">
             <div class="analyzing-header">
                 <h2>ANALYZING</h2>
-                <div class="analyzing-sub" id="progressStage">대화 행동 패턴을 분석하고 있습니다</div>
+                <div class="analyzing-sub" id="progressStage">대화 성향을 분석하고 있습니다</div>
             </div>
 
             <div class="analyzing-layout">
@@ -1526,7 +1526,7 @@
                             <span class="gauge-value" id="gaugeCVal">--</span>
                         </div>
                         <div class="gauge-track"><div class="gauge-fill" id="gaugeCFill"></div></div>
-                        <div class="gauge-desc">대화를 이끄는 정도</div>
+                        <div class="gauge-desc">대화를 이끄는 경향</div>
                     </div>
                     <div class="gauge-item" id="gaugeB">
                         <div class="gauge-label">
@@ -1534,7 +1534,7 @@
                             <span class="gauge-value" id="gaugeBVal">--</span>
                         </div>
                         <div class="gauge-track"><div class="gauge-fill" id="gaugeBFill"></div></div>
-                        <div class="gauge-desc">논리 vs 감성 비율</div>
+                        <div class="gauge-desc">논리 중심 성향</div>
                     </div>
                     <div class="gauge-item" id="gaugeA">
                         <div class="gauge-label">
@@ -1542,7 +1542,7 @@
                             <span class="gauge-value" id="gaugeAVal">--</span>
                         </div>
                         <div class="gauge-track"><div class="gauge-fill" id="gaugeAFill"></div></div>
-                        <div class="gauge-desc">자기 노출 수준</div>
+                        <div class="gauge-desc">자기 표현 성향</div>
                     </div>
                     <div class="gauge-item" id="gaugeR">
                         <div class="gauge-label">
@@ -3034,7 +3034,7 @@
             try {
                 let messages;
 
-                T.addLine('<span class="dim">[init]</span> KNOT v0.2 엔진 로딩...', 300);
+                T.addLine('<span class="dim">[init]</span> 분석 시스템 준비 중...', 300);
                 T.addLine('<span class="dim">[file]</span> 파일 크기: ' + (file.size / 1024).toFixed(1) + ' KB', 200);
 
                 if (file.name.endsWith('.zip')) {
@@ -3077,46 +3077,48 @@
 
                 // Animate C axis
                 T.activateGauge('C');
-                T.addLine('<span class="dim">[axis]</span> 주도성(C): 측정 중...', 200);
+                T.addLine('<span class="dim">[axis]</span> 주도성(C) 패턴 분석 중...', 200);
                 await wait(300);
                 T.fillGauge('C', cbar.C);
                 T.completeGauge('C');
-                T.addLine('<span class="dim">[axis]</span> <span class="success">C축 확정 → ' + (cbar.C >= 0 ? '+' : '') + cbar.C.toFixed(2) + '</span>', 150);
+                T.addLine('<span class="dim">[axis]</span> <span class="success">C축 성향 확정 → ' + (cbar.C >= 0 ? '+' : '') + cbar.C.toFixed(2) + '</span>', 150);
                 T.setProgress(40);
 
                 // Animate B axis
                 T.activateGauge('B');
-                T.addLine('<span class="dim">[axis]</span> 논리성(B): 측정 중...', 200);
+                T.addLine('<span class="dim">[axis]</span> 논리성(B) 패턴 분석 중...', 200);
                 await wait(300);
                 T.fillGauge('B', cbar.B);
                 T.completeGauge('B');
-                T.addLine('<span class="dim">[axis]</span> <span class="success">B축 확정 → ' + (cbar.B >= 0 ? '+' : '') + cbar.B.toFixed(2) + '</span>', 150);
+                T.addLine('<span class="dim">[axis]</span> <span class="success">B축 성향 확정 → ' + (cbar.B >= 0 ? '+' : '') + cbar.B.toFixed(2) + '</span>', 150);
                 T.setProgress(50);
 
                 // Animate A axis
                 T.activateGauge('A');
-                T.addLine('<span class="dim">[axis]</span> 개방성(A): 측정 중...', 200);
+                T.addLine('<span class="dim">[axis]</span> 개방성(A) 패턴 분석 중...', 200);
                 await wait(300);
                 T.fillGauge('A', cbar.A);
                 T.completeGauge('A');
-                T.addLine('<span class="dim">[axis]</span> <span class="success">A축 확정 → ' + (cbar.A >= 0 ? '+' : '') + cbar.A.toFixed(2) + '</span>', 150);
+                T.addLine('<span class="dim">[axis]</span> <span class="success">A축 성향 확정 → ' + (cbar.A >= 0 ? '+' : '') + cbar.A.toFixed(2) + '</span>', 150);
                 T.setProgress(60);
 
                 // Animate R axis
                 T.activateGauge('R');
-                T.addLine('<span class="dim">[axis]</span> 공감성(R): 측정 중...', 200);
+                T.addLine('<span class="dim">[axis]</span> 공감성(R) 패턴 분석 중...', 200);
                 await wait(300);
                 T.fillGauge('R', cbar.R);
                 T.completeGauge('R');
-                T.addLine('<span class="dim">[axis]</span> <span class="success">R축 확정 → ' + (cbar.R >= 0 ? '+' : '') + cbar.R.toFixed(2) + '</span>', 150);
+                T.addLine('<span class="dim">[axis]</span> <span class="success">R축 성향 확정 → ' + (cbar.R >= 0 ? '+' : '') + cbar.R.toFixed(2) + '</span>', 150);
                 T.setProgress(65);
 
                 await wait(200);
                 updateProgress('행동 유형을 결정하고 있습니다');
-                T.addLine('<span class="prompt">$</span> classify-type --system=32', 300);
+                .addLine('<span class="prompt">$</span> initializing analysis engine', 300)
+                .addLine('<span class="prompt">$</span> syncing conversation data', 300)
+                .addLine('<span class="prompt">$</span> running deep pattern analysis', 300);
                 const type = computeType(axes);
-                T.addLine('<span class="dim">[type]</span> <span class="warn">잠정 유형: ' + sanitizeHTML(type.emoji) + ' ' + sanitizeHTML(type.code) + ' - ' + sanitizeHTML(type.name) + '</span>', 200);
-                T.setProgress(70, 'AI 심층 분석 중...');
+                T.addLine('<span class="dim">[type]</span> <span class="warn">잠정 대화 유형 도출 완료: ' + sanitizeHTML(type.emoji) + ' ' + sanitizeHTML(type.code) + ' - ' + sanitizeHTML(type.name) + '</span>', 200);
+                T.setProgress(70, 'AI 심층 분석 진행 중...');
 
                 // LLM 분석
                 let llmResult = null;
@@ -3872,24 +3874,24 @@ function displayResult() {
             // Fake scanning animation for LLM wait
             startLLMScan() {
                 const phrases = [
-                    '<span class="dim">[scan]</span> <span class="info">문맥 흐름 패턴 추적...</span>',
-                    '<span class="dim">[scan]</span> 감정 곡선 변화율 측정...',
-                    '<span class="dim">[scan]</span> <span class="warn">비어어적 단서 탐색...</span>',
-                    '<span class="dim">[scan]</span> 대화 주도권 전환점 분석...',
-                    '<span class="dim">[scan]</span> <span class="info">응답 지연 패턴 해독...</span>',
-                    '<span class="dim">[scan]</span> 질문-응답 매칭률 계산...',
-                    '<span class="dim">[scan]</span> <span class="warn">유머 사용 빈도 추출...</span>',
-                    '<span class="dim">[scan]</span> 공감 표현 밀도 측정...',
-                    '<span class="dim">[scan]</span> <span class="info">주제 전환 패턴 분류...</span>',
-                    '<span class="dim">[scan]</span> 자기 노출 심도 평가...',
-                    '<span class="dim">[scan]</span> <span class="success">갈등 해소 전략 판별...</span>',
-                    '<span class="dim">[scan]</span> 관계 역학 시뮬레이션...',
-                    '<span class="dim">[scan]</span> <span class="info">대화 밀도 지수 산출...</span>',
-                    '<span class="dim">[scan]</span> 어휘 다양성 계수 측정...',
-                    '<span class="dim">[scan]</span> <span class="warn">감정 전이 패턴 매핑...</span>',
-                    '<span class="dim">[scan]</span> 대화 리듬 분석...',
-                    '<span class="dim">[scan]</span> <span class="info">츜층 행동 프로필 합성 중...</span>',
-                    '<span class="dim">[scan]</span> <span class="success">최종 유형 후보군 비교...</span>',
+                    '<span class="dim">[scan]</span> <span class="info">대화 흐름 패턴 분석 중...</span>',
+                    '<span class="dim">[scan]</span> 감정 흐름 분석 중...',
+                    '<span class="dim">[scan]</span> <span class="warn">반응 스타일 분석 중...</span>',
+                    '<span class="dim">[scan]</span> 대화 주도 흐름 분석 중...',
+                    '<span class="dim">[scan]</span> <span class="info">응답 패턴 안정성 분석 중...</span>',
+                    '<span class="dim">[scan]</span> 질문 반응 패턴 분석 중...',
+                    '<span class="dim">[scan]</span> <span class="warn">표현 스타일 분석 중...</span>',
+                    '<span class="dim">[scan]</span> 공감 반응 패턴 분석 중...',
+                    '<span class="dim">[scan]</span> <span class="info">주제 전환 흐름 분석 중...</span>',
+                    '<span class="dim">[scan]</span> 자기 표현 패턴 분석 중...',
+                    '<span class="dim">[scan]</span> <span class="success">갈등 대응 방식 분석 중...</span>',
+                    '<span class="dim">[scan]</span> 관계 흐름 구조 분석 중...',
+                    '<span class="dim">[scan]</span> <span class="info">대화 밀도 분석 중...</span>',
+                    '<span class="dim">[scan]</span> 어휘 사용 패턴 분석 중...',
+                    '<span class="dim">[scan]</span> <span class="warn">감정 전이 흐름 분석 중...</span>',
+                    '<span class="dim">[scan]</span> 대화 리듬 분석 중...',
+                    '<span class="dim">[scan]</span> <span class="info">심층 대화 프로필 구성 중...</span>',
+                    '<span class="dim">[scan]</span> <span class="success">최종 유형 비교 분석 중...</span>',
                 ];
                 let idx = 0;
                 this.interval = setInterval(() => {
