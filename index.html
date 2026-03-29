@@ -67,12 +67,10 @@
 
         .screen {
             display: none;
-            opacity: 0;
         }
 
         .screen.active {
             display: block;
-            opacity: 1 !important;
         }
 
         /* Landing Screen — Cyber Terminal */
@@ -1406,7 +1404,7 @@
 </head>
 <body>
     <!-- Landing Screen -->
-    <div class="screen landing active">
+    <div class="screen landing active" style="display:block">
         <div class="container">
             <div class="logo">KNOT</div>
             <div class="subtitle">AI Behavioral Analysis & Matching Engine</div>
@@ -1493,7 +1491,7 @@
     
 
         <!-- Analyzing Screen -->
-    <div class="screen analyzing">
+    <div class="screen analyzing" style="display:none">
         <div class="container">
             <div class="analyzing-header">
                 <h2>ANALYZING</h2>
@@ -1563,7 +1561,7 @@
 
 
 <!-- Result Screen -->
-    <div class="screen result">
+    <div class="screen result" style="display:none">
         <div class="container">
             <div class="result-header">
                 <div class="type-badge">
@@ -1651,7 +1649,7 @@
     </div>
 
     <!-- Match Screen -->
-    <div class="screen match">
+    <div class="screen match" style="display:none">
         <div class="container">
             <div class="match-header">
                 <div class="match-title">호환성 분석</div>
@@ -3772,8 +3770,13 @@ function displayResult() {
 
         // ============ UI CONTROLLERS ============
         function showScreen(name) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.querySelector('.screen.' + name).classList.add('active');
+            document.querySelectorAll('.screen').forEach(s => {
+                s.classList.remove('active');
+                s.style.display = 'none';
+            });
+            const target = document.querySelector('.screen.' + name);
+            target.classList.add('active');
+            target.style.display = 'block';
         }
 
         function updateProgress(stage) {
