@@ -1727,6 +1727,25 @@
 
     <script>
 
+        // === NUCLEAR FIX: Destroy and recreate file inputs to prevent browser form restoration ===
+        (function(){
+            ['fileInput','matchFileInput'].forEach(function(id){
+                var el = document.getElementById(id);
+                if(el){
+                    var fresh = document.createElement('input');
+                    fresh.type='file';
+                    fresh.id=el.id;
+                    if(el.className)fresh.className=el.className;
+                    if(el.getAttribute('accept'))fresh.setAttribute('accept',el.getAttribute('accept'));
+                    fresh.setAttribute('autocomplete','off');
+                    fresh.style.cssText=el.style.cssText;
+                    el.parentNode.replaceChild(fresh,el);
+                }
+            });
+        })();
+        var _screenLocked = true; // Locked until legitimate file processing begins
+
+
         // ============ DATA STRUCTURES & CONFIG ============
         const AXIS_COLORS = {
             A1: 'var(--a1)', A2: 'var(--a2)', A3: 'var(--a3)', A4: 'var(--a4)', A5: 'var(--a5)', A6: 'var(--a6)',
@@ -3018,6 +3037,7 @@
         // ============ ANALYSIS ORCHESTRATION ============
                 async function analyzeConversation(file) {
             if (!file) { console.warn('analyzeConversation called without file'); return; }
+            _screenLocked = false; // Unlock navigation for legitimate analysis
             showScreen('analyzing');
             terminalEngine.reset();
             const T = terminalEngine;
@@ -3771,7 +3791,8 @@ function displayResult() {
 
         // ============ UI CONTROLLERS ============
         function showScreen(name) {
-            console.warn('showScreen called:', name, new Error().stack);
+                        if (_screenLocked && name !== 'landing') { console.warn('showScreen BLOCKED (locked):', name); return; }
+console.warn('showScreen called:', name, new Error().stack);
             document.querySelectorAll('.screen').forEach(s => {
                 s.style.cssText = 'display:none !important';
             });
