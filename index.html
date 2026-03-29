@@ -2015,9 +2015,7 @@
                 throw new Error('파일 크기는 50MB 이하여야 합니다. 현재 파일: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB');
             }
 
-            if (typeof JSZip === "undefined") {
-                await new Promise((res, rej) => { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"; s.onload = res; s.onerror = () => rej(new Error("JSZip CDN load failed")); document.head.appendChild(s); });
-            }
+            if (typeof JSZip === "undefined") { throw new Error("ZIP 처리 기능을 사용할 수 없습니다. 페이지를 새로고침해주세요."); }
             const zip = new JSZip();
             let contents;
             try {
@@ -4545,5 +4543,6 @@ function displayResult() {
             document.getElementById('shareOverlay').classList.add('active');
         }
     </script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </body>
 </html>
