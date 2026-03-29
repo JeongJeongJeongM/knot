@@ -1743,7 +1743,8 @@
                 }
             });
         })();
-        var _screenLocked = true; // Locked until legitimate file processing begins
+        var _screenLocked = true;
+        var _pageLoadTime = Date.now(); // Locked until legitimate file processing begins
 
 
         // ============ DATA STRUCTURES & CONFIG ============
@@ -3037,7 +3038,13 @@
         // ============ ANALYSIS ORCHESTRATION ============
                 async function analyzeConversation(file) {
             if (!file) { console.warn('analyzeConversation called without file'); return; }
-            _screenLocked = false; // Unlock navigation for legitimate analysis
+            // Time guard: block analysis within 5 seconds of page load (browser form restoration)
+            if (Date.now() - _pageLoadTime < 5000) {
+                console.warn('analyzeConversation BLOCKED: too early after page load (' + (Date.now() - _pageLoadTime) + 'ms)');
+                showScreen('landing');
+                return;
+            }
+            _screenLocked = false;
             showScreen('analyzing');
             terminalEngine.reset();
             const T = terminalEngine;
