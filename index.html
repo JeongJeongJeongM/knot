@@ -1542,7 +1542,6 @@
                     <div class="upload-text">JSON 또는 ZIP 파일 드래그 &amp; 드롭</div>
                     <div style="font-size: 10px; color:#555; font-family:'Courier New',monospace;">또는 클릭하여 파일 선택</div>
                 </div>
-                <input type="file" id="fileInput" accept=".json,.zip">
             </div>
 
             <div class="instructions">
@@ -1755,8 +1754,7 @@
                 <div style="margin-bottom: 15px;">
                     <div style="font-size: 13px; margin-bottom: 10px;">두 번째 프로필 업로드</div>
                     <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 15px;">파일 또는 프로필 코드 붙여넣기</div>
-                    <input type="file" id="matchFileInput" accept=".json,.zip">
-                    <button onclick="document.getElementById('matchFileInput').click()">파일 선택</button>
+                    <button onclick="(function(){var i=document.createElement('input');i.type='file';i.accept='.json,.zip';i.style.display='none';i.onchange=function(){if(this.files[0]){analyzeMatchConversation(this.files[0]);}document.body.removeChild(this);};document.body.appendChild(i);i.click();})()">파일 선택</button>
                     <div style="margin: 15px 0;">또는</div>
                     <textarea id="matchCodeInput" placeholder="프로필 코드 입력..." style="width: 100%; height: 80px; padding: 10px; background-color: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 11px; resize: none;"></textarea>
                     <button onclick="loadProfileFromCode()" style="margin-top: 10px;">코드에서 로드</button>
@@ -4066,14 +4064,14 @@ function displayResult() {
         }
 
         // ============ FILE UPLOAD HANDLERS ============
-        document.getElementById('fileInput').addEventListener('change', (e) => {
-            if (e.target.files[0]) {
-                analyzeConversation(e.target.files[0]);
-            }
-        });
-
-        document.getElementById('uploadZone').addEventListener('click', () => {
-            document.getElementById('fileInput').click();
+        document.getElementById('uploadZone').addEventListener('click', function() {
+            var inp = document.createElement('input');
+            inp.type = 'file';
+            inp.accept = '.json,.zip';
+            inp.style.display = 'none';
+            inp.onchange = function() { if (this.files[0]) analyzeConversation(this.files[0]); document.body.removeChild(this); };
+            document.body.appendChild(inp);
+            inp.click();
         });
 
         document.getElementById('uploadZone').addEventListener('dragover', (e) => {
@@ -4093,11 +4091,7 @@ function displayResult() {
             }
         });
 
-        document.getElementById('matchFileInput').addEventListener('change', (e) => {
-            if (e.target.files[0]) {
-                loadMatchFile(e.target.files[0]);
-            }
-        });
+        // matchFileInput handler removed - created dynamically
 
         // ============ INSTAGRAM SHARE CARD ============
         function roundRect(ctx, x, y, w, h, r) {
