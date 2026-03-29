@@ -3931,11 +3931,15 @@ function displayResult() {
             document.getElementById('matchResultsContainer').classList.add('hidden');
         }
 
-        // Reset file inputs to prevent browser form state restoration triggering change events
-        document.querySelectorAll('input[type="file"]').forEach(function(inp) { inp.value = ''; });
+        // User interaction guard - browser restores file inputs on reload, triggering change events
+        var _userInteracted = false;
+        ['click','touchstart','keydown','drop'].forEach(function(evt) {
+            document.addEventListener(evt, function() { _userInteracted = true; }, {once: true, capture: true});
+        });
 
         // ============ FILE UPLOAD HANDLERS ============
         document.getElementById('fileInput').addEventListener('change', (e) => {
+            if (!_userInteracted) { e.target.value = ''; return; }
             if (e.target.files[0]) {
                 analyzeConversation(e.target.files[0]);
             }
@@ -3963,6 +3967,7 @@ function displayResult() {
         });
 
         document.getElementById('matchFileInput').addEventListener('change', (e) => {
+            if (!_userInteracted) { e.target.value = ''; return; }
             if (e.target.files[0]) {
                 loadMatchFile(e.target.files[0]);
             }
