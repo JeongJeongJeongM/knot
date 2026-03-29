@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- CSP temporarily disabled -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+        <meta http-equiv="Pragma" content="no-cache">
+        <meta http-equiv="Expires" content="0">
+        <!-- CSP temporarily disabled -->
     <title>KNOT - AI Behavioral Analysis Engine</title>
     <!-- JSZip removed for debugging -->
     <style>
@@ -1403,7 +1406,7 @@
 </head>
 <body>
     <!-- Landing Screen -->
-    <div class="screen landing active">
+    <div class="screen landing active" style="display:block !important;opacity:1 !important;visibility:visible !important;">
         <div class="container">
             <div class="logo">KNOT</div>
             <div class="subtitle">AI Behavioral Analysis & Matching Engine</div>
@@ -4540,5 +4543,19 @@ function displayResult() {
         }
     </script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-</body>
+<script>
+    // Force visibility fallback
+    document.addEventListener("DOMContentLoaded", function() {
+        document.body.style.opacity = "1";
+        document.body.style.visibility = "visible";
+        document.body.removeAttribute("unresolved");
+        var landing = document.querySelector(".screen.landing.active");
+        if (landing) {
+            landing.style.display = "block";
+            landing.style.opacity = "1";
+            landing.style.visibility = "visible";
+        }
+    });
+    </script>
+    </body>
 </html>
