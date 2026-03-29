@@ -1404,7 +1404,7 @@
 </head>
 <body>
     <!-- Landing Screen -->
-    <div class="screen landing active" style="display:block">
+    <div class="screen landing active" style="display:block;opacity:1;visibility:visible;">
         <div class="container">
             <div class="logo">KNOT</div>
             <div class="subtitle">AI Behavioral Analysis & Matching Engine</div>
@@ -3773,10 +3773,14 @@ function displayResult() {
             document.querySelectorAll('.screen').forEach(s => {
                 s.classList.remove('active');
                 s.style.display = 'none';
+                s.style.opacity = '0';
+                s.style.visibility = 'hidden';
             });
             const target = document.querySelector('.screen.' + name);
             target.classList.add('active');
             target.style.display = 'block';
+            target.style.opacity = '1';
+            target.style.visibility = 'visible';
         }
 
         function updateProgress(stage) {
