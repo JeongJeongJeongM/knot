@@ -3017,6 +3017,7 @@
 
         // ============ ANALYSIS ORCHESTRATION ============
                 async function analyzeConversation(file) {
+            if (!file) { console.warn('analyzeConversation called without file'); return; }
             showScreen('analyzing');
             terminalEngine.reset();
             const T = terminalEngine;
@@ -3770,6 +3771,7 @@ function displayResult() {
 
         // ============ UI CONTROLLERS ============
         function showScreen(name) {
+            console.warn('showScreen called:', name, new Error().stack);
             document.querySelectorAll('.screen').forEach(s => {
                 s.style.cssText = 'display:none !important';
             });
@@ -4546,10 +4548,22 @@ function displayResult() {
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
     (function() {
-        var l = document.querySelector('.screen.landing');
-        if (l && getComputedStyle(l).display === 'none') {
-            l.style.cssText = 'display:block !important';
+        function ensureLanding() {
+            var analyzing = document.querySelector('.screen.analyzing');
+            var landing = document.querySelector('.screen.landing');
+            if (analyzing && getComputedStyle(analyzing).display !== 'none') {
+                analyzing.style.cssText = 'display:none !important';
+                if (landing) landing.style.cssText = 'display:block !important';
+            }
+            if (landing && getComputedStyle(landing).display === 'none') {
+                landing.style.cssText = 'display:block !important';
+            }
         }
+        ensureLanding();
+        setTimeout(ensureLanding, 0);
+        setTimeout(ensureLanding, 100);
+        setTimeout(ensureLanding, 500);
+        setTimeout(ensureLanding, 1000);
     })();
     </script>
     </body>
