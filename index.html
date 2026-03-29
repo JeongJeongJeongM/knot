@@ -1406,7 +1406,7 @@
 </head>
 <body>
     <!-- Landing Screen -->
-    <div class="screen landing active" style="display:block !important;opacity:1 !important;visibility:visible !important;">
+    <div class="screen landing active">
         <div class="container">
             <div class="logo">KNOT</div>
             <div class="subtitle">AI Behavioral Analysis & Matching Engine</div>
@@ -4543,19 +4543,5 @@ function displayResult() {
         }
     </script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script>
-    // Force visibility fallback
-    document.addEventListener("DOMContentLoaded", function() {
-        document.body.style.opacity = "1";
-        document.body.style.visibility = "visible";
-        document.body.removeAttribute("unresolved");
-        var landing = document.querySelector(".screen.landing.active");
-        if (landing) {
-            landing.style.display = "block";
-            landing.style.opacity = "1";
-            landing.style.visibility = "visible";
-        }
-    });
-    </script>
-    </body>
+</body>
 </html>
