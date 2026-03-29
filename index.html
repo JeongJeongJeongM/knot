@@ -1404,7 +1404,7 @@
 </head>
 <body>
     <!-- Landing Screen -->
-    <div class="screen landing active">
+    <div class="screen landing active" style="display:block !important">
         <div class="container">
             <div class="logo">KNOT</div>
             <div class="subtitle">AI Behavioral Analysis & Matching Engine</div>
@@ -3771,11 +3771,10 @@ function displayResult() {
         // ============ UI CONTROLLERS ============
         function showScreen(name) {
             document.querySelectorAll('.screen').forEach(s => {
-                s.classList.remove('active');
-                s.removeAttribute('style');
+                s.style.cssText = 'display:none !important';
             });
             const target = document.querySelector('.screen.' + name);
-            if (target) target.classList.add('active');
+            if (target) target.style.cssText = 'display:block !important';
         }
 
         function updateProgress(stage) {
@@ -4547,9 +4546,9 @@ function displayResult() {
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
     (function() {
-        if (!document.querySelector('.screen.active')) {
-            var l = document.querySelector('.screen.landing');
-            if (l) l.classList.add('active');
+        var l = document.querySelector('.screen.landing');
+        if (l && getComputedStyle(l).display === 'none') {
+            l.style.cssText = 'display:block !important';
         }
     })();
     </script>
