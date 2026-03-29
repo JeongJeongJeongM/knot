@@ -1,5 +1,4 @@
 <!DOCTYPE html> 
-<!-- v3.2.1 -->
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -1187,183 +1186,7 @@
             padding: 8px 0;
         }
 
-        
-        /* Behavior DNA Grid */
-        .dna-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 8px;
-        }
-        .dna-card {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid #1a1a2e;
-            border-radius: 6px;
-            padding: 10px 12px;
-        }
-        .dna-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-        .dna-label {
-            font-size: 10px;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-family: 'Courier New', monospace;
-        }
-        .dna-value {
-            font-size: 12px;
-            font-weight: 700;
-            font-family: 'Courier New', monospace;
-        }
-        .dna-bar-track {
-            height: 4px;
-            background: rgba(255,255,255,0.06);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        .dna-bar-fill {
-            height: 100%;
-            border-radius: 2px;
-            transition: width 0.6s ease;
-        }
-        .dna-hint {
-            font-size: 9px;
-            color: #555;
-            margin-top: 4px;
-        }
-        .dna-group-label {
-            font-size: 10px;
-            color: var(--ac);
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            font-family: 'Courier New', monospace;
-            margin-top: 12px;
-            margin-bottom: 6px;
-            padding-left: 2px;
-        }
-        .dna-group-label:first-child {
-            margin-top: 0;
-        }
-
-
-        /* Axis Comparison Overlay */
-        .axis-cmp-item {
-            margin-bottom: 14px;
-            padding-bottom: 14px;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-        }
-        .axis-cmp-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .axis-cmp-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-        .axis-cmp-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text);
-            font-family: 'Courier New', monospace;
-        }
-        .axis-cmp-values {
-            font-size: 10px;
-            color: var(--text-dim);
-            font-family: 'Courier New', monospace;
-        }
-        .axis-cmp-bar-track {
-            position: relative;
-            height: 18px;
-            background: rgba(255,255,255,0.04);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .axis-cmp-bar {
-            position: absolute;
-            height: 7px;
-            border-radius: 3px;
-            transition: width 0.6s ease;
-            left: 0;
-        }
-        .axis-cmp-bar.bar-a { top: 2px; }
-        .axis-cmp-bar.bar-b { top: 9px; }
-        .axis-cmp-struct {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .axis-cmp-struct-tag {
-            font-size: 10px;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-weight: 600;
-        }
-        .axis-cmp-legend {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 14px;
-            font-size: 10px;
-            font-family: 'Courier New', monospace;
-            color: var(--text-dim);
-        }
-        .legend-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 4px;
-            vertical-align: middle;
-        }
-
-
-        /* Synergy & Collision */
-        .sc-grid { display: grid; gap: 8px; }
-        .sc-card {
-            padding: 12px;
-            border-radius: 6px;
-            border-left: 3px solid;
-        }
-        .sc-card.synergy { border-left-color: #4ADE80; background: rgba(74,222,128,0.06); }
-        .sc-card.collision { border-left-color: #F87171; background: rgba(248,113,113,0.06); }
-        .sc-card.neutral { border-left-color: #555; background: rgba(255,255,255,0.02); }
-        .sc-axis-id {
-            font-size: 10px;
-            font-weight: 700;
-            font-family: 'Courier New', monospace;
-            letter-spacing: 1px;
-            margin-bottom: 4px;
-        }
-        .sc-card.synergy .sc-axis-id { color: #4ADE80; }
-        .sc-card.collision .sc-axis-id { color: #F87171; }
-        .sc-card.neutral .sc-axis-id { color: #888; }
-        .sc-desc { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
-        .sc-summary { display: flex; gap: 12px; margin-bottom: 14px; }
-        .sc-summary-badge {
-            flex: 1;
-            text-align: center;
-            padding: 10px;
-            border-radius: 6px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid #1a1a2e;
-        }
-        .sc-summary-count {
-            font-size: 20px;
-            font-weight: 900;
-            font-family: 'Courier New', monospace;
-        }
-        .sc-summary-label {
-            font-size: 9px;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 4px;
-        }
-
-/* Utilities */
+        /* Utilities */
         .mt-20 {
             margin-top: 20px;
         }
@@ -1775,14 +1598,7 @@
                 <div class="structural-axes" id="structuralAxes"></div>
             </div>
 
-            
-            <!-- Behavior DNA -->
-            <div class="axes-section">
-                <div class="section-title">행동 DNA</div>
-                <div id="behaviorDnaPanel"></div>
-            </div>
-
-<!-- Interpretation Lenses -->
+            <!-- Interpretation Lenses -->
             <div class="axes-section">
                 <div class="section-title">프로필 분석 (Profile Analysis)</div>
                 <div id="lenses" class="lenses-section"></div>
@@ -1882,20 +1698,7 @@
                     <div id="frictionAxes"></div>
                 </div>
 
-                
-                <!-- Axis Overlay Comparison -->
-                <div class="axes-section">
-                    <div class="section-title">축별 상세 비교</div>
-                    <div id="axisComparisonPanel"></div>
-                </div>
-
-                <!-- Synergy & Collision Points -->
-                <div class="axes-section">
-                    <div class="section-title">시너지 & 충돌 포인트</div>
-                    <div id="synergyCollisionPanel"></div>
-                </div>
-
-<!-- Enhanced Matching Analysis -->
+                <!-- Enhanced Matching Analysis -->
                 <div class="match-analysis-section">
                     <div class="section-title">향상된 호환성 분석</div>
 
@@ -3000,223 +2803,7 @@
             return flags;
         }
 
-                // ============ BEHAVIOR DNA PANEL ============
-        function renderBehaviorDna(profile) {
-            const rates = profile?.rates;
-            if (!rates) return '';
-
-            const groups = [
-                {
-                    label: '참여 신호',
-                    rates: [
-                        { key: 'interest_rate', label: '관심도', hint: '질문·호기심 빈도', color: '#4ADE80' },
-                        { key: 'sharing_rate', label: '자기노출', hint: '개인 이야기 공유', color: '#60A5FA' },
-                        { key: 'empathy_rate', label: '공감 반응', hint: '감정 지지 표현', color: '#C084FC' },
-                        { key: 'availability_rate', label: '수용 의지', hint: '참여·수락 신호', color: '#4ADE80' },
-                        { key: 'feedback_pos_rate', label: '긍정 피드백', hint: '칭찬·동의 빈도', color: '#34D399' },
-                    ]
-                },
-                {
-                    label: '경계 신호',
-                    rates: [
-                        { key: 'feedback_neg_rate', label: '비판적 반응', hint: '부정·비판 표현', color: '#F87171' },
-                        { key: 'hostile_rate', label: '적대성', hint: '공격적 언어 빈도', color: '#F87171' },
-                        { key: 'disinterest_rate', label: '무관심', hint: '관심 부족 지표', color: '#FB923C' },
-                        { key: 'distress_rate', label: '고통 표현', hint: '감정적 어려움 표출', color: '#FBBF24' },
-                        { key: 'boundary_rate', label: '경계 설정', hint: '거절·제한 표현', color: '#FB923C' },
-                    ]
-                },
-                {
-                    label: '구조 신호',
-                    rates: [
-                        { key: 'task_assign_rate', label: '지시·요청', hint: '과제 할당 빈도', color: '#F5A623' },
-                        { key: 'status_update_rate', label: '상태 보고', hint: '진행 상황 공유', color: '#60A5FA' },
-                        { key: 'turn_count_norm', label: '대화량', hint: '전체 메시지 규모', color: '#94A3B8' },
-                        { key: 'self_loop_rate', label: '패턴 일관성', hint: '말투 반복 안정도', color: '#94A3B8' },
-                    ]
-                }
-            ];
-
-            let html = '';
-            groups.forEach(group => {
-                html += '<div class="dna-group-label">' + group.label + '</div>';
-                html += '<div class="dna-grid">';
-                group.rates.forEach(r => {
-                    const val = clamp01(rates[r.key] || 0);
-                    const pct = (val * 100).toFixed(0);
-                    html += '<div class="dna-card">' +
-                        '<div class="dna-card-header">' +
-                        '<span class="dna-label">' + r.label + '</span>' +
-                        '<span class="dna-value" style="color:' + r.color + ';">' + pct + '%</span>' +
-                        '</div>' +
-                        '<div class="dna-bar-track">' +
-                        '<div class="dna-bar-fill" style="width:' + Math.max(val*100,2) + '%;background:' + r.color + ';"></div>' +
-                        '</div>' +
-                        '<div class="dna-hint">' + r.hint + '</div>' +
-                        '</div>';
-                });
-                html += '</div>';
-            });
-
-            const sf = rates.diagnostics?.shrinkFactor;
-            if (sf !== undefined && sf < 0.85) {
-                const sfPct = (sf * 100).toFixed(0);
-                html += '<div style="margin-top:12px;padding:10px 12px;background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.15);border-radius:6px;font-size:11px;color:var(--text-dim);line-height:1.5;">' +
-                    '<span style="color:var(--ac);font-weight:600;">수축 계수 ' + sfPct + '%</span> — 데이터가 충분하지 않아 성향 강도(A1~A6) 값이 중립(50%) 쪽으로 보정되었습니다. 대화 데이터가 많아지면 더 선명한 결과를 얻을 수 있습니다.</div>';
-            }
-
-            return html;
-        }
-
-        // ============ AXIS COMPARISON (MATCHING) ============
-        function renderAxisComparison(profileA, profileB) {
-            const axesA = profileA.axes;
-            const axesB = profileB.axes;
-            const nameA = profileA.type?.code || 'A';
-            const nameB = profileB.type?.code || 'B';
-
-            let html = '<div class="axis-cmp-legend">' +
-                '<span><span class="legend-dot" style="background:var(--ac);"></span> ' + sanitizeHTML(nameA) + ' (나)</span>' +
-                '<span><span class="legend-dot" style="background:#60A5FA;"></span> ' + sanitizeHTML(nameB) + ' (상대)</span>' +
-            '</div>';
-
-            const intensityAxes = [
-                { id: 'A1', label: AXIS_LABELS.A1 },
-                { id: 'A2', label: AXIS_LABELS.A2 },
-                { id: 'A3', label: AXIS_LABELS.A3 },
-                { id: 'A4', label: AXIS_LABELS.A4 },
-                { id: 'A5', label: AXIS_LABELS.A5 },
-                { id: 'A6', label: AXIS_LABELS.A6 }
-            ];
-
-            intensityAxes.forEach(axis => {
-                const valA = axesA.intensity[axis.id] || 0;
-                const valB = axesB.intensity[axis.id] || 0;
-                const pctA = (valA * 100).toFixed(0);
-                const pctB = (valB * 100).toFixed(0);
-                const diff = Math.abs(valA - valB);
-                const diffColor = diff < 0.15 ? '#4ADE80' : diff > 0.35 ? '#F87171' : '#FBBF24';
-
-                html += '<div class="axis-cmp-item">' +
-                    '<div class="axis-cmp-header">' +
-                    '<span class="axis-cmp-label">' + axis.id + ' ' + sanitizeHTML(axis.label) + '</span>' +
-                    '<span class="axis-cmp-values">' +
-                    '<span style="color:var(--ac);">' + pctA + '%</span>' +
-                    '<span style="color:#555;"> vs </span>' +
-                    '<span style="color:#60A5FA;">' + pctB + '%</span>' +
-                    '<span style="color:' + diffColor + ';margin-left:6px;">Δ' + (diff*100).toFixed(0) + '</span>' +
-                    '</span></div>' +
-                    '<div class="axis-cmp-bar-track">' +
-                    '<div class="axis-cmp-bar bar-a" style="width:' + Math.max(valA*100,2) + '%;background:var(--ac);opacity:0.85;"></div>' +
-                    '<div class="axis-cmp-bar bar-b" style="width:' + Math.max(valB*100,2) + '%;background:#60A5FA;opacity:0.85;"></div>' +
-                    '</div></div>';
-            });
-
-            const structAxes = [
-                { id: 'A7', label: AXIS_LABELS.A7 },
-                { id: 'A8', label: AXIS_LABELS.A8 },
-                { id: 'A9', label: AXIS_LABELS.A9 },
-                { id: 'A10', label: AXIS_LABELS.A10 },
-                { id: 'A11', label: AXIS_LABELS.A11 }
-            ];
-
-            structAxes.forEach(axis => {
-                const styleA = axesA.structural[axis.id]?.primary || '-';
-                const styleB = axesB.structural[axis.id]?.primary || '-';
-                const labelA = STRUCT_LABELS[styleA] || styleA;
-                const labelB = STRUCT_LABELS[styleB] || styleB;
-                const match = styleA === styleB;
-
-                html += '<div class="axis-cmp-item">' +
-                    '<div class="axis-cmp-header">' +
-                    '<span class="axis-cmp-label">' + axis.id + ' ' + sanitizeHTML(axis.label) + '</span>' +
-                    '<span style="font-size:10px;color:' + (match ? '#4ADE80' : '#FBBF24') + ';">' + (match ? '일치' : '상이') + '</span>' +
-                    '</div>' +
-                    '<div class="axis-cmp-struct">' +
-                    '<span class="axis-cmp-struct-tag" style="background:rgba(245,166,35,0.12);color:var(--ac);">' + sanitizeHTML(labelA) + '</span>' +
-                    '<span style="font-size:10px;color:#555;">vs</span>' +
-                    '<span class="axis-cmp-struct-tag" style="background:rgba(96,165,250,0.12);color:#60A5FA;">' + sanitizeHTML(labelB) + '</span>' +
-                    '</div></div>';
-            });
-
-            return html;
-        }
-
-        // ============ SYNERGY & COLLISION ============
-        function renderSynergyCollision(profileA, profileB) {
-            const axesA = profileA.axes;
-            const axesB = profileB.axes;
-            const points = [];
-
-            const intensityDescs = {
-                A1: { syn: '서로의 관심사에 비슷한 에너지로 반응합니다.', col: '한쪽은 적극적이고 다른 쪽은 소극적이라 온도차가 발생할 수 있습니다.' },
-                A2: { syn: '공감 수준이 비슷하여 정서적 교류가 자연스럽습니다.', col: '공감 능력의 차이가 커서 정서적 단절을 느낄 수 있습니다.' },
-                A3: { syn: '의사 표현 강도가 균형 잡혀 대등한 대화가 가능합니다.', col: '한쪽이 주장이 강하고 다른 쪽이 수동적이라 힘의 불균형이 생길 수 있습니다.' },
-                A4: { syn: '감정 표현의 깊이가 비슷하여 서로 편안합니다.', col: '감정 표현 차이가 커서 한쪽이 답답하거나 부담스러울 수 있습니다.' },
-                A5: { syn: '배려의 주고받음이 균형 잡혀 있습니다.', col: '돌봄의 방향이 한쪽으로 치우쳐 소진이 발생할 수 있습니다.' },
-                A6: { syn: '일관된 태도로 서로 안정감을 줍니다.', col: '한쪽은 예측 가능하고 다른 쪽은 변덕스러워 신뢰 형성에 시간이 걸립니다.' }
-            };
-
-            ['A1','A2','A3','A4','A5','A6'].forEach(id => {
-                const a = axesA.intensity[id] || 0;
-                const b = axesB.intensity[id] || 0;
-                const diff = Math.abs(a - b);
-                const desc = intensityDescs[id];
-                if (diff < 0.15) {
-                    points.push({ id: id, type: 'synergy', label: AXIS_LABELS[id], desc: desc.syn, diff: diff });
-                } else if (diff > 0.35) {
-                    points.push({ id: id, type: 'collision', label: AXIS_LABELS[id], desc: desc.col, diff: diff });
-                }
-            });
-
-            const structDescs = {
-                A7: { syn: '상호작용 주도 방식이 잘 맞아 대화 리듬이 자연스럽습니다.', col: '대화 주도권에서 충돌이 발생하거나 둘 다 수동적일 수 있습니다.' },
-                A8: { syn: '갈등 해결 방식이 호환되어 갈등이 오래가지 않습니다.', col: '갈등 처리 방식이 달라 오해가 깊어질 위험이 있습니다.' },
-                A9: { syn: '감정 처리 스타일이 비슷하여 정서적으로 통합니다.', col: '감정 처리 방식의 차이가 의사소통 장벽이 될 수 있습니다.' },
-                A10: { syn: '친밀감 형성 속도가 비슷하여 관계 발전이 자연스럽습니다.', col: '친밀감 속도 차이로 한쪽은 급하고 다른 쪽은 느려 갈등이 생길 수 있습니다.' },
-                A11: { syn: '주고받음의 균형이 맞아 호혜적인 관계가 가능합니다.', col: '관계에서의 기여 방식이 달라 불만이 쌓일 수 있습니다.' }
-            };
-
-            ['A7','A8','A9','A10','A11'].forEach(id => {
-                const styleA = axesA.structural[id]?.primary || '';
-                const styleB = axesB.structural[id]?.primary || '';
-                const desc = structDescs[id];
-                const key = styleA + '_' + styleB;
-                const friction = CONFLICT_MATRIX[id] ? (CONFLICT_MATRIX[id][key] || 0.5) : 0.5;
-
-                if (friction < 0.25) {
-                    points.push({ id: id, type: 'synergy', label: AXIS_LABELS[id], desc: desc.syn, diff: friction });
-                } else if (friction > 0.6) {
-                    points.push({ id: id, type: 'collision', label: AXIS_LABELS[id], desc: desc.col, diff: friction });
-                }
-            });
-
-            const synergies = points.filter(p => p.type === 'synergy');
-            const collisions = points.filter(p => p.type === 'collision');
-
-            let html = '<div class="sc-summary">' +
-                '<div class="sc-summary-badge"><div class="sc-summary-count" style="color:#4ADE80;">' + synergies.length + '</div><div class="sc-summary-label">시너지</div></div>' +
-                '<div class="sc-summary-badge"><div class="sc-summary-count" style="color:#F87171;">' + collisions.length + '</div><div class="sc-summary-label">충돌</div></div>' +
-                '<div class="sc-summary-badge"><div class="sc-summary-count" style="color:#94A3B8;">' + (11 - synergies.length - collisions.length) + '</div><div class="sc-summary-label">중립</div></div>' +
-            '</div>';
-
-            html += '<div class="sc-grid">';
-            synergies.forEach(p => {
-                html += '<div class="sc-card synergy"><div class="sc-axis-id">' + p.id + ' ' + sanitizeHTML(p.label) + '</div><div class="sc-desc">' + sanitizeHTML(p.desc) + '</div></div>';
-            });
-            collisions.forEach(p => {
-                html += '<div class="sc-card collision"><div class="sc-axis-id">' + p.id + ' ' + sanitizeHTML(p.label) + '</div><div class="sc-desc">' + sanitizeHTML(p.desc) + '</div></div>';
-            });
-
-            if (synergies.length === 0 && collisions.length === 0) {
-                html += '<div class="sc-card neutral"><div class="sc-axis-id">균형 상태</div><div class="sc-desc">극단적인 시너지나 충돌 없이 대부분의 축에서 중간 범위의 차이를 보입니다.</div></div>';
-            }
-
-            html += '</div>';
-            return html;
-        }
-
-function renderDiagnosticsPanel(profile) {
+        function renderDiagnosticsPanel(profile) {
             const d = profile?.rates?.diagnostics || {};
             const summary = getResolutionSummary(profile);
 
@@ -3716,11 +3303,7 @@ function displayResult() {
             });
             document.getElementById('structuralAxes').innerHTML = structHTML;
 
-
-            // Render behavior DNA panel
-            document.getElementById('behaviorDnaPanel').innerHTML = renderBehaviorDna(profile);
-
-            // Render comparison section
+// Render comparison section
 
             // Clear sensitive data after results are displayed
             setTimeout(() => {
@@ -4093,13 +3676,6 @@ function displayResult() {
             });
 
             document.getElementById('frictionAxes').innerHTML = frictionHTML;
-
-            
-            // Axis comparison overlay
-            document.getElementById('axisComparisonPanel').innerHTML = renderAxisComparison(currentProfile, matchProfile);
-
-            // Synergy & collision analysis
-            document.getElementById('synergyCollisionPanel').innerHTML = renderSynergyCollision(currentProfile, matchProfile);
 
             // Display type comparison
             const typeA = currentProfile.type || { emoji: '🔮', code: '-', name: '-' };
