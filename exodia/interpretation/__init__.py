@@ -37,6 +37,30 @@ from exodia.interpretation.card import (
     generate_matching_card,
 )
 
+# v3 timeseries tracking
+from exodia.interpretation.timeseries import (
+    TimeseriesStore,
+    PeriodSnapshot,
+    AxisSnapshot,
+    build_timeseries,
+    aggregate_sessions_to_snapshot,
+)
+
+# v3 convergence detection
+from exodia.interpretation.convergence import (
+    ConvergenceReport,
+    AxisConvergence,
+    assess_convergence,
+)
+
+# v3 drift detection
+from exodia.interpretation.drift import (
+    DriftReport,
+    DriftEvent,
+    AxisDrift,
+    detect_drift,
+)
+
 __all__ = [
     # Core
     "INTENSITY_VOCAB", "STRUCTURAL_VOCAB",
@@ -53,4 +77,11 @@ __all__ = [
     # v3 Cards
     "IndividualCardData", "MatchingCardData",
     "generate_individual_card", "generate_matching_card",
+    # v3 Timeseries
+    "TimeseriesStore", "PeriodSnapshot", "AxisSnapshot",
+    "build_timeseries", "aggregate_sessions_to_snapshot",
+    # v3 Convergence
+    "ConvergenceReport", "AxisConvergence", "assess_convergence",
+    # v3 Drift
+    "DriftReport", "DriftEvent", "AxisDrift", "detect_drift",
 ]
