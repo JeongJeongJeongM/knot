@@ -76,7 +76,7 @@ def _get_top_distinctive_traits(profile_data: Dict, n: int = 3) -> List[TraitChi
         if val is None:
             continue
         if isinstance(val, dict):
-            val = val.get("value", 0.5)
+            val = val.get("score", val.get("value", 0.5))
         val = float(val)
         pct = _estimate_percentile(val)
         deviation = abs(val - 0.5)
@@ -114,7 +114,7 @@ def generate_individual_card(
         IndividualCardData with all rendering data
     """
     diff = calculate_differentiation_score(profile_data)
-    score = diff["score"]
+    score = diff.get("total_score", diff.get("score", 0))
 
     # Rarity percentage (rough: score 70 → ~4%, score 50 → ~15%)
     if score >= 80:
@@ -154,7 +154,9 @@ def generate_matching_card(
     # Estimate rarity of this combination
     diff_a = calculate_differentiation_score(profile_a)
     diff_b = calculate_differentiation_score(profile_b)
-    combined = (diff_a["score"] + diff_b["score"]) / 2
+    score_a = diff_a.get("total_score", diff_a.get("score", 0))
+    score_b = diff_b.get("total_score", diff_b.get("score", 0))
+    combined = (score_a + score_b) / 2
     rarity_pct = round(max(2.0, (100 - combined) / 6), 1)
 
     return MatchingCardData(

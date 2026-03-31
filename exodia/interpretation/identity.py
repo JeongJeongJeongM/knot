@@ -43,94 +43,114 @@ def _dom(axis_data: dict) -> str:
 #         intimacy_comfort_high, attachment_dominant, conflict_dominant)
 # Simplified to major archetype groups
 
+# ── Engine axis reference (DO NOT expose to users) ──────────
+# Intensity: A1=engagement, A2=receptivity, A3=assertiveness,
+#            A4=emotional_expression, A5=collaboration, A6=stability
+# Structural: A7=orientation(initiator/responder/balanced),
+#   A8=conflict(confrontational/avoidant/boundary/repair),
+#   A9=emotion_reg(expressive/analytical/suppressive/externalized),
+#   A10=intimacy(slow_burn/fast_opener/surface_locked/depth_seeker),
+#   A11=balance(giver/taker), A13=feedback(growth/defensive/avoidant/absorptive),
+#   A15=investment(active_investor/passive_maintainer/disengaged),
+#   A16=cognition(analytical/pragmatic/binary),
+#   A17=humor(tension_breaker/bonding/deflective/aggressive/minimal)
+
 _INDIVIDUAL_ARCHETYPES: List[dict] = [
-    # High intensity + Low expression + High confidence → Frozen Volcano
+    # High engagement + Low expression + Suppressive → internally alive but externally cold
     {
-        "match": lambda d: _h(d["A1"]) and _l(d["A3"]) and _h(d["A4"]),
+        "match": lambda d: _h(d["A1"]) and _l(d["A4"]) and _dom(d.get("A9", {})) == "suppressive",
         "name": "얼어붙은 화산",
         "emoji": "🌋",
         "code": "E-VF",
         "tagline": "안에서 들끓지만 밖으로는 차가운, 통제된 격렬함의 소유자",
     },
-    # High intensity + High expression + High social → Storm Conductor
+    # High engagement + High assertiveness + Confrontational conflict → bold leader
     {
-        "match": lambda d: _h(d["A1"]) and _h(d["A3"]) and _h(d["A5"]),
+        "match": lambda d: _h(d["A1"]) and _h(d["A3"]) and _dom(d.get("A8", {})) == "confrontational",
         "name": "폭풍의 지휘자",
         "emoji": "⚡",
         "code": "E-SC",
         "tagline": "감정의 폭풍을 에너지로 바꾸는, 주도적인 격렬함의 소유자",
     },
-    # High empathy + High expression + Low conflict (avoidant) → Fog Lantern
+    # High receptivity + Low assertiveness + High expression → empathetic but yielding
     {
-        "match": lambda d: _h(d["A3"]) and _dom(d.get("A15", {})) == "정서적공감형" and _dom(d.get("A7", {})) == "회피형",
+        "match": lambda d: _h(d["A2"]) and _l(d["A3"]) and _h(d["A4"]),
         "name": "안개 속의 등불",
         "emoji": "🏮",
         "code": "E-LM",
         "tagline": "따뜻하게 비추지만 스스로는 흔들리는, 부드러운 공감의 소유자",
     },
-    # High confidence + Low authority + High social → Pathbreaker
+    # High engagement + High assertiveness + Initiator → trailblazer
     {
-        "match": lambda d: _h(d["A4"]) and _l(d["A6"]) and _h(d["A5"]),
+        "match": lambda d: _h(d["A1"]) and _h(d["A3"]) and _dom(d.get("A7", {})) == "initiator",
         "name": "길 없는 개척자",
         "emoji": "🗡️",
         "code": "E-PB",
         "tagline": "기존 질서를 따르지 않는, 자기 길을 만드는 확신의 소유자",
     },
-    # Low intensity + Low expression + Low social → Silent Observer
+    # Low engagement + Low assertiveness + Low expression → quiet observer
     {
-        "match": lambda d: _l(d["A1"]) and _l(d["A3"]) and _l(d["A5"]),
+        "match": lambda d: _l(d["A1"]) and _l(d["A3"]) and _l(d["A4"]),
         "name": "고요한 관찰자",
         "emoji": "🌑",
         "code": "E-SO",
         "tagline": "조용히 세상을 읽는, 낮은 온도의 깊은 사유자",
     },
-    # High intimacy + High expression + Secure attachment → Warm Harbor
+    # High receptivity + High collaboration + High stability → warm & stable
     {
-        "match": lambda d: _h(d.get("A12", 0.5)) and _h(d["A3"]) and _dom(d.get("A9", {})) == "안정형",
+        "match": lambda d: _h(d["A2"]) and _h(d["A5"]) and _h(d["A6"]),
         "name": "따뜻한 항구",
         "emoji": "🏖️",
         "code": "E-WH",
         "tagline": "사람들이 쉬어가는, 안정적이고 개방적인 존재",
     },
-    # High intensity + High expression + Anxious attachment → Deep Current
+    # High expression + Low stability + Expressive emotion reg → deep volatile
     {
-        "match": lambda d: _h(d["A1"]) and _h(d["A3"]) and _dom(d.get("A9", {})) == "불안형",
+        "match": lambda d: _h(d["A4"]) and _l(d["A6"]) and _dom(d.get("A9", {})) == "expressive",
         "name": "심연의 해류",
         "emoji": "🌊",
         "code": "E-DC",
         "tagline": "감정의 깊이가 바닥을 모르는, 격렬하고 불안한 열정의 소유자",
     },
-    # High logic + High confidence + Low emotion expression → Iron Compass
+    # High assertiveness + High stability + Analytical cognition → iron compass
     {
-        "match": lambda d: _dom(d.get("A10", {})) == "논리형" and _h(d["A4"]) and _l(d["A3"]),
+        "match": lambda d: _h(d["A3"]) and _h(d["A6"]) and _dom(d.get("A16", {})) == "analytical",
         "name": "쇠로 된 나침반",
         "emoji": "🧭",
         "code": "E-IC",
         "tagline": "감정이 아닌 논리로 방향을 잡는, 흔들리지 않는 판단의 소유자",
     },
-    # High change acceptance + Low boundary rigidity → Free Wind
+    # High collaboration + Fast opener + Active investor → open & free
     {
-        "match": lambda d: _h(d.get("A14", 0.5)) and _dom(d.get("A17", {})) == "유연형",
+        "match": lambda d: _h(d["A5"]) and _dom(d.get("A10", {})) == "fast_opener" and _dom(d.get("A15", {})) == "active_investor",
         "name": "자유로운 바람",
         "emoji": "🍃",
         "code": "E-FW",
         "tagline": "경계를 넘나들며 변화를 즐기는, 유연한 적응의 소유자",
     },
-    # High intensity + Avoidant attachment + High boundary rigidity → Armored Heart
+    # High engagement + Low expression + Avoidant conflict → armored but caring
     {
-        "match": lambda d: _h(d["A1"]) and _dom(d.get("A9", {})) == "회피형" and _dom(d.get("A17", {})) == "경직형",
+        "match": lambda d: _h(d["A1"]) and _l(d["A4"]) and _dom(d.get("A8", {})) == "avoidant",
         "name": "갑옷 입은 심장",
         "emoji": "🛡️",
         "code": "E-AH",
         "tagline": "뜨거운 심장 위에 차가운 갑옷을 두른, 자기 보호의 전문가",
     },
-    # Self-deprecating humor + High empathy + Anxious → Broken Mirror
+    # Deflective humor + Absorptive feedback + High expression → self-deprecating
     {
-        "match": lambda d: _dom(d.get("A8", {})) == "자기비하형" and _h(d["A1"]) and _dom(d.get("A9", {})) == "불안형",
+        "match": lambda d: _dom(d.get("A17", {})) == "deflective" and _dom(d.get("A13", {})) == "absorptive" and _h(d["A4"]),
         "name": "금 간 거울",
         "emoji": "🪞",
         "code": "E-BM",
         "tagline": "자기를 웃음으로 감추는, 상처 위의 유머리스트",
+    },
+    # High expression + Low stability + Externalized emotion reg → explosive
+    {
+        "match": lambda d: _h(d["A4"]) and _l(d["A6"]) and _dom(d.get("A9", {})) == "externalized",
+        "name": "불꽃 산책자",
+        "emoji": "🔥",
+        "code": "E-FS",
+        "tagline": "감정을 밖으로 쏟아내는, 예측 불가의 열정가",
     },
     # Default fallback
     {
@@ -155,15 +175,24 @@ def generate_identity(profile_data: Dict) -> Identity:
     Returns:
         Identity with name, emoji, code, tagline, summary
     """
+    # Unwrap 'axes' wrapper if present
+    raw = profile_data.get("axes", profile_data)
+
     # Normalize: extract float values for intensity axes
     flat = {}
-    for key, val in profile_data.items():
+    for key, val in raw.items():
         if isinstance(val, (int, float)):
             flat[key] = float(val)
         elif isinstance(val, dict):
-            flat[key] = val  # keep structural axes as-is
-            if "value" in val:
+            # Try extracting numeric value from various key conventions
+            if "score" in val:
+                flat[key] = float(val["score"])
+            elif "value" in val:
                 flat[key] = float(val["value"])
+            elif "dominant" in val or "mix" in val:
+                flat[key] = val  # keep structural axes as-is
+            else:
+                flat[key] = val
 
     # Find matching archetype
     for arch in _INDIVIDUAL_ARCHETYPES:
@@ -195,34 +224,43 @@ def _generate_identity_summary(data: Dict, name: str) -> str:
     """Generate a short personality summary without engine terms."""
     parts = []
 
-    # Emotion intensity + expression
+    # Engagement (A1) + Expression (A4)
     a1 = data.get("A1", 0.5)
-    a3 = data.get("A3", 0.5)
-    if _h(a1) and _l(a3):
-        parts.append("감정을 살짝 느끼는 법이 없지만, 그걸 밖으로 내보내는 일은 거의 없다.")
-    elif _h(a1) and _h(a3):
-        parts.append("감정을 숨기지 않고 솔직하게 표현하며, 그 강도가 주변에 에너지를 준다.")
+    a4 = data.get("A4", 0.5)
+    if _h(a1) and _l(a4):
+        parts.append("관심과 에너지가 높지만, 그걸 밖으로 드러내는 일은 거의 없다.")
+    elif _h(a1) and _h(a4):
+        parts.append("적극적으로 관여하고 감정 표현도 거침없이 하는 편이다.")
     elif _l(a1):
-        parts.append("내면이 고요한 편이며, 감정의 진폭이 크지 않다.")
+        parts.append("관여의 온도가 낮고, 조용히 거리를 두며 관찰하는 스타일이다.")
 
-    # Relationship style
+    # Conflict style (A8)
+    a8 = data.get("A8", {})
+    dom_a8 = _dom(a8) if isinstance(a8, dict) else ""
+    if dom_a8 == "confrontational":
+        parts.append("갈등 상황에서 정면으로 부딪히는 것을 피하지 않는다.")
+    elif dom_a8 == "avoidant":
+        parts.append("갈등을 마주하기보다 우회하거나 피하려는 경향이 있다.")
+    elif dom_a8 == "repair":
+        parts.append("갈등이 생기면 관계를 복구하려는 방향으로 움직인다.")
+
+    # Emotion regulation (A9)
     a9 = data.get("A9", {})
-    a12 = data.get("A12", 0.5)
     dom_a9 = _dom(a9) if isinstance(a9, dict) else ""
-    if dom_a9 == "회피형":
-        parts.append("관계에서 거리를 유지하려는 경향이 있고, 친밀해지는 것을 불편해한다.")
-    elif dom_a9 == "불안형":
-        parts.append("관계에서 확인받고 싶은 욕구가 강하고, 감정적 연결을 깊게 추구한다.")
-    elif dom_a9 == "안정형":
-        parts.append("관계에서 안정적이고, 가까워지는 것을 자연스럽게 받아들인다.")
+    if dom_a9 == "expressive":
+        parts.append("감정을 안에 가두지 않고 바깥으로 풀어낸다.")
+    elif dom_a9 == "suppressive":
+        parts.append("감정을 억누르고 드러내지 않으려 한다.")
+    elif dom_a9 == "externalized":
+        parts.append("내면의 감정이 행동으로 직접 분출되는 경향이 있다.")
 
-    # Decision style
-    a10 = data.get("A10", {})
-    dom_a10 = _dom(a10) if isinstance(a10, dict) else ""
-    if dom_a10 == "논리형":
-        parts.append("판단할 때 감정보다 논리가 먼저 작동한다.")
-    elif dom_a10 == "감정형":
-        parts.append("결정에서 감정과 직관의 비중이 크다.")
+    # Cognition (A16)
+    a16 = data.get("A16", {})
+    dom_a16 = _dom(a16) if isinstance(a16, dict) else ""
+    if dom_a16 == "analytical":
+        parts.append("판단할 때 감정보다 분석이 먼저 작동한다.")
+    elif dom_a16 == "binary":
+        parts.append("세상을 흑백으로 나누는 경향이 있다.")
 
     return " ".join(parts) if parts else f"{name}의 특성을 가진 복합적 프로필입니다."
 
@@ -244,63 +282,72 @@ class MatchIdentity:
 
 
 _MATCH_ARCHETYPES: List[dict] = [
-    # Avoidant × Anxious → Push-Pull
+    # Expressive × Suppressive emotion regulation → Push-Pull
     {
         "match": lambda a, b: (
-            (_dom(a.get("A9", {})) == "회피형" and _dom(b.get("A9", {})) == "불안형") or
-            (_dom(a.get("A9", {})) == "불안형" and _dom(b.get("A9", {})) == "회피형")
+            (_dom(a.get("A9", {})) == "expressive" and _dom(b.get("A9", {})) == "suppressive") or
+            (_dom(a.get("A9", {})) == "suppressive" and _dom(b.get("A9", {})) == "expressive")
         ),
         "name": "밀물과 썰물",
         "tagline": "다가가면 물러나고, 물러나면 다가오는 — 끝없는 파도의 관계",
         "tension": "높음",
         "growth": "매우 높음",
     },
-    # Both high intensity → Fire meets Fire
+    # Both high engagement + high expression → Fire meets Fire
     {
-        "match": lambda a, b: _h(a.get("A1", 0.5)) and _h(b.get("A1", 0.5)),
+        "match": lambda a, b: _h(a.get("A1", 0.5)) and _h(b.get("A1", 0.5)) and _h(a.get("A4", 0.5)) and _h(b.get("A4", 0.5)),
         "name": "두 개의 불꽃",
         "tagline": "서로의 열기가 관계를 밝히기도, 태우기도 하는 — 격렬한 공명의 관계",
         "tension": "매우 높음",
         "growth": "높음",
     },
-    # One logic + One emotion → Translator pair
+    # Analytical cognition vs Pragmatic/Binary → Translator pair
     {
         "match": lambda a, b: (
-            (_dom(a.get("A10", {})) == "논리형" and _dom(b.get("A10", {})) == "감정형") or
-            (_dom(a.get("A10", {})) == "감정형" and _dom(b.get("A10", {})) == "논리형")
+            (_dom(a.get("A16", {})) == "analytical" and _dom(b.get("A16", {})) in ("pragmatic", "binary")) or
+            (_dom(a.get("A16", {})) in ("pragmatic", "binary") and _dom(b.get("A16", {})) == "analytical")
         ),
         "name": "번역이 필요한 대화",
         "tagline": "같은 말을 다른 언어로 하는 — 통역이 필요한 관계",
         "tension": "보통",
         "growth": "높음",
     },
-    # High expression gap → Ice and Fire
+    # High expression gap (A4) → Ice and Fire
     {
-        "match": lambda a, b: abs(a.get("A3", 0.5) - b.get("A3", 0.5)) > 0.4,
+        "match": lambda a, b: abs(a.get("A4", 0.5) - b.get("A4", 0.5)) > 0.4,
         "name": "불과 얼음",
         "tagline": "한쪽은 타오르고 다른 쪽은 얼어있는 — 온도차가 만드는 긴장과 매력",
         "tension": "높음",
         "growth": "높음",
     },
-    # Both stable + similar style → Calm Waters
+    # Both high stability + both high collaboration → Calm Waters
     {
-        "match": lambda a, b: (
-            _dom(a.get("A9", {})) == "안정형" and _dom(b.get("A9", {})) == "안정형"
-        ),
+        "match": lambda a, b: _h(a.get("A6", 0.5)) and _h(b.get("A6", 0.5)) and _h(a.get("A5", 0.5)) and _h(b.get("A5", 0.5)),
         "name": "잔잔한 호수",
         "tagline": "서로에게 기대도 흔들리지 않는 — 안정 위의 안정",
         "tension": "낮음",
         "growth": "보통",
     },
-    # Both avoidant → Two Fortresses
+    # Both avoidant conflict → Two Fortresses
     {
         "match": lambda a, b: (
-            _dom(a.get("A9", {})) == "회피형" and _dom(b.get("A9", {})) == "회피형"
+            _dom(a.get("A8", {})) == "avoidant" and _dom(b.get("A8", {})) == "avoidant"
         ),
         "name": "마주 보는 성벽",
         "tagline": "서로의 벽을 인정하지만 넘지 못하는 — 안전하지만 외로운 거리",
         "tension": "보통",
         "growth": "낮음",
+    },
+    # Confrontational × Avoidant conflict → Clash
+    {
+        "match": lambda a, b: (
+            (_dom(a.get("A8", {})) == "confrontational" and _dom(b.get("A8", {})) == "avoidant") or
+            (_dom(a.get("A8", {})) == "avoidant" and _dom(b.get("A8", {})) == "confrontational")
+        ),
+        "name": "부딪히는 파장",
+        "tagline": "한쪽은 부딪히고 다른 쪽은 피하는 — 갈등 언어가 다른 관계",
+        "tension": "매우 높음",
+        "growth": "높음",
     },
     # Default
     {
@@ -363,14 +410,19 @@ def generate_match_identity(
 
 
 def _flatten(data: Dict) -> Dict:
-    """Extract float values, keep structural axes as dicts."""
+    """Extract float values, keep structural axes as dicts. Handles 'axes' wrapper."""
+    raw = data.get("axes", data)
     flat = {}
-    for key, val in data.items():
+    for key, val in raw.items():
         if isinstance(val, (int, float)):
             flat[key] = float(val)
         elif isinstance(val, dict):
-            if "value" in val:
+            if "score" in val:
+                flat[key] = float(val["score"])
+            elif "value" in val:
                 flat[key] = float(val["value"])
+            elif "dominant" in val or "mix" in val:
+                flat[key] = val
             else:
                 flat[key] = val
     return flat
@@ -383,41 +435,47 @@ def _calculate_compatibility(a: Dict, b: Dict) -> int:
     """
     score = 50  # baseline
 
-    # Attachment compatibility
+    # Emotion regulation compatibility (A9)
     dom_a9a = _dom(a.get("A9", {})) if isinstance(a.get("A9"), dict) else ""
     dom_a9b = _dom(b.get("A9", {})) if isinstance(b.get("A9"), dict) else ""
 
-    if dom_a9a == "안정형" and dom_a9b == "안정형":
-        score += 20
-    elif dom_a9a == "안정형" or dom_a9b == "안정형":
-        score += 10
-    elif (dom_a9a == "회피형" and dom_a9b == "불안형") or (dom_a9a == "불안형" and dom_a9b == "회피형"):
-        score -= 15
-    elif dom_a9a == "회피형" and dom_a9b == "회피형":
-        score -= 5
+    if dom_a9a == dom_a9b:
+        score += 10  # same style = easier communication
+    elif {dom_a9a, dom_a9b} == {"expressive", "suppressive"}:
+        score -= 15  # opposite = high friction
+    elif {dom_a9a, dom_a9b} == {"expressive", "externalized"}:
+        score -= 10  # both outward = volatile
 
-    # Expression compatibility
-    a3a = a.get("A3", 0.5) if isinstance(a.get("A3"), (int, float)) else 0.5
-    a3b = b.get("A3", 0.5) if isinstance(b.get("A3"), (int, float)) else 0.5
-    gap = abs(a3a - a3b)
+    # Expression gap (A4)
+    a4a = a.get("A4", 0.5) if isinstance(a.get("A4"), (int, float)) else 0.5
+    a4b = b.get("A4", 0.5) if isinstance(b.get("A4"), (int, float)) else 0.5
+    gap = abs(a4a - a4b)
     if gap > 0.4:
         score -= 10
     elif gap < 0.2:
         score += 5
 
-    # Conflict style compatibility
-    dom_a7a = _dom(a.get("A7", {})) if isinstance(a.get("A7"), dict) else ""
-    dom_a7b = _dom(b.get("A7", {})) if isinstance(b.get("A7"), dict) else ""
-    if dom_a7a == "직면형" and dom_a7b == "회피형":
-        score -= 10
-    elif dom_a7a == "중재형" or dom_a7b == "중재형":
+    # Conflict style compatibility (A8)
+    dom_a8a = _dom(a.get("A8", {})) if isinstance(a.get("A8"), dict) else ""
+    dom_a8b = _dom(b.get("A8", {})) if isinstance(b.get("A8"), dict) else ""
+    if {dom_a8a, dom_a8b} == {"confrontational", "avoidant"}:
+        score -= 10  # direct clash
+    elif dom_a8a == "repair" or dom_a8b == "repair":
+        score += 10  # repair tendency helps
+    elif dom_a8a == dom_a8b:
         score += 5
 
-    # Decision style compatibility
-    dom_a10a = _dom(a.get("A10", {})) if isinstance(a.get("A10"), dict) else ""
-    dom_a10b = _dom(b.get("A10", {})) if isinstance(b.get("A10"), dict) else ""
-    if dom_a10a == dom_a10b:
+    # Stability similarity (A6)
+    a6a = a.get("A6", 0.5) if isinstance(a.get("A6"), (int, float)) else 0.5
+    a6b = b.get("A6", 0.5) if isinstance(b.get("A6"), (int, float)) else 0.5
+    if abs(a6a - a6b) < 0.2:
         score += 5
+
+    # Collaboration (A5) — both high = good
+    a5a = a.get("A5", 0.5) if isinstance(a.get("A5"), (int, float)) else 0.5
+    a5b = b.get("A5", 0.5) if isinstance(b.get("A5"), (int, float)) else 0.5
+    if _h(a5a) and _h(a5b):
+        score += 10
 
     return max(10, min(90, score))
 
@@ -439,5 +497,7 @@ def _generate_match_summary(a: Dict, b: Dict, name: str) -> str:
         return "안정적이고 편안한 관계. 큰 파도는 없지만 지속 가능하다. 다만 자극이 부족해서 관계가 정체될 수 있다."
     elif "성벽" in name:
         return "서로의 공간을 존중하지만 깊이 들어가지 못하는 관계. 편안하지만 외로울 수 있다."
+    elif "파장" in name:
+        return "갈등 해결 방식이 정반대인 조합. 한쪽은 정면 돌파, 다른 쪽은 회피. 서로의 방식을 이해하지 못하면 같은 문제가 반복된다."
     else:
         return "단일 패턴으로 설명하기 어려운 복합적 역학. 여러 차원에서 다른 방식으로 작동하는 관계."

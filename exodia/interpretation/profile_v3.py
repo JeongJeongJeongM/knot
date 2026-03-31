@@ -219,8 +219,8 @@ def generate_individual_prompt(profile_data: Dict, l3_output: Any = None) -> Dic
 
 ## 프로필 요약
 정체성: {identity.name} ({identity.tagline})
-희소성 점수: {diff_score['score']}점 / 100점
-희소성 해석: {diff_score['interpretation']}
+희소성 점수: {diff_score.get('total_score', diff_score.get('score', 0))}점 / 100점
+희소성 해석: {diff_score.get('interpretation', '분석 중')}
 
 ## 특성 데이터
 {profile_desc}
@@ -255,9 +255,9 @@ def generate_individual_prompt(profile_data: Dict, l3_output: Any = None) -> Dic
         "identity": identity,
         "sections": INDIVIDUAL_SECTIONS,
         "rarity_data": {
-            "score": diff_score["score"],
-            "interpretation": diff_score["interpretation"],
-            "rarity_pct": max(1.0, 100 - diff_score["score"]) / 10,  # rough estimate
+            "score": diff_score.get("total_score", diff_score.get("score", 0)),
+            "interpretation": diff_score.get("interpretation", "분석 중"),
+            "rarity_pct": max(1.0, 100 - diff_score.get("total_score", diff_score.get("score", 0))) / 10,
         },
         "metadata": {
             "label": label_result.get("full_label", ""),
