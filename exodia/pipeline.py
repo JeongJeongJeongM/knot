@@ -11,7 +11,7 @@ v5.0 Spec Section 16 데이터 흐름.
 v5.0 변경사항:
 - CalibrationConfig DI 추가 (LSM v5.0 Korean-optimized)
 - Cold Start confidence cap (turn_count 기반)
-- L5 Comparator에 DI 홵합
+- L5 Comparator에 DI 통합
 - engine_version → "5.0.0"
 """
 import hashlib
@@ -188,7 +188,7 @@ class ExodiaPipeline:
             # L4: 축 합성
             l3_output = self.l3.process(l2_output)
 
-            # L5: 팬영
+            # L5: 투영
             l4_output = self.l4.process(l3_output, purpose_distribution)
 
             # LSM: 기능어 rate 추출 (v4.0 NEW)
@@ -388,7 +388,7 @@ class ExodiaPipeline:
             weights = [1.0 / n for _ in range(n)]
 
         # 강도 축 가중 평균
-        intensity_keys = ["A1", "A2", "A3", "A4", "A5", "A6"]
+        intensity_keys = ["A1", "A2", "A3", "A4", "A5", "A6", "A12", "A14"]
         intensity_axes = {}
         for key in intensity_keys:
             weighted_score = sum(
@@ -408,7 +408,7 @@ class ExodiaPipeline:
             )
 
         # 구조 축: 시간 가중 mix 평균
-        structural_keys = ["A7", "A8", "A9", "A10", "A11"]
+        structural_keys = ["A7", "A8", "A9", "A10", "A11", "A13", "A15", "A16", "A17"]
         structural_axes = {}
         for key in structural_keys:
             # 각 세션의 mix를 가중 평균
@@ -431,7 +431,7 @@ class ExodiaPipeline:
                     for mk, mv in sa.mix.items():
                         weighted_mix[mk] += w * mv
 
-            # 정규혔
+            # 정규화
             mix_total = sum(weighted_mix.values())
             if mix_total > 0:
                 weighted_mix = {k: v / mix_total for k, v in weighted_mix.items()}
@@ -451,3 +451,4 @@ class ExodiaPipeline:
             intensity_axes=intensity_axes,
             structural_axes=structural_axes,
         )
+
