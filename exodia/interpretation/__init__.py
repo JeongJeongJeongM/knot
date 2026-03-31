@@ -53,6 +53,14 @@ from exodia.interpretation.convergence import (
     assess_convergence,
 )
 
+# v3 risk signal detection
+from exodia.interpretation.risk import (
+    RiskReport,
+    RiskSignal,
+    detect_individual_risk,
+    detect_matching_risk,
+)
+
 # v3 drift detection
 from exodia.interpretation.drift import (
     DriftReport,
@@ -82,6 +90,9 @@ __all__ = [
     "build_timeseries", "aggregate_sessions_to_snapshot",
     # v3 Convergence
     "ConvergenceReport", "AxisConvergence", "assess_convergence",
+    # v3 Risk
+    "RiskReport", "RiskSignal",
+    "detect_individual_risk", "detect_matching_risk",
     # v3 Drift
     "DriftReport", "DriftEvent", "AxisDrift", "detect_drift",
 ]
