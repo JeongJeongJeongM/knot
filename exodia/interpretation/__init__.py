@@ -53,6 +53,13 @@ from exodia.interpretation.convergence import (
     assess_convergence,
 )
 
+# v3 response integrity / fake data detection
+from exodia.interpretation.integrity import (
+    IntegrityReport,
+    IntegrityFlag,
+    assess_integrity,
+)
+
 # v3 risk signal detection
 from exodia.interpretation.risk import (
     RiskReport,
@@ -90,6 +97,8 @@ __all__ = [
     "build_timeseries", "aggregate_sessions_to_snapshot",
     # v3 Convergence
     "ConvergenceReport", "AxisConvergence", "assess_convergence",
+    # v3 Integrity
+    "IntegrityReport", "IntegrityFlag", "assess_integrity",
     # v3 Risk
     "RiskReport", "RiskSignal",
     "detect_individual_risk", "detect_matching_risk",
