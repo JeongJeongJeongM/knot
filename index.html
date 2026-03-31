@@ -24,6 +24,12 @@
             --a9: #E879F9;
             --a10: #2DD4BF;
             --a11: #F472B6;
+            --a12: #94A3B8;
+            --a13: #C084FC;
+            --a14: #34D399;
+            --a15: #F59E0B;
+            --a16: #818CF8;
+            --a17: #EC4899;
         }
 
         * {
@@ -1608,9 +1614,9 @@
                 <div id="lenses" class="lenses-section"></div>
             </div>
 
-            <!-- Ideal Partner Recommendations -->
-            <div class="axes-section">
-                <div class="section-title">이상적 파트너 유형</div>
+            <!-- Partner Recommendations (v3: hidden, reserved for future) -->
+            <div class="axes-section" id="partnerSection" style="display:none;">
+                <div class="section-title">파트너 분석</div>
                 <div id="partnerRecommendations"></div>
             </div>
 
@@ -1737,7 +1743,8 @@
         // ============ DATA STRUCTURES & CONFIG ============
         const AXIS_COLORS = {
             A1: 'var(--a1)', A2: 'var(--a2)', A3: 'var(--a3)', A4: 'var(--a4)', A5: 'var(--a5)', A6: 'var(--a6)',
-            A7: 'var(--a7)', A8: 'var(--a8)', A9: 'var(--a9)', A10: 'var(--a10)', A11: 'var(--a11)'
+            A7: 'var(--a7)', A8: 'var(--a8)', A9: 'var(--a9)', A10: 'var(--a10)', A11: 'var(--a11)',
+            A12: 'var(--a12)', A13: 'var(--a13)', A14: 'var(--a14)', A15: 'var(--a15)', A16: 'var(--a16)', A17: 'var(--a17)'
         };
 
         // 구조축 영어→한국어 번역
@@ -1746,17 +1753,26 @@
             initiator: '주도형', responder: '반응형', balanced: '균형형',
             // A8 갈등
             confrontational: '직면형', repair: '회복형', avoidant: '회피형', boundary: '선긋기형',
-            // A9 감정
+            // A9 감정조절
             expressive: '표출형', analytical: '분석형', suppressive: '억제형', externalized: '행동전환형',
             // A10 친밀감
             surface_locked: '표면유지형', slow_burn: '천천히형', depth_seeker: '깊이추구형', fast_opener: '빠른개방형',
             // A11 상호성
-            giver: '주는 편', taker: '받는 편'
+            giver: '주는 편', taker: '받는 편',
+            // A13 피드백 반응
+            growth: '성장추구형', defensive: '방어형', absorptive: '자기비판형',
+            // A15 투자도
+            active_investor: '능동투자형', passive_maintainer: '수동유지형', disengaged: '단절형',
+            // A16 인지방식
+            pragmatic: '실용형', binary: '이분법형',
+            // A17 유머
+            tension_breaker: '긴장해소형', bonding: '결속형', deflective: '회피형(유머)', aggressive: '공격형(유머)', minimal: '최소형'
         };
 
         const AXIS_LABELS = {
             A1: '관심도', A2: '공감력', A3: '주장성', A4: '감정 개방', A5: '서포트', A6: '일관성',
-            A7: '대화 주도', A8: '갈등 대처', A9: '감정 처리', A10: '거리 조절', A11: '주고받기'
+            A7: '대화 주도', A8: '갈등 대처', A9: '감정 처리', A10: '거리 조절', A11: '주고받기',
+            A12: '친밀감 편안함', A13: '피드백 반응', A14: '변화 수용성', A15: '관계 투자', A16: '인지 방식', A17: '유머 스타일'
         };
 
         const CONFLICT_MATRIX = {
@@ -1811,118 +1827,197 @@
       return totalLSM / cats.length;
     }
 
-    // ============ 32-TYPE SYSTEM ============
-        const TYPE_DEFINITIONS = {
-            'S-CS': { emoji: '🗡️', name: '고독한 수호자', desc: '갈등을 직면하되, 천천히 마음을 여는 보호자' },
-            'S-CF': { emoji: '🌋', name: '열린 전사', desc: '거침없이 부딪히고, 거침없이 다가가는 뜨거운 수용자' },
-            'S-CL': { emoji: '🏰', name: '철벽 파수꾼', desc: '선을 지키며 표면에서 싸우는 단단한 방어자' },
-            'S-CD': { emoji: '⚔️', name: '깊은 투사', desc: '진짜 연결을 위해 갈등도 불사하는 전사형 수용자' },
-            'S-BS': { emoji: '🌿', name: '조용한 정원사', desc: '경계를 세우며 천천히 관계를 가꾸는 사람' },
-            'S-BF': { emoji: '🌻', name: '따뜻한 문지기', desc: '선은 확실하지만 문은 활짝 여는 환대자' },
-            'S-BL': { emoji: '🧱', name: '현실적 건축가', desc: '경계와 거리를 정밀하게 설계하는 구조주의자' },
-            'S-BD': { emoji: '🔮', name: '선택적 현자', desc: '깊이를 추구하되 자기 영역은 명확히 지키는 사람' },
-            'S-AS': { emoji: '🌫️', name: '안개 속 은둔자', desc: '갈등을 피하고 천천히, 조심스럽게 다가가는 사람' },
-            'S-AF': { emoji: '🎭', name: '밝은 회피자', desc: '겉으론 열리지만 진짜 갈등에선 사라지는 이중성' },
-            'S-AL': { emoji: '🐚', name: '조개 속 진주', desc: '갈등도 피하고 깊이도 피하는 가장 단단한 껍질' },
-            'S-AD': { emoji: '🌊', name: '깊은 바다의 조류', desc: '깊이를 원하면서도 마찰은 절대 원하지 않는 모순' },
-            'S-RS': { emoji: '🕊️', name: '인내의 치유사', desc: '관계를 복구하면서 천천히 신뢰를 쌓아가는 사람' },
-            'S-RF': { emoji: '☀️', name: '따뜻한 복원자', desc: '열린 마음으로 관계를 치유하는 태양 같은 존재' },
-            'S-RL': { emoji: '🩹', name: '표면의 응급사', desc: '관계를 고치려 하지만 정작 깊이는 허용하지 않는 역설' },
-            'S-RD': { emoji: '💎', name: '깊은 치유자', desc: '진정한 회복과 깊은 연결을 동시에 추구하는 희귀한 유형' },
-            'Y-CS': { emoji: '🦅', name: '전략적 사냥꾼', desc: '목표를 향해 직진하되, 접근은 신중한 계산가' },
-            'Y-CF': { emoji: '🔥', name: '불꽃 정복자', desc: '원하는 것을 정면 돌파로 얻어내는 가장 직선적 유형' },
-            'Y-CL': { emoji: '🗼', name: '고립된 지배자', desc: '강하게 부딪히지만 내면은 절대 보여주지 않는 요새' },
-            'Y-CD': { emoji: '🐉', name: '심연의 용', desc: '깊이 파고들며 원하는 것을 쟁취하는 강렬한 존재' },
-            'Y-BS': { emoji: '🏹', name: '냉정한 궁수', desc: '거리를 유지하며 정확히 원하는 것만 겨냥하는 사람' },
-            'Y-BF': { emoji: '🎪', name: '매력적 협상가', desc: '열린 태도로 다가가되 거래의 조건은 명확한 전략가' },
-            'Y-BL': { emoji: '🧊', name: '빙하 설계자', desc: '모든 것이 계산된, 차갑지만 정교한 관계 운영자' },
-            'Y-BD': { emoji: '🔭', name: '선별적 탐험가', desc: '깊이 있는 연결을 원하되 자기 조건은 양보 없는 사람' },
-            'Y-AS': { emoji: '🦊', name: '조용한 여우', desc: '원하는 건 분명하지만 갈등은 우회하는 영리한 전략가' },
-            'Y-AF': { emoji: '🎈', name: '가벼운 쾌락주의자', desc: '열려 있고 자유로우며 마찰 없이 욕구를 추구하는 사람' },
-            'Y-AL': { emoji: '🕶️', name: '미스터리 수집가', desc: '원하는 건 챙기되 자신은 절대 드러내지 않는 포커페이스' },
-            'Y-AD': { emoji: '🌑', name: '그림자 탐색자', desc: '깊이를 갈구하면서도 위험은 피하는 복잡한 모순체' },
-            'Y-RS': { emoji: '🦉', name: '현명한 중재자', desc: '관계를 관리하면서 자신의 이익도 놓치지 않는 균형감' },
-            'Y-RF': { emoji: '🌅', name: '매혹적 재건자', desc: '부서진 것을 고치면서 원하는 방향으로 이끄는 사람' },
-            'Y-RL': { emoji: '⚙️', name: '시스템 정비사', desc: '관계를 고치되 자기 내면의 문은 열지 않는 기술자' },
-            'Y-RD': { emoji: '🌌', name: '우주적 설계자', desc: '깊은 연결과 복원력을 가진, 가장 야망 있는 관계 건설자' }
-        };
+    // ============ V3 IDENTITY SYSTEM ============
+        const IDENTITY_ARCHETYPES = [
+            {
+                match: d => _h(d.A1) && _l(d.A4) && _sdom(d, 'A9') === 'suppressive',
+                name: '얼어붙은 화산', emoji: '🌋', code: 'E-VF',
+                tagline: '안에서 들끓지만 밖으로는 차가운, 통제된 격렬함의 소유자'
+            },
+            {
+                match: d => _h(d.A1) && _h(d.A3) && _sdom(d, 'A8') === 'confrontational',
+                name: '폭풍의 지휘자', emoji: '⚡', code: 'E-SC',
+                tagline: '감정의 폭풍을 에너지로 바꾸는, 주도적인 격렬함의 소유자'
+            },
+            {
+                match: d => _h(d.A2) && _l(d.A3) && _h(d.A4),
+                name: '안개 속의 등불', emoji: '🏮', code: 'E-LM',
+                tagline: '따뜻하게 비추지만 스스로는 흔들리는, 부드러운 공감의 소유자'
+            },
+            {
+                match: d => _h(d.A1) && _h(d.A3) && _sdom(d, 'A7') === 'initiator',
+                name: '길 없는 개척자', emoji: '🗡️', code: 'E-PB',
+                tagline: '기존 질서를 따르지 않는, 자기 길을 만드는 확신의 소유자'
+            },
+            {
+                match: d => _l(d.A1) && _l(d.A3) && _l(d.A4),
+                name: '고요한 관찰자', emoji: '🌑', code: 'E-SO',
+                tagline: '조용히 세상을 읽는, 낮은 온도의 깊은 사유자'
+            },
+            {
+                match: d => _h(d.A2) && _h(d.A5) && _h(d.A6),
+                name: '따뜻한 항구', emoji: '🏖️', code: 'E-WH',
+                tagline: '사람들이 쉬어가는, 안정적이고 개방적인 존재'
+            },
+            {
+                match: d => _h(d.A4) && _l(d.A6) && _sdom(d, 'A9') === 'expressive',
+                name: '심연의 해류', emoji: '🌊', code: 'E-DC',
+                tagline: '감정의 깊이가 바닥을 모르는, 격렬하고 불안한 열정의 소유자'
+            },
+            {
+                match: d => _h(d.A3) && _h(d.A6) && _sdom(d, 'A16') === 'analytical',
+                name: '쇠로 된 나침반', emoji: '🧭', code: 'E-IC',
+                tagline: '감정이 아닌 논리로 방향을 잡는, 흔들리지 않는 판단의 소유자'
+            },
+            {
+                match: d => _h(d.A5) && _sdom(d, 'A10') === 'fast_opener' && _sdom(d, 'A15') === 'active_investor',
+                name: '자유로운 바람', emoji: '🍃', code: 'E-FW',
+                tagline: '경계를 넘나들며 변화를 즐기는, 유연한 적응의 소유자'
+            },
+            {
+                match: d => _h(d.A1) && _l(d.A4) && _sdom(d, 'A8') === 'avoidant',
+                name: '갑옷 입은 심장', emoji: '🛡️', code: 'E-AH',
+                tagline: '뜨거운 심장 위에 차가운 갑옷을 두른, 자기 보호의 전문가'
+            },
+            {
+                match: d => _sdom(d, 'A17') === 'deflective' && _sdom(d, 'A13') === 'absorptive' && _h(d.A4),
+                name: '금 간 거울', emoji: '🪞', code: 'E-BM',
+                tagline: '자기를 웃음으로 감추는, 상처 위의 유머리스트'
+            },
+            {
+                match: d => _h(d.A4) && _l(d.A6) && _sdom(d, 'A9') === 'externalized',
+                name: '불꽃 산책자', emoji: '🔥', code: 'E-FS',
+                tagline: '감정을 밖으로 쏟아내는, 예측 불가의 열정가'
+            },
+            // Default fallback
+            {
+                match: () => true,
+                name: '미지의 윤곽', emoji: '🔮', code: 'E-XX',
+                tagline: '하나의 유형에 담기지 않는, 복합적인 존재'
+            },
+        ];
 
-        function computeType(axes) {
-            const { A1, A2, A3, A4, A5, A6 } = axes.intensity;
-            const { A8, A10 } = axes.structural;
+        // Match archetypes for pair analysis
+        const MATCH_ARCHETYPES = [
+            {
+                match: (a, b) => (_sdom(a, 'A9') === 'expressive' && _sdom(b, 'A9') === 'suppressive') || (_sdom(a, 'A9') === 'suppressive' && _sdom(b, 'A9') === 'expressive'),
+                name: '밀물과 썰물', tagline: '다가가면 물러나고, 물러나면 다가오는 — 끝없는 파도의 관계',
+                tension: '높음', growth: '매우 높음'
+            },
+            {
+                match: (a, b) => _h(a.A1) && _h(b.A1) && _h(a.A4) && _h(b.A4),
+                name: '두 개의 불꽃', tagline: '서로의 열기가 관계를 밝히기도, 태우기도 하는 — 격렬한 공명의 관계',
+                tension: '매우 높음', growth: '높음'
+            },
+            {
+                match: (a, b) => (_sdom(a, 'A16') === 'analytical' && ['pragmatic','binary'].includes(_sdom(b, 'A16'))) || (_sdom(b, 'A16') === 'analytical' && ['pragmatic','binary'].includes(_sdom(a, 'A16'))),
+                name: '번역이 필요한 대화', tagline: '같은 말을 다른 언어로 하는 — 통역이 필요한 관계',
+                tension: '보통', growth: '높음'
+            },
+            {
+                match: (a, b) => Math.abs((a.A4 || 0.5) - (b.A4 || 0.5)) > 0.4,
+                name: '불과 얼음', tagline: '한쪽은 타오르고 다른 쪽은 얼어있는 — 온도차가 만드는 긴장과 매력',
+                tension: '높음', growth: '높음'
+            },
+            {
+                match: (a, b) => _h(a.A6) && _h(b.A6) && _h(a.A5) && _h(b.A5),
+                name: '잔잔한 호수', tagline: '서로에게 기대도 흔들리지 않는 — 안정 위의 안정',
+                tension: '낮음', growth: '보통'
+            },
+            {
+                match: (a, b) => _sdom(a, 'A8') === 'avoidant' && _sdom(b, 'A8') === 'avoidant',
+                name: '마주 보는 성벽', tagline: '서로의 벽을 인정하지만 넘지 못하는 — 안전하지만 외로운 거리',
+                tension: '보통', growth: '낮음'
+            },
+            {
+                match: (a, b) => (_sdom(a, 'A8') === 'confrontational' && _sdom(b, 'A8') === 'avoidant') || (_sdom(a, 'A8') === 'avoidant' && _sdom(b, 'A8') === 'confrontational'),
+                name: '부딪히는 파장', tagline: '한쪽은 부딪히고 다른 쪽은 피하는 — 갈등 언어가 다른 관계',
+                tension: '매우 높음', growth: '높음'
+            },
+            // Default
+            {
+                match: () => true,
+                name: '교차하는 궤도', tagline: '서로 다른 궤도를 돌지만 주기적으로 만나는 — 복합적 역학의 관계',
+                tension: '보통', growth: '보통'
+            },
+        ];
 
-            // Dimension 1: Root Drive
-            const receptive = (A2 + A5 + A6) / 3;
-            const desire = (A1 + A3 + A4) / 3;
-            const drive = receptive > desire ? 'S' : 'Y';
-
-            // Dimension 2: Conflict Style (map A8 primary to code)
-            const conflictMap = { 'confrontational': 'C', 'boundary': 'B', 'avoidant': 'A', 'repair': 'R' };
-            const conflict = conflictMap[A8.primary] || 'B';
-
-            // Dimension 3: Intimacy Pattern (map A10 primary to code)
-            const intimacyMap = { 'slow_burn': 'S', 'fast_opener': 'F', 'surface_locked': 'L', 'depth_seeker': 'D' };
-            const intimacy = intimacyMap[A10.primary] || 'S';
-
-            const typeCode = drive + '-' + conflict + intimacy;
-            const typeDef = TYPE_DEFINITIONS[typeCode] || { emoji: '🔮', name: '미분류', desc: '분석 불가' };
-
-            return { code: typeCode, ...typeDef };
+        // Identity helper functions
+        function _h(v) { return typeof v === 'number' && v >= 0.6; }
+        function _l(v) { return typeof v === 'number' && v < 0.4; }
+        function _sdom(data, axis) {
+            const axData = data._structural && data._structural[axis];
+            if (!axData) return '';
+            return axData.primary || '';
         }
 
-        function getIdealPartners(typeCode) {
-            // Partner recommendation logic based on type code compatibility
-            const [drive, conflict, intimacy] = [typeCode[0], typeCode[2], typeCode[3]];
-            let ideal = [];
-            let compatible = [];
-            let challenging = [];
-
-            // Build compatible types based on dimension matching
-            for (const [tCode, tDef] of Object.entries(TYPE_DEFINITIONS)) {
-                if (tCode === typeCode) continue;
-
-                const [tDrive, tConflict, tIntimacy] = [tCode[0], tCode[2], tCode[3]];
-
-                // Conflict compatibility score
-                const conflictKey = conflict + '_' + tConflict;
-                const conflictScore = CONFLICT_MATRIX.A8[conflictKey] || 0.5;
-
-                // Intimacy compatibility score
-                const intimacyMap = { 'S': 'slow_burn', 'F': 'fast_opener', 'L': 'surface_locked', 'D': 'depth_seeker' };
-                const intimacyKey = intimacyMap[intimacy] + '_' + intimacyMap[tIntimacy];
-                const intimacyScore = CONFLICT_MATRIX.A10[intimacyKey] || 0.5;
-
-                const score = (1 - conflictScore) * 0.5 + (1 - intimacyScore) * 0.5;
-
-                if (score > 0.65) {
-                    ideal.push({ code: tCode, name: tDef.name, reason: tDef.desc });
-                } else if (score > 0.50) {
-                    compatible.push({ code: tCode, name: tDef.name, reason: tDef.desc });
+        function _flattenProfile(axes) {
+            const flat = {};
+            if (axes.intensity) {
+                for (const [k, v] of Object.entries(axes.intensity)) {
+                    flat[k] = typeof v === 'number' ? v : 0.5;
                 }
             }
+            flat._structural = axes.structural || {};
+            return flat;
+        }
 
-            // Limit to 2-3 items
-            ideal = ideal.slice(0, 3);
-            compatible = compatible.slice(0, 3);
-            challenging = [];
-
-            // Find most incompatible types
-            for (const [tCode, tDef] of Object.entries(TYPE_DEFINITIONS)) {
-                if (tCode === typeCode) continue;
-                const [tDrive, tConflict, tIntimacy] = [tCode[0], tCode[2], tCode[3]];
-                const conflictKey = conflict + '_' + tConflict;
-                const conflictScore = CONFLICT_MATRIX.A8[conflictKey] || 0.5;
-                const intimacyMap = { 'S': 'slow_burn', 'F': 'fast_opener', 'L': 'surface_locked', 'D': 'depth_seeker' };
-                const intimacyKey = intimacyMap[intimacy] + '_' + intimacyMap[tIntimacy];
-                const intimacyScore = CONFLICT_MATRIX.A10[intimacyKey] || 0.5;
-                const score = (1 - conflictScore) * 0.5 + (1 - intimacyScore) * 0.5;
-                if (score < 0.35) {
-                    challenging.push({ code: tCode, name: tDef.name, reason: tDef.desc });
-                }
+        function computeIdentity(axes) {
+            const flat = _flattenProfile(axes);
+            for (const arch of IDENTITY_ARCHETYPES) {
+                try {
+                    if (arch.match(flat)) {
+                        return { name: arch.name, emoji: arch.emoji, code: arch.code, tagline: arch.tagline, desc: arch.tagline };
+                    }
+                } catch { continue; }
             }
-            challenging = challenging.slice(0, 3);
+            const fb = IDENTITY_ARCHETYPES[IDENTITY_ARCHETYPES.length - 1];
+            return { name: fb.name, emoji: fb.emoji, code: fb.code, tagline: fb.tagline, desc: fb.tagline };
+        }
 
-            return { ideal, compatible, challenging };
+        function computeMatchIdentity(axesA, axesB, identityA, identityB) {
+            const flatA = _flattenProfile(axesA);
+            const flatB = _flattenProfile(axesB);
+            for (const arch of MATCH_ARCHETYPES) {
+                try {
+                    if (arch.match(flatA, flatB)) {
+                        const compat = _calcCompatibility(flatA, flatB);
+                        return {
+                            name: arch.name, tagline: arch.tagline,
+                            emoji_a: identityA.emoji, emoji_b: identityB.emoji,
+                            code: identityA.code + ' × ' + identityB.code,
+                            compatibility: compat, tension: arch.tension, growth: arch.growth
+                        };
+                    }
+                } catch { continue; }
+            }
+            return {
+                name: '교차하는 궤도', tagline: '복합적 역학의 관계',
+                emoji_a: identityA.emoji, emoji_b: identityB.emoji,
+                code: identityA.code + ' × ' + identityB.code,
+                compatibility: 50, tension: '보통', growth: '보통'
+            };
+        }
+
+        function _calcCompatibility(a, b) {
+            let score = 50;
+            // Emotion regulation
+            const d9a = _sdom(a, 'A9'), d9b = _sdom(b, 'A9');
+            if (d9a === d9b && d9a) score += 10;
+            else if ((d9a === 'expressive' && d9b === 'suppressive') || (d9a === 'suppressive' && d9b === 'expressive')) score -= 15;
+            // Expression gap
+            const gap = Math.abs((a.A4 || 0.5) - (b.A4 || 0.5));
+            if (gap > 0.4) score -= 10; else if (gap < 0.2) score += 5;
+            // Conflict style
+            const d8a = _sdom(a, 'A8'), d8b = _sdom(b, 'A8');
+            if ((d8a === 'confrontational' && d8b === 'avoidant') || (d8a === 'avoidant' && d8b === 'confrontational')) score -= 10;
+            else if (d8a === 'repair' || d8b === 'repair') score += 10;
+            else if (d8a === d8b && d8a) score += 5;
+            // Stability
+            if (Math.abs((a.A6 || 0.5) - (b.A6 || 0.5)) < 0.2) score += 5;
+            // Collaboration
+            if (_h(a.A5) && _h(b.A5)) score += 10;
+            return Math.max(10, Math.min(90, score));
         }
 
         let currentProfile = null;
@@ -2961,13 +3056,14 @@
         const WORKER_URL = 'https://knot-exodia.ashirmallo.workers.dev';
         let USE_LLM = true; // LLM 분석 사용 여부 (Worker 연결 실패시 자동 fallback)
 
-        async function callWorkerAnalyze(axes, rates, messagesSample, lensSummary) {
+        async function callWorkerAnalyze(axes, identity, messagesSample, lensSummary) {
             try {
                 const response = await fetch(WORKER_URL + '/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         axes,
+                        identity,
                         messages_sample: messagesSample,
                         lens_summary: lensSummary
                     })
@@ -2980,12 +3076,18 @@
             }
         }
 
-        async function callWorkerMatch(profileA, profileB, compatResult) {
+        async function callWorkerMatch(profileA, profileB, identityA, identityB, matchIdentity) {
             try {
                 const response = await fetch(WORKER_URL + '/match', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ profileA, profileB, compatResult })
+                    body: JSON.stringify({
+                        profileA: { axes: profileA.axes },
+                        profileB: { axes: profileB.axes },
+                        identityA,
+                        identityB,
+                        matchIdentity
+                    })
                 });
                 if (!response.ok) throw new Error(`Worker error: ${response.status}`);
                 return await response.json();
@@ -3112,12 +3214,12 @@
                 T.setProgress(65);
 
                 await wait(200);
-                updateProgress('행동 유형을 결정하고 있습니다');
-                T.addLine('<span class="prompt">$</span> initializing analysis engine', 300);
+                updateProgress('정체성을 분석하고 있습니다');
+                T.addLine('<span class="prompt">$</span> initializing identity engine v3', 300);
                 T.addLine('<span class="prompt">$</span> syncing conversation data', 300);
                 T.addLine('<span class="prompt">$</span> running deep pattern analysis', 300);
-                const type = computeType(axes);
-                T.addLine('<span class="dim">[type]</span> <span class="warn">잠정 대화 유형 도출 완료: ' + sanitizeHTML(type.emoji) + ' ' + sanitizeHTML(type.code) + ' - ' + sanitizeHTML(type.name) + '</span>', 200);
+                const identity = computeIdentity(axes);
+                T.addLine('<span class="dim">[identity]</span> <span class="warn">정체성 도출 완료: ' + sanitizeHTML(identity.emoji) + ' ' + sanitizeHTML(identity.code) + ' - ' + sanitizeHTML(identity.name) + '</span>', 200);
                 T.setProgress(70, 'AI 심층 분석 진행 중...');
 
                 // LLM 분석
@@ -3139,7 +3241,7 @@
 
                     const messagesSample = extractMessagesSample(messages);
                     const lensSummary = buildLensSummary(axes);
-                    llmResult = await callWorkerAnalyze(axes, rates, messagesSample, lensSummary);
+                    llmResult = await callWorkerAnalyze(axes, identity, messagesSample, lensSummary);
 
                     clearInterval(llmInterval);
                     T.stopLLMScan();
@@ -3152,7 +3254,7 @@
                 currentProfile = {
                     rates,
                     axes,
-                    type,
+                    identity,
                     llmResult,
                     messages,
                     functionWordProfile: computeFunctionWordProfile(messages),
@@ -3174,17 +3276,28 @@
 
 
 
+        // LLM 섹션 텍스트 포맷팅 (global scope for reuse)
+        function formatLLMContent(raw) {
+            if (!raw || !raw.trim()) return '';
+            let text = sanitizeHTML(raw.trim());
+            text = text.replace(/[·•]/g, '');
+            text = text.replace(/\n/g, '<br>');
+            text = text.replace(/(<br>\s*){3,}/g, '<br><br>');
+            text = text.replace(/^(<br>\s*)+/, '');
+            return text;
+        }
+
 function displayResult() {
             const profile = currentProfile;
             const axes = profile.axes;
 
-            // Display 32-type system
-            const type = profile.type;
-            document.getElementById('typeEmoji').textContent = sanitizeHTML(type.emoji);
-            document.getElementById('typeCode').textContent = sanitizeHTML(type.code);
-            document.getElementById('typeName').textContent = sanitizeHTML(type.name);
+            // Display v3 Identity
+            const identity = profile.identity;
+            document.getElementById('typeEmoji').textContent = identity.emoji;
+            document.getElementById('typeCode').textContent = sanitizeHTML(identity.code);
+            document.getElementById('typeName').textContent = sanitizeHTML(identity.name);
             const resolution = getResolutionSummary(profile);
-            document.getElementById('typeDesc').textContent = `${sanitizeHTML(type.desc)} · 신뢰도 ${sanitizeHTML(resolution.label)} (${formatPercent(resolution.score)})`;
+            document.getElementById('typeDesc').textContent = `${sanitizeHTML(identity.tagline)} · 신뢰도 ${sanitizeHTML(resolution.label)} (${formatPercent(resolution.score)})`;
 
             // Diagnostics panel
             document.getElementById('diagnosticsPanel').innerHTML = renderDiagnosticsPanel(profile);
@@ -3196,62 +3309,8 @@ function displayResult() {
                 document.getElementById('temporalSection').style.display = 'block';
             }
 
-            // Display partner recommendations
-            const partners = getIdealPartners(type.code);
-            let partnersHTML = '';
-
-            if (partners.ideal.length > 0) {
-                partnersHTML += '<div style="margin-bottom: 15px;"><div style="font-size: 12px; font-weight: 600; color: #4ADE80; margin-bottom: 10px;">이상적 유형</div>';
-                partners.ideal.forEach(p => {
-                    const typeDef = TYPE_DEFINITIONS[p.code];
-                    partnersHTML += `
-                        <div class="partner-card ideal">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                <span style="font-size: 20px;">${sanitizeHTML(typeDef.emoji)}</span>
-                                <div class="partner-type">${sanitizeHTML(p.code)} - ${sanitizeHTML(p.name)}</div>
-                            </div>
-                            <div class="partner-reason">${sanitizeHTML(typeDef.desc)}</div>
-                        </div>
-                    `;
-                });
-                partnersHTML += '</div>';
-            }
-
-            if (partners.compatible.length > 0) {
-                partnersHTML += '<div style="margin-bottom: 15px;"><div style="font-size: 12px; font-weight: 600; color: #60A5FA; margin-bottom: 10px;">적응 가능 유형</div>';
-                partners.compatible.forEach(p => {
-                    const typeDef = TYPE_DEFINITIONS[p.code];
-                    partnersHTML += `
-                        <div class="partner-card compatible">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                <span style="font-size: 20px;">${typeDef.emoji}</span>
-                                <div class="partner-type">${p.code} - ${p.name}</div>
-                            </div>
-                            <div class="partner-reason">${typeDef.desc}</div>
-                        </div>
-                    `;
-                });
-                partnersHTML += '</div>';
-            }
-
-            if (partners.challenging.length > 0) {
-                partnersHTML += '<div style="margin-bottom: 15px;"><div style="font-size: 12px; font-weight: 600; color: #F87171; margin-bottom: 10px;">도전 유형</div>';
-                partners.challenging.forEach(p => {
-                    const typeDef = TYPE_DEFINITIONS[p.code];
-                    partnersHTML += `
-                        <div class="partner-card challenging">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                <span style="font-size: 20px;">${typeDef.emoji}</span>
-                                <div class="partner-type">${p.code} - ${p.name}</div>
-                            </div>
-                            <div class="partner-reason">${typeDef.desc}</div>
-                        </div>
-                    `;
-                });
-                partnersHTML += '</div>';
-            }
-
-            document.getElementById('partnerRecommendations').innerHTML = partnersHTML;
+            // v3: No more partner recommendations section — replaced by identity tagline display
+            document.getElementById('partnerRecommendations').innerHTML = '';
 
             let intensityHTML = '';
             const intensityAxes = [
@@ -3260,10 +3319,13 @@ function displayResult() {
                 { id: 'A3', label: AXIS_LABELS.A3, value: axes.intensity.A3, desc: '자기 의견을 얼마나 직접 말하나' },
                 { id: 'A4', label: AXIS_LABELS.A4, value: axes.intensity.A4, desc: '기분이나 감정을 얼마나 드러내나' },
                 { id: 'A5', label: AXIS_LABELS.A5, value: axes.intensity.A5, desc: '상대를 얼마나 챙기고 도와주나' },
-                { id: 'A6', label: AXIS_LABELS.A6, value: axes.intensity.A6, desc: '말투와 태도가 얼마나 일정한가' }
+                { id: 'A6', label: AXIS_LABELS.A6, value: axes.intensity.A6, desc: '말투와 태도가 얼마나 일정한가' },
+                { id: 'A12', label: AXIS_LABELS.A12, value: axes.intensity.A12, desc: '친밀한 관계가 얼마나 편안한가' },
+                { id: 'A14', label: AXIS_LABELS.A14, value: axes.intensity.A14, desc: '변화에 얼마나 열려있는가' }
             ];
 
             intensityAxes.forEach(axis => {
+                if (axis.value === undefined || axis.value === null) return;
                 const width = Math.min(Math.max(axis.value * 100, 2), 100);
                 intensityHTML += `
                     <div class="axis-item">
@@ -3286,15 +3348,20 @@ function displayResult() {
                 { id: 'A8', label: AXIS_LABELS.A8, data: axes.structural.A8 },
                 { id: 'A9', label: AXIS_LABELS.A9, data: axes.structural.A9 },
                 { id: 'A10', label: AXIS_LABELS.A10, data: axes.structural.A10 },
-                { id: 'A11', label: AXIS_LABELS.A11, data: axes.structural.A11 }
+                { id: 'A11', label: AXIS_LABELS.A11, data: axes.structural.A11 },
+                { id: 'A13', label: AXIS_LABELS.A13, data: axes.structural.A13 },
+                { id: 'A15', label: AXIS_LABELS.A15, data: axes.structural.A15 },
+                { id: 'A16', label: AXIS_LABELS.A16, data: axes.structural.A16 },
+                { id: 'A17', label: AXIS_LABELS.A17, data: axes.structural.A17 }
             ];
 
             structuralAxes.forEach(axis => {
+                if (!axis.data) return; // Skip missing axes
                 const color = AXIS_COLORS[axis.id];
                 let mixHTML = '';
-                for (const [style, ratio] of Object.entries(axis.data.styles)) {
+                const styles = axis.data.styles || {};
+                for (const [style, ratio] of Object.entries(styles)) {
                     if (ratio > 0.05) {
-                        const segmentWidth = ratio * 100;
                         mixHTML += `<div class="mix-ratio-segment" style="flex: ${ratio}; background-color: ${color}; opacity: ${0.3 + ratio * 0.7};"></div>`;
                     }
                 }
@@ -3302,7 +3369,7 @@ function displayResult() {
                 structHTML += `
                     <div class="struct-item">
                         <div class="struct-label">${sanitizeHTML(axis.id)} ${sanitizeHTML(axis.label)}</div>
-                        <div class="primary-style">${sanitizeHTML(STRUCT_LABELS[axis.data.primary] || axis.data.primary)}</div>
+                        <div class="primary-style">${sanitizeHTML(STRUCT_LABELS[axis.data.primary] || axis.data.primary || '-')}</div>
                         <div class="mix-ratio-bar">${mixHTML}</div>
                     </div>
                 `;
@@ -3317,50 +3384,58 @@ function displayResult() {
             }, 500);
 
 
-            // LLM 섹션 텍스트 포맷팅: sanitize → 줄바꿈/불릿 처리
-            function formatLLMContent(raw) {
-                if (!raw || !raw.trim()) return '';
-                let text = sanitizeHTML(raw.trim());
-                // · • 불릿 마커 완전 제거
-                text = text.replace(/[·•]/g, '');
-                // 줄바꿈 → <br>
-                text = text.replace(/\n/g, '<br>');
-                // 연속 <br> 정리
-                text = text.replace(/(<br>\s*){3,}/g, '<br><br>');
-                // 앞머리 <br> 제거
-                text = text.replace(/^(<br>\s*)+/, '');
-                return text;
-            }
-
-            // 프로필 분석: LLM 10섹션 결과 우선, fallback으로 7렌즈 로컬 분석
+            // v3 프로필 분석: LLM 7섹션 결과 우선, fallback으로 로컬 분석
             let lensesHTML = '';
             const llmSections = profile.llmResult && profile.llmResult.sections;
 
-            if (llmSections) {
-                // LLM 10-섹션 출력
-                const sectionNames = [
-                    '전반적 인상', '감정 표현과 정서 처리', '사고와 해석 방식',
-                    '대화 스타일', '관계에서 중요한 가치', '호감 형성 리듬',
-                    '함께할 때 예상 분위기', '어려워질 수 있는 지점', '매력 포인트', '세 문장 요약'
-                ];
-                sectionNames.forEach((name, idx) => {
-                    const content = formatLLMContent(llmSections[name]);
-                    const isEmpty = !content;
+            if (llmSections && Array.isArray(llmSections)) {
+                // v3 7-섹션 출력 (with subsections)
+                llmSections.forEach((section, idx) => {
                     const isOpen = idx === 0 ? ' active' : '';
-                    const displayContent = isEmpty
-                        ? '<span style="color:var(--dim);font-style:italic;">이 영역은 데이터에서 뚣렷하게 드러나지 않았어요.</span>'
-                        : content;
+                    const title = sanitizeHTML(section.title || section.key || '');
+                    const summary = formatLLMContent(section.summary || '');
+
+                    let subsHTML = '';
+                    if (section.subsections && Array.isArray(section.subsections)) {
+                        section.subsections.forEach(sub => {
+                            const subTitle = sanitizeHTML(sub.title || '');
+                            const subContent = formatLLMContent(sub.content || '');
+                            if (subContent) {
+                                subsHTML += `<div style="margin-top:12px;"><div style="font-size:12px;color:#60A5FA;font-weight:600;margin-bottom:4px;">${subTitle}</div><div style="font-size:13px;line-height:1.7;">${subContent}</div></div>`;
+                            }
+                        });
+                    }
+
+                    const displayContent = (summary || subsHTML)
+                        ? `<div style="font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:8px;">${summary}</div>${subsHTML}`
+                        : '<span style="color:var(--dim);font-style:italic;">이 영역은 데이터에서 뚜렷하게 드러나지 않았어요.</span>';
+
+                    lensesHTML += `
+                        <div class="lens-card">
+                            <div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')">
+                                <span class="lens-title">${title} <span style="font-size:10px;color:var(--ac);font-weight:400;">AI v3</span></span>
+                                <span class="lens-toggle">▼</span>
+                            </div>
+                            <div class="lens-content${isOpen}">${displayContent}</div>
+                        </div>
+                    `;
+                });
+            } else if (llmSections && typeof llmSections === 'object' && !Array.isArray(llmSections)) {
+                // Legacy format: sections as key-value object
+                for (const [name, content] of Object.entries(llmSections)) {
+                    const formatted = formatLLMContent(typeof content === 'string' ? content : JSON.stringify(content));
                     lensesHTML += `
                         <div class="lens-card">
                             <div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')">
                                 <span class="lens-title">${sanitizeHTML(name)} <span style="font-size:10px;color:var(--ac);font-weight:400;">AI</span></span>
                                 <span class="lens-toggle">▼</span>
                             </div>
-                            <div class="lens-content${isOpen}">${displayContent}</div>
+                            <div class="lens-content">${formatted}</div>
                         </div>
                     `;
-                });} else {
-                // Fallback: 기존 7렌즈 로컬 분석
+                }
+            } else {
+                // Fallback: 기존 로컬 분석
                 for (const [lensName, lensFunc] of Object.entries(LENSES)) {
                     lensesHTML += `
                         <div class="lens-card">
@@ -3378,7 +3453,7 @@ function displayResult() {
             const profileCode = btoa(unescape(encodeURIComponent(JSON.stringify({
                 intensity: axes.intensity,
                 structural: axes.structural,
-                type: type,
+                identity: identity,
                 timestamp: currentProfile.timestamp
             }))));
             document.getElementById('profileCode').textContent = profileCode;
@@ -3473,7 +3548,7 @@ function displayResult() {
             const payload = {
                 ...feedbackState,
                 axes: currentProfile?.axes || null,
-                type: currentProfile?.type || null,
+                identity: currentProfile?.identity || null,
                 timestamp: new Date().toISOString()
             };
 
@@ -3501,8 +3576,8 @@ function displayResult() {
 
         // ============ ENHANCED MATCHING ============
         function generateEnhancedAnalysis(profileA, profileB, compatResult) {
-            const typeA = profileA.type || { code: '-', name: '-' };
-            const typeB = profileB.type || { code: '-', name: '-' };
+            const typeA = profileA.identity || { code: '-', name: '-' };
+            const typeB = profileB.identity || { code: '-', name: '-' };
 
             const a8A = profileA.axes.structural.A8.primary;
             const a8B = profileB.axes.structural.A8.primary;
@@ -3683,23 +3758,51 @@ function displayResult() {
 
             document.getElementById('frictionAxes').innerHTML = frictionHTML;
 
-            // Display type comparison
-            const typeA = currentProfile.type || { emoji: '🔮', code: '-', name: '-' };
-            const typeB = matchProfile.type || { emoji: '🔮', code: '-', name: '-' };
+            // Display identity comparison (v3)
+            const idA = currentProfile.identity || { emoji: '🔮', code: '-', name: '-' };
+            const idB = matchProfile.identity || { emoji: '🔮', code: '-', name: '-' };
 
-            document.getElementById('matchType1Emoji').textContent = typeA.emoji;
-            document.getElementById('matchType1Code').textContent = typeA.code;
-            document.getElementById('matchType1Name').textContent = typeA.name;
+            document.getElementById('matchType1Emoji').textContent = idA.emoji;
+            document.getElementById('matchType1Code').textContent = idA.code;
+            document.getElementById('matchType1Name').textContent = idA.name;
 
-            document.getElementById('matchType2Emoji').textContent = typeB.emoji;
-            document.getElementById('matchType2Code').textContent = typeB.code;
-            document.getElementById('matchType2Name').textContent = typeB.name;
+            document.getElementById('matchType2Emoji').textContent = idB.emoji;
+            document.getElementById('matchType2Code').textContent = idB.code;
+            document.getElementById('matchType2Name').textContent = idB.name;
+
+            // Compute match identity
+            const matchId = computeMatchIdentity(currentProfile.axes, matchProfile.axes, idA, idB);
 
             // Generate enhanced analysis (LLM 우선, fallback 로컬)
             let analysis;
             if (USE_LLM) {
-                const llmMatch = await callWorkerMatch(currentProfile, matchProfile, result);
-                if (llmMatch && llmMatch.strengths) {
+                const llmMatch = await callWorkerMatch(currentProfile, matchProfile, idA, idB, matchId);
+                if (llmMatch && llmMatch.sections && Array.isArray(llmMatch.sections)) {
+                    // v3 matching response — render 6 sections
+                    let matchSectionsHTML = '';
+                    llmMatch.sections.forEach((section, idx) => {
+                        const isOpen = idx === 0 ? ' active' : '';
+                        const title = sanitizeHTML(section.title || '');
+                        const summary = formatLLMContent(section.summary || '');
+                        let subsHTML = '';
+                        if (section.subsections && Array.isArray(section.subsections)) {
+                            section.subsections.forEach(sub => {
+                                const subTitle = sanitizeHTML(sub.title || '');
+                                const subContent = formatLLMContent(sub.content || '');
+                                if (subContent) {
+                                    subsHTML += `<div style="margin-top:12px;"><div style="font-size:12px;color:#60A5FA;font-weight:600;margin-bottom:4px;">${subTitle}</div><div style="font-size:13px;line-height:1.7;">${subContent}</div></div>`;
+                                }
+                            });
+                        }
+                        matchSectionsHTML += `<div class="lens-card"><div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')"><span class="lens-title">${title} <span style="font-size:10px;color:var(--ac);font-weight:400;">AI v3</span></span><span class="lens-toggle">▼</span></div><div class="lens-content${isOpen}"><div style="font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:8px;">${summary}</div>${subsHTML}</div></div>`;
+                    });
+                    // Show match identity + sections
+                    document.getElementById('matchStrengths').innerHTML = `<div style="text-align:center;margin-bottom:15px;"><div style="font-size:20px;">${sanitizeHTML(matchId.emoji_a)} × ${sanitizeHTML(matchId.emoji_b)}</div><div style="font-size:16px;color:var(--ac);margin:5px 0;">${sanitizeHTML(matchId.name)}</div><div style="font-size:12px;color:var(--text-dim);">${sanitizeHTML(matchId.tagline)}</div><div style="margin-top:8px;font-size:11px;">호환성 ${matchId.compatibility}% · 긴장도 ${sanitizeHTML(matchId.tension)} · 성장 ${sanitizeHTML(matchId.growth)}</div></div>`;
+                    document.getElementById('matchRisks').innerHTML = matchSectionsHTML;
+                    document.getElementById('matchGrowth').textContent = '';
+                    document.getElementById('matchOutlook').textContent = '';
+                    analysis = null;
+                } else if (llmMatch && llmMatch.strengths) {
                     analysis = llmMatch;
                 } else {
                     analysis = generateEnhancedAnalysis(currentProfile, matchProfile, result);
@@ -3708,19 +3811,15 @@ function displayResult() {
                 analysis = generateEnhancedAnalysis(currentProfile, matchProfile, result);
             }
 
-            // Display strengths
-            const strengthsHTML = analysis.strengths.map(s => `<li>${s}</li>`).join('');
-            document.getElementById('matchStrengths').innerHTML = strengthsHTML;
-
-            // Display risks
-            const risksHTML = analysis.risks.map(r => `<li>${r}</li>`).join('');
-            document.getElementById('matchRisks').innerHTML = risksHTML;
-
-            // Display growth direction
-            document.getElementById('matchGrowth').textContent = analysis.growth;
-
-            // Display outlook
-            document.getElementById('matchOutlook').textContent = analysis.outlook;
+            // Display strengths/risks/growth (only if analysis is non-null, i.e. fallback mode)
+            if (analysis) {
+                const strengthsHTML = analysis.strengths.map(s => `<li>${s}</li>`).join('');
+                document.getElementById('matchStrengths').innerHTML = strengthsHTML;
+                const risksHTML = analysis.risks.map(r => `<li>${r}</li>`).join('');
+                document.getElementById('matchRisks').innerHTML = risksHTML;
+                document.getElementById('matchGrowth').textContent = analysis.growth;
+                document.getElementById('matchOutlook').textContent = analysis.outlook;
+            }
 
             document.getElementById('matchResultsContainer').classList.remove('hidden');
 
@@ -3738,12 +3837,12 @@ function displayResult() {
 
                 const rates = computeRates(messages);
                 const axes = computeAxes(rates);
-                const type = computeType(axes);
+                const identity = computeIdentity(axes);
 
                 matchProfile = {
                     rates,
                     axes,
-                    type,
+                    identity,
                     timestamp: new Date().toISOString()
                 };
 
@@ -3762,12 +3861,13 @@ function displayResult() {
 
             try {
                 const decoded = JSON.parse(decodeURIComponent(escape(atob(code))));
+                const loadedAxes = {
+                    intensity: decoded.intensity,
+                    structural: decoded.structural
+                };
                 matchProfile = {
-                    axes: {
-                        intensity: decoded.intensity,
-                        structural: decoded.structural
-                    },
-                    type: decoded.type,
+                    axes: loadedAxes,
+                    identity: decoded.identity || computeIdentity(loadedAxes),
                     timestamp: decoded.timestamp
                 };
                 await displayMatch();
@@ -4001,7 +4101,7 @@ function displayResult() {
         function downloadShareCard() {
             const canvas = document.getElementById('shareCanvas');
             const link = document.createElement('a');
-            link.download = 'KNOT-' + (currentProfile?.type?.code || 'result') + '.png';
+            link.download = 'KNOT-' + (currentProfile?.identity?.code || 'result') + '.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
         }
@@ -4017,7 +4117,7 @@ function displayResult() {
             const W = 1080, H = 1350;
             canvas.width = W; canvas.height = H;
             const profile = currentProfile;
-            const type = profile.type;
+            const type = profile.identity || { emoji: '🔮', code: 'E-XX', name: '미지의 윤곽', tagline: '', desc: '' };
             const axes = profile.axes;
             const BG = '#08080D', AC = '#F5A623', TEXT = '#E8E8E8', DIM = '#777';
             const axisColors = ['#F5A623','#60A5FA','#F87171','#A78BFA','#4ADE80','#38BDF8'];
@@ -4201,10 +4301,9 @@ function displayResult() {
             btn.textContent = '\u23f3 \uc0dd\uc131 \uc911...';
             try {
                 const shareData = {
-                    type: currentProfile.type,
+                    identity: currentProfile.identity,
                     axes: currentProfile.axes,
-                    rates: currentProfile.rates,
-                    llmResult: currentProfile.llmResult,
+                    sections: currentProfile.llmResult?.sections || [],
                     timestamp: currentProfile.timestamp
                 };
                 const resp = await fetch(WORKER_URL + '/share', {
@@ -4302,7 +4401,7 @@ function displayResult() {
             if (!window._shareCanvases) return;
             window._shareCanvases.forEach((canvas, i) => {
                 const link = document.createElement('a');
-                link.download = 'KNOT-' + (currentProfile?.type?.code || 'card') + '-' + (i + 1) + '.png';
+                link.download = 'KNOT-' + (currentProfile?.identity?.code || 'card') + '-' + (i + 1) + '.png';
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             });
@@ -4316,7 +4415,7 @@ function displayResult() {
             container.innerHTML = '';
             dotsContainer.innerHTML = '';
             const profile = currentProfile;
-            const type = profile.type;
+            const type = profile.identity || { emoji: '🔮', code: 'E-XX', name: '미지의 윤곽', tagline: '', desc: '' };
             const axes = profile.axes;
             const BG = '#08080D', AC = '#F5A623', TEXT = '#E8E8E8', DIM = '#777';
             const axisColors = ['#F5A623','#60A5FA','#F87171','#A78BFA','#4ADE80','#38BDF8'];
@@ -4492,42 +4591,18 @@ function displayResult() {
                 canvases.push(c4);
             }
 
-            // ---- Card 5: Ideal Partners ----
-            const partners = getIdealPartners(type.code);
-            if ((partners.ideal && partners.ideal.length > 0) || (partners.compatible && partners.compatible.length > 0)) {
+            // ---- Card 5: Identity Summary (v3) ----
+            {
                 const c5 = createCard(W, H);
                 const ctx5 = c5.getContext('2d');
                 drawCardBg(ctx5, W, H, BG);
-                drawCardHeader(ctx5, W, AC, DIM, type, '이상적 파트너');
-                let py = 380;
-                const renderPartners = (list, color, label) => {
-                    if (list.length === 0 || py > H - 200) return;
-                    ctx5.fillStyle = color;
-                    ctx5.font = '700 26px -apple-system, BlinkMacSystemFont, sans-serif';
-                    ctx5.textAlign = 'left';
-                    ctx5.fillText(label, 100, py); py += 50;
-                    list.forEach(p => {
-                        if (py > H - 120) return;
-                        const td = TYPE_DEFINITIONS[p.code];
-                        if (!td) return;
-                        ctx5.fillStyle = color.replace('1)', '0.08)').replace('#4ADE80','rgba(74,222,128,0.08)').replace('#60A5FA','rgba(96,165,250,0.08)');
-                        roundRect(ctx5, 80, py - 10, W - 160, 80, 14); ctx5.fill();
-                        ctx5.font = '40px serif'; ctx5.textAlign = 'left';
-                        ctx5.fillText(td.emoji, 110, py + 42);
-                        ctx5.fillStyle = TEXT;
-                        ctx5.font = '700 26px -apple-system, BlinkMacSystemFont, sans-serif';
-                        ctx5.fillText(p.code + ' ' + p.name, 170, py + 28);
-                        ctx5.fillStyle = DIM;
-                        ctx5.font = '400 20px -apple-system, BlinkMacSystemFont, sans-serif';
-                        let reason = p.reason || '';
-                        if (reason.length > 50) reason = reason.substring(0, 47) + '...';
-                        ctx5.fillText(reason, 170, py + 55);
-                        py += 100;
-                    });
-                    py += 20;
-                };
-                renderPartners(partners.ideal, '#4ADE80', '💚 최고의 궁합');
-                renderPartners(partners.compatible, '#60A5FA', '💙 좋은 궁합');
+                drawCardHeader(ctx5, W, AC, DIM, type, '정체성 요약');
+                let py = 400;
+                ctx5.fillStyle = TEXT;
+                ctx5.font = '400 28px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx5.textAlign = 'center';
+                const tagline = type.tagline || '';
+                wrapText(ctx5, tagline, W/2, py, W - 160, 38);
                 drawBranding(ctx5, W, H, AC);
                 canvases.push(c5);
             }
