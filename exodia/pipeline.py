@@ -451,4 +451,3 @@ class ExodiaPipeline:
             intensity_axes=intensity_axes,
             structural_axes=structural_axes,
         )
-

@@ -55,7 +55,7 @@ _SUGGEST = re.compile(r'(하자|갈까|해볼까|어때|가자|먹자|보자|할
 _FEEDBACK_POS = re.compile(r'(잘했|대단|멋지|천재|최고|굿|잘\s?한다|잘\s?하네)')
 
 # Greeting
-_GREET_OPEN = re.compile(r'^(안녕|하이|여로|ㅎㅇ|반가)')
+_GREET_OPEN = re.compile(r'^(안녕|하이|헬로|ㅎㅇ|반가)')
 _GREET_CLOSE = re.compile(r'(잘\s?가|안녕|바이|ㅂㅂ|내일\s?봐)')
 _THANKS = re.compile(r'(고마워|감사|ㄳ|고맙)')
 
