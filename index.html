@@ -3565,7 +3565,7 @@ function displayResult() {
                         humor: '유머', other: '기타'
                     };
                     for (const [topic, data] of Object.entries(topics)) {
-                        const weight = typeof data === 'object' ? data.weight : data;
+                        const weight = typeof data === 'object' ? (data.ratio || data.weight || 0) : data;
                         if (weight > 0.03) {
                             const pct = (weight * 100).toFixed(0);
                             const label = topicLabels[topic] || topic;
