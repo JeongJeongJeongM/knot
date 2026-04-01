@@ -3183,7 +3183,7 @@
         const WORKER_URL = 'https://knot-exodia.ashirmallo.workers.dev';
         let USE_LLM = true; // LLM 분석 사용 여부 (Worker 연결 실패시 자동 fallback)
 
-        async function callWorkerAnalyze(axes, identity, messagesSample, lensSummary, prismResult, anchorResult) {
+        async function callWorkerAnalyze(axes, identity, messagesSample, lensSummary, rawMessages) {
             try {
                 const response = await fetch(WORKER_URL + '/analyze', {
                     method: 'POST',
@@ -3193,8 +3193,7 @@
                         identity,
                         messages_sample: messagesSample,
                         lens_summary: lensSummary,
-                        prism: prismResult,
-                        anchor: anchorResult
+                        raw_messages: rawMessages
                     })
                 });
                 if (!response.ok) throw new Error(`Worker error: ${response.status}`);
@@ -3351,55 +3350,18 @@
                 T.addLine('<span class="dim">[identity]</span> <span class="warn">정체성 도출 완료: ' + sanitizeHTML(identity.emoji) + ' ' + sanitizeHTML(identity.code) + ' - ' + sanitizeHTML(identity.name) + '</span>', 200);
                 T.setProgress(70, 'AI 심층 분석 진행 중...');
 
-                // PRISM 분석 (관심사 프로파일)
+                // PRISM + ANCHOR + LLM 분석 (서버 사이드)
                 let prismResult = null;
-                try {
-                    T.addLine('<span class="prompt">$</span> <span class="info">prism-analyze --engine=interest-content --depth=depth</span>', 400);
-                    T.addLine('<span class="dim">[prism]</span> 관심사/콘텐츠 패턴 분석 중...', 200);
-                    updateProgress('콘텐츠 기반 관심사 패턴을 분석하고 있습니다');
-                    const prismMessages = messages.map(m =>
-                        typeof m === 'string'
-                            ? { sender: 'user', text: m }
-                            : { sender: m.sender || m.role || 'user', text: m.text || m.content || '' }
-                    );
-                    if (typeof PRISM !== 'undefined' && PRISM.analyze) {
-                        prismResult = PRISM.analyze(prismMessages);
-                        T.addLine('<span class="dim">[prism]</span> <span class="success">관심사 분석 완료</span>', 150);
-                    }
-                } catch (e) {
-                    console.warn('PRISM analysis failed:', e);
-                }
-
-                // ANCHOR 분석 (관계 역학)
                 let anchorResult = null;
-                try {
-                    T.addLine('<span class="prompt">$</span> <span class="info">anchor-analyze --engine=relationship --depth=dynamics</span>', 400);
-                    T.addLine('<span class="dim">[anchor]</span> 관계 역학 패턴 분석 중...', 200);
-                    updateProgress('관계 패턴과 정서 역학을 분석하고 있습니다');
-                    const anchorMessages = messages.map(m =>
-                        typeof m === 'string'
-                            ? { sender: 'user', text: m }
-                            : { sender: m.sender || m.role || 'user', text: m.text || m.content || '' }
-                    );
-                    if (typeof ANCHOR !== 'undefined' && ANCHOR.analyze) {
-                        anchorResult = ANCHOR.analyze(anchorMessages);
-                        T.addLine('<span class="dim">[anchor]</span> <span class="success">관계 역학 분석 완료</span>', 150);
-                    }
-                } catch (e) {
-                    console.warn('ANCHOR analysis failed:', e);
-                }
-
-                // LLM 분석
                 let llmResult = null;
-                if (USE_LLM) {
-                    await wait(300);
-                    T.addLine('<span class="prompt">$</span> <span class="info">deep-analyze --engine=claude --depth=full</span>', 400);
-                    T.addLine('<span class="dim">[llm]</span> <span class="warn">AI 심층 분석 시작 (10~20초 소요)</span>', 300);
-                    updateProgress('AI가 당신의 대화 패턴을 심층 분석하고 있습니다');
 
+                T.addLine('<span class="prompt">$</span> <span class="info">server-analyze --engine=prism+anchor+claude</span>', 400);
+                T.addLine('<span class="dim">[server]</span> <span class="warn">서버 분석 시작 (PRISM + ANCHOR + AI 심층)</span>', 300);
+                updateProgress('서버에서 25축 분석을 진행하고 있습니다');
+
+                if (USE_LLM) {
                     T.startLLMScan();
 
-                    // Slowly increment progress during LLM
                     let llmProg = 70;
                     const llmInterval = setInterval(() => {
                         llmProg = Math.min(llmProg + 1.5, 95);
@@ -3408,15 +3370,26 @@
 
                     const messagesSample = extractMessagesSample(messages);
                     const lensSummary = buildLensSummary(axes);
-                    llmResult = await callWorkerAnalyze(axes, identity, messagesSample, lensSummary, prismResult, anchorResult);
+                    const rawMessages = messages.map(m => typeof m === 'string' ? m : (m.text || m.content || ''));
+                    const serverResult = await callWorkerAnalyze(axes, identity, messagesSample, lensSummary, rawMessages);
+
+                    if (serverResult) {
+                        if (serverResult.prism) prismResult = serverResult.prism;
+                        if (serverResult.anchor) anchorResult = serverResult.anchor;
+                        if (serverResult.sections) {
+                            llmResult = { sections: serverResult.sections };
+                        } else {
+                            llmResult = serverResult;
+                        }
+                    }
 
                     clearInterval(llmInterval);
                     T.stopLLMScan();
-                    T.addLine('<span class="dim">[llm]</span> <span class="success">AI 분석 완료!</span>', 100);
+                    T.addLine('<span class="dim">[server]</span> <span class="success">서버 분석 완료!</span>', 100);
                 }
 
                 T.setProgress(98, '결과 렌더링...');
-                T.addLine('<span class="prompt">$</span> <span class="success">분석 완료. 결과를 렌더링m��니다...</span>', 200);
+                T.addLine('<span class="prompt">$</span> <span class="success">분석 완료. 결과를 렌더링합니다...</span>', 200);
 
                 currentProfile = {
                     rates,
@@ -4960,7 +4933,6 @@ function displayResult() {
             document.getElementById('shareOverlay').classList.add('active');
         }
     </script>
-    <script src="prism.js"></script>
-    <script src="anchor.js"></script>
+    <!-- PRISM/ANCHOR engines moved to server-side (Cloudflare Worker) for security -->
 </body>
 </html>
