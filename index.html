@@ -919,6 +919,109 @@
             color: var(--text-dim);
         }
 
+        /* PRISM & ANCHOR Sections */
+        .prism-section, .anchor-section {
+            background: #0c0c14;
+            border: 1px solid #1a1a2e;
+            border-radius: 10px;
+            padding: 18px;
+            margin-top: 16px;
+        }
+
+        .prism-section-title, .anchor-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 14px;
+            color: var(--ac);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'Courier New', monospace;
+        }
+
+        .dimension-card {
+            background: rgba(245,166,35,0.05);
+            border: 1px solid rgba(245,166,35,0.15);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .dimension-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ac);
+            margin-bottom: 6px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .dimension-content {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-dim);
+        }
+
+        .topic-tag {
+            display: inline-block;
+            background: rgba(96,165,250,0.1);
+            border: 1px solid rgba(96,165,250,0.3);
+            color: #60A5FA;
+            padding: 5px 12px;
+            border-radius: 6px;
+            margin: 4px 4px 4px 0;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .depth-indicator {
+            display: flex;
+            gap: 4px;
+            margin: 8px 0;
+        }
+
+        .depth-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            flex: 1;
+        }
+
+        .depth-bar.active {
+            background: #60A5FA;
+        }
+
+        .match-placeholder {
+            background: rgba(0,0,0,0.2);
+            border: 1px dashed #1a1a2e;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            color: var(--text-dim);
+            margin-top: 12px;
+        }
+
+        .match-placeholder-text {
+            font-size: 13px;
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+
+        .match-button {
+            padding: 10px 24px;
+            background: var(--ac);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            transition: opacity 0.3s;
+        }
+
+        .match-button:hover {
+            opacity: 0.85;
+        }
+
         /* Match Screen */
         .match-container {
             padding: 20px 0;
@@ -1608,6 +1711,18 @@
                 <div class="structural-axes" id="structuralAxes"></div>
             </div>
 
+            <!-- PRISM: 관심사 프로파일 -->
+            <div class="axes-section prism-section">
+                <div class="prism-section-title">관심사 프로파일 (PRISM)</div>
+                <div id="prismPanel"></div>
+            </div>
+
+            <!-- ANCHOR: 관계 역학 프로파일 -->
+            <div class="axes-section anchor-section">
+                <div class="anchor-section-title">관계 역학 프로파일 (ANCHOR)</div>
+                <div id="anchorPanel"></div>
+            </div>
+
             <!-- Interpretation Lenses -->
             <div class="axes-section">
                 <div class="section-title">프로필 분석 (Profile Analysis)</div>
@@ -1624,6 +1739,18 @@
             <div class="axes-section" id="feedbackSection" style="display:none;">
                 <div class="section-title">분석 품질 평가</div>
                 <div id="feedbackContent"></div>
+            </div>
+
+            <!-- Compatibility Match Section -->
+            <div class="axes-section">
+                <div class="section-title">궁합 분석</div>
+                <div class="match-placeholder">
+                    <div class="match-placeholder-text">
+                        두 개의 프로필을 비교하여 대화 호환성을 분석합니다.<br>
+                        다른 사람의 분석 결과를 공유받아 매칭을 시작하세요.
+                    </div>
+                    <button class="match-button" onclick="switchToMatch()">궁합 분석하기</button>
+                </div>
             </div>
 
             <!-- Share Card Section -->
@@ -3056,7 +3183,7 @@
         const WORKER_URL = 'https://knot-exodia.ashirmallo.workers.dev';
         let USE_LLM = true; // LLM 분석 사용 여부 (Worker 연결 실패시 자동 fallback)
 
-        async function callWorkerAnalyze(axes, identity, messagesSample, lensSummary) {
+        async function callWorkerAnalyze(axes, identity, messagesSample, lensSummary, prismResult, anchorResult) {
             try {
                 const response = await fetch(WORKER_URL + '/analyze', {
                     method: 'POST',
@@ -3065,7 +3192,9 @@
                         axes,
                         identity,
                         messages_sample: messagesSample,
-                        lens_summary: lensSummary
+                        lens_summary: lensSummary,
+                        prism: prismResult,
+                        anchor: anchorResult
                     })
                 });
                 if (!response.ok) throw new Error(`Worker error: ${response.status}`);
@@ -3222,6 +3351,42 @@
                 T.addLine('<span class="dim">[identity]</span> <span class="warn">정체성 도출 완료: ' + sanitizeHTML(identity.emoji) + ' ' + sanitizeHTML(identity.code) + ' - ' + sanitizeHTML(identity.name) + '</span>', 200);
                 T.setProgress(70, 'AI 심층 분석 진행 중...');
 
+                // PRISM 분석 (관심사 프로파일)
+                let prismResult = null;
+                try {
+                    T.addLine('<span class="prompt">$</span> <span class="info">prism-analyze --engine=interest-content --depth=depth</span>', 400);
+                    T.addLine('<span class="dim">[prism]</span> 관심사/콘텐츠 패턴 분석 중...', 200);
+                    updateProgress('콘텐츠 기반 관심사 패턴을 분석하고 있습니다');
+                    const prismMessages = messages.map(m => ({
+                        sender: m.sender || m.role || 'user',
+                        text: m.text || m.content || ''
+                    }));
+                    if (typeof PRISM !== 'undefined' && PRISM.analyze) {
+                        prismResult = PRISM.analyze(prismMessages);
+                        T.addLine('<span class="dim">[prism]</span> <span class="success">관심사 분석 완료</span>', 150);
+                    }
+                } catch (e) {
+                    console.warn('PRISM analysis failed:', e);
+                }
+
+                // ANCHOR 분석 (관계 역학)
+                let anchorResult = null;
+                try {
+                    T.addLine('<span class="prompt">$</span> <span class="info">anchor-analyze --engine=relationship --depth=dynamics</span>', 400);
+                    T.addLine('<span class="dim">[anchor]</span> 관계 역학 패턴 분석 중...', 200);
+                    updateProgress('관계 패턴과 정서 역학을 분석하고 있습니다');
+                    const anchorMessages = messages.map(m => ({
+                        sender: m.sender || m.role || 'user',
+                        text: m.text || m.content || ''
+                    }));
+                    if (typeof ANCHOR !== 'undefined' && ANCHOR.analyze) {
+                        anchorResult = ANCHOR.analyze(anchorMessages);
+                        T.addLine('<span class="dim">[anchor]</span> <span class="success">관계 역학 분석 완료</span>', 150);
+                    }
+                } catch (e) {
+                    console.warn('ANCHOR analysis failed:', e);
+                }
+
                 // LLM 분석
                 let llmResult = null;
                 if (USE_LLM) {
@@ -3241,7 +3406,7 @@
 
                     const messagesSample = extractMessagesSample(messages);
                     const lensSummary = buildLensSummary(axes);
-                    llmResult = await callWorkerAnalyze(axes, identity, messagesSample, lensSummary);
+                    llmResult = await callWorkerAnalyze(axes, identity, messagesSample, lensSummary, prismResult, anchorResult);
 
                     clearInterval(llmInterval);
                     T.stopLLMScan();
@@ -3258,6 +3423,8 @@
                     llmResult,
                     messages,
                     functionWordProfile: computeFunctionWordProfile(messages),
+                    prism: prismResult,
+                    anchor: anchorResult,
                     timestamp: new Date().toISOString()
                 };
 
@@ -3375,6 +3542,136 @@ function displayResult() {
                 `;
             });
             document.getElementById('structuralAxes').innerHTML = structHTML;
+
+            // Render PRISM section (관심사 프로파일)
+            let prismHTML = '';
+            if (profile.prism) {
+                const prism = profile.prism;
+                prismHTML += '<div style="margin-bottom:16px;">';
+
+                // P1: 주제 분포
+                if (prism.topic_distribution) {
+                    prismHTML += '<div class="dimension-card">';
+                    prismHTML += '<div class="dimension-label">P1: 주제 분포 (Topic Distribution)</div>';
+                    prismHTML += '<div class="dimension-content">';
+                    const topics = prism.topic_distribution.distribution || {};
+                    for (const [topic, weight] of Object.entries(topics)) {
+                        if (weight > 0.05) {
+                            const pct = (weight * 100).toFixed(0);
+                            prismHTML += `<span class="topic-tag">${sanitizeHTML(topic)} ${pct}%</span>`;
+                        }
+                    }
+                    prismHTML += '</div></div>';
+                }
+
+                // P2: 탐구 깊이
+                if (prism.engagement) {
+                    prismHTML += '<div class="dimension-card">';
+                    prismHTML += '<div class="dimension-label">P2: 탐구 깊이 (Engagement Depth)</div>';
+                    prismHTML += '<div class="dimension-content">';
+                    const depth = prism.engagement.avg_depth_per_topic || 0.5;
+                    const depthLevel = depth < 0.3 ? '표면적' : depth < 0.7 ? '중간' : '심화';
+                    prismHTML += `깊이 수준: <strong>${depthLevel}</strong> (${(depth * 100).toFixed(0)}%) - 주제에 대한 탐구 강도를 나타냅니다.`;
+                    prismHTML += '</div></div>';
+                }
+
+                // P3: 언어적 풍경
+                if (prism.vocabulary) {
+                    prismHTML += '<div class="dimension-card">';
+                    prismHTML += '<div class="dimension-label">P3: 언어적 풍경 (Vocabulary Landscape)</div>';
+                    prismHTML += '<div class="dimension-content">';
+                    const vocab = prism.vocabulary;
+                    const ttr = vocab.type_token_ratio || 0;
+                    const register = vocab.register || '중립';
+                    prismHTML += `어휘 다양성: ${(ttr * 100).toFixed(0)}% · 문체: <strong>${sanitizeHTML(register)}</strong>`;
+                    prismHTML += '</div></div>';
+                }
+
+                // P4: 호기심 지형
+                if (prism.curiosity) {
+                    prismHTML += '<div class="dimension-card">';
+                    prismHTML += '<div class="dimension-label">P4: 호기심 지형 (Curiosity Signature)</div>';
+                    prismHTML += '<div class="dimension-content">';
+                    const curiosity = prism.curiosity;
+                    const questionRate = (curiosity.question_rate || 0) * 100;
+                    const curiosityType = curiosity.curiosity_type || '균형';
+                    prismHTML += `질문 빈도: ${questionRate.toFixed(0)}% · 호기심 유형: <strong>${sanitizeHTML(curiosityType)}</strong>`;
+                    prismHTML += '</div></div>';
+                }
+
+                prismHTML += '</div>';
+            } else {
+                prismHTML = '<div style="color:var(--text-dim);font-size:13px;">분석 데이터 부족 - PRISM 분석 결과를 불러올 수 없습니다.</div>';
+            }
+            document.getElementById('prismPanel').innerHTML = prismHTML;
+
+            // Render ANCHOR section (관계 역학 프로파일)
+            let anchorHTML = '';
+            if (profile.anchor) {
+                const anchor = profile.anchor;
+                anchorHTML += '<div style="margin-bottom:16px;">';
+
+                // R1: 관계 안정감 (Attachment)
+                if (anchor.dimensions && anchor.dimensions.attachment) {
+                    anchorHTML += '<div class="dimension-card">';
+                    anchorHTML += '<div class="dimension-label">R1: 관계 안정감 (Attachment Pattern)</div>';
+                    anchorHTML += '<div class="dimension-content">';
+                    const attach = anchor.dimensions.attachment;
+                    const attachDesc = attach.compatibility || '분석 불가';
+                    anchorHTML += `안정적인 유대를 선호하는 경향: <strong>${sanitizeHTML(attachDesc)}</strong>`;
+                    if (attach.risks && attach.risks.length > 0) {
+                        anchorHTML += `<br><span style="color:var(--text-dim);font-size:12px;">주의: ${sanitizeHTML(attach.risks.join(', '))}</span>`;
+                    }
+                    anchorHTML += '</div></div>';
+                }
+
+                // R2: 갈등 대처 (Conflict)
+                if (anchor.dimensions && anchor.dimensions.conflict) {
+                    anchorHTML += '<div class="dimension-card">';
+                    anchorHTML += '<div class="dimension-label">R2: 갈등 대처 (Conflict Mode)</div>';
+                    anchorHTML += '<div class="dimension-content">';
+                    const conflict = anchor.dimensions.conflict;
+                    const conflictDesc = conflict.compatibility || '분석 불가';
+                    anchorHTML += `갈등 상황에서의 대처 방식: <strong>${sanitizeHTML(conflictDesc)}</strong>`;
+                    if (conflict.risks && conflict.risks.length > 0) {
+                        anchorHTML += `<br><span style="color:var(--text-dim);font-size:12px;">주의: ${sanitizeHTML(conflict.risks.join(', '))}</span>`;
+                    }
+                    anchorHTML += '</div></div>';
+                }
+
+                // R3: 정서적 가용성 (Emotional)
+                if (anchor.dimensions && anchor.dimensions.emotional) {
+                    anchorHTML += '<div class="dimension-card">';
+                    anchorHTML += '<div class="dimension-label">R3: 정서적 가용성 (Emotional Response)</div>';
+                    anchorHTML += '<div class="dimension-content">';
+                    const emotional = anchor.dimensions.emotional;
+                    const emotionalDesc = emotional.compatibility || '분석 불가';
+                    anchorHTML += `정서적 반응 방식: <strong>${sanitizeHTML(emotionalDesc)}</strong>`;
+                    if (emotional.risks && emotional.risks.length > 0) {
+                        anchorHTML += `<br><span style="color:var(--text-dim);font-size:12px;">주의: ${sanitizeHTML(emotional.risks.join(', '))}</span>`;
+                    }
+                    anchorHTML += '</div></div>';
+                }
+
+                // R4: 성장 지향성 (Growth)
+                if (anchor.dimensions && anchor.dimensions.growth) {
+                    anchorHTML += '<div class="dimension-card">';
+                    anchorHTML += '<div class="dimension-label">R4: 성장 지향성 (Growth Orientation)</div>';
+                    anchorHTML += '<div class="dimension-content">';
+                    const growth = anchor.dimensions.growth;
+                    const growthDesc = growth.compatibility || '분석 불가';
+                    anchorHTML += `변화와 성장에 대한 태도: <strong>${sanitizeHTML(growthDesc)}</strong>`;
+                    if (growth.risks && growth.risks.length > 0) {
+                        anchorHTML += `<br><span style="color:var(--text-dim);font-size:12px;">주의: ${sanitizeHTML(growth.risks.join(', '))}</span>`;
+                    }
+                    anchorHTML += '</div></div>';
+                }
+
+                anchorHTML += '</div>';
+            } else {
+                anchorHTML = '<div style="color:var(--text-dim);font-size:13px;">분석 데이터 부족 - ANCHOR 분석 결과를 불러올 수 없습니다.</div>';
+            }
+            document.getElementById('anchorPanel').innerHTML = anchorHTML;
 
 // Render comparison section
 
@@ -4621,5 +4918,7 @@ function displayResult() {
             document.getElementById('shareOverlay').classList.add('active');
         }
     </script>
+    <script src="prism.js"></script>
+    <script src="anchor.js"></script>
 </body>
 </html>
