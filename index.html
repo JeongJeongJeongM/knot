@@ -3556,12 +3556,24 @@ function displayResult() {
                     prismHTML += '<div class="dimension-card">';
                     prismHTML += '<div class="dimension-label">P1: 주제 분포 (Topic Distribution)</div>';
                     prismHTML += '<div class="dimension-content">';
-                    const topics = prism.topic_distribution.distribution || {};
-                    for (const [topic, weight] of Object.entries(topics)) {
-                        if (weight > 0.05) {
+                    const topics = prism.topic_distribution.topics || prism.topic_distribution.distribution || {};
+                    const topicLabels = {
+                        daily_life: '일상', work: '직장/업무', technology: '기술', philosophy: '철학',
+                        psychology: '심리', relationships: '관계', health: '건강', finance: '경제/금융',
+                        politics: '정치/사회', art_culture: '예술/문화', science: '과학', travel: '여행',
+                        food: '음식', sports: '스포츠', education: '교육/학습', entertainment: '엔터테인먼트',
+                        humor: '유머', other: '기타'
+                    };
+                    for (const [topic, data] of Object.entries(topics)) {
+                        const weight = typeof data === 'object' ? data.weight : data;
+                        if (weight > 0.03) {
                             const pct = (weight * 100).toFixed(0);
-                            prismHTML += `<span class="topic-tag">${sanitizeHTML(topic)} ${pct}%</span>`;
+                            const label = topicLabels[topic] || topic;
+                            prismHTML += `<span class="topic-tag">${sanitizeHTML(label)} ${pct}%</span> `;
                         }
+                    }
+                    if (prism.topic_distribution.diversity_score) {
+                        prismHTML += `<div style="margin-top:8px;color:var(--text-dim);font-size:12px;">다양성: ${(prism.topic_distribution.diversity_score * 100).toFixed(0)}%</div>`;
                     }
                     prismHTML += '</div></div>';
                 }
@@ -3571,9 +3583,10 @@ function displayResult() {
                     prismHTML += '<div class="dimension-card">';
                     prismHTML += '<div class="dimension-label">P2: 탐구 깊이 (Engagement Depth)</div>';
                     prismHTML += '<div class="dimension-content">';
-                    const depth = prism.engagement.avg_depth_per_topic || 0.5;
-                    const depthLevel = depth < 0.3 ? '표면적' : depth < 0.7 ? '중간' : '심화';
-                    prismHTML += `깊이 수준: <strong>${depthLevel}</strong> (${(depth * 100).toFixed(0)}%) - 주제에 대한 탐구 강도를 나타냅니다.`;
+                    const depthMap = { surface: '표면적', casual: '일상적', analytical: '분석적', exploratory: '탐구적', creative: '창의적' };
+                    const overallDepth = prism.engagement.overall_depth || 'casual';
+                    const depthLabel = depthMap[overallDepth] || overallDepth;
+                    prismHTML += `깊이 수준: <strong>${sanitizeHTML(depthLabel)}</strong> - 주제에 대한 탐구 강도를 나타냅니다.`;
                     prismHTML += '</div></div>';
                 }
 
@@ -3583,9 +3596,13 @@ function displayResult() {
                     prismHTML += '<div class="dimension-label">P3: 언어적 풍경 (Vocabulary Landscape)</div>';
                     prismHTML += '<div class="dimension-content">';
                     const vocab = prism.vocabulary;
-                    const ttr = vocab.type_token_ratio || 0;
-                    const register = vocab.register || '중립';
-                    prismHTML += `어휘 다양성: ${(ttr * 100).toFixed(0)}% · 문체: <strong>${sanitizeHTML(register)}</strong>`;
+                    const diversityMap = { high: '높음', moderate: '보통', low: '낮음' };
+                    const diversityLabel = diversityMap[vocab.diversity] || vocab.diversity || '보통';
+                    const registerMap = { formal: '격식체', neutral: '중립', casual: '구어체', narrow: '제한적', wide: '넓음' };
+                    const registerLabel = registerMap[vocab.register_range] || vocab.register_range || '중립';
+                    const abstractionMap = { leans_abstract: '추상적', balanced: '균형', leans_concrete: '구체적' };
+                    const abstractionLabel = abstractionMap[vocab.abstraction] || vocab.abstraction || '균형';
+                    prismHTML += `어휘 다양성: <strong>${sanitizeHTML(diversityLabel)}</strong> · 문체: <strong>${sanitizeHTML(registerLabel)}</strong> · 추상도: <strong>${sanitizeHTML(abstractionLabel)}</strong>`;
                     prismHTML += '</div></div>';
                 }
 
@@ -3595,9 +3612,10 @@ function displayResult() {
                     prismHTML += '<div class="dimension-label">P4: 호기심 지형 (Curiosity Signature)</div>';
                     prismHTML += '<div class="dimension-content">';
                     const curiosity = prism.curiosity;
-                    const questionRate = (curiosity.question_rate || 0) * 100;
-                    const curiosityType = curiosity.curiosity_type || '균형';
-                    prismHTML += `질문 빈도: ${questionRate.toFixed(0)}% · 호기심 유형: <strong>${sanitizeHTML(curiosityType)}</strong>`;
+                    const questionRate = ((curiosity.question_ratio || curiosity.question_rate || 0) * 100);
+                    const dvbMap = { deep_diver: '깊이 탐구형', wide_scanner: '넓은 탐색형', balanced: '균형형' };
+                    const curiosityType = dvbMap[curiosity.depth_vs_breadth] || curiosity.curiosity_type || '균형형';
+                    prismHTML += `질문 빈도: <strong>${questionRate.toFixed(0)}%</strong> · 호기심 유형: <strong>${sanitizeHTML(curiosityType)}</strong>`;
                     prismHTML += '</div></div>';
                 }
 
@@ -3614,57 +3632,79 @@ function displayResult() {
                 anchorHTML += '<div style="margin-bottom:16px;">';
 
                 // R1: 관계 안정감 (Attachment)
-                if (anchor.dimensions && anchor.dimensions.attachment) {
+                const attachData = anchor.attachment || (anchor.dimensions && anchor.dimensions.attachment);
+                if (attachData) {
                     anchorHTML += '<div class="dimension-card">';
                     anchorHTML += '<div class="dimension-label">R1: 관계 안정감 (Attachment Pattern)</div>';
                     anchorHTML += '<div class="dimension-content">';
-                    const attach = anchor.dimensions.attachment;
-                    const attachDesc = attach.compatibility || '분석 불가';
-                    anchorHTML += `안정적인 유대를 선호하는 경향: <strong>${sanitizeHTML(attachDesc)}</strong>`;
-                    if (attach.risks && attach.risks.length > 0) {
-                        anchorHTML += `<br><span style="color:var(--text-dim);font-size:12px;">주의: ${sanitizeHTML(attach.risks.join(', '))}</span>`;
+                    const tendencyMap = {
+                        secure: '안정형', leans_anxious: '불안 경향', leans_avoidant: '회피 경향',
+                        anxious: '불안형', avoidant: '회피형', disorganized: '혼란형'
+                    };
+                    const tendency = tendencyMap[attachData.primary_tendency] || attachData.primary_tendency || attachData.compatibility || '분석 불가';
+                    anchorHTML += `애착 경향: <strong>${sanitizeHTML(tendency)}</strong>`;
+                    if (attachData.confidence) {
+                        anchorHTML += ` (신뢰도: ${(attachData.confidence * 100).toFixed(0)}%)`;
+                    }
+                    if (attachData.stress_shift) {
+                        const stressMap = { amplified_anxiety: '불안 증폭', withdrawal: '철수', maintain: '유지', seek_reassurance: '확인 추구' };
+                        anchorHTML += `<br>스트레스 시: <strong>${sanitizeHTML(stressMap[attachData.stress_shift] || attachData.stress_shift)}</strong>`;
                     }
                     anchorHTML += '</div></div>';
                 }
 
                 // R2: 갈등 대처 (Conflict)
-                if (anchor.dimensions && anchor.dimensions.conflict) {
+                const conflictData = anchor.conflict || (anchor.dimensions && anchor.dimensions.conflict);
+                if (conflictData) {
                     anchorHTML += '<div class="dimension-card">';
                     anchorHTML += '<div class="dimension-label">R2: 갈등 대처 (Conflict Mode)</div>';
                     anchorHTML += '<div class="dimension-content">';
-                    const conflict = anchor.dimensions.conflict;
-                    const conflictDesc = conflict.compatibility || '분석 불가';
-                    anchorHTML += `갈등 상황에서의 대처 방식: <strong>${sanitizeHTML(conflictDesc)}</strong>`;
-                    if (conflict.risks && conflict.risks.length > 0) {
-                        anchorHTML += `<br><span style="color:var(--text-dim);font-size:12px;">주의: ${sanitizeHTML(conflict.risks.join(', '))}</span>`;
+                    const modeMap = {
+                        direct_engagement: '직접 대면', diplomatic_approach: '외교적 접근',
+                        avoidance: '회피', escalation: '격화', withdrawal: '철수'
+                    };
+                    const mode = modeMap[conflictData.default_mode] || conflictData.default_mode || conflictData.compatibility || '분석 불가';
+                    anchorHTML += `갈등 대처 방식: <strong>${sanitizeHTML(mode)}</strong>`;
+                    if (conflictData.recovery_speed) {
+                        const recoveryMap = { fast: '빠름', moderate: '보통', slow: '느림' };
+                        anchorHTML += ` · 회복 속도: <strong>${sanitizeHTML(recoveryMap[conflictData.recovery_speed] || conflictData.recovery_speed)}</strong>`;
                     }
                     anchorHTML += '</div></div>';
                 }
 
                 // R3: 정서적 가용성 (Emotional)
-                if (anchor.dimensions && anchor.dimensions.emotional) {
+                const emotionalData = anchor.emotional_availability || (anchor.dimensions && anchor.dimensions.emotional);
+                if (emotionalData) {
                     anchorHTML += '<div class="dimension-card">';
                     anchorHTML += '<div class="dimension-label">R3: 정서적 가용성 (Emotional Response)</div>';
                     anchorHTML += '<div class="dimension-content">';
-                    const emotional = anchor.dimensions.emotional;
-                    const emotionalDesc = emotional.compatibility || '분석 불가';
-                    anchorHTML += `정서적 반응 방식: <strong>${sanitizeHTML(emotionalDesc)}</strong>`;
-                    if (emotional.risks && emotional.risks.length > 0) {
-                        anchorHTML += `<br><span style="color:var(--text-dim);font-size:12px;">주의: ${sanitizeHTML(emotional.risks.join(', '))}</span>`;
+                    const styleMap = {
+                        empathic_exploration: '공감적 탐구', supportive: '지지적', acknowledging: '인정형', dismissive: '무시형'
+                    };
+                    const style = styleMap[emotionalData.response_style] || emotionalData.response_style || emotionalData.compatibility || '분석 불가';
+                    anchorHTML += `정서적 반응: <strong>${sanitizeHTML(style)}</strong>`;
+                    if (emotionalData.emotional_range) {
+                        const rangeMap = { wide: '넓음', moderate: '보통', narrow: '제한적' };
+                        anchorHTML += ` · 감정 범위: <strong>${sanitizeHTML(rangeMap[emotionalData.emotional_range] || emotionalData.emotional_range)}</strong>`;
                     }
                     anchorHTML += '</div></div>';
                 }
 
                 // R4: 성장 지향성 (Growth)
-                if (anchor.dimensions && anchor.dimensions.growth) {
+                const growthData = anchor.growth || (anchor.dimensions && anchor.dimensions.growth);
+                if (growthData) {
                     anchorHTML += '<div class="dimension-card">';
                     anchorHTML += '<div class="dimension-label">R4: 성장 지향성 (Growth Orientation)</div>';
                     anchorHTML += '<div class="dimension-content">';
-                    const growth = anchor.dimensions.growth;
-                    const growthDesc = growth.compatibility || '분석 불가';
-                    anchorHTML += `변화와 성장에 대한 태도: <strong>${sanitizeHTML(growthDesc)}</strong>`;
-                    if (growth.risks && growth.risks.length > 0) {
-                        anchorHTML += `<br><span style="color:var(--text-dim);font-size:12px;">주의: ${sanitizeHTML(growth.risks.join(', '))}</span>`;
+                    const orientMap = {
+                        active_growth: '적극적 성장', reflective_growth: '성찰적 성장',
+                        stability_oriented: '안정 지향', externally_driven: '외부 동기'
+                    };
+                    const orient = orientMap[growthData.orientation] || growthData.orientation || growthData.compatibility || '분석 불가';
+                    anchorHTML += `성장 지향성: <strong>${sanitizeHTML(orient)}</strong>`;
+                    if (growthData.self_awareness) {
+                        const awarenessMap = { high: '높음', moderate: '보통', low: '낮음' };
+                        anchorHTML += ` · 자기 인식: <strong>${sanitizeHTML(awarenessMap[growthData.self_awareness] || growthData.self_awareness)}</strong>`;
                     }
                     anchorHTML += '</div></div>';
                 }
