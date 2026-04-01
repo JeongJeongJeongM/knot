@@ -3357,10 +3357,11 @@
                     T.addLine('<span class="prompt">$</span> <span class="info">prism-analyze --engine=interest-content --depth=depth</span>', 400);
                     T.addLine('<span class="dim">[prism]</span> 관심사/콘텐츠 패턴 분석 중...', 200);
                     updateProgress('콘텐츠 기반 관심사 패턴을 분석하고 있습니다');
-                    const prismMessages = messages.map(m => ({
-                        sender: m.sender || m.role || 'user',
-                        text: m.text || m.content || ''
-                    }));
+                    const prismMessages = messages.map(m =>
+                        typeof m === 'string'
+                            ? { sender: 'user', text: m }
+                            : { sender: m.sender || m.role || 'user', text: m.text || m.content || '' }
+                    );
                     if (typeof PRISM !== 'undefined' && PRISM.analyze) {
                         prismResult = PRISM.analyze(prismMessages);
                         T.addLine('<span class="dim">[prism]</span> <span class="success">관심사 분석 완료</span>', 150);
@@ -3375,10 +3376,11 @@
                     T.addLine('<span class="prompt">$</span> <span class="info">anchor-analyze --engine=relationship --depth=dynamics</span>', 400);
                     T.addLine('<span class="dim">[anchor]</span> 관계 역학 패턴 분석 중...', 200);
                     updateProgress('관계 패턴과 정서 역학을 분석하고 있습니다');
-                    const anchorMessages = messages.map(m => ({
-                        sender: m.sender || m.role || 'user',
-                        text: m.text || m.content || ''
-                    }));
+                    const anchorMessages = messages.map(m =>
+                        typeof m === 'string'
+                            ? { sender: 'user', text: m }
+                            : { sender: m.sender || m.role || 'user', text: m.text || m.content || '' }
+                    );
                     if (typeof ANCHOR !== 'undefined' && ANCHOR.analyze) {
                         anchorResult = ANCHOR.analyze(anchorMessages);
                         T.addLine('<span class="dim">[anchor]</span> <span class="success">관계 역학 분석 완료</span>', 150);
