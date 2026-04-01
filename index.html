@@ -3545,8 +3545,9 @@ function displayResult() {
                             prismHTML += `<span class="topic-tag">${sanitizeHTML(label)} ${pct}%</span> `;
                         }
                     }
-                    if (prism.topic_distribution.diversity_score) {
-                        prismHTML += `<div style="margin-top:8px;color:var(--text-dim);font-size:12px;">다양성: ${(prism.topic_distribution.diversity_score * 100).toFixed(0)}%</div>`;
+                    const divScore = prism.topic_distribution.diversity_score || prism.topic_distribution.topic_diversity;
+                    if (divScore) {
+                        prismHTML += `<div style="margin-top:8px;color:var(--text-dim);font-size:12px;">다양성: ${(divScore * 100).toFixed(0)}%</div>`;
                     }
                     prismHTML += '</div></div>';
                 }
@@ -3611,8 +3612,8 @@ function displayResult() {
                     anchorHTML += '<div class="dimension-label">R1: 관계 안정감 (Attachment Pattern)</div>';
                     anchorHTML += '<div class="dimension-content">';
                     const tendencyMap = {
-                        secure: '안정형', leans_anxious: '불안 경향', leans_avoidant: '회피 경향',
-                        anxious: '불안형', avoidant: '회피형', disorganized: '혼란형'
+                        secure: '안정형', leans_secure: '안정 경향', leans_anxious: '불안 경향', leans_avoidant: '회피 경향',
+                        anxious: '불안형', avoidant: '회피형', disorganized: '혼란형', leans_disorganized: '혼란 경향'
                     };
                     const tendency = tendencyMap[attachData.primary_tendency] || attachData.primary_tendency || attachData.compatibility || '분석 불가';
                     anchorHTML += `애착 경향: <strong>${sanitizeHTML(tendency)}</strong>`;
@@ -3620,7 +3621,7 @@ function displayResult() {
                         anchorHTML += ` (신뢰도: ${(attachData.confidence * 100).toFixed(0)}%)`;
                     }
                     if (attachData.stress_shift) {
-                        const stressMap = { amplified_anxiety: '불안 증폭', withdrawal: '철수', maintain: '유지', seek_reassurance: '확인 추구' };
+                        const stressMap = { amplified_anxiety: '불안 증폭', withdrawal: '철수', maintain: '유지', seek_reassurance: '확인 추구', stable_under_pressure: '안정 유지' };
                         anchorHTML += `<br>스트레스 시: <strong>${sanitizeHTML(stressMap[attachData.stress_shift] || attachData.stress_shift)}</strong>`;
                     }
                     anchorHTML += '</div></div>';
@@ -3634,7 +3635,7 @@ function displayResult() {
                     anchorHTML += '<div class="dimension-content">';
                     const modeMap = {
                         direct_engagement: '직접 대면', diplomatic_approach: '외교적 접근',
-                        avoidance: '회피', escalation: '격화', withdrawal: '철수'
+                        strategic_withdrawal: '전략적 후퇴', avoidance: '회피', escalation: '격화', withdrawal: '철수'
                     };
                     const mode = modeMap[conflictData.default_mode] || conflictData.default_mode || conflictData.compatibility || '분석 불가';
                     anchorHTML += `갈등 대처 방식: <strong>${sanitizeHTML(mode)}</strong>`;
@@ -3656,6 +3657,10 @@ function displayResult() {
                     };
                     const style = styleMap[emotionalData.response_style] || emotionalData.response_style || emotionalData.compatibility || '분석 불가';
                     anchorHTML += `정서적 반응: <strong>${sanitizeHTML(style)}</strong>`;
+                    if (emotionalData.recognition) {
+                        const recogMap = { quick: '빠름', moderate: '보통', slow: '느림' };
+                        anchorHTML += ` · 감정 인식: <strong>${sanitizeHTML(recogMap[emotionalData.recognition] || emotionalData.recognition)}</strong>`;
+                    }
                     if (emotionalData.emotional_range) {
                         const rangeMap = { wide: '넓음', moderate: '보통', narrow: '제한적' };
                         anchorHTML += ` · 감정 범위: <strong>${sanitizeHTML(rangeMap[emotionalData.emotional_range] || emotionalData.emotional_range)}</strong>`;
@@ -3675,6 +3680,10 @@ function displayResult() {
                     };
                     const orient = orientMap[growthData.orientation] || growthData.orientation || growthData.compatibility || '분석 불가';
                     anchorHTML += `성장 지향성: <strong>${sanitizeHTML(orient)}</strong>`;
+                    if (growthData.change_tolerance) {
+                        const toleranceMap = { high: '높음', moderate: '보통', low: '낮음' };
+                        anchorHTML += ` · 변화 수용도: <strong>${sanitizeHTML(toleranceMap[growthData.change_tolerance] || growthData.change_tolerance)}</strong>`;
+                    }
                     if (growthData.self_awareness) {
                         const awarenessMap = { high: '높음', moderate: '보통', low: '낮음' };
                         anchorHTML += ` · 자기 인식: <strong>${sanitizeHTML(awarenessMap[growthData.self_awareness] || growthData.self_awareness)}</strong>`;
