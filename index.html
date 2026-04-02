@@ -3187,6 +3187,25 @@
                         } catch {}
                     }
                 }
+
+                // Flush TextDecoder for remaining multi-byte chars
+                const flushed = decoder.decode();
+                if (flushed) buffer += flushed;
+
+                // Process any remaining data in buffer
+                if (buffer.trim()) {
+                    const remainLines = buffer.split('\n');
+                    for (const line of remainLines) {
+                        if (!line.startsWith('data: ')) continue;
+                        try {
+                            const ev = JSON.parse(line.slice(6));
+                            if (ev.type === 'delta') { fullText += ev.text; chunks++; }
+                            else if (ev.type === 'meta') meta = ev;
+                            else if (ev.type === 'error') error = ev.error;
+                            else if (ev.type === 'done') { /* stream complete */ }
+                        } catch {}
+                    }
+                }
             } catch (e) {
                 if (e.name === 'AbortError') {
                     error = error || 'Stream timeout (120s)';
@@ -3200,157 +3219,138 @@
         }
 
         function repairJSON(raw) {
-            // Fix common Claude JSON issues:
-            // 1. Unescaped quotes inside string values
-            // 2. Unescaped newlines/tabs inside strings
-            // 3. Truncated JSON (close open brackets)
-            let s = raw;
-
             // Try parse as-is first
-            try { return JSON.parse(s); } catch(e) {
-                console.log('[KNOT] Direct parse failed at position', e.message.match(/position (\d+)/)?.[1] || 'unknown');
+            try { return JSON.parse(raw); } catch(e) {
+                console.log('[KNOT] Direct parse failed:', e.message.slice(0, 80));
             }
 
-            // Strategy A: Fix unescaped characters inside JSON string values
-            // Walk through character by character, tracking string context
-            try {
-                let fixed = '';
-                let inString = false;
-                let escaped = false;
-                for (let i = 0; i < s.length; i++) {
-                    const c = s[i];
-                    if (escaped) { fixed += c; escaped = false; continue; }
-                    if (c === '\\') { fixed += c; escaped = true; continue; }
+            // Single-pass repair: fix escaping + handle truncation
+            // Walk char by char, build clean output, track structure stack
+            let out = '';
+            let inStr = false;
+            let esc = false;
+            const stack = []; // tracks open { and [
+
+            for (let i = 0; i < raw.length; i++) {
+                const c = raw[i];
+
+                if (esc) {
+                    out += c;
+                    esc = false;
+                    continue;
+                }
+
+                if (c === '\\') {
+                    out += c;
+                    esc = true;
+                    continue;
+                }
+
+                if (inStr) {
                     if (c === '"') {
-                        if (!inString) {
-                            inString = true; fixed += c;
+                        // Is this a real closing quote or unescaped interior quote?
+                        // Look ahead for JSON structural chars
+                        let j = i + 1;
+                        while (j < raw.length && ' \n\r\t'.includes(raw[j])) j++;
+                        const next = raw[j];
+                        if (next === ':' || next === ',' || next === ']' || next === '}' || next === undefined) {
+                            inStr = false;
+                            out += '"';
                         } else {
-                            // Check if this quote ends the string or is unescaped inside
-                            // Look ahead: if next non-whitespace is : , ] } then it's a real closing quote
-                            let j = i + 1;
-                            while (j < s.length && (s[j] === ' ' || s[j] === '\n' || s[j] === '\r' || s[j] === '\t')) j++;
-                            const next = s[j];
-                            if (next === ':' || next === ',' || next === ']' || next === '}' || next === undefined) {
-                                inString = false; fixed += c;
-                            } else {
-                                // Unescaped quote inside string - escape it
-                                fixed += '\\"';
-                            }
+                            out += '\\"'; // escape interior quote
                         }
-                    } else if (inString && (c === '\n' || c === '\r' || c === '\t')) {
-                        // Escape control chars inside strings
-                        if (c === '\n') fixed += '\\n';
-                        else if (c === '\r') fixed += '\\r';
-                        else if (c === '\t') fixed += '\\t';
+                    } else if (c === '\n') {
+                        out += '\\n';
+                    } else if (c === '\r') {
+                        out += '\\r';
+                    } else if (c === '\t') {
+                        out += '\\t';
                     } else {
-                        fixed += c;
+                        out += c;
                     }
-                }
-                const result = JSON.parse(fixed);
-                console.log('[KNOT] Strategy A (fix unescaped chars) succeeded');
-                return result;
-            } catch(e) {
-                console.log('[KNOT] Strategy A failed:', e.message.slice(0, 100));
-            }
-
-            // Strategy B: Truncated JSON - try to close open brackets/braces
-            try {
-                let t = s.trim();
-                // Count open/close brackets
-                let braces = 0, brackets = 0, inStr = false, esc = false;
-                for (let i = 0; i < t.length; i++) {
-                    const c = t[i];
-                    if (esc) { esc = false; continue; }
-                    if (c === '\\') { esc = true; continue; }
-                    if (c === '"') { inStr = !inStr; continue; }
-                    if (inStr) continue;
-                    if (c === '{') braces++;
-                    else if (c === '}') braces--;
-                    else if (c === '[') brackets++;
-                    else if (c === ']') brackets--;
-                }
-                if (braces > 0 || brackets > 0) {
-                    // Truncated - find last complete value and close
-                    // Remove trailing incomplete string/value
-                    let trimmed = t.replace(/,\s*"[^"]*"?\s*:?\s*"?[^"]*$/, '');
-                    if (trimmed === t) trimmed = t.replace(/,\s*\{[^}]*$/, '');
-                    if (trimmed === t) trimmed = t.replace(/"[^"]*$/, '"');
-                    // Re-count and close
-                    braces = 0; brackets = 0; inStr = false; esc = false;
-                    for (let i = 0; i < trimmed.length; i++) {
-                        const c = trimmed[i];
-                        if (esc) { esc = false; continue; }
-                        if (c === '\\') { esc = true; continue; }
-                        if (c === '"') { inStr = !inStr; continue; }
-                        if (inStr) continue;
-                        if (c === '{') braces++;
-                        else if (c === '}') braces--;
-                        else if (c === '[') brackets++;
-                        else if (c === ']') brackets--;
-                    }
-                    let suffix = '';
-                    // Close in reverse order
-                    for (let i = 0; i < brackets; i++) suffix += ']';
-                    for (let i = 0; i < braces; i++) suffix += '}';
-                    const completed = trimmed + suffix;
-                    const result = JSON.parse(completed);
-                    console.log(`[KNOT] Strategy B (close truncated JSON) succeeded, closed ${braces} braces + ${brackets} brackets`);
-                    return result;
-                }
-            } catch(e) {
-                console.log('[KNOT] Strategy B failed:', e.message.slice(0, 100));
-            }
-
-            // Strategy C: Combined A+B - fix escaping then close truncated
-            try {
-                let fixed = '';
-                let inString = false, escaped = false;
-                for (let i = 0; i < s.length; i++) {
-                    const c = s[i];
-                    if (escaped) { fixed += c; escaped = false; continue; }
-                    if (c === '\\') { fixed += c; escaped = true; continue; }
+                } else {
+                    // Outside string
                     if (c === '"') {
-                        if (!inString) { inString = true; fixed += c; }
-                        else {
-                            let j = i + 1;
-                            while (j < s.length && ' \n\r\t'.includes(s[j])) j++;
-                            const next = s[j];
-                            if (next === ':' || next === ',' || next === ']' || next === '}' || next === undefined) {
-                                inString = false; fixed += c;
-                            } else { fixed += '\\"'; }
-                        }
-                    } else if (inString && (c === '\n' || c === '\r' || c === '\t')) {
-                        fixed += c === '\n' ? '\\n' : c === '\r' ? '\\r' : '\\t';
-                    } else { fixed += c; }
+                        inStr = true;
+                        out += c;
+                    } else if (c === '{') {
+                        stack.push('}');
+                        out += c;
+                    } else if (c === '[') {
+                        stack.push(']');
+                        out += c;
+                    } else if (c === '}' || c === ']') {
+                        if (stack.length > 0) stack.pop();
+                        out += c;
+                    } else {
+                        out += c;
+                    }
                 }
-                // Now close truncation
-                let braces = 0, brackets = 0;
-                inString = false; escaped = false;
-                for (let i = 0; i < fixed.length; i++) {
-                    const c = fixed[i];
-                    if (escaped) { escaped = false; continue; }
-                    if (c === '\\') { escaped = true; continue; }
-                    if (c === '"') { inString = !inString; continue; }
-                    if (inString) continue;
-                    if (c === '{') braces++;
-                    else if (c === '}') braces--;
-                    else if (c === '[') brackets++;
-                    else if (c === ']') brackets--;
-                }
-                if (braces > 0 || brackets > 0) {
-                    // Remove trailing incomplete value
-                    fixed = fixed.replace(/,\s*"[^"]*"?\s*:?\s*"?[^"]*$/, '');
-                    if (inString) fixed += '"';
-                    for (let i = 0; i < brackets; i++) fixed += ']';
-                    for (let i = 0; i < braces; i++) fixed += '}';
-                }
-                const result = JSON.parse(fixed);
-                console.log('[KNOT] Strategy C (fix + close) succeeded');
-                return result;
-            } catch(e) {
-                console.log('[KNOT] Strategy C failed:', e.message.slice(0, 100));
             }
 
+            // If nothing to close, try parsing what we have
+            if (stack.length === 0 && !inStr) {
+                try { return JSON.parse(out); } catch(e) {
+                    console.log('[KNOT] Escape-fixed parse failed:', e.message.slice(0, 80));
+                }
+            }
+
+            // Truncated: need to close open structures
+            // Step 1: if we're inside a string, close it
+            if (inStr) {
+                out += '"';
+            }
+
+            // Step 2: progressively cut back trailing incomplete content until JSON parses
+            let attempt = out;
+            for (let cutback = 0; cutback < 8; cutback++) {
+                if (cutback > 0) {
+                    // Find last comma outside a string and cut there
+                    let lastComma = -1;
+                    let inS = false, es = false;
+                    for (let i = 0; i < attempt.length; i++) {
+                        if (es) { es = false; continue; }
+                        if (attempt[i] === '\\') { es = true; continue; }
+                        if (attempt[i] === '"') { inS = !inS; continue; }
+                        if (!inS && attempt[i] === ',') lastComma = i;
+                    }
+                    if (lastComma > 0) {
+                        attempt = attempt.slice(0, lastComma);
+                    } else {
+                        break; // No more commas to cut at
+                    }
+                }
+
+                // Re-count stack for this attempt
+                const closeStack = [];
+                let s2 = false, e2 = false;
+                for (let i = 0; i < attempt.length; i++) {
+                    if (e2) { e2 = false; continue; }
+                    if (attempt[i] === '\\') { e2 = true; continue; }
+                    if (attempt[i] === '"') { s2 = !s2; continue; }
+                    if (s2) continue;
+                    if (attempt[i] === '{') closeStack.push('}');
+                    else if (attempt[i] === '[') closeStack.push(']');
+                    else if ((attempt[i] === '}' || attempt[i] === ']') && closeStack.length > 0) closeStack.pop();
+                }
+
+                // Close open structures in reverse order
+                let completed = attempt;
+                while (closeStack.length > 0) {
+                    completed += closeStack.pop();
+                }
+
+                try {
+                    const result = JSON.parse(completed);
+                    const sCount = result.sections ? result.sections.length : 0;
+                    console.log(`[KNOT] JSON repair succeeded (cutback=${cutback}, ${sCount} sections recovered)`);
+                    return result;
+                } catch(e) {
+                    if (cutback === 0) console.log('[KNOT] Repair attempt 0 failed:', e.message.slice(0, 80));
+                }
+            }
+
+            console.error('[KNOT] All JSON repair attempts failed');
             return null;
         }
 

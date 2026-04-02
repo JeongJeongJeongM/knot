@@ -1856,6 +1856,26 @@ function callClaudeStream(apiKey, systemPrompt, userPrompt, corsHeaders) {
         }
       }
 
+      // Flush TextDecoder for remaining multi-byte chars
+      const flushed = decoder.decode();
+      if (flushed) buffer += flushed;
+
+      // Process any remaining data in buffer
+      if (buffer.trim()) {
+        const remainLines = buffer.split('\n');
+        for (const line of remainLines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const event = JSON.parse(data);
+            if (event.type === 'content_block_delta' && event.delta && event.delta.text) {
+              await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text: event.delta.text })}\n\n`));
+            }
+          } catch {}
+        }
+      }
+
       await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
     } catch (e) {
       try {
@@ -2196,6 +2216,26 @@ export default {
               }
             }
 
+            // Flush TextDecoder for remaining multi-byte chars
+            const flushed = decoder.decode();
+            if (flushed) buf += flushed;
+
+            // Process remaining buffer
+            if (buf.trim()) {
+              const remainLines = buf.split('\n');
+              for (const line of remainLines) {
+                if (!line.startsWith('data: ')) continue;
+                const d = line.slice(6).trim();
+                if (d === '[DONE]') continue;
+                try {
+                  const ev = JSON.parse(d);
+                  if (ev.type === 'content_block_delta' && ev.delta && ev.delta.text) {
+                    await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text: ev.delta.text })}\n\n`));
+                  }
+                } catch {}
+              }
+            }
+
             await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
           } catch (e) {
             try { await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: e.message })}\n\n`)); } catch {}
@@ -2340,6 +2380,27 @@ export default {
                 } catch {}
               }
             }
+
+            // Flush TextDecoder for remaining multi-byte chars
+            const flushed = decoder.decode();
+            if (flushed) buf += flushed;
+
+            // Process remaining buffer
+            if (buf.trim()) {
+              const remainLines = buf.split('\n');
+              for (const line of remainLines) {
+                if (!line.startsWith('data: ')) continue;
+                const d = line.slice(6).trim();
+                if (d === '[DONE]') continue;
+                try {
+                  const ev = JSON.parse(d);
+                  if (ev.type === 'content_block_delta' && ev.delta && ev.delta.text) {
+                    await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text: ev.delta.text })}\n\n`));
+                  }
+                } catch {}
+              }
+            }
+
             await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
           } catch (e) {
             try { await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: e.message })}\n\n`)); } catch {}
