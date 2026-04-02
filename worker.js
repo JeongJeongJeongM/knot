@@ -1790,28 +1790,42 @@ ${descB}
 }
 
 async function callClaude(apiKey, systemPrompt, userPrompt) {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 8000,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }],
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 55000);
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Claude API error: ${response.status} - ${error}`);
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 8000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Claude API error: ${response.status} - ${error}`);
+    }
+
+    const data = await response.json();
+    return data.content[0].text;
+  } catch (e) {
+    clearTimeout(timeoutId);
+    if (e.name === 'AbortError') {
+      throw new Error('Claude API timeout (55s)');
+    }
+    throw e;
   }
-
-  const data = await response.json();
-  return data.content[0].text;
 }
 
 function extractJSON(text) {
@@ -1999,6 +2013,19 @@ export default {
           if (anchorResult.success !== false && !anchorResult.error) {
             anchor = sanitizeAnchor(anchorResult);
           }
+        }
+
+        // Diagnostic mode: return early without calling Claude API
+        if (url.searchParams.get('diag') === '1') {
+          return jsonResponse({
+            diag: true,
+            axes_ok: !!axes,
+            prism_ok: !!prism,
+            anchor_ok: !!anchor,
+            identity,
+            has_api_key: !!env.ANTHROPIC_API_KEY,
+            prompt_length: buildAnalyzePrompt(axes, identity, messagesSample, lensSummary, prism, anchor).length,
+          }, 200, corsHeaders);
         }
 
         const userPrompt = buildAnalyzePrompt(axes, identity, messagesSample, lensSummary, prism, anchor);
