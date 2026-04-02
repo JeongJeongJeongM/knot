@@ -1725,7 +1725,7 @@
             <!-- Share Card Section -->
             <div class="export-section" style="margin-top: 20px;">
                 <div class="export-title">공유하기</div>
-                <button class="share-card-btn" onclick="generateMultiShareCards()">📸 인스타그램 카드 만들기 (여러 장)</button>
+                <button class="share-card-btn" onclick="generateMultiShareCards()">📸 분석 이미지 저장</button>
                 <button class="share-url-btn" id="shareUrlBtn" onclick="generateShareURL()">🔗 공유 링크 만들기</button>
                 <div class="share-url-result" id="shareUrlResult">
                     <input type="text" id="shareUrlInput" readonly>
@@ -1753,7 +1753,7 @@
                 <button class="share-download" onclick="downloadAllShareCards()">전체 저장 📥</button>
                 <button class="share-close" onclick="closeShareOverlay()">닫기</button>
             </div>
-            <div class="share-hint">인스타그램 → 새 게시물 → 여러 장 선택 → 업로드</div>
+            <div class="share-hint">이미지를 길게 눌러 저장하거나 전체 저장 버튼을 사용하세요</div>
         </div>
     </div>
 
@@ -1924,71 +1924,127 @@
     }
 
     // ============ V3 IDENTITY SYSTEM ============
+        // ═══ 5축 타입 코드 시스템 ═══
+        // F/S (Fire/Still) - 정서 표출
+        // A/H (Assert/Harmonize) - 사회 동력
+        // T/R (Think/Relate) - 인지 기반
+        // O/W (Open/Wall) - 경계 방식
+        // X/V (Flex/Rigid) - 회복 탄성
+        const TYPE_AXES = [
+            {
+                id: 'emotion', name: '정서 표출',
+                high: { letter: 'F', label: 'Fire', desc: '감정을 강하게 느끼고 적극적으로 표현한다' },
+                low:  { letter: 'S', label: 'Still', desc: '감정을 내면에서 처리하고 절제된 방식으로 표현한다' },
+                calc: (d) => ((d.A1 || 0.5) * 0.6 + (d.A3 || 0.5) * 0.4)
+            },
+            {
+                id: 'drive', name: '사회 동력',
+                high: { letter: 'A', label: 'Assert', desc: '상황을 주도하고 방향을 설정한다' },
+                low:  { letter: 'H', label: 'Harmonize', desc: '상황을 관찰하고 흐름에 맞춰 움직인다' },
+                calc: (d) => {
+                    const base = ((d.A4 || 0.5) * 0.4 + (d.A5 || 0.5) * 0.4);
+                    const struct = d._structural?.A7?.primary === 'initiator' ? 0.2 : d._structural?.A7?.primary === 'responder' ? 0 : 0.1;
+                    return base + struct;
+                }
+            },
+            {
+                id: 'cognition', name: '인지 기반',
+                high: { letter: 'T', label: 'Think', desc: '논리와 분석을 기반으로 판단한다' },
+                low:  { letter: 'R', label: 'Relate', desc: '공감과 관계를 고려하여 판단한다' },
+                calc: (d) => {
+                    const a10 = d._structural?.A10;
+                    const a16 = d._structural?.A16;
+                    let score = 0.5;
+                    if (a10) score += (a10.styles?.logical || 0) * 0.3 - (a10.styles?.emotional || 0) * 0.3;
+                    if (a16) score += (a16.primary === 'analytical' ? 0.15 : a16.primary === 'binary' ? -0.1 : 0);
+                    return Math.max(0, Math.min(1, score));
+                }
+            },
+            {
+                id: 'boundary', name: '경계 방식',
+                high: { letter: 'O', label: 'Open', desc: '경계를 열어두고 변화를 수용한다' },
+                low:  { letter: 'W', label: 'Wall', desc: '경계를 세우고 안전한 영역을 지킨다' },
+                calc: (d) => ((d.A12 || 0.5) * 0.5 + (d.A14 || 0.5) * 0.5)
+            },
+            {
+                id: 'resilience', name: '회복 탄성',
+                high: { letter: 'X', label: 'Flex', desc: '스트레스에 유연하게 적응한다' },
+                low:  { letter: 'V', label: 'Rigid', desc: '스트레스에 경직되거나 고착된다' },
+                calc: (d) => {
+                    const a2 = d.A2 || 0.5;
+                    const a11 = d._structural?.A11;
+                    const flexBonus = a11?.primary === 'flexible' ? 0.15 : a11?.primary === 'rigid' ? -0.15 : 0;
+                    return Math.max(0, Math.min(1, a2 * 0.7 + 0.15 + flexBonus));
+                }
+            }
+        ];
+
+        // 아키타입 (5축 코드와 별개로 서브네임 제공)
         const IDENTITY_ARCHETYPES = [
             {
                 match: d => _h(d.A1) && _l(d.A4) && _sdom(d, 'A9') === 'suppressive',
-                name: '얼어붙은 화산', emoji: '🌋', code: 'E-VF',
+                name: '얼어붙은 화산', emoji: '🌋',
                 tagline: '안에서 들끓지만 밖으로는 차가운, 통제된 격렬함의 소유자'
             },
             {
                 match: d => _h(d.A1) && _h(d.A3) && _sdom(d, 'A8') === 'confrontational',
-                name: '폭풍의 지휘자', emoji: '⚡', code: 'E-SC',
+                name: '폭풍의 지휘자', emoji: '⚡',
                 tagline: '감정의 폭풍을 에너지로 바꾸는, 주도적인 격렬함의 소유자'
             },
             {
                 match: d => _h(d.A2) && _l(d.A3) && _h(d.A4),
-                name: '안개 속의 등불', emoji: '🏮', code: 'E-LM',
+                name: '안개 속의 등불', emoji: '🏮',
                 tagline: '따뜻하게 비추지만 스스로는 흔들리는, 부드러운 공감의 소유자'
             },
             {
                 match: d => _h(d.A1) && _h(d.A3) && _sdom(d, 'A7') === 'initiator',
-                name: '길 없는 개척자', emoji: '🗡️', code: 'E-PB',
+                name: '길 없는 개척자', emoji: '🗡️',
                 tagline: '기존 질서를 따르지 않는, 자기 길을 만드는 확신의 소유자'
             },
             {
                 match: d => _l(d.A1) && _l(d.A3) && _l(d.A4),
-                name: '고요한 관찰자', emoji: '🌑', code: 'E-SO',
+                name: '고요한 관찰자', emoji: '🌑',
                 tagline: '조용히 세상을 읽는, 낮은 온도의 깊은 사유자'
             },
             {
                 match: d => _h(d.A2) && _h(d.A5) && _h(d.A6),
-                name: '따뜻한 항구', emoji: '🏖️', code: 'E-WH',
+                name: '따뜻한 항구', emoji: '🏖️',
                 tagline: '사람들이 쉬어가는, 안정적이고 개방적인 존재'
             },
             {
                 match: d => _h(d.A4) && _l(d.A6) && _sdom(d, 'A9') === 'expressive',
-                name: '심연의 해류', emoji: '🌊', code: 'E-DC',
+                name: '심연의 해류', emoji: '🌊',
                 tagline: '감정의 깊이가 바닥을 모르는, 격렬하고 불안한 열정의 소유자'
             },
             {
                 match: d => _h(d.A3) && _h(d.A6) && _sdom(d, 'A16') === 'analytical',
-                name: '쇠로 된 나침반', emoji: '🧭', code: 'E-IC',
+                name: '쇠로 된 나침반', emoji: '🧭',
                 tagline: '감정이 아닌 논리로 방향을 잡는, 흔들리지 않는 판단의 소유자'
             },
             {
                 match: d => _h(d.A5) && _sdom(d, 'A10') === 'fast_opener' && _sdom(d, 'A15') === 'active_investor',
-                name: '자유로운 바람', emoji: '🍃', code: 'E-FW',
+                name: '자유로운 바람', emoji: '🍃',
                 tagline: '경계를 넘나들며 변화를 즐기는, 유연한 적응의 소유자'
             },
             {
                 match: d => _h(d.A1) && _l(d.A4) && _sdom(d, 'A8') === 'avoidant',
-                name: '갑옷 입은 심장', emoji: '🛡️', code: 'E-AH',
+                name: '갑옷 입은 심장', emoji: '🛡️',
                 tagline: '뜨거운 심장 위에 차가운 갑옷을 두른, 자기 보호의 전문가'
             },
             {
                 match: d => _sdom(d, 'A17') === 'deflective' && _sdom(d, 'A13') === 'absorptive' && _h(d.A4),
-                name: '금 간 거울', emoji: '🪞', code: 'E-BM',
+                name: '금 간 거울', emoji: '🪞',
                 tagline: '자기를 웃음으로 감추는, 상처 위의 유머리스트'
             },
             {
                 match: d => _h(d.A4) && _l(d.A6) && _sdom(d, 'A9') === 'externalized',
-                name: '불꽃 산책자', emoji: '🔥', code: 'E-FS',
+                name: '불꽃 산책자', emoji: '🔥',
                 tagline: '감정을 밖으로 쏟아내는, 예측 불가의 열정가'
             },
             // Default fallback
             {
                 match: () => true,
-                name: '미지의 윤곽', emoji: '🔮', code: 'E-XX',
+                name: '미지의 윤곽', emoji: '🔮',
                 tagline: '하나의 유형에 담기지 않는, 복합적인 존재'
             },
         ];
@@ -2060,15 +2116,34 @@
 
         function computeIdentity(axes) {
             const flat = _flattenProfile(axes);
+
+            // 5축 코드 계산
+            const axisResults = [];
+            let code = '';
+            for (const axis of TYPE_AXES) {
+                const score = axis.calc(flat);
+                const isHigh = score >= 0.5;
+                const letter = isHigh ? axis.high.letter : axis.low.letter;
+                code += letter;
+                axisResults.push({ ...axis, score, letter, isHigh });
+            }
+
+            // 아키타입 매칭 (서브네임)
+            let archetype = IDENTITY_ARCHETYPES[IDENTITY_ARCHETYPES.length - 1];
             for (const arch of IDENTITY_ARCHETYPES) {
                 try {
-                    if (arch.match(flat)) {
-                        return { name: arch.name, emoji: arch.emoji, code: arch.code, tagline: arch.tagline, desc: arch.tagline };
-                    }
+                    if (arch.match(flat)) { archetype = arch; break; }
                 } catch { continue; }
             }
-            const fb = IDENTITY_ARCHETYPES[IDENTITY_ARCHETYPES.length - 1];
-            return { name: fb.name, emoji: fb.emoji, code: fb.code, tagline: fb.tagline, desc: fb.tagline };
+
+            return {
+                name: archetype.name,
+                emoji: archetype.emoji,
+                code: code,
+                tagline: archetype.tagline,
+                desc: archetype.tagline,
+                axisResults: axisResults
+            };
         }
 
         function computeMatchIdentity(axesA, axesB, identityA, identityB) {
@@ -3301,25 +3376,33 @@
                 out += '"';
             }
 
-            // Step 2: progressively cut back trailing incomplete content until JSON parses
-            let attempt = out;
-            for (let cutback = 0; cutback < 8; cutback++) {
-                if (cutback > 0) {
-                    // Find last comma outside a string and cut there
-                    let lastComma = -1;
-                    let inS = false, es = false;
-                    for (let i = 0; i < attempt.length; i++) {
-                        if (es) { es = false; continue; }
-                        if (attempt[i] === '\\') { es = true; continue; }
-                        if (attempt[i] === '"') { inS = !inS; continue; }
-                        if (!inS && attempt[i] === ',') lastComma = i;
-                    }
-                    if (lastComma > 0) {
-                        attempt = attempt.slice(0, lastComma);
-                    } else {
-                        break; // No more commas to cut at
-                    }
+            // Step 2: collect all structural comma positions with their nesting depth
+            const commaPositions = [];
+            {
+                let s2 = false, e2 = false, depth = 0;
+                for (let i = 0; i < out.length; i++) {
+                    if (e2) { e2 = false; continue; }
+                    if (out[i] === '\\') { e2 = true; continue; }
+                    if (out[i] === '"') { s2 = !s2; continue; }
+                    if (s2) continue;
+                    if (out[i] === '{' || out[i] === '[') depth++;
+                    else if (out[i] === '}' || out[i] === ']') depth = Math.max(0, depth - 1);
+                    else if (out[i] === ',') commaPositions.push({ pos: i, depth });
                 }
+            }
+
+            // Step 3: try closing as-is first, then progressively cut back
+            // Sort cutpoints: prefer cutting at shallowest depth first (preserves more content)
+            const cutPoints = [out.length]; // first try: no cut
+            // Add comma positions from end to start, prioritizing shallower depth
+            const sortedCommas = [...commaPositions].reverse();
+            // Group by depth and interleave: try deepest recent commas first, then shallower
+            for (const cp of sortedCommas) {
+                cutPoints.push(cp.pos);
+            }
+
+            for (let ci = 0; ci < Math.min(cutPoints.length, 12); ci++) {
+                const attempt = out.slice(0, cutPoints[ci]);
 
                 // Re-count stack for this attempt
                 const closeStack = [];
@@ -3343,10 +3426,10 @@
                 try {
                     const result = JSON.parse(completed);
                     const sCount = result.sections ? result.sections.length : 0;
-                    console.log(`[KNOT] JSON repair succeeded (cutback=${cutback}, ${sCount} sections recovered)`);
+                    console.log(`[KNOT] JSON repair succeeded (cutback=${ci}, ${sCount} sections recovered)`);
                     return result;
                 } catch(e) {
-                    if (cutback === 0) console.log('[KNOT] Repair attempt 0 failed:', e.message.slice(0, 80));
+                    if (ci === 0) console.log('[KNOT] Repair attempt 0 failed:', e.message.slice(0, 80));
                 }
             }
 
@@ -3720,12 +3803,57 @@
 function buildProfileOverview(axes, profile) {
             const intensity = axes.intensity || {};
             const structural = axes.structural || {};
+            const identity = profile.identity || {};
+            const axisResults = identity.axisResults || [];
 
-            // ── 핵심 특이점: 0.5에서 가장 먼 intensity 축 4개 ──
+            let html = '';
+
+            // ═══ 5축 코드 해설 ═══
+            if (axisResults.length > 0) {
+                html += `<div style="margin-bottom:24px;">
+                    <div style="font-size:12px;color:var(--ac);font-weight:600;letter-spacing:0.5px;margin-bottom:14px;">// 타입 코드 해설</div>`;
+                axisResults.forEach(ax => {
+                    const pct = Math.round(ax.score * 100);
+                    const chosen = ax.isHigh ? ax.high : ax.low;
+                    const opposite = ax.isHigh ? ax.low : ax.high;
+                    const barColor = ax.isHigh ? '#F59E0B' : '#60A5FA';
+                    const strength = Math.abs(ax.score - 0.5) * 200; // 0-100 strength
+                    const strengthLabel = strength > 60 ? '강한 경향' : strength > 30 ? '보통 경향' : '약한 경향';
+                    html += `<div style="margin-bottom:16px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:12px 14px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                            <div>
+                                <span style="font-size:15px;font-weight:800;color:${barColor};margin-right:6px;">${chosen.letter}</span>
+                                <span style="font-size:12px;font-weight:600;color:var(--text);">${chosen.label}</span>
+                                <span style="font-size:11px;color:var(--text-dim);margin-left:6px;">${ax.name}</span>
+                            </div>
+                            <span style="font-size:11px;color:var(--text-dim);">${strengthLabel}</span>
+                        </div>
+                        <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-bottom:6px;">
+                            <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px;transition:width 0.5s;"></div>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);">
+                            <span>${opposite.label} (${opposite.letter})</span>
+                            <span>${chosen.label} (${chosen.letter})</span>
+                        </div>
+                        <div style="font-size:12px;color:var(--text);margin-top:8px;line-height:1.6;">${chosen.desc}</div>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+
+            // ═══ 레이더 차트 (Canvas) ═══
+            html += `<div style="margin-bottom:24px;">
+                <div style="font-size:12px;color:var(--ac);font-weight:600;letter-spacing:0.5px;margin-bottom:14px;">// 전체 프로필 맵</div>
+                <div style="display:flex;justify-content:center;">
+                    <canvas id="radarChart" width="320" height="320" style="max-width:100%;"></canvas>
+                </div>
+            </div>`;
+
+            // ═══ 세부 축 수치 ═══
             const AXIS_DISPLAY_NAMES = {
-                A1: '정서 강도', A2: '공감 민감도', A3: '감정 표현 빈도',
-                A4: '자기 확신도', A5: '서포트 성향', A6: '일관성',
-                A12: '친밀감 수용도', A14: '변화 수용성'
+                A1: '정서 강도', A2: '정서 안정성', A3: '감정 표현',
+                A4: '자기 확신', A5: '사회적 주도성', A6: '권위 수용',
+                A12: '친밀감 편안함', A14: '변화 수용성'
             };
             const axisEntries = [];
             for (const [key, val] of Object.entries(intensity)) {
@@ -3734,118 +3862,106 @@ function buildProfileOverview(axes, profile) {
                 }
             }
             axisEntries.sort((a, b) => b.deviation - a.deviation);
-            const topTraits = axisEntries.slice(0, 4);
 
-            // ── 영역별 위치 (composite) ──
-            const safeAvg = (keys) => {
-                const vals = keys.map(k => intensity[k]).filter(v => v !== undefined && v !== null);
-                return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0.5;
-            };
-            const domains = [
-                { name: '감정 영역', score: safeAvg(['A1', 'A2', 'A3', 'A4']), desc: '' },
-                { name: '관계 영역', score: safeAvg(['A5', 'A12']), desc: '' },
-                { name: '사고 영역', score: 0.5, desc: '' },
-                { name: '갈등 대응', score: safeAvg(['A14']), desc: '' }
-            ];
-            // Structural axes 반영
-            if (structural.A10) {
-                const logicScore = (structural.A10.styles || {}).logical || 0;
-                domains[2].score = 0.3 + logicScore * 0.5;
-            }
-            if (structural.A8) {
-                const confrontScore = (structural.A8.styles || {}).confrontational || 0;
-                const avoidScore = (structural.A8.styles || {}).avoidant || 0;
-                domains[3].score = safeAvg(['A14']) * 0.5 + confrontScore * 0.3 + (1 - avoidScore) * 0.2;
-            }
-
-            // 영역 설명
-            domains.forEach(d => {
-                if (d.score > 0.75) d.desc = '평균 대비 매우 높음';
-                else if (d.score > 0.6) d.desc = '평균 대비 높은 편';
-                else if (d.score > 0.4) d.desc = '평균 범위';
-                else if (d.score > 0.25) d.desc = '평균 대비 낮은 편';
-                else d.desc = '평균 대비 매우 낮음';
-            });
-
-            // ── 희소성 등급 ──
-            const totalDeviation = axisEntries.reduce((sum, a) => sum + a.deviation, 0);
-            const avgDeviation = axisEntries.length > 0 ? totalDeviation / axisEntries.length : 0;
-            // Higher deviation from center = rarer
-            const rarityPct = Math.max(1, Math.min(30, Math.round((1 - avgDeviation * 2) * 30)));
-            let rarityLabel = '보통';
-            if (rarityPct <= 5) rarityLabel = '매우 드문 조합';
-            else if (rarityPct <= 10) rarityLabel = '드문 조합';
-            else if (rarityPct <= 20) rarityLabel = '다소 드문 조합';
-
-            // ── 주목할 조합 ──
-            let notableCombo = '';
-            if (topTraits.length >= 2) {
-                const t1 = topTraits[0];
-                const t2 = topTraits[1];
-                const dir1 = t1.value > 0.5 ? '높' : '낮';
-                const dir2 = t2.value > 0.5 ? '높' : '낮';
-                notableCombo = `${t1.name}이(가) ${dir1}고 ${t2.name}이(가) ${dir2}은 조합이 이 프로필의 핵심 특징입니다.`;
-            }
-
-            // ── HTML 조립 ──
-            let html = '';
-
-            // 희소성 등급
-            html += `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:16px;margin-bottom:20px;text-align:center;">
-                <div style="font-size:11px;color:var(--ac);font-weight:600;letter-spacing:1px;margin-bottom:6px;">희소성 등급</div>
-                <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;">전체 분석 대상 중 상위 ${rarityPct}%</div>
-                <div style="font-size:12px;color:var(--text-dim);font-style:italic;">${rarityLabel}</div>
-            </div>`;
-
-            // 핵심 특이점
             html += `<div style="margin-bottom:20px;">
-                <div style="font-size:12px;color:var(--ac);font-weight:600;letter-spacing:0.5px;margin-bottom:12px;">// 핵심 특이점</div>`;
-            topTraits.forEach(t => {
+                <div style="font-size:12px;color:var(--ac);font-weight:600;letter-spacing:0.5px;margin-bottom:12px;">// 세부 축 수치</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">`;
+            axisEntries.forEach(t => {
                 const pct = Math.round(t.value * 100);
-                const barColor = pct > 60 ? '#F59E0B' : pct < 40 ? '#60A5FA' : '#9CA3AF';
-                const posLabel = pct > 60 ? `전체 분석 대상 중 상위 ${100 - pct}%` : `전체 분석 대상 중 하위 ${pct}%`;
-                html += `<div style="margin-bottom:14px;">
+                const barColor = pct > 65 ? '#F59E0B' : pct < 35 ? '#60A5FA' : '#6B7280';
+                html += `<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:10px;">
                     <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                        <span style="font-size:13px;font-weight:600;color:var(--text);">${sanitizeHTML(t.name)}</span>
-                        <span style="font-size:13px;font-weight:700;color:${barColor};">${pct}%</span>
+                        <span style="font-size:11px;font-weight:600;color:var(--text);">${sanitizeHTML(t.name)}</span>
+                        <span style="font-size:11px;font-weight:700;color:${barColor};">${pct}%</span>
                     </div>
-                    <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
+                    <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
                         <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px;"></div>
                     </div>
-                    <div style="font-size:11px;color:var(--text-dim);margin-top:3px;">${posLabel}</div>
-                </div>`;
-            });
-            html += '</div>';
-
-            // 영역별 위치
-            html += `<div style="margin-bottom:20px;">
-                <div style="font-size:12px;color:var(--ac);font-weight:600;letter-spacing:0.5px;margin-bottom:12px;">// 영역별 위치</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">`;
-            domains.forEach(d => {
-                const pct = Math.round(d.score * 100);
-                const barColor = pct > 60 ? '#F59E0B' : pct < 40 ? '#60A5FA' : '#9CA3AF';
-                html += `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:12px;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                        <span style="font-size:12px;font-weight:600;color:var(--text);">${sanitizeHTML(d.name)}</span>
-                        <span style="font-size:12px;font-weight:700;color:${barColor};">${pct}%</span>
-                    </div>
-                    <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-bottom:6px;">
-                        <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px;"></div>
-                    </div>
-                    <div style="font-size:10px;color:var(--text-dim);">${sanitizeHTML(d.desc)}</div>
                 </div>`;
             });
             html += '</div></div>';
 
-            // 주목할 조합
-            if (notableCombo) {
-                html += `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:14px;margin-bottom:16px;">
-                    <div style="font-size:12px;color:var(--ac);font-weight:600;margin-bottom:6px;">주목할 조합</div>
-                    <div style="font-size:13px;line-height:1.7;color:var(--text);">${sanitizeHTML(notableCombo)}</div>
-                </div>`;
+            return html;
+        }
+
+        // 레이더 차트 그리기 (displayResult 이후 호출)
+        function drawRadarChart(axes) {
+            const canvas = document.getElementById('radarChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width, H = canvas.height;
+            const cx = W / 2, cy = H / 2, R = Math.min(cx, cy) - 40;
+            const intensity = axes.intensity || {};
+
+            const labels = ['정서 강도', '안정성', '감정 표현', '자기 확신', '주도성', '권위 수용', '친밀감', '변화 수용'];
+            const keys = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A12', 'A14'];
+            const values = keys.map(k => intensity[k] ?? 0.5);
+            const n = labels.length;
+            const angleStep = (Math.PI * 2) / n;
+
+            ctx.clearRect(0, 0, W, H);
+
+            // 배경 그리드
+            for (let ring = 1; ring <= 4; ring++) {
+                const r = R * (ring / 4);
+                ctx.beginPath();
+                for (let i = 0; i <= n; i++) {
+                    const angle = -Math.PI / 2 + angleStep * i;
+                    const x = cx + Math.cos(angle) * r;
+                    const y = cy + Math.sin(angle) * r;
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
             }
 
-            return html;
+            // 축선
+            for (let i = 0; i < n; i++) {
+                const angle = -Math.PI / 2 + angleStep * i;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(angle) * R, cy + Math.sin(angle) * R);
+                ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+                ctx.stroke();
+            }
+
+            // 데이터 폴리곤
+            ctx.beginPath();
+            for (let i = 0; i <= n; i++) {
+                const idx = i % n;
+                const angle = -Math.PI / 2 + angleStep * idx;
+                const r = R * values[idx];
+                const x = cx + Math.cos(angle) * r;
+                const y = cy + Math.sin(angle) * r;
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.15)';
+            ctx.fill();
+            ctx.strokeStyle = '#F59E0B';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 데이터 점
+            for (let i = 0; i < n; i++) {
+                const angle = -Math.PI / 2 + angleStep * i;
+                const r = R * values[i];
+                ctx.beginPath();
+                ctx.arc(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r, 3, 0, Math.PI * 2);
+                ctx.fillStyle = '#F59E0B';
+                ctx.fill();
+            }
+
+            // 라벨
+            ctx.fillStyle = '#999';
+            ctx.font = '10px monospace';
+            ctx.textAlign = 'center';
+            for (let i = 0; i < n; i++) {
+                const angle = -Math.PI / 2 + angleStep * i;
+                const lx = cx + Math.cos(angle) * (R + 22);
+                const ly = cy + Math.sin(angle) * (R + 22);
+                ctx.fillText(labels[i], lx, ly + 3);
+            }
         }
 
 function displayResult() {
@@ -3939,6 +4055,9 @@ function displayResult() {
             renderFeedbackSurvey();
 
             showScreen('result');
+
+            // 레이더 차트 렌더링 (DOM이 보인 후)
+            requestAnimationFrame(() => drawRadarChart(axes));
         }
 
         // ============ FEEDBACK SURVEY ============
