@@ -3234,6 +3234,8 @@
             let buffer = '';
             let fullText = '';
             let meta = null;
+            let scores = null;    // Stage 1 result: { axes, identity, prism, anchor, analysis_id }
+            let analysisId = null;
             let error = null;
             let chunks = 0;
 
@@ -3242,6 +3244,24 @@
                 signal.addEventListener('abort', () => {
                     try { reader.cancel(); } catch {}
                 });
+            }
+
+            function processEvent(ev) {
+                if (ev.type === 'delta') { fullText += ev.text; chunks++; }
+                else if (ev.type === 'meta') meta = ev;
+                else if (ev.type === 'scores') {
+                    // Stage 1 complete: axes + identity + prism + anchor + analysis_id
+                    scores = ev;
+                    analysisId = ev.analysis_id || null;
+                    console.log('[KNOT] Stage 1 scores received:', ev.identity?.code, ev.identity?.name);
+                }
+                else if (ev.type === 'status') {
+                    console.log(`[KNOT] Stage ${ev.stage}: ${ev.message}`);
+                }
+                else if (ev.type === 'error') error = ev.error;
+                else if (ev.type === 'done') {
+                    if (ev.analysis_id) analysisId = ev.analysis_id;
+                }
             }
 
             try {
@@ -3253,13 +3273,7 @@
                     buffer = lines.pop() || '';
                     for (const line of lines) {
                         if (!line.startsWith('data: ')) continue;
-                        try {
-                            const ev = JSON.parse(line.slice(6));
-                            if (ev.type === 'delta') { fullText += ev.text; chunks++; }
-                            else if (ev.type === 'meta') meta = ev;
-                            else if (ev.type === 'error') error = ev.error;
-                            else if (ev.type === 'done') { /* stream complete */ }
-                        } catch {}
+                        try { processEvent(JSON.parse(line.slice(6))); } catch {}
                     }
                 }
 
@@ -3269,16 +3283,9 @@
 
                 // Process any remaining data in buffer
                 if (buffer.trim()) {
-                    const remainLines = buffer.split('\n');
-                    for (const line of remainLines) {
+                    for (const line of buffer.split('\n')) {
                         if (!line.startsWith('data: ')) continue;
-                        try {
-                            const ev = JSON.parse(line.slice(6));
-                            if (ev.type === 'delta') { fullText += ev.text; chunks++; }
-                            else if (ev.type === 'meta') meta = ev;
-                            else if (ev.type === 'error') error = ev.error;
-                            else if (ev.type === 'done') { /* stream complete */ }
-                        } catch {}
+                        try { processEvent(JSON.parse(line.slice(6))); } catch {}
                     }
                 }
             } catch (e) {
@@ -3289,8 +3296,8 @@
                 }
             }
 
-            console.log(`[KNOT] SSE stream: ${chunks} chunks, ${fullText.length} chars, error=${error || 'none'}`);
-            return { fullText, meta, error };
+            console.log(`[KNOT] SSE stream: ${chunks} chunks, ${fullText.length} chars, scores=${!!scores}, error=${error || 'none'}`);
+            return { fullText, meta, scores, analysisId, error };
         }
 
         function repairJSON(raw) {
@@ -3460,22 +3467,20 @@
             return repairJSON(jsonStr);
         }
 
-        async function callWorkerAnalyzeSingle(axes, identity, messagesSample, lensSummary, rawMessages) {
+        // 2-Stage API call: sends only raw_messages, receives scores then essay
+        async function callWorkerAnalyzeSingle(rawMessages, lensSummary) {
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 150000); // 150s timeout
+            const timeout = setTimeout(() => controller.abort(), 300000); // 300s timeout (2 LLM calls)
 
             try {
-                console.log('[KNOT] Calling /analyze...');
+                console.log('[KNOT] Calling /analyze (2-stage)...');
                 const response = await fetch(WORKER_URL + '/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     signal: controller.signal,
                     body: JSON.stringify({
-                        axes,
-                        identity,
-                        messages_sample: Array.isArray(messagesSample) ? messagesSample.join('\n') : messagesSample,
-                        lens_summary: typeof lensSummary === 'string' ? lensSummary : JSON.stringify(lensSummary),
-                        raw_messages: rawMessages
+                        raw_messages: rawMessages,
+                        lens_summary: typeof lensSummary === 'string' ? lensSummary : JSON.stringify(lensSummary || '')
                     })
                 });
 
@@ -3488,27 +3493,38 @@
 
                 const contentType = response.headers.get('Content-Type') || '';
                 if (contentType.includes('text/event-stream')) {
-                    const { fullText, meta, error } = await readSSEStream(response, controller.signal);
+                    const { fullText, scores, analysisId, error } = await readSSEStream(response, controller.signal);
                     if (error) throw new Error(`SSE error: ${error}`);
-                    if (!fullText) throw new Error('Empty AI response (no text received)');
 
-                    console.log(`[KNOT] Parsing AI response (${fullText.length} chars)...`);
-                    const parsed = parseAIResponse(fullText);
+                    // Build result combining Stage 1 scores and Stage 2 essay
+                    const result = {};
 
-                    if (!parsed) {
-                        console.error('[KNOT] Parse failed. First 200 chars:', fullText.slice(0, 200));
-                        console.error('[KNOT] Last 200 chars:', fullText.slice(-200));
-                        throw new Error(`JSON parse failed (${fullText.length} chars received)`);
+                    // Stage 1: axes, identity, prism, anchor from server
+                    if (scores) {
+                        result.axes = scores.axes || null;
+                        result.identity = scores.identity || null;
+                        result.prism = scores.prism || null;
+                        result.anchor = scores.anchor || null;
+                        result.analysis_id = scores.analysis_id || analysisId;
                     }
 
-                    console.log(`[KNOT] Parsed OK. sections=${parsed.sections ? parsed.sections.length : 'none'}`);
-
-                    // Attach PRISM/ANCHOR from metadata
-                    if (meta) {
-                        if (meta.prism) parsed.prism = meta.prism;
-                        if (meta.anchor) parsed.anchor = meta.anchor;
+                    // Stage 2: essay sections
+                    if (fullText) {
+                        console.log(`[KNOT] Parsing essay (${fullText.length} chars)...`);
+                        const parsed = parseAIResponse(fullText);
+                        if (parsed && parsed.sections) {
+                            result.sections = parsed.sections;
+                        } else {
+                            console.error('[KNOT] Essay parse failed. First 200 chars:', fullText.slice(0, 200));
+                            // Non-fatal: we still have scores even if essay parsing fails
+                        }
                     }
-                    return parsed;
+
+                    if (!result.axes && !result.sections) {
+                        throw new Error('서버에서 유효한 데이터를 받지 못했습니다');
+                    }
+
+                    return result;
                 } else {
                     return await response.json();
                 }
@@ -3517,11 +3533,11 @@
             }
         }
 
-        async function callWorkerAnalyze(axes, identity, messagesSample, lensSummary, rawMessages) {
+        async function callWorkerAnalyze(rawMessages, lensSummary) {
             // Try up to 2 times
             for (let attempt = 1; attempt <= 2; attempt++) {
                 try {
-                    const result = await callWorkerAnalyzeSingle(axes, identity, messagesSample, lensSummary, rawMessages);
+                    const result = await callWorkerAnalyzeSingle(rawMessages, lensSummary);
                     return result;
                 } catch (e) {
                     console.error(`[KNOT] Attempt ${attempt} failed:`, e.message);
@@ -3655,9 +3671,9 @@
                 await wait(150);
                 T.addLine('<span class="prompt">$</span> compute-axes --model=4D', 400);
 
-                // Activate gauges one by one as axes are computed
+                // Activate gauges one by one as axes are computed (local — may be overridden by server)
                 updateProgress('4개 핵심 축의 좌표를 계산하고 있습니다');
-                const axes = computeAxes(rates);
+                let axes = computeAxes(rates);
                 const ax = axes.intensity;
                 const cbar = {
                     C: (ax.A3 - 0.5) * 2,
@@ -3707,18 +3723,20 @@
                 T.addLine('<span class="prompt">$</span> initializing identity engine v3', 300);
                 T.addLine('<span class="prompt">$</span> syncing conversation data', 300);
                 T.addLine('<span class="prompt">$</span> running deep pattern analysis', 300);
-                const identity = computeIdentity(axes);
-                T.addLine('<span class="dim">[identity]</span> <span class="warn">정체성 도출 완료: ' + sanitizeHTML(identity.emoji) + ' ' + sanitizeHTML(identity.code) + ' - ' + sanitizeHTML(identity.name) + '</span>', 200);
+                // Local identity (for animation only — will be overridden by server)
+                let identity = computeIdentity(axes);
+                T.addLine('<span class="dim">[identity]</span> <span class="warn">로컬 분석 완료: ' + sanitizeHTML(identity.emoji) + ' ' + sanitizeHTML(identity.code) + ' - ' + sanitizeHTML(identity.name) + '</span>', 200);
                 T.setProgress(70, 'AI 심층 분석 진행 중...');
 
-                // PRISM + ANCHOR + LLM 분석 (서버 사이드)
+                // 2-Stage 서버 분석 (Stage 1: LLM 점수 매기기 → Stage 2: 에세이 작성)
                 let prismResult = null;
                 let anchorResult = null;
                 let llmResult = null;
+                let analysisId = null;
 
-                T.addLine('<span class="prompt">$</span> <span class="info">server-analyze --engine=prism+anchor+claude</span>', 400);
-                T.addLine('<span class="dim">[server]</span> <span class="warn">서버 분석 시작 (PRISM + ANCHOR + AI 심층)</span>', 300);
-                updateProgress('서버에서 25축 분석을 진행하고 있습니다');
+                T.addLine('<span class="prompt">$</span> <span class="info">server-analyze --engine=2stage-llm</span>', 400);
+                T.addLine('<span class="dim">[server]</span> <span class="warn">2단계 서버 분석 시작 (Stage 1: 점수 도출 → Stage 2: 에세이 작성)</span>', 300);
+                updateProgress('서버에서 AI가 대화를 읽고 점수를 매기고 있습니다');
 
                 if (USE_LLM) {
                     T.startLLMScan();
@@ -3726,37 +3744,47 @@
                     let llmProg = 70;
                     let llmSec = 0;
                     const llmMessages = [
-                        { at: 10, msg: '<span class="dim">[server]</span> <span class="info">PRISM + ANCHOR 엔진 분석 완료. AI 에세이 생성 중...</span>' },
-                        { at: 25, msg: '<span class="dim">[server]</span> <span class="info">AI가 프로필 에세이를 작성하고 있습니다. 잠시만 기다려주세요...</span>' },
-                        { at: 45, msg: '<span class="dim">[server]</span> <span class="warn">심층 분석은 최대 90초까지 소요될 수 있습니다...</span>' },
-                        { at: 70, msg: '<span class="dim">[server]</span> <span class="info">거의 완료되었습니다...</span>' },
+                        { at: 5, msg: '<span class="dim">[server]</span> <span class="info">Stage 1: AI가 대화를 분석하여 행동 점수를 도출하고 있습니다...</span>' },
+                        { at: 15, msg: '<span class="dim">[server]</span> <span class="info">Stage 1: PRISM + ANCHOR 엔진 병렬 분석 중...</span>' },
+                        { at: 30, msg: '<span class="dim">[server]</span> <span class="warn">Stage 2: 확정된 점수를 기반으로 에세이를 작성합니다...</span>' },
+                        { at: 50, msg: '<span class="dim">[server]</span> <span class="info">Stage 2: AI가 프로필 에세이를 작성하고 있습니다...</span>' },
+                        { at: 80, msg: '<span class="dim">[server]</span> <span class="warn">2단계 분석은 최대 120초까지 소요될 수 있습니다...</span>' },
+                        { at: 100, msg: '<span class="dim">[server]</span> <span class="info">거의 완료되었습니다...</span>' },
                     ];
                     const llmInterval = setInterval(() => {
                         llmSec++;
-                        llmProg = Math.min(70 + (llmSec * 0.3), 95);
+                        llmProg = Math.min(70 + (llmSec * 0.2), 95);
                         T.setProgress(llmProg);
                         const msg = llmMessages.find(m => m.at === llmSec);
                         if (msg) T.addLine(msg.msg, 0);
                     }, 1000);
 
-                    const messagesSample = extractMessagesSample(messages);
-                    const lensSummary = buildLensSummary(axes);
+                    // Send only raw_messages to server (server does all scoring)
                     const rawMessages = messages.map(m => typeof m === 'string' ? m : (m.text || m.content || ''));
-                    const serverResult = await callWorkerAnalyze(axes, identity, messagesSample, lensSummary, rawMessages);
+                    const lensSummary = buildLensSummary(axes); // local axes for lens hints
+                    const serverResult = await callWorkerAnalyze(rawMessages, lensSummary);
 
                     if (serverResult) {
+                        // Override local axes/identity with server-computed (LLM) results
+                        if (serverResult.axes) {
+                            axes = serverResult.axes;
+                            T.addLine('<span class="dim">[server]</span> <span class="success">Stage 1 완료: LLM 점수 확정</span>', 100);
+                        }
+                        if (serverResult.identity) {
+                            identity = serverResult.identity;
+                            T.addLine('<span class="dim">[server]</span> <span class="success">정체성: ' + sanitizeHTML(identity.emoji) + ' ' + sanitizeHTML(identity.code) + ' - ' + sanitizeHTML(identity.name) + '</span>', 100);
+                        }
                         if (serverResult.prism) prismResult = serverResult.prism;
                         if (serverResult.anchor) anchorResult = serverResult.anchor;
+                        if (serverResult.analysis_id) analysisId = serverResult.analysis_id;
                         if (serverResult.sections) {
                             llmResult = { sections: serverResult.sections };
-                        } else {
-                            llmResult = serverResult;
                         }
                     }
 
                     clearInterval(llmInterval);
                     T.stopLLMScan();
-                    T.addLine('<span class="dim">[server]</span> <span class="success">서버 분석 완료!</span>', 100);
+                    T.addLine('<span class="dim">[server]</span> <span class="success">2단계 서버 분석 완료!</span>', 100);
                 }
 
                 T.setProgress(98, '결과 렌더링...');
@@ -3771,6 +3799,7 @@
                     functionWordProfile: computeFunctionWordProfile(messages),
                     prism: prismResult,
                     anchor: anchorResult,
+                    analysisId: analysisId,
                     timestamp: new Date().toISOString()
                 };
 
@@ -3808,48 +3837,46 @@ function buildProfileOverview(axes, profile) {
 
             let html = '';
 
-            // ═══ 5축 코드 해설 ═══
+            // ═══ 5축 Diverging Bar 차트 ═══
             if (axisResults.length > 0) {
                 html += `<div style="margin-bottom:24px;">
                     <div style="font-size:12px;color:var(--ac);font-weight:600;letter-spacing:0.5px;margin-bottom:14px;">// 타입 코드 해설</div>`;
                 axisResults.forEach(ax => {
-                    const pct = Math.round(ax.score * 100);
-                    const chosen = ax.isHigh ? ax.high : ax.low;
-                    const opposite = ax.isHigh ? ax.low : ax.high;
-                    const barColor = ax.isHigh ? '#F59E0B' : '#60A5FA';
-                    const strength = Math.abs(ax.score - 0.5) * 200; // 0-100 strength
-                    const strengthLabel = strength > 60 ? '강한 경향' : strength > 30 ? '보통 경향' : '약한 경향';
-                    html += `<div style="margin-bottom:16px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:12px 14px;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                            <div>
-                                <span style="font-size:15px;font-weight:800;color:${barColor};margin-right:6px;">${chosen.letter}</span>
-                                <span style="font-size:12px;font-weight:600;color:var(--text);">${chosen.label}</span>
-                                <span style="font-size:11px;color:var(--text-dim);margin-left:6px;">${ax.name}</span>
+                    const pct = ax.score * 100; // 0~100, 50 = center
+                    const isHigh = ax.isHigh;
+                    const chosen = isHigh ? ax.high : ax.low;
+                    const deviation = Math.abs(pct - 50); // 0~50
+                    const fillWidth = deviation; // % of half-bar
+                    const fillSide = isHigh ? 'right' : 'left';
+                    const barColorHigh = '#F59E0B';
+                    const barColorLow = '#60A5FA';
+                    const activeColor = isHigh ? barColorHigh : barColorLow;
+                    html += `<div style="margin-bottom:18px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+                            <div style="min-width:70px;font-size:11px;font-family:monospace;">
+                                <span style="display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;border-radius:3px;font-size:11px;font-weight:800;${!isHigh ? 'background:'+barColorLow+';color:#0a0a0f;' : 'background:rgba(255,255,255,0.08);color:#555;'}">${ax.low.letter}</span>
+                                <span style="color:#666;margin-left:2px;">${ax.low.label}</span>
                             </div>
-                            <span style="font-size:11px;color:var(--text-dim);">${strengthLabel}</span>
+                            <div style="font-size:11px;color:#777;text-align:center;flex:1;">${ax.name}</div>
+                            <div style="min-width:70px;font-size:11px;font-family:monospace;text-align:right;">
+                                <span style="color:#666;margin-right:2px;">${ax.high.label}</span>
+                                <span style="display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;border-radius:3px;font-size:11px;font-weight:800;${isHigh ? 'background:'+barColorHigh+';color:#0a0a0f;' : 'background:rgba(255,255,255,0.08);color:#555;'}">${ax.high.letter}</span>
+                            </div>
                         </div>
-                        <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-bottom:6px;">
-                            <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px;transition:width 0.5s;"></div>
+                        <div style="position:relative;height:28px;background:rgba(255,255,255,0.03);border-radius:6px;overflow:hidden;">
+                            <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.1);"></div>
+                            ${fillSide === 'right'
+                              ? `<div style="position:absolute;left:50%;top:3px;bottom:3px;width:${fillWidth}%;background:linear-gradient(90deg,${barColorHigh}88,${barColorHigh});border-radius:4px;transition:width 0.8s cubic-bezier(0.25,0.46,0.45,0.94);"></div>`
+                              : `<div style="position:absolute;right:50%;top:3px;bottom:3px;width:${fillWidth}%;background:linear-gradient(270deg,${barColorLow}88,${barColorLow});border-radius:4px;transition:width 0.8s cubic-bezier(0.25,0.46,0.45,0.94);"></div>`
+                            }
                         </div>
-                        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);">
-                            <span>${opposite.label} (${opposite.letter})</span>
-                            <span>${chosen.label} (${chosen.letter})</span>
-                        </div>
-                        <div style="font-size:12px;color:var(--text);margin-top:8px;line-height:1.6;">${chosen.desc}</div>
+                        <div style="font-size:11px;color:#888;margin-top:5px;line-height:1.5;">${chosen.desc}</div>
                     </div>`;
                 });
                 html += '</div>';
             }
 
-            // ═══ 레이더 차트 (Canvas) ═══
-            html += `<div style="margin-bottom:24px;">
-                <div style="font-size:12px;color:var(--ac);font-weight:600;letter-spacing:0.5px;margin-bottom:14px;">// 전체 프로필 맵</div>
-                <div style="display:flex;justify-content:center;">
-                    <canvas id="radarChart" width="320" height="320" style="max-width:100%;"></canvas>
-                </div>
-            </div>`;
-
-            // ═══ 세부 축 수치 ═══
+            // ═══ 세부 축 수치 (수평 바) ═══
             const AXIS_DISPLAY_NAMES = {
                 A1: '정서 강도', A2: '정서 안정성', A3: '감정 표현',
                 A4: '자기 확신', A5: '사회적 주도성', A6: '권위 수용',
@@ -3864,105 +3891,26 @@ function buildProfileOverview(axes, profile) {
             axisEntries.sort((a, b) => b.deviation - a.deviation);
 
             html += `<div style="margin-bottom:20px;">
-                <div style="font-size:12px;color:var(--ac);font-weight:600;letter-spacing:0.5px;margin-bottom:12px;">// 세부 축 수치</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">`;
+                <div style="font-size:12px;color:var(--ac);font-weight:600;letter-spacing:0.5px;margin-bottom:14px;">// 세부 축 수치</div>`;
             axisEntries.forEach(t => {
                 const pct = Math.round(t.value * 100);
                 const barColor = pct > 65 ? '#F59E0B' : pct < 35 ? '#60A5FA' : '#6B7280';
-                html += `<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:10px;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                        <span style="font-size:11px;font-weight:600;color:var(--text);">${sanitizeHTML(t.name)}</span>
-                        <span style="font-size:11px;font-weight:700;color:${barColor};">${pct}%</span>
+                html += `<div style="margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+                        <span style="font-size:12px;color:#ccc;">${sanitizeHTML(t.name)}</span>
+                        <span style="font-size:11px;font-family:monospace;font-weight:700;color:${barColor};">${pct}%</span>
                     </div>
-                    <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
-                        <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px;"></div>
+                    <div style="height:6px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden;">
+                        <div style="width:${pct}%;height:100%;background:${barColor};border-radius:3px;transition:width 1s cubic-bezier(0.25,0.46,0.45,0.94);"></div>
                     </div>
                 </div>`;
             });
-            html += '</div></div>';
+            html += '</div>';
 
             return html;
         }
 
-        // 레이더 차트 그리기 (displayResult 이후 호출)
-        function drawRadarChart(axes) {
-            const canvas = document.getElementById('radarChart');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            const W = canvas.width, H = canvas.height;
-            const cx = W / 2, cy = H / 2, R = Math.min(cx, cy) - 40;
-            const intensity = axes.intensity || {};
-
-            const labels = ['정서 강도', '안정성', '감정 표현', '자기 확신', '주도성', '권위 수용', '친밀감', '변화 수용'];
-            const keys = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A12', 'A14'];
-            const values = keys.map(k => intensity[k] ?? 0.5);
-            const n = labels.length;
-            const angleStep = (Math.PI * 2) / n;
-
-            ctx.clearRect(0, 0, W, H);
-
-            // 배경 그리드
-            for (let ring = 1; ring <= 4; ring++) {
-                const r = R * (ring / 4);
-                ctx.beginPath();
-                for (let i = 0; i <= n; i++) {
-                    const angle = -Math.PI / 2 + angleStep * i;
-                    const x = cx + Math.cos(angle) * r;
-                    const y = cy + Math.sin(angle) * r;
-                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-                }
-                ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-            }
-
-            // 축선
-            for (let i = 0; i < n; i++) {
-                const angle = -Math.PI / 2 + angleStep * i;
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.lineTo(cx + Math.cos(angle) * R, cy + Math.sin(angle) * R);
-                ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-                ctx.stroke();
-            }
-
-            // 데이터 폴리곤
-            ctx.beginPath();
-            for (let i = 0; i <= n; i++) {
-                const idx = i % n;
-                const angle = -Math.PI / 2 + angleStep * idx;
-                const r = R * values[idx];
-                const x = cx + Math.cos(angle) * r;
-                const y = cy + Math.sin(angle) * r;
-                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-            }
-            ctx.fillStyle = 'rgba(245, 158, 11, 0.15)';
-            ctx.fill();
-            ctx.strokeStyle = '#F59E0B';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // 데이터 점
-            for (let i = 0; i < n; i++) {
-                const angle = -Math.PI / 2 + angleStep * i;
-                const r = R * values[i];
-                ctx.beginPath();
-                ctx.arc(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r, 3, 0, Math.PI * 2);
-                ctx.fillStyle = '#F59E0B';
-                ctx.fill();
-            }
-
-            // 라벨
-            ctx.fillStyle = '#999';
-            ctx.font = '10px monospace';
-            ctx.textAlign = 'center';
-            for (let i = 0; i < n; i++) {
-                const angle = -Math.PI / 2 + angleStep * i;
-                const lx = cx + Math.cos(angle) * (R + 22);
-                const ly = cy + Math.sin(angle) * (R + 22);
-                ctx.fillText(labels[i], lx, ly + 3);
-            }
-        }
+        // 레이더 차트 제거됨 — Diverging Bar로 대체
 
 function displayResult() {
             const profile = currentProfile;
@@ -4056,8 +4004,7 @@ function displayResult() {
 
             showScreen('result');
 
-            // 레이더 차트 렌더링 (DOM이 보인 후)
-            requestAnimationFrame(() => drawRadarChart(axes));
+            // 레이더 차트 제거됨 — Diverging Bar로 대체
         }
 
         // ============ FEEDBACK SURVEY ============
@@ -4143,6 +4090,7 @@ function displayResult() {
 
             const payload = {
                 ...feedbackState,
+                analysis_id: currentProfile?.analysisId || null,
                 axes: currentProfile?.axes || null,
                 identity: currentProfile?.identity || null,
                 timestamp: new Date().toISOString()

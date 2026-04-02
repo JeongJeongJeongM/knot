@@ -1503,6 +1503,230 @@ function sanitizeAnchor(anchor) {
   return Object.keys(clean).length > 0 ? clean : null;
 }
 
+// ═══════════════════════════════════════════════════════════
+// STAGE 1: SCORING SYSTEM PROMPT — LLM reads conversation, outputs structured scores
+// ═══════════════════════════════════════════════════════════
+
+const SYSTEM_PROMPT_SCORING = `당신은 행동 분석 엔진입니다. 대화 원문을 읽고 정량적 행동 프로필을 JSON으로 출력합니다.
+절대 설명하지 마세요. 오직 유효한 JSON만 출력하세요.
+
+## 출력할 축 (Intensity — 0.0~1.0 실수)
+
+| 축 | 이름 | 0.0 극단 | 1.0 극단 |
+|----|------|----------|----------|
+| A1 | 정서 강도 | 무관심, 무감각 | 몰입, 격정 |
+| A2 | 정서 안정성 | 냉담, 무반응 | 깊은 공감, 감정적 |
+| A3 | 감정 표현 | 평화추구, 억제 | 대항적, 공격적 |
+| A4 | 자기 확신 | 겸손, 소극적 | 지배적, 단정적 |
+| A5 | 사회적 주도성 | 관찰자, 수동적 | 개방적, 적극적 |
+| A6 | 권위 수용 | 변동 높음, 불안정 | 일관적, 안정적 |
+| A12 | 친밀감 편안함 | 둔감, 거리감 | 초민감, 깊은 친밀 |
+| A14 | 변화 수용성 | 갈등고착, 경직 | 뛰어난 중재, 유연 |
+
+## 출력할 축 (Structural — primary + styles 분포)
+
+| 축 | 이름 | 가능한 primary 값 |
+|----|------|-------------------|
+| A7 | 상호작용 지향 | initiator, responder, balanced |
+| A8 | 갈등 조절 | confrontational, repair, avoidant, boundary |
+| A9 | 감정 처리 | expressive, analytical, suppressive, externalized |
+| A10 | 친밀감 기울기 | surface_locked, slow_burn, depth_seeker, fast_opener |
+| A11 | 호혜성 | giver, taker, balanced |
+| A13 | 인정 욕구 | growth, defensive, avoidant, absorptive |
+| A15 | 관계 투자 | active_investor, passive_maintainer, disengaged |
+| A16 | 의사결정 스타일 | analytical, pragmatic, binary |
+| A17 | 유머/긴장 해소 | tension_breaker, bonding, deflective, aggressive, minimal |
+
+## Structural 축 styles 형식
+각 structural 축은 primary(지배적 유형)와 styles(모든 유형의 비율, 합계 1.0)를 반환합니다.
+예시: {"primary": "confrontational", "styles": {"confrontational": 0.55, "repair": 0.25, "avoidant": 0.10, "boundary": 0.10}}
+
+## 판단 원칙
+1. 대화 원문에서 실제 행동 패턴을 관찰하여 점수를 매기세요
+2. 키워드 빈도가 아니라 맥락과 의도를 읽으세요
+3. 단일 발화에 과도한 비중을 두지 마세요 — 반복 패턴을 찾으세요
+4. 정보가 부족한 축은 0.5 (중립)로 두되, styles는 균등 분배하세요
+5. PRISM/ANCHOR 보조 데이터가 제공되면 참고하되, 대화 원문 관찰이 우선입니다
+6. 반드시 유효한 JSON만 출력하세요. 코드블록, 설명, 주석 금지.
+
+## 출력 형식 (이 구조 정확히 따르세요)
+{
+  "intensity": {
+    "A1": 0.00, "A2": 0.00, "A3": 0.00, "A4": 0.00,
+    "A5": 0.00, "A6": 0.00, "A12": 0.00, "A14": 0.00
+  },
+  "structural": {
+    "A7": {"primary": "...", "styles": {...}},
+    "A8": {"primary": "...", "styles": {...}},
+    "A9": {"primary": "...", "styles": {...}},
+    "A10": {"primary": "...", "styles": {...}},
+    "A11": {"primary": "...", "styles": {...}},
+    "A13": {"primary": "...", "styles": {...}},
+    "A15": {"primary": "...", "styles": {...}},
+    "A16": {"primary": "...", "styles": {...}},
+    "A17": {"primary": "...", "styles": {...}}
+  }
+}`;
+
+function buildScoringPrompt(rawMessages, prism, anchor) {
+  let prompt = `다음 대화 메시지를 분석하여 행동 프로필 JSON을 출력하세요.\n\n`;
+
+  prompt += `## 대화 원문 (${rawMessages.length}개 메시지)\n`;
+  const truncated = rawMessages.slice(0, 500); // Limit to 500 messages
+  truncated.forEach((msg, i) => {
+    const text = typeof msg === 'string' ? msg : (msg.text || '');
+    const clean = sanitizeString(text, 2000);
+    prompt += `[${i + 1}] ${clean}\n`;
+  });
+  if (rawMessages.length > 500) {
+    prompt += `\n... (${rawMessages.length - 500}개 메시지 생략)\n`;
+  }
+
+  if (prism) {
+    prompt += `\n## 보조 데이터: PRISM (관심사/호기심 — 키워드 기반 자동 분석 결과)\n`;
+    if (prism.topic_distribution && typeof prism.topic_distribution === 'object') {
+      const topics = prism.topic_distribution.topics || prism.topic_distribution;
+      if (topics && typeof topics === 'object') {
+        prompt += `주제 분포: ${JSON.stringify(topics).slice(0, 1000)}\n`;
+      }
+    }
+    if (prism.curiosity && typeof prism.curiosity === 'object') {
+      prompt += `호기심 패턴: ${JSON.stringify(prism.curiosity).slice(0, 500)}\n`;
+    }
+    if (prism.vocabulary && typeof prism.vocabulary === 'object') {
+      prompt += `언어 특징: ${JSON.stringify(prism.vocabulary).slice(0, 500)}\n`;
+    }
+  }
+
+  if (anchor) {
+    prompt += `\n## 보조 데이터: ANCHOR (관계 역학 — 키워드 기반 자동 분석 결과)\n`;
+    if (anchor.attachment) prompt += `애착: ${JSON.stringify(anchor.attachment).slice(0, 500)}\n`;
+    if (anchor.conflict) prompt += `갈등: ${JSON.stringify(anchor.conflict).slice(0, 500)}\n`;
+    if (anchor.emotional_availability) prompt += `정서적 가용성: ${JSON.stringify(anchor.emotional_availability).slice(0, 500)}\n`;
+    if (anchor.growth) prompt += `성장: ${JSON.stringify(anchor.growth).slice(0, 500)}\n`;
+  }
+
+  prompt += `\n위 대화를 읽고 행동 프로필 JSON만 출력하세요.`;
+  return prompt;
+}
+
+// ═══════════════════════════════════════════════════════════
+// Server-side type code + identity computation (mirrors frontend logic)
+// ═══════════════════════════════════════════════════════════
+
+const SERVER_TYPE_AXES = [
+  {
+    id: 'emotion', name: '정서 표출',
+    high: { letter: 'F', label: 'Fire', desc: '감정을 강하게 느끼고 적극적으로 표현한다' },
+    low:  { letter: 'S', label: 'Still', desc: '감정을 내면에서 처리하고 절제된 방식으로 표현한다' },
+    calc: (d) => ((d.A1 || 0.5) * 0.6 + (d.A3 || 0.5) * 0.4)
+  },
+  {
+    id: 'drive', name: '사회 동력',
+    high: { letter: 'A', label: 'Assert', desc: '상황을 주도하고 방향을 설정한다' },
+    low:  { letter: 'H', label: 'Harmonize', desc: '상황을 관찰하고 흐름에 맞춰 움직인다' },
+    calc: (d) => {
+      const base = ((d.A4 || 0.5) * 0.4 + (d.A5 || 0.5) * 0.4);
+      const struct = d._structural?.A7?.primary === 'initiator' ? 0.2 : d._structural?.A7?.primary === 'responder' ? 0 : 0.1;
+      return base + struct;
+    }
+  },
+  {
+    id: 'cognition', name: '인지 기반',
+    high: { letter: 'T', label: 'Think', desc: '논리와 분석을 기반으로 판단한다' },
+    low:  { letter: 'R', label: 'Relate', desc: '공감과 관계를 고려하여 판단한다' },
+    calc: (d) => {
+      const a10 = d._structural?.A10;
+      const a16 = d._structural?.A16;
+      let score = 0.5;
+      if (a10) score += (a10.styles?.logical || 0) * 0.3 - (a10.styles?.emotional || 0) * 0.3;
+      if (a16) score += (a16.primary === 'analytical' ? 0.15 : a16.primary === 'binary' ? -0.1 : 0);
+      return Math.max(0, Math.min(1, score));
+    }
+  },
+  {
+    id: 'boundary', name: '경계 방식',
+    high: { letter: 'O', label: 'Open', desc: '경계를 열어두고 변화를 수용한다' },
+    low:  { letter: 'W', label: 'Wall', desc: '경계를 세우고 안전한 영역을 지킨다' },
+    calc: (d) => ((d.A12 || 0.5) * 0.5 + (d.A14 || 0.5) * 0.5)
+  },
+  {
+    id: 'resilience', name: '회복 탄성',
+    high: { letter: 'X', label: 'Flex', desc: '스트레스에 유연하게 적응한다' },
+    low:  { letter: 'V', label: 'Rigid', desc: '스트레스에 경직되거나 고착된다' },
+    calc: (d) => {
+      const a2 = d.A2 || 0.5;
+      const a11 = d._structural?.A11;
+      const flexBonus = a11?.primary === 'flexible' ? 0.15 : a11?.primary === 'rigid' ? -0.15 : 0;
+      return Math.max(0, Math.min(1, a2 * 0.7 + 0.15 + flexBonus));
+    }
+  }
+];
+
+const SERVER_IDENTITY_ARCHETYPES = [
+  { match: d => _sh(d.A1) && _sl(d.A4) && _sdom(d,'A9')==='suppressive', name:'얼어붙은 화산', emoji:'🌋', tagline:'안에서 들끓지만 밖으로는 차가운, 통제된 격렬함의 소유자' },
+  { match: d => _sh(d.A1) && _sh(d.A3) && _sdom(d,'A8')==='confrontational', name:'폭풍의 지휘자', emoji:'⚡', tagline:'감정의 폭풍을 에너지로 바꾸는, 주도적인 격렬함의 소유자' },
+  { match: d => _sh(d.A2) && _sl(d.A3) && _sh(d.A4), name:'안개 속의 등불', emoji:'🏮', tagline:'따뜻하게 비추지만 스스로는 흔들리는, 부드러운 공감의 소유자' },
+  { match: d => _sh(d.A1) && _sh(d.A3) && _sdom(d,'A7')==='initiator', name:'길 없는 개척자', emoji:'🗡️', tagline:'기존 질서를 따르지 않는, 자기 길을 만드는 확신의 소유자' },
+  { match: d => _sl(d.A1) && _sl(d.A3) && _sl(d.A4), name:'고요한 관찰자', emoji:'🌑', tagline:'조용히 세상을 읽는, 낮은 온도의 깊은 사유자' },
+  { match: d => _sh(d.A2) && _sh(d.A5) && _sh(d.A6), name:'따뜻한 항구', emoji:'🏖️', tagline:'사람들이 쉬어가는, 안정적이고 개방적인 존재' },
+  { match: d => _sh(d.A4) && _sl(d.A2) && _sdom(d,'A7')==='initiator', name:'칼날 위의 무용수', emoji:'🔪', tagline:'날카로운 확신과 불안정한 감정이 공존하는 존재' },
+  { match: d => _sh(d.A6) && _sl(d.A1) && _sl(d.A3), name:'잔잔한 호수', emoji:'🌊', tagline:'감정의 파동이 적고 일관된, 안정적인 존재' },
+  { match: d => _sh(d.A1) && _sh(d.A2) && _sh(d.A5), name:'불꽃의 중재자', emoji:'🔥', tagline:'뜨겁게 공감하면서 동시에 방향을 제시하는 존재' },
+  { match: () => true, name:'미지의 윤곽', emoji:'🔮', tagline:'아직 정의되지 않은, 복합적인 존재' },
+];
+
+function _sh(v) { return v !== undefined && v >= 0.5; }
+function _sl(v) { return v !== undefined && v < 0.5; }
+function _sdom(d, axis) {
+  return d._structural?.[axis]?.primary || '';
+}
+
+function serverFlattenProfile(axes) {
+  const flat = {};
+  if (axes.intensity) {
+    for (const [k, v] of Object.entries(axes.intensity)) flat[k] = v;
+  }
+  flat._structural = axes.structural || {};
+  return flat;
+}
+
+function computeServerIdentity(axes) {
+  const flat = serverFlattenProfile(axes);
+
+  // 5-axis type code
+  const axisResults = [];
+  let code = '';
+  for (const axis of SERVER_TYPE_AXES) {
+    const score = axis.calc(flat);
+    const isHigh = score >= 0.5;
+    const letter = isHigh ? axis.high.letter : axis.low.letter;
+    code += letter;
+    axisResults.push({ id: axis.id, name: axis.name, score, letter, isHigh, high: axis.high, low: axis.low });
+  }
+
+  // Archetype matching
+  let archetype = SERVER_IDENTITY_ARCHETYPES[SERVER_IDENTITY_ARCHETYPES.length - 1];
+  for (const arch of SERVER_IDENTITY_ARCHETYPES) {
+    try {
+      if (arch.match(flat)) { archetype = arch; break; }
+    } catch { continue; }
+  }
+
+  return {
+    name: archetype.name,
+    emoji: archetype.emoji,
+    code: code,
+    tagline: archetype.tagline,
+    desc: archetype.tagline,
+    axisResults: axisResults
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// STAGE 2: ESSAY SYSTEM PROMPT (기존)
+// ═══════════════════════════════════════════════════════════
+
 const SYSTEM_PROMPT_INDIVIDUAL = `당신은 냉철한 행동 심리 관찰자입니다. 데이터를 기반으로 한 사람의 심리 프로필을 작성합니다.
 
 핵심 규칙:
@@ -2103,7 +2327,11 @@ export default {
       }
     }
 
-    // ──── POST /analyze ────
+    // ══════════════════════════════════════════════════════
+    // POST /analyze — 2-STAGE LLM ARCHITECTURE
+    // Stage 1: LLM reads raw messages → structured scores (non-streaming)
+    // Stage 2: LLM reads scores → essay (SSE streaming)
+    // ══════════════════════════════════════════════════════
     if (path === '/analyze') {
       if (!(await checkRateLimit(ip, 'analyze', RATE_LIMIT_ANALYZE, env))) {
         return jsonResponse({ error: '분석 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' }, 429, corsHeaders);
@@ -2116,64 +2344,115 @@ export default {
 
       try {
         const body = await request.json();
-        const axes = sanitizeAxes(body.axes);
-        if (!axes) {
-          return jsonResponse({ error: 'Invalid axes data' }, 400, corsHeaders);
+
+        // raw_messages is now the primary input (frontend no longer computes axes)
+        const rawMessages = body.raw_messages;
+        if (!rawMessages || !Array.isArray(rawMessages) || rawMessages.length === 0) {
+          return jsonResponse({ error: 'raw_messages 배열이 필요합니다' }, 400, corsHeaders);
         }
 
-        const identity = body.identity || { name: '미지의 윤곽', tagline: '복합적인 존재', emoji: '🔮', code: 'E-XX' };
-        const messagesSample = sanitizeString(body.messages_sample || '', 50000);
-        const lensSummary = sanitizeString(body.lens_summary || '', 5000);
-
-        // Handle PRISM: either use pre-computed or compute from raw_messages
-        let prism = sanitizePrism(body.prism);
-        if (!prism && body.raw_messages && Array.isArray(body.raw_messages)) {
-          const messages = body.raw_messages.map(msg =>
-            typeof msg === 'string' ? { sender: 'user', text: msg } : msg
-          );
-          const prismResult = analyzePrism(messages);
+        // Run PRISM deterministically server-side
+        const prismMessages = rawMessages.map(msg =>
+          typeof msg === 'string' ? { sender: 'user', text: msg } : msg
+        );
+        let prism = null;
+        try {
+          const prismResult = analyzePrism(prismMessages);
           if (prismResult.success !== false && !prismResult.error) {
             prism = sanitizePrism(prismResult);
           }
-        }
+        } catch (e) { console.error('[PRISM Error]', e.message); }
 
-        // Handle ANCHOR: either use pre-computed or compute from raw_messages
-        let anchor = sanitizeAnchor(body.anchor);
-        if (!anchor && body.raw_messages && Array.isArray(body.raw_messages)) {
-          const messages = body.raw_messages.map(msg =>
-            typeof msg === 'string' ? { sender: 'user', text: msg } : msg
-          );
-          const anchorResult = analyzeAnchor(messages);
+        // Run ANCHOR deterministically server-side
+        let anchor = null;
+        try {
+          const anchorResult = analyzeAnchor(prismMessages);
           if (anchorResult.success !== false && !anchorResult.error) {
             anchor = sanitizeAnchor(anchorResult);
           }
-        }
+        } catch (e) { console.error('[ANCHOR Error]', e.message); }
 
         // Diagnostic mode: return early without calling Claude API
         if (url.searchParams.get('diag') === '1') {
+          const scoringPrompt = buildScoringPrompt(rawMessages, prism, anchor);
           return jsonResponse({
             diag: true,
-            axes_ok: !!axes,
+            message_count: rawMessages.length,
             prism_ok: !!prism,
             anchor_ok: !!anchor,
-            identity,
             has_api_key: !!env.ANTHROPIC_API_KEY,
-            prompt_length: buildAnalyzePrompt(axes, identity, messagesSample, lensSummary, prism, anchor).length,
+            scoring_prompt_length: scoringPrompt.length,
           }, 200, corsHeaders);
         }
 
-        const userPrompt = buildAnalyzePrompt(axes, identity, messagesSample, lensSummary, prism, anchor);
-
-        // Stream mode: pipe Anthropic SSE through to client
-        // First send PRISM/ANCHOR as metadata, then stream Claude response
+        // ──── SSE response stream ────
         const encoder = new TextEncoder();
         const { readable, writable } = new TransformStream();
         const writer = writable.getWriter();
 
         (async () => {
           try {
-            // Send pre-computed data first
-            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'meta', prism: prism || null, anchor: anchor || null })}\n\n`));
+            // ═══ STAGE 1: Non-streaming scoring call ═══
+            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'status', stage: 1, message: '행동 패턴 분석 중...' })}\n\n`));
+
+            const scoringPrompt = buildScoringPrompt(rawMessages, prism, anchor);
+            const scoringRaw = await callClaude(env.ANTHROPIC_API_KEY, SYSTEM_PROMPT_SCORING, scoringPrompt);
+            const scores = extractJSON(scoringRaw);
+
+            if (!scores || !scores.intensity) {
+              await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: 'Stage 1 점수 파싱 실패' })}\n\n`));
+              await writer.close();
+              return;
+            }
+
+            // Build axes object from LLM scores
+            const axes = {
+              intensity: scores.intensity || {},
+              structural: scores.structural || {}
+            };
+
+            // Compute type code + identity server-side from LLM-produced axes
+            const identity = computeServerIdentity(axes);
+            const analysisId = crypto.randomUUID();
+
+            // ──── Save Stage 1 to D1 analyses table ────
+            try {
+              if (env.KNOT_DB) {
+                await env.KNOT_DB.prepare(
+                  `INSERT INTO analyses (id, type_code, type_name, tagline, axes_json, prism_json, anchor_json, sections_json, identity_json, message_count, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+                ).bind(
+                  analysisId,
+                  identity.code || '',
+                  identity.name || '',
+                  identity.tagline || '',
+                  JSON.stringify(axes),
+                  prism ? JSON.stringify(prism) : null,
+                  anchor ? JSON.stringify(anchor) : null,
+                  null, // sections_json filled after Stage 2
+                  JSON.stringify(identity),
+                  rawMessages.length
+                ).run();
+              }
+            } catch (dbErr) {
+              console.error('[D1 Stage1 Save Error]', dbErr.message);
+            }
+
+            // Send Stage 1 results to client (scores + identity + analysis_id)
+            await writer.write(encoder.encode(`data: ${JSON.stringify({
+              type: 'scores',
+              analysis_id: analysisId,
+              axes: axes,
+              identity: identity,
+              prism: prism || null,
+              anchor: anchor || null,
+            })}\n\n`));
+
+            // ═══ STAGE 2: Streaming essay call ═══
+            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'status', stage: 2, message: '에세이 작성 중...' })}\n\n`));
+
+            // Build essay prompt using confirmed scores (NOT raw messages)
+            const lensSummary = sanitizeString(body.lens_summary || '', 5000);
+            const essayPrompt = buildAnalyzePrompt(axes, identity, null, lensSummary, prism, anchor);
 
             const apiResp = await fetch('https://api.anthropic.com/v1/messages', {
               method: 'POST',
@@ -2187,7 +2466,7 @@ export default {
                 max_tokens: 16384,
                 stream: true,
                 system: SYSTEM_PROMPT_INDIVIDUAL,
-                messages: [{ role: 'user', content: userPrompt }],
+                messages: [{ role: 'user', content: essayPrompt }],
               }),
             });
 
@@ -2198,9 +2477,11 @@ export default {
               return;
             }
 
+            // Stream Stage 2 essay to client
             const reader = apiResp.body.getReader();
             const decoder = new TextDecoder();
             let buf = '';
+            let fullText = '';
 
             while (true) {
               const { done, value } = await reader.read();
@@ -2215,33 +2496,50 @@ export default {
                 try {
                   const ev = JSON.parse(d);
                   if (ev.type === 'content_block_delta' && ev.delta && ev.delta.text) {
+                    fullText += ev.delta.text;
                     await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text: ev.delta.text })}\n\n`));
                   }
                 } catch {}
               }
             }
 
-            // Flush TextDecoder for remaining multi-byte chars
+            // Flush remaining
             const flushed = decoder.decode();
             if (flushed) buf += flushed;
-
-            // Process remaining buffer
             if (buf.trim()) {
-              const remainLines = buf.split('\n');
-              for (const line of remainLines) {
+              for (const line of buf.split('\n')) {
                 if (!line.startsWith('data: ')) continue;
                 const d = line.slice(6).trim();
                 if (d === '[DONE]') continue;
                 try {
                   const ev = JSON.parse(d);
                   if (ev.type === 'content_block_delta' && ev.delta && ev.delta.text) {
+                    fullText += ev.delta.text;
                     await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text: ev.delta.text })}\n\n`));
                   }
                 } catch {}
               }
             }
 
-            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'done', analysis_id: analysisId })}\n\n`));
+
+            // ──── Save Stage 2 essay to D1 ────
+            try {
+              if (env.KNOT_DB && fullText.length > 100) {
+                // Update analyses row with sections_json
+                await env.KNOT_DB.prepare(
+                  `UPDATE analyses SET sections_json = ? WHERE id = ?`
+                ).bind(fullText, analysisId).run();
+
+                // Also insert into essays table
+                await env.KNOT_DB.prepare(
+                  `INSERT INTO essays (id, analysis_id, essay_json, created_at) VALUES (?, ?, ?, datetime('now'))`
+                ).bind(crypto.randomUUID(), analysisId, fullText).run();
+              }
+            } catch (dbErr) {
+              console.error('[D1 Stage2 Save Error]', dbErr.message);
+            }
+
           } catch (e) {
             try { await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: e.message })}\n\n`)); } catch {}
           } finally {
@@ -2430,6 +2728,24 @@ export default {
       }
       try {
         const body = await request.json();
+
+        // Primary: D1 feedback table
+        if (env.KNOT_DB) {
+          const feedbackId = crypto.randomUUID();
+          await env.KNOT_DB.prepare(
+            `INSERT INTO feedback (id, analysis_id, rating, accuracy, useful, issues_json, comment, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+          ).bind(
+            feedbackId,
+            body.analysis_id || null,
+            body.rating || 0,
+            body.accuracy || null,
+            body.useful || null,
+            body.issues ? JSON.stringify(body.issues) : null,
+            body.text || body.comment || null
+          ).run();
+        }
+
+        // Fallback: also write to KV if available (backward compat, can remove later)
         if (env.FEEDBACK_STORE) {
           const key = `fb:${Date.now()}:${ip.replace(/\./g, '_')}`;
           await env.FEEDBACK_STORE.put(key, JSON.stringify({
@@ -2438,6 +2754,7 @@ export default {
             timestamp: new Date().toISOString(),
           }), { expirationTtl: 60 * 60 * 24 * 90 });
         }
+
         return jsonResponse({ ok: true }, 200, corsHeaders);
       } catch (e) {
         return jsonResponse({ error: e.message }, 500, corsHeaders);

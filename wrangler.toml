@@ -9,3 +9,8 @@ id = "2407d509ed7047b08f93b9a1f8fefe3a"
 [[kv_namespaces]]
 binding = "FEEDBACK_STORE"
 id = "6d0b84ff72de473f9678f6fd36e0ed2a"
+
+[[d1_databases]]
+binding = "KNOT_DB"
+database_name = "knot-analytics"
+database_id = "a456a4b6-4bad-47b8-8ca6-3450cb326350"
