@@ -1809,7 +1809,7 @@ function callClaudeStream(apiKey, systemPrompt, userPrompt, corsHeaders) {
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 8000,
+          max_tokens: 12000,
           stream: true,
           system: systemPrompt,
           messages: [{ role: 'user', content: userPrompt }],
@@ -1881,7 +1881,7 @@ async function callClaude(apiKey, systemPrompt, userPrompt) {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 8000,
+      max_tokens: 12000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
     }),
@@ -2153,7 +2153,7 @@ export default {
               },
               body: JSON.stringify({
                 model: 'claude-sonnet-4-20250514',
-                max_tokens: 8000,
+                max_tokens: 12000,
                 stream: true,
                 system: SYSTEM_PROMPT_INDIVIDUAL,
                 messages: [{ role: 'user', content: userPrompt }],
@@ -2299,7 +2299,7 @@ export default {
               },
               body: JSON.stringify({
                 model: 'claude-sonnet-4-20250514',
-                max_tokens: 8000,
+                max_tokens: 12000,
                 stream: true,
                 system: SYSTEM_PROMPT_MATCHING,
                 messages: [{ role: 'user', content: userPrompt }],
