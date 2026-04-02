@@ -1789,8 +1789,88 @@ ${descB}
   return prompt;
 }
 
+// callClaude: returns streaming Response that pipes Anthropic SSE → client
+function callClaudeStream(apiKey, systemPrompt, userPrompt, corsHeaders) {
+  const encoder = new TextEncoder();
+
+  const { readable, writable } = new TransformStream();
+  const writer = writable.getWriter();
+
+  // Launch the streaming request in the background
+  (async () => {
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 8000,
+          stream: true,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }],
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: `API ${response.status}: ${error.slice(0, 200)}` })}\n\n`));
+        await writer.close();
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const event = JSON.parse(data);
+            if (event.type === 'content_block_delta' && event.delta && event.delta.text) {
+              await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text: event.delta.text })}\n\n`));
+            } else if (event.type === 'message_stop') {
+              await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+            }
+          } catch {}
+        }
+      }
+
+      await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+    } catch (e) {
+      try {
+        await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: e.message })}\n\n`));
+      } catch {}
+    } finally {
+      try { await writer.close(); } catch {}
+    }
+  })();
+
+  return new Response(readable, {
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  });
+}
+
+// Non-streaming fallback for simple calls
 async function callClaude(apiKey, systemPrompt, userPrompt) {
-  // Use streaming to prevent Cloudflare Worker subrequest timeout
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -1801,7 +1881,6 @@ async function callClaude(apiKey, systemPrompt, userPrompt) {
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 8000,
-      stream: true,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
     }),
@@ -1812,39 +1891,8 @@ async function callClaude(apiKey, systemPrompt, userPrompt) {
     throw new Error(`Claude API error: ${response.status} - ${error}`);
   }
 
-  // Read SSE stream and collect text chunks
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let fullText = '';
-  let buffer = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-
-    for (const line of lines) {
-      if (!line.startsWith('data: ')) continue;
-      const data = line.slice(6).trim();
-      if (data === '[DONE]') continue;
-
-      try {
-        const event = JSON.parse(data);
-        if (event.type === 'content_block_delta' && event.delta && event.delta.text) {
-          fullText += event.delta.text;
-        }
-      } catch {}
-    }
-  }
-
-  if (!fullText) {
-    throw new Error('Empty response from Claude API');
-  }
-
-  return fullText;
+  const data = await response.json();
+  return data.content[0].text;
 }
 
 function extractJSON(text) {
@@ -2083,19 +2131,79 @@ export default {
         }
 
         const userPrompt = buildAnalyzePrompt(axes, identity, messagesSample, lensSummary, prism, anchor);
-        const rawResponse = await callClaude(env.ANTHROPIC_API_KEY, SYSTEM_PROMPT_INDIVIDUAL, userPrompt);
-        const parsed = extractJSON(rawResponse);
 
-        if (!parsed) {
-          return jsonResponse({ error: 'Failed to parse AI response', raw: rawResponse.slice(0, 500) }, 500, corsHeaders);
-        }
+        // Stream mode: pipe Anthropic SSE through to client
+        // First send PRISM/ANCHOR as metadata, then stream Claude response
+        const encoder = new TextEncoder();
+        const { readable, writable } = new TransformStream();
+        const writer = writable.getWriter();
 
-        // Add PRISM and ANCHOR to response
-        const response = parsed;
-        if (prism) response.prism = prism;
-        if (anchor) response.anchor = anchor;
+        (async () => {
+          try {
+            // Send pre-computed data first
+            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'meta', prism: prism || null, anchor: anchor || null })}\n\n`));
 
-        return jsonResponse(response, 200, corsHeaders);
+            const apiResp = await fetch('https://api.anthropic.com/v1/messages', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': env.ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01',
+              },
+              body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 8000,
+                stream: true,
+                system: SYSTEM_PROMPT_INDIVIDUAL,
+                messages: [{ role: 'user', content: userPrompt }],
+              }),
+            });
+
+            if (!apiResp.ok) {
+              const errText = await apiResp.text();
+              await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: `API ${apiResp.status}: ${errText.slice(0, 200)}` })}\n\n`));
+              await writer.close();
+              return;
+            }
+
+            const reader = apiResp.body.getReader();
+            const decoder = new TextDecoder();
+            let buf = '';
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buf += decoder.decode(value, { stream: true });
+              const lines = buf.split('\n');
+              buf = lines.pop() || '';
+              for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                const d = line.slice(6).trim();
+                if (d === '[DONE]') continue;
+                try {
+                  const ev = JSON.parse(d);
+                  if (ev.type === 'content_block_delta' && ev.delta && ev.delta.text) {
+                    await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text: ev.delta.text })}\n\n`));
+                  }
+                } catch {}
+              }
+            }
+
+            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+          } catch (e) {
+            try { await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: e.message })}\n\n`)); } catch {}
+          } finally {
+            try { await writer.close(); } catch {}
+          }
+        })();
+
+        return new Response(readable, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+          },
+        });
       } catch (e) {
         return jsonResponse({ error: e.message }, 500, corsHeaders);
       }
@@ -2171,21 +2279,71 @@ export default {
         }
 
         const userPrompt = buildMatchPrompt(profileA, profileB, identityA, identityB, matchIdentity, prismA, prismB, anchorA, anchorB);
-        const rawResponse = await callClaude(env.ANTHROPIC_API_KEY, SYSTEM_PROMPT_MATCHING, userPrompt);
-        const parsed = extractJSON(rawResponse);
 
-        if (!parsed) {
-          return jsonResponse({ error: 'Failed to parse AI response', raw: rawResponse.slice(0, 500) }, 500, corsHeaders);
-        }
+        // Stream mode for match too
+        const encoder = new TextEncoder();
+        const { readable, writable } = new TransformStream();
+        const writer = writable.getWriter();
 
-        // Add PRISM and ANCHOR to response
-        const response = parsed;
-        if (prismA) response.prismA = prismA;
-        if (prismB) response.prismB = prismB;
-        if (anchorA) response.anchorA = anchorA;
-        if (anchorB) response.anchorB = anchorB;
+        (async () => {
+          try {
+            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'meta', prismA: prismA || null, prismB: prismB || null, anchorA: anchorA || null, anchorB: anchorB || null })}\n\n`));
 
-        return jsonResponse(response, 200, corsHeaders);
+            const apiResp = await fetch('https://api.anthropic.com/v1/messages', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': env.ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01',
+              },
+              body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 8000,
+                stream: true,
+                system: SYSTEM_PROMPT_MATCHING,
+                messages: [{ role: 'user', content: userPrompt }],
+              }),
+            });
+
+            if (!apiResp.ok) {
+              const errText = await apiResp.text();
+              await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: `API ${apiResp.status}: ${errText.slice(0, 200)}` })}\n\n`));
+              await writer.close();
+              return;
+            }
+
+            const reader = apiResp.body.getReader();
+            const decoder = new TextDecoder();
+            let buf = '';
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buf += decoder.decode(value, { stream: true });
+              const lines = buf.split('\n');
+              buf = lines.pop() || '';
+              for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                const d = line.slice(6).trim();
+                if (d === '[DONE]') continue;
+                try {
+                  const ev = JSON.parse(d);
+                  if (ev.type === 'content_block_delta' && ev.delta && ev.delta.text) {
+                    await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text: ev.delta.text })}\n\n`));
+                  }
+                } catch {}
+              }
+            }
+            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+          } catch (e) {
+            try { await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: e.message })}\n\n`)); } catch {}
+          } finally {
+            try { await writer.close(); } catch {}
+          }
+        })();
+
+        return new Response(readable, {
+          headers: { ...corsHeaders, 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
+        });
       } catch (e) {
         return jsonResponse({ error: e.message }, 500, corsHeaders);
       }
