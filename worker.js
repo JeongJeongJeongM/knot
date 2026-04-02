@@ -1714,7 +1714,10 @@ ${profileDesc}
 - 구체적인 행동/상황 묘사 위주
 - PRISM 데이터가 있다면 관심사 지형, 호기심 패턴 섹션에 통합
 - ANCHOR 데이터가 있다면 관계 안에서의 나, 관계 역학 섹션에 통합
-- JSON 형식으로 출력: {"sections": [{"key": "...", "title": "...", "summary": "...", "subsections": [{"title": "...", "content": "..."}]}]}`;
+- 반드시 유효한 JSON만 출력하세요. \`\`\`json 코드블록으로 감싸지 마세요.
+- JSON 문자열 안의 큰따옴표는 반드시 \\"로 이스케이프하세요.
+- JSON 문자열 안에 줄바꿈을 넣지 마세요.
+- 출력 형식: {"sections": [{"key": "...", "title": "...", "summary": "...", "subsections": [{"title": "...", "content": "..."}]}]}`;
 
   return prompt;
 }
@@ -1785,7 +1788,10 @@ ${descB}
 - "위험하다" 대신 "이런 패턴이 반복될 수 있다" 식으로 관찰적 서술
 - PRISM 데이터가 있다면 공유 세계, 대화 가능성 분석에 통합
 - ANCHOR 데이터가 있다면 감정의 춤, 안정감과 갈등 역학 분석에 통합
-- JSON 형식으로 출력: {"sections": [{"key": "...", "title": "...", "summary": "...", "subsections": [{"title": "...", "content": "..."}]}]}`;
+- 반드시 유효한 JSON만 출력하세요. \`\`\`json 코드블록으로 감싸지 마세요.
+- JSON 문자열 안의 큰따옴표는 반드시 \\"로 이스케이프하세요.
+- JSON 문자열 안에 줄바꿈을 넣지 마세요.
+- 출력 형식: {"sections": [{"key": "...", "title": "...", "summary": "...", "subsections": [{"title": "...", "content": "..."}]}]}`;
 
   return prompt;
 }

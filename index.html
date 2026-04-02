@@ -3199,21 +3199,182 @@
             return { fullText, meta, error };
         }
 
+        function repairJSON(raw) {
+            // Fix common Claude JSON issues:
+            // 1. Unescaped quotes inside string values
+            // 2. Unescaped newlines/tabs inside strings
+            // 3. Truncated JSON (close open brackets)
+            let s = raw;
+
+            // Try parse as-is first
+            try { return JSON.parse(s); } catch(e) {
+                console.log('[KNOT] Direct parse failed at position', e.message.match(/position (\d+)/)?.[1] || 'unknown');
+            }
+
+            // Strategy A: Fix unescaped characters inside JSON string values
+            // Walk through character by character, tracking string context
+            try {
+                let fixed = '';
+                let inString = false;
+                let escaped = false;
+                for (let i = 0; i < s.length; i++) {
+                    const c = s[i];
+                    if (escaped) { fixed += c; escaped = false; continue; }
+                    if (c === '\\') { fixed += c; escaped = true; continue; }
+                    if (c === '"') {
+                        if (!inString) {
+                            inString = true; fixed += c;
+                        } else {
+                            // Check if this quote ends the string or is unescaped inside
+                            // Look ahead: if next non-whitespace is : , ] } then it's a real closing quote
+                            let j = i + 1;
+                            while (j < s.length && (s[j] === ' ' || s[j] === '\n' || s[j] === '\r' || s[j] === '\t')) j++;
+                            const next = s[j];
+                            if (next === ':' || next === ',' || next === ']' || next === '}' || next === undefined) {
+                                inString = false; fixed += c;
+                            } else {
+                                // Unescaped quote inside string - escape it
+                                fixed += '\\"';
+                            }
+                        }
+                    } else if (inString && (c === '\n' || c === '\r' || c === '\t')) {
+                        // Escape control chars inside strings
+                        if (c === '\n') fixed += '\\n';
+                        else if (c === '\r') fixed += '\\r';
+                        else if (c === '\t') fixed += '\\t';
+                    } else {
+                        fixed += c;
+                    }
+                }
+                const result = JSON.parse(fixed);
+                console.log('[KNOT] Strategy A (fix unescaped chars) succeeded');
+                return result;
+            } catch(e) {
+                console.log('[KNOT] Strategy A failed:', e.message.slice(0, 100));
+            }
+
+            // Strategy B: Truncated JSON - try to close open brackets/braces
+            try {
+                let t = s.trim();
+                // Count open/close brackets
+                let braces = 0, brackets = 0, inStr = false, esc = false;
+                for (let i = 0; i < t.length; i++) {
+                    const c = t[i];
+                    if (esc) { esc = false; continue; }
+                    if (c === '\\') { esc = true; continue; }
+                    if (c === '"') { inStr = !inStr; continue; }
+                    if (inStr) continue;
+                    if (c === '{') braces++;
+                    else if (c === '}') braces--;
+                    else if (c === '[') brackets++;
+                    else if (c === ']') brackets--;
+                }
+                if (braces > 0 || brackets > 0) {
+                    // Truncated - find last complete value and close
+                    // Remove trailing incomplete string/value
+                    let trimmed = t.replace(/,\s*"[^"]*"?\s*:?\s*"?[^"]*$/, '');
+                    if (trimmed === t) trimmed = t.replace(/,\s*\{[^}]*$/, '');
+                    if (trimmed === t) trimmed = t.replace(/"[^"]*$/, '"');
+                    // Re-count and close
+                    braces = 0; brackets = 0; inStr = false; esc = false;
+                    for (let i = 0; i < trimmed.length; i++) {
+                        const c = trimmed[i];
+                        if (esc) { esc = false; continue; }
+                        if (c === '\\') { esc = true; continue; }
+                        if (c === '"') { inStr = !inStr; continue; }
+                        if (inStr) continue;
+                        if (c === '{') braces++;
+                        else if (c === '}') braces--;
+                        else if (c === '[') brackets++;
+                        else if (c === ']') brackets--;
+                    }
+                    let suffix = '';
+                    // Close in reverse order
+                    for (let i = 0; i < brackets; i++) suffix += ']';
+                    for (let i = 0; i < braces; i++) suffix += '}';
+                    const completed = trimmed + suffix;
+                    const result = JSON.parse(completed);
+                    console.log(`[KNOT] Strategy B (close truncated JSON) succeeded, closed ${braces} braces + ${brackets} brackets`);
+                    return result;
+                }
+            } catch(e) {
+                console.log('[KNOT] Strategy B failed:', e.message.slice(0, 100));
+            }
+
+            // Strategy C: Combined A+B - fix escaping then close truncated
+            try {
+                let fixed = '';
+                let inString = false, escaped = false;
+                for (let i = 0; i < s.length; i++) {
+                    const c = s[i];
+                    if (escaped) { fixed += c; escaped = false; continue; }
+                    if (c === '\\') { fixed += c; escaped = true; continue; }
+                    if (c === '"') {
+                        if (!inString) { inString = true; fixed += c; }
+                        else {
+                            let j = i + 1;
+                            while (j < s.length && ' \n\r\t'.includes(s[j])) j++;
+                            const next = s[j];
+                            if (next === ':' || next === ',' || next === ']' || next === '}' || next === undefined) {
+                                inString = false; fixed += c;
+                            } else { fixed += '\\"'; }
+                        }
+                    } else if (inString && (c === '\n' || c === '\r' || c === '\t')) {
+                        fixed += c === '\n' ? '\\n' : c === '\r' ? '\\r' : '\\t';
+                    } else { fixed += c; }
+                }
+                // Now close truncation
+                let braces = 0, brackets = 0;
+                inString = false; escaped = false;
+                for (let i = 0; i < fixed.length; i++) {
+                    const c = fixed[i];
+                    if (escaped) { escaped = false; continue; }
+                    if (c === '\\') { escaped = true; continue; }
+                    if (c === '"') { inString = !inString; continue; }
+                    if (inString) continue;
+                    if (c === '{') braces++;
+                    else if (c === '}') braces--;
+                    else if (c === '[') brackets++;
+                    else if (c === ']') brackets--;
+                }
+                if (braces > 0 || brackets > 0) {
+                    // Remove trailing incomplete value
+                    fixed = fixed.replace(/,\s*"[^"]*"?\s*:?\s*"?[^"]*$/, '');
+                    if (inString) fixed += '"';
+                    for (let i = 0; i < brackets; i++) fixed += ']';
+                    for (let i = 0; i < braces; i++) fixed += '}';
+                }
+                const result = JSON.parse(fixed);
+                console.log('[KNOT] Strategy C (fix + close) succeeded');
+                return result;
+            } catch(e) {
+                console.log('[KNOT] Strategy C failed:', e.message.slice(0, 100));
+            }
+
+            return null;
+        }
+
         function parseAIResponse(fullText) {
-            let parsed = null;
-            // Step 1: Direct JSON parse
-            try { parsed = JSON.parse(fullText); } catch {}
-            // Step 2: Extract from ```json code block
-            if (!parsed) {
-                const match = fullText.match(/```(?:json)?\s*([\s\S]*?)```/);
-                if (match) try { parsed = JSON.parse(match[1].trim()); } catch {}
+            // Extract JSON content (remove ```json wrapper if present)
+            let jsonStr = fullText;
+
+            // Remove ```json ... ``` wrapper
+            const codeBlockMatch = fullText.match(/```(?:json)?\s*([\s\S]*?)```\s*$/);
+            if (codeBlockMatch) {
+                jsonStr = codeBlockMatch[1].trim();
+            } else {
+                // No closing ``` - extract everything after opening ```json
+                const openMatch = fullText.match(/```(?:json)?\s*([\s\S]*)/);
+                if (openMatch) {
+                    jsonStr = openMatch[1].trim();
+                } else {
+                    // Try to find outermost braces
+                    const s = fullText.indexOf('{');
+                    if (s >= 0) jsonStr = fullText.slice(s);
+                }
             }
-            // Step 3: Find outermost braces
-            if (!parsed) {
-                const s = fullText.indexOf('{'), e = fullText.lastIndexOf('}');
-                if (s >= 0 && e > s) try { parsed = JSON.parse(fullText.slice(s, e + 1)); } catch {}
-            }
-            return parsed;
+
+            return repairJSON(jsonStr);
         }
 
         async function callWorkerAnalyzeSingle(axes, identity, messagesSample, lensSummary, rawMessages) {
