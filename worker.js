@@ -1397,7 +1397,8 @@ async function checkRateLimit(ip, endpoint, limit, env) {
 }
 
 function sanitizeString(str, maxLen = 100000) {
-  if (typeof str !== 'string') return '';
+  if (Array.isArray(str)) str = str.join('\n');
+  if (typeof str !== 'string') str = String(str || '');
   return str.slice(0, maxLen).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
 }
 
