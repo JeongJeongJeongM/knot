@@ -1969,6 +1969,35 @@ export default {
 
     const path = url.pathname;
 
+    // ──── POST /test-api ──── (minimal Claude API test)
+    if (path === '/test-api') {
+      try {
+        const start = Date.now();
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 20000);
+        const apiResp = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': env.ANTHROPIC_API_KEY || '',
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 50,
+            messages: [{ role: 'user', content: 'Say hello in Korean, one word only.' }],
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(tid);
+        const elapsed = Date.now() - start;
+        const text = await apiResp.text();
+        return jsonResponse({ status: apiResp.status, elapsed_ms: elapsed, body: text.slice(0, 500) }, 200, corsHeaders);
+      } catch (e) {
+        return jsonResponse({ error: e.message, name: e.name }, 500, corsHeaders);
+      }
+    }
+
     // ──── POST /analyze ────
     if (path === '/analyze') {
       if (!(await checkRateLimit(ip, 'analyze', RATE_LIMIT_ANALYZE, env))) {
