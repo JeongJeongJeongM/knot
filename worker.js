@@ -1969,12 +1969,22 @@ export default {
 
     const path = url.pathname;
 
-    // ──── POST /test-api ──── (minimal Claude API test)
+    // ──── POST /test-api ──── (Claude API test with configurable params)
     if (path === '/test-api') {
       try {
+        const body = await request.json().catch(() => ({}));
+        const testMaxTokens = body.max_tokens || 50;
+        const testSystem = body.system || '';
+        const testMsg = body.message || 'Say hello in Korean, one word only.';
         const start = Date.now();
         const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), 20000);
+        const tid = setTimeout(() => controller.abort(), 60000);
+        const apiBody = {
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: testMaxTokens,
+          messages: [{ role: 'user', content: testMsg }],
+        };
+        if (testSystem) apiBody.system = testSystem;
         const apiResp = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
@@ -1982,19 +1992,15 @@ export default {
             'x-api-key': env.ANTHROPIC_API_KEY || '',
             'anthropic-version': '2023-06-01',
           },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 50,
-            messages: [{ role: 'user', content: 'Say hello in Korean, one word only.' }],
-          }),
+          body: JSON.stringify(apiBody),
           signal: controller.signal,
         });
         clearTimeout(tid);
         const elapsed = Date.now() - start;
         const text = await apiResp.text();
-        return jsonResponse({ status: apiResp.status, elapsed_ms: elapsed, body: text.slice(0, 500) }, 200, corsHeaders);
+        return jsonResponse({ status: apiResp.status, elapsed_ms: elapsed, body: text.slice(0, 1000) }, 200, corsHeaders);
       } catch (e) {
-        return jsonResponse({ error: e.message, name: e.name }, 500, corsHeaders);
+        return jsonResponse({ error: e.message, name: e.name, elapsed_ms: Date.now() }, 500, corsHeaders);
       }
     }
 
