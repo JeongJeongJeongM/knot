@@ -204,6 +204,106 @@ function prismShannonEntropy(probabilities) {
   return entropy;
 }
 
+// ═══════════════════════════════════════════════════════════
+// L0 PREPROCESSING LAYER — H2AI Core Points #1, #2, #3
+// ═══════════════════════════════════════════════════════════
+
+const L0_CONFIG = {
+  MIN_CHAR_COUNT: 2000,          // #3: 최소 총 글자 수
+  MIN_VALID_TURNS: 10,           // #3: 최소 유효 턴 수
+  TURN_MERGE_INTERVAL_MS: 3600000, // #1: 1시간 = 3,600,000ms
+};
+
+/**
+ * #2: Code/Markdown Stripper — 코드 블록, JSON, 로그 노이즈 소거
+ */
+function l0StripCodeAndNoise(text) {
+  // 코드 블록 치환 (```...```)
+  let cleaned = text.replace(/```[\s\S]*?```/g, '[CODE_BLOCK]');
+  // 인라인 코드 치환 (`...`)
+  cleaned = cleaned.replace(/`[^`]+`/g, '[CODE]');
+  // JSON 블록 치환 ({...} 형태의 멀티라인)
+  cleaned = cleaned.replace(/\{[\s\S]{50,}?\}/g, '[JSON_BLOCK]');
+  // URL 치환
+  cleaned = cleaned.replace(/https?:\/\/[^\s]+/g, '[URL]');
+  // 로그 패턴 치환 (타임스탬프 + 로그레벨)
+  cleaned = cleaned.replace(/\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}[^\n]*/g, '[LOG]');
+  // 파일 경로 치환
+  cleaned = cleaned.replace(/(?:\/[\w.-]+){3,}/g, '[PATH]');
+  return cleaned;
+}
+
+/**
+ * #1: The Sanitizer — assistant 발화 제거 + 타임스탬프 기반 턴 병합
+ */
+function l0SanitizeAndMergeTurns(messages) {
+  // Step 1: assistant 발화 100% 제거, user 발화만 추출
+  const userOnly = messages.filter(msg =>
+    msg.sender === 'user' || msg.sender === 'me' || !msg.sender
+  );
+
+  if (userOnly.length === 0) return [];
+
+  // Step 2: 코드/노이즈 스트리핑 적용
+  const cleaned = userOnly.map(msg => ({
+    ...msg,
+    text: l0StripCodeAndNoise(msg.text || ''),
+    _originalText: msg.text || '',
+  }));
+
+  // Step 3: 타임스탬프 기반 턴 병합 (1시간 이내 연속 발화 → 단일 턴)
+  if (!cleaned[0]?.timestamp) {
+    // 타임스탬프가 없으면 병합 없이 반환
+    return cleaned;
+  }
+
+  const merged = [];
+  let buffer = { ...cleaned[0] };
+
+  for (let i = 1; i < cleaned.length; i++) {
+    const curr = cleaned[i];
+    const prevTime = new Date(buffer.timestamp).getTime();
+    const currTime = new Date(curr.timestamp).getTime();
+
+    if (!isNaN(prevTime) && !isNaN(currTime) &&
+        (currTime - prevTime) <= L0_CONFIG.TURN_MERGE_INTERVAL_MS) {
+      // 1시간 이내: 단일 턴으로 병합
+      buffer.text += '\n' + curr.text;
+      buffer._originalText += '\n' + curr._originalText;
+    } else {
+      merged.push(buffer);
+      buffer = { ...curr };
+    }
+  }
+  merged.push(buffer);
+  return merged;
+}
+
+/**
+ * #3: Density Filter — 저밀도 데이터 엔진 진입 차단
+ * Returns: { pass: boolean, reason?: string }
+ */
+function l0DensityCheck(texts) {
+  const totalChars = texts.reduce((sum, t) => sum + t.length, 0);
+  const validTurns = texts.filter(t => t.trim().length > 5).length;
+
+  if (totalChars < L0_CONFIG.MIN_CHAR_COUNT) {
+    return {
+      pass: false,
+      reason: `DENSITY_TOO_LOW`,
+      message: `사유 데이터가 부족합니다. 최소 ${L0_CONFIG.MIN_CHAR_COUNT}자 이상의 대화가 필요합니다. (현재: ${totalChars}자)`,
+    };
+  }
+  if (validTurns < L0_CONFIG.MIN_VALID_TURNS) {
+    return {
+      pass: false,
+      reason: `TURNS_TOO_FEW`,
+      message: `유효한 대화 턴이 부족합니다. 최소 ${L0_CONFIG.MIN_VALID_TURNS}회 이상 필요합니다. (현재: ${validTurns}회)`,
+    };
+  }
+  return { pass: true };
+}
+
 class PrismP1TopicAnalyzer {
   constructor(customKeywords = null) {
     this.keywords = { ...PRISM_TOPIC_KEYWORDS };
@@ -230,6 +330,10 @@ class PrismP1TopicAnalyzer {
     topicCounts['other'] = 0;
     topicTurnCounts['other'] = 0;
 
+    // #4: Cross-Matrix — 단일 발화 내 이종 주제 동시 발현 추적
+    const coOccurrence = {};  // "catA|catB" → count
+    let fusionTurnCount = 0;  // 2개 이상 주제가 공존하는 턴 수
+
     for (const text of texts) {
       const textLower = text.toLowerCase();
       const matchedInTurn = new Set();
@@ -250,6 +354,18 @@ class PrismP1TopicAnalyzer {
 
       for (const cat of matchedInTurn) {
         topicTurnCounts[cat] += 1;
+      }
+
+      // #4: 교차 행렬 — 단일 턴 내 복수 주제 co-occurrence 기록
+      const matchedArr = Array.from(matchedInTurn).sort();
+      if (matchedArr.length >= 2) {
+        fusionTurnCount++;
+        for (let a = 0; a < matchedArr.length; a++) {
+          for (let b = a + 1; b < matchedArr.length; b++) {
+            const key = `${matchedArr[a]}|${matchedArr[b]}`;
+            coOccurrence[key] = (coOccurrence[key] || 0) + 1;
+          }
+        }
       }
 
       if (matchedInTurn.size === 0) {
@@ -285,7 +401,18 @@ class PrismP1TopicAnalyzer {
     const ratios = Object.values(topics).map(t => t.ratio).filter(r => r > 0);
     const entropy = prismShannonEntropy(ratios);
     const maxEntropy = Math.log2(PRISM_CONFIG.TOPIC_CATEGORIES.length) || 1.0;
-    const diversity = Math.round((entropy / (maxEntropy + PRISM_CONFIG.EPSILON)) * 10000) / 10000;
+    const baseDiversity = entropy / (maxEntropy + PRISM_CONFIG.EPSILON);
+
+    // #4: 융합적 사고력 가점 — 이종 주제 동시 발현 비율에 따라 다양성 보정
+    const fusionRatio = fusionTurnCount / (texts.length + PRISM_CONFIG.EPSILON);
+    const fusionBonus = Math.min(fusionRatio * 0.3, 0.15); // 최대 0.15 가점
+    const diversity = Math.round(Math.min(1.0, baseDiversity + fusionBonus) * 10000) / 10000;
+
+    // 상위 co-occurrence 쌍 추출 (융합 패턴)
+    const topFusions = Object.entries(coOccurrence)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([pair, count]) => ({ pair: pair.split('|'), count }));
 
     const gaps = [];
     if (selfReportedInterests) {
@@ -302,7 +429,11 @@ class PrismP1TopicAnalyzer {
       }
     }
 
-    return { topics, dominant_topic: dominant, topic_diversity: diversity, self_report_gaps: gaps };
+    return {
+      topics, dominant_topic: dominant, topic_diversity: diversity,
+      self_report_gaps: gaps,
+      topic_fusion: { fusion_ratio: Math.round(fusionRatio * 10000) / 10000, top_fusions: topFusions },
+    };
   }
 
   _findMatchingCategory(interest) {
@@ -618,9 +749,22 @@ class PrismP4CuriosityAnalyzer {
       typeDistribution[qtype] = Math.round((count / totalQ) * 10000) / 10000;
     }
 
+    // #5: 프롬프트 목적성 분류 — Task-Master vs Philosopher 강제 레이블링
+    const factualRatio = typeDistribution['factual'] || 0;
+    const hypothesisRatio = typeDistribution['hypothesis'] || 0;
+    const metaRatio = typeDistribution['meta'] || 0;
+
+    let prompt_intent = 'balanced';
+    if (factualRatio > 0.9) {
+      prompt_intent = 'task_master';      // 명령/사실 위주 90% 초과
+    } else if ((hypothesisRatio + metaRatio) > 0.15) {
+      prompt_intent = 'philosopher';      // 가설+메타 15% 초과
+    }
+
     return {
       question_ratio: questionRatio, dominant_type: dominantType, depth_vs_breadth: depthVsBreadth,
       follow_up_tendency: followUpTendency, question_type_distribution: typeDistribution,
+      prompt_intent: prompt_intent,
     };
   }
 
@@ -683,13 +827,23 @@ function analyzePrism(messages, selfReportedInterests = null) {
     };
   }
 
-  const userMessages = messages.filter(msg => msg.sender === 'user' || !msg.sender);
-  const texts = userMessages.map(msg => msg.text);
+  // #1, #2: L0 전처리 — assistant 제거, 코드 스트리핑, 턴 병합
+  const preprocessed = l0SanitizeAndMergeTurns(messages);
+  const texts = preprocessed.map(msg => msg.text);
 
   if (texts.length < PRISM_CONFIG.MIN_TURNS_FOR_ANALYSIS) {
     return {
       error: 'INSUFFICIENT_TURNS',
       message: `Need at least ${PRISM_CONFIG.MIN_TURNS_FOR_ANALYSIS} turns, got ${texts.length}`,
+    };
+  }
+
+  // #3: 밀도 필터
+  const densityCheck = l0DensityCheck(texts);
+  if (!densityCheck.pass) {
+    return {
+      error: densityCheck.reason,
+      message: densityCheck.message,
     };
   }
 
@@ -713,9 +867,12 @@ function analyzePrism(messages, selfReportedInterests = null) {
   const p4 = new PrismP4CuriosityAnalyzer();
   const curiosity = p4.analyze(texts);
 
+  // #11: L3.5 Consistency Volatility
+  const consistency = l3ConsistencyVolatility(texts, PRISM_CONFIG.DEPTH_LEVEL_WEIGHTS);
+
   return {
     topic_distribution: topicDist,
-    engagement: engagement,
+    engagement: { ...engagement, consistency_volatility: consistency },
     vocabulary: vocabulary,
     curiosity: curiosity,
     metadata: {
@@ -724,6 +881,7 @@ function analyzePrism(messages, selfReportedInterests = null) {
       computed_at: prismNowISO(),
       input_hash: inputHash,
       turn_count: texts.length,
+      preprocessed_from: messages.length,
     },
   };
 }
@@ -1180,6 +1338,18 @@ function R3EmotionalAnalyzer_analyze(texts) {
     response_style = "acknowledging";
   }
 
+  // #7: H2AI 전용 가중치 보정 — empathic 가중치 0, self_disclosure 5배
+  // H2AI 모드에서는 '타인 공감'이 의미 없으므로 '자기 개방'에 집중
+  const h2ai_empathic_weight = 0;         // 공감 시그널 가중치 → 0
+  const h2ai_disclosure_weight = 5;       // 자기 개방 시그널 가중치 → 5x
+  const weighted_empathic = empathic * h2ai_empathic_weight;
+  const weighted_disclosure = disclosure * h2ai_disclosure_weight;
+
+  // #8: Absolute Magnitude — 비율이 아닌 벡터 크기(총량) 측정
+  // ||V|| = sqrt(Space^2 + Solution^2)
+  const magnitude = Math.sqrt(space * space + solution * solution);
+  const magnitudeNorm = magnitude / (total + ANCHOR_CONFIG.EPSILON);
+
   const sol_total = solution + space + ANCHOR_CONFIG.EPSILON;
   let sol_vs_space = "balanced";
   if (solution / sol_total > 0.7) {
@@ -1188,7 +1358,15 @@ function R3EmotionalAnalyzer_analyze(texts) {
     sol_vs_space = "space_holding";
   }
 
-  const disc_ratio = disclosure / (total + ANCHOR_CONFIG.EPSILON);
+  // #8: 두 영역 모두 상위 80%일 경우 Alpha_Integrated로 격상
+  const solRatio = solution / (total + ANCHOR_CONFIG.EPSILON);
+  const spaceRatio = space / (total + ANCHOR_CONFIG.EPSILON);
+  if (solRatio > 0.15 && spaceRatio > 0.15 && magnitudeNorm > 0.2) {
+    sol_vs_space = "alpha_integrated";
+  }
+
+  // #7: 자기 개방도는 H2AI 보정된 가중치 사용
+  const disc_ratio = weighted_disclosure / (total * h2ai_disclosure_weight + ANCHOR_CONFIG.EPSILON);
   let self_disc = "minimal";
   if (disc_ratio > 0.15) {
     self_disc = "open";
@@ -1203,6 +1381,7 @@ function R3EmotionalAnalyzer_analyze(texts) {
     response_style: response_style,
     solution_vs_space: sol_vs_space,
     self_disclosure: self_disc,
+    emotional_magnitude: Math.round(magnitudeNorm * 10000) / 10000,
     narrative: narrative,
   };
 }
@@ -1310,23 +1489,14 @@ function analyzeAnchor(messages) {
     };
   }
 
-  const user_messages = messages.filter(
-    m => m && (m.sender === "user" || m.sender === "me")
-  );
-
-  if (user_messages.length < ANCHOR_CONFIG.MIN_TURNS_FOR_ANALYSIS) {
-    return {
-      error: "INSUFFICIENT_TURNS",
-      message: `ANCHOR requires at least ${ANCHOR_CONFIG.MIN_TURNS_FOR_ANALYSIS} user messages, got ${user_messages.length}`,
-    };
-  }
-
-  const texts = user_messages.map(m => m.text || "").filter(t => t.length > 0);
+  // #1, #2: L0 전처리 재활용 (PRISM에서 이미 처리된 경우 중복 방지)
+  const preprocessed = l0SanitizeAndMergeTurns(messages);
+  const texts = preprocessed.map(m => m.text || "").filter(t => t.length > 0);
 
   if (texts.length < ANCHOR_CONFIG.MIN_TURNS_FOR_ANALYSIS) {
     return {
-      error: "INSUFFICIENT_DATA",
-      message: `ANCHOR requires at least ${ANCHOR_CONFIG.MIN_TURNS_FOR_ANALYSIS} non-empty messages`,
+      error: "INSUFFICIENT_TURNS",
+      message: `ANCHOR requires at least ${ANCHOR_CONFIG.MIN_TURNS_FOR_ANALYSIS} user messages, got ${texts.length}`,
     };
   }
 
@@ -1338,18 +1508,23 @@ function analyzeAnchor(messages) {
     const emotional_availability = R3EmotionalAnalyzer_analyze(texts);
     const growth = R4GrowthAnalyzer_analyze(texts);
 
+    // #6: Markov State Transition — 턴 간 상태 전이 행렬
+    const markov = anchorMarkovTransition(texts);
+
     return {
       success: true,
       attachment: attachment,
       conflict: conflict,
       emotional_availability: emotional_availability,
       growth: growth,
+      markov_transitions: markov,
       metadata: {
         engine_version: ANCHOR_CONFIG.ENGINE_VERSION,
         spec_version: ANCHOR_CONFIG.SPEC_VERSION,
         computed_at: prismNowISO(),
         input_hash: input_hash,
         turn_count: texts.length,
+        interaction_mode: 'H2AI',
       },
     };
   } catch (e) {
@@ -1359,6 +1534,297 @@ function analyzeAnchor(messages) {
       engine_version: ANCHOR_CONFIG.ENGINE_VERSION,
     };
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+// #6: Markov State Transition — 시계열 인과성 추적
+// ═══════════════════════════════════════════════════════════
+
+const MARKOV_STATES = ['secure', 'anxious', 'avoidant', 'neutral', 'conflict'];
+
+function anchorClassifyTurnState(text) {
+  const tl = text.toLowerCase();
+  if (ANCHOR_STRESS_INDICATORS.some(s => tl.includes(s)) ||
+      ANCHOR_CONFLICT_CONTEXT_KEYWORDS.some(s => tl.includes(s))) {
+    // 갈등 상태
+    if (ANCHOR_AVOIDANT_SIGNALS.some(s => tl.includes(s))) return 'avoidant';
+    if (ANCHOR_ANXIOUS_SIGNALS.some(s => tl.includes(s))) return 'anxious';
+    return 'conflict';
+  }
+  if (ANCHOR_ANXIOUS_SIGNALS.some(s => tl.includes(s))) return 'anxious';
+  if (ANCHOR_AVOIDANT_SIGNALS.some(s => tl.includes(s))) return 'avoidant';
+  if (ANCHOR_SECURE_SIGNALS.some(s => tl.includes(s))) return 'secure';
+  return 'neutral';
+}
+
+function anchorMarkovTransition(texts) {
+  if (texts.length < 2) return { transitions: {}, dominant_pattern: null, collapse_patterns: [] };
+
+  // 각 턴의 상태 태깅
+  const states = texts.map(t => anchorClassifyTurnState(t));
+
+  // 전이 행렬 구축: P(S_t+1 | S_t)
+  const transCount = {};
+  const fromCount = {};
+  for (let i = 0; i < states.length - 1; i++) {
+    const from = states[i];
+    const to = states[i + 1];
+    const key = `${from}->${to}`;
+    transCount[key] = (transCount[key] || 0) + 1;
+    fromCount[from] = (fromCount[from] || 0) + 1;
+  }
+
+  // 전이 확률 계산
+  const transitions = {};
+  for (const [key, count] of Object.entries(transCount)) {
+    const from = key.split('->')[0];
+    transitions[key] = Math.round((count / (fromCount[from] || 1)) * 10000) / 10000;
+  }
+
+  // 붕괴 패턴 감지: 부정적 연쇄 전이 (불안→회피, 갈등→회피 등)
+  const collapsePatterns = [];
+  const negativeChains = [
+    ['anxious', 'avoidant'],   // 불안 → 회피
+    ['conflict', 'avoidant'],  // 갈등 → 회피
+    ['anxious', 'conflict'],   // 불안 → 갈등 격화
+    ['conflict', 'anxious'],   // 갈등 → 불안 전이
+  ];
+  for (const [from, to] of negativeChains) {
+    const key = `${from}->${to}`;
+    if (transitions[key] && transitions[key] > 0.3) {
+      collapsePatterns.push({ pattern: key, probability: transitions[key] });
+    }
+  }
+
+  // 가장 빈도 높은 전이 패턴
+  let dominantPattern = null;
+  let maxCount = 0;
+  for (const [key, count] of Object.entries(transCount)) {
+    if (count > maxCount) { maxCount = count; dominantPattern = key; }
+  }
+
+  return { transitions, dominant_pattern: dominantPattern, collapse_patterns: collapsePatterns };
+}
+
+// ═══════════════════════════════════════════════════════════
+// #9: L1 Decision Tree Fallback — LLM 장애 시 하드코딩 분석
+// ═══════════════════════════════════════════════════════════
+
+// 인과 접속사 사전
+const L1_CAUSAL_CONJUNCTIONS = [
+  '왜냐하면', '따라서', '그러므로', '때문에', '그래서', '결론적으로',
+  '이로 인해', '결과적으로', '그 결과', '이에 따라', '즉', '바꿔 말하면',
+  '다시 말해', '요컨대', '한편', '반면에', '그럼에도', '하지만', '그러나',
+];
+
+// P3 전문 어휘 교차 참조 (PRISM_DOMAIN_VOCABULARY에서 핵심 키워드)
+const L1_DOMAIN_MARKERS = [
+  // tech
+  '알고리즘', '아키텍처', '프레임워크', '리팩토링', '디버깅',
+  // psychology
+  '인지', '무의식', '방어기제', '트라우마', '메타인지',
+  // philosophy
+  '존재론', '인식론', '변증법', '현상학', '실존',
+  // finance
+  '포트폴리오', '리스크', '헤지', '레버리지', '밸류에이션',
+  // science
+  '가설', '실험', '변수', '상관관계', '인과관계',
+];
+
+/**
+ * L1 Decision Tree: LLM 없이 텍스트 기반 행동 프로필 추정
+ * 정확도 목표: 80%+ (분석적 대화 여부 판정)
+ */
+function l1FallbackDecisionTree(texts, prism, anchor) {
+  const allText = texts.join(' ');
+  const totalLen = allText.length;
+
+  // 인과 접속사 밀도
+  let causalCount = 0;
+  for (const conj of L1_CAUSAL_CONJUNCTIONS) {
+    const regex = new RegExp(conj, 'g');
+    const matches = allText.match(regex);
+    if (matches) causalCount += matches.length;
+  }
+  const causalDensity = causalCount / (texts.length + PRISM_CONFIG.EPSILON);
+
+  // 전문 어휘 밀도
+  let domainCount = 0;
+  for (const marker of L1_DOMAIN_MARKERS) {
+    if (allText.includes(marker)) domainCount++;
+  }
+  const domainDensity = domainCount / L1_DOMAIN_MARKERS.length;
+
+  // 평균 문장 길이
+  const avgLen = totalLen / (texts.length + PRISM_CONFIG.EPSILON);
+
+  // 질문 비율 (PRISM P4에서 가져옴)
+  const questionRatio = prism?.curiosity?.question_ratio || 0;
+  const promptIntent = prism?.curiosity?.prompt_intent || 'balanced';
+
+  // 결정 트리 로직
+  const fallbackIntensity = {};
+
+  // A1 정서 강도: 감탄사/강조 표현 밀도
+  const emotionalMarkers = (allText.match(/[!！]{2,}|ㅠ+|ㅜ+|ㅋ+|ㅎ+|하하|진짜|대박|미쳤/g) || []).length;
+  fallbackIntensity.A1 = Math.min(1.0, emotionalMarkers / (texts.length * 0.5 + PRISM_CONFIG.EPSILON));
+
+  // A2 정서 안정성: 인과 접속사 + 문장 길이 일관성
+  const lengths = texts.map(t => t.length);
+  const lenMean = lengths.reduce((a, b) => a + b, 0) / lengths.length;
+  const lenStd = Math.sqrt(lengths.reduce((sum, l) => sum + (l - lenMean) ** 2, 0) / lengths.length);
+  const lenCV = lenStd / (lenMean + PRISM_CONFIG.EPSILON);
+  fallbackIntensity.A2 = Math.min(1.0, Math.max(0, 1.0 - lenCV));
+
+  // A3 감정 표현: 감정 어휘 밀도
+  const expressiveMarkers = (allText.match(/좋아|싫어|슬프|기뻐|화나|무서|불안|행복|사랑|미워|짜증/g) || []).length;
+  fallbackIntensity.A3 = Math.min(1.0, expressiveMarkers / (texts.length * 0.3 + PRISM_CONFIG.EPSILON));
+
+  // A4 자기 확신: 단정적 표현 밀도
+  const assertiveMarkers = (allText.match(/확실히|분명히|당연히|반드시|절대|무조건|틀림없이|나는|내가/g) || []).length;
+  fallbackIntensity.A4 = Math.min(1.0, assertiveMarkers / (texts.length * 0.3 + PRISM_CONFIG.EPSILON));
+
+  // A5 사회적 주도성: 제안/의견 표현
+  const initiativeMarkers = (allText.match(/해보자|하자|어때|제안|생각에는|방법은|해볼까/g) || []).length;
+  fallbackIntensity.A5 = Math.min(1.0, initiativeMarkers / (texts.length * 0.2 + PRISM_CONFIG.EPSILON));
+
+  // A6 권위 수용: 겸양/수용 표현
+  const acceptanceMarkers = (allText.match(/맞아|그렇지|동의|알겠|이해|감사|고마워|배우|참고/g) || []).length;
+  fallbackIntensity.A6 = Math.min(1.0, acceptanceMarkers / (texts.length * 0.3 + PRISM_CONFIG.EPSILON));
+
+  // A12 친밀감 편안함: 개인적 이야기 공유
+  const intimacyMarkers = (allText.match(/내 경험|솔직히|사실은|비밀인데|나만|개인적으로|우리|같이/g) || []).length;
+  fallbackIntensity.A12 = Math.min(1.0, intimacyMarkers / (texts.length * 0.2 + PRISM_CONFIG.EPSILON));
+
+  // A14 변화 수용성: 열린 태도 표현
+  const openMarkers = (allText.match(/새로운|다르게|바꿔|시도|도전|변화|혁신|왜 안 돼/g) || []).length;
+  fallbackIntensity.A14 = Math.min(1.0, openMarkers / (texts.length * 0.2 + PRISM_CONFIG.EPSILON));
+
+  // 간이 structural axes (기본값)
+  const fallbackStructural = {
+    A7:  { primary: avgLen > 100 && causalDensity > 0.5 ? 'initiator' : 'balanced' },
+    A8:  { primary: 'boundary' },
+    A9:  { primary: fallbackIntensity.A3 > 0.3 ? 'expressive' : 'analytical' },
+    A10: { primary: domainDensity > 0.2 ? 'depth_seeker' : 'slow_burn' },
+    A11: { primary: 'balanced' },
+    A13: { primary: questionRatio > 0.3 ? 'growth' : 'defensive' },
+    A15: { primary: promptIntent === 'philosopher' ? 'active_investor' : 'passive_maintainer' },
+    A16: { primary: causalDensity > 0.3 ? 'analytical' : 'pragmatic' },
+    A17: { primary: 'minimal' },
+  };
+
+  return {
+    intensity: fallbackIntensity,
+    structural: fallbackStructural,
+    _fallback: true,
+    _confidence: causalDensity > 0.3 && domainDensity > 0.15 ? 'high' : causalDensity > 0.1 ? 'medium' : 'low',
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// #11: L3.5 Consistency Volatility — 구간 분산 페널티
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * 전/후반부 평균 차이 + 표준편차 페널티
+ * C4_final = (|late_mean - early_mean| + λ * σ_total) / ceiling
+ */
+function l3ConsistencyVolatility(texts, depthWeights) {
+  if (texts.length < 4) return { c4_score: 0, volatility: 'stable' };
+
+  const LAMBDA = 0.5;
+  const C4_CEILING = 1.0;
+
+  // 각 턴의 depth weight 추출
+  const p2 = new PrismP2DepthAnalyzer();
+  const weights = texts.map(t => {
+    const depth = p2._classifyDepth(t);
+    return depthWeights[depth] || 0.1;
+  });
+
+  const mid = Math.floor(weights.length / 2);
+  const earlyWeights = weights.slice(0, mid);
+  const lateWeights = weights.slice(mid);
+
+  const mean = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+  const std = arr => {
+    const m = mean(arr);
+    return Math.sqrt(arr.reduce((sum, v) => sum + (v - m) ** 2, 0) / arr.length);
+  };
+
+  const earlyMean = mean(earlyWeights);
+  const lateMean = mean(lateWeights);
+  const sigmaTotal = std(weights);
+
+  const c4Final = Math.min(1.0, (Math.abs(lateMean - earlyMean) + LAMBDA * sigmaTotal) / C4_CEILING);
+
+  let volatility = 'stable';
+  if (c4Final > 0.6) volatility = 'volatile';
+  else if (c4Final > 0.3) volatility = 'moderate';
+
+  return {
+    c4_score: Math.round(c4Final * 10000) / 10000,
+    volatility: volatility,
+    early_mean: Math.round(earlyMean * 10000) / 10000,
+    late_mean: Math.round(lateMean * 10000) / 10000,
+    sigma: Math.round(sigmaTotal * 10000) / 10000,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// #12: L4 Asymmetric Delta — 비대칭 마찰 계수
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Δ = α · max(0, O - E) + β · max(0, E - O)
+ * O = Observed (실제값), E = Expected (기준값/중립 0.5)
+ */
+const L4_AXIS_WEIGHTS = {
+  // 초과(α)와 미달(β) 가중치를 축별로 차등 적용
+  A1:  { alpha: 1.2, beta: 0.8 },   // 정서 강도: 초과에 약간 가산
+  A2:  { alpha: 0.8, beta: 1.2 },   // 정서 안정성: 불안정(미달)에 가산
+  A3:  { alpha: 1.0, beta: 1.0 },   // 감정 표현: 대칭
+  A4:  { alpha: 1.5, beta: 0.8 },   // 자기 확신: 과잉확신(초과)에 높은 마찰
+  A5:  { alpha: 1.3, beta: 0.7 },   // 사회적 주도성: 공격적 주도(초과) 페널티
+  A6:  { alpha: 0.7, beta: 1.3 },   // 권위 수용: 맹종(미달)에 가산
+  A12: { alpha: 1.0, beta: 1.0 },   // 친밀감: 대칭
+  A14: { alpha: 0.8, beta: 1.2 },   // 변화 수용: 경직(미달)에 가산
+};
+
+function l4AsymmetricDelta(observed, expected) {
+  if (!observed || !expected) return null;
+
+  const deltas = {};
+  let totalFriction = 0;
+
+  for (const [axis, weights] of Object.entries(L4_AXIS_WEIGHTS)) {
+    const o = observed[axis];
+    const e = expected[axis] ?? 0.5; // 기준값 없으면 중립(0.5)
+
+    if (o === undefined) continue;
+
+    const overshoot = Math.max(0, o - e);
+    const undershoot = Math.max(0, e - o);
+    const delta = weights.alpha * overshoot + weights.beta * undershoot;
+
+    deltas[axis] = {
+      observed: Math.round(o * 10000) / 10000,
+      expected: Math.round(e * 10000) / 10000,
+      delta: Math.round(delta * 10000) / 10000,
+      direction: overshoot > undershoot ? 'overshoot' : undershoot > overshoot ? 'undershoot' : 'aligned',
+    };
+    totalFriction += delta;
+  }
+
+  const axisCount = Object.keys(deltas).length || 1;
+  const avgFriction = totalFriction / axisCount;
+
+  return {
+    axis_deltas: deltas,
+    total_friction: Math.round(totalFriction * 10000) / 10000,
+    avg_friction: Math.round(avgFriction * 10000) / 10000,
+    friction_level: avgFriction > 0.3 ? 'high' : avgFriction > 0.15 ? 'moderate' : 'low',
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2395,21 +2861,34 @@ export default {
             // ═══ STAGE 1: Non-streaming scoring call ═══
             await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'status', stage: 1, message: '행동 패턴 분석 중...' })}\n\n`));
 
-            const scoringPrompt = buildScoringPrompt(rawMessages, prism, anchor);
-            const scoringRaw = await callClaude(env.ANTHROPIC_API_KEY, SYSTEM_PROMPT_SCORING, scoringPrompt);
-            const scores = extractJSON(scoringRaw);
+            let axes;
+            let usedFallback = false;
 
-            if (!scores || !scores.intensity) {
-              await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: 'Stage 1 점수 파싱 실패' })}\n\n`));
-              await writer.close();
-              return;
+            try {
+              const scoringPrompt = buildScoringPrompt(rawMessages, prism, anchor);
+              const scoringRaw = await callClaude(env.ANTHROPIC_API_KEY, SYSTEM_PROMPT_SCORING, scoringPrompt);
+              const scores = extractJSON(scoringRaw);
+
+              if (scores && scores.intensity) {
+                axes = {
+                  intensity: scores.intensity || {},
+                  structural: scores.structural || {}
+                };
+              }
+            } catch (llmErr) {
+              console.error('[Stage 1 LLM Error]', llmErr.message);
             }
 
-            // Build axes object from LLM scores
-            const axes = {
-              intensity: scores.intensity || {},
-              structural: scores.structural || {}
-            };
+            // #9: L1 Decision Tree Fallback — LLM 실패 시 하드코딩 분석
+            if (!axes) {
+              const userTexts = rawMessages
+                .filter(m => !m.sender || m.sender === 'user' || m.sender === 'me')
+                .map(m => typeof m === 'string' ? m : (m.text || ''));
+              const fallback = l1FallbackDecisionTree(userTexts, prism, anchor);
+              axes = { intensity: fallback.intensity, structural: fallback.structural };
+              usedFallback = true;
+              console.log('[Stage 1] Using L1 fallback decision tree, confidence:', fallback._confidence);
+            }
 
             // Compute type code + identity server-side from LLM-produced axes
             const identity = computeServerIdentity(axes);
@@ -2437,6 +2916,9 @@ export default {
               console.error('[D1 Stage1 Save Error]', dbErr.message);
             }
 
+            // #12: L4 Asymmetric Delta 계산 (중립 0.5 기준)
+            const friction = l4AsymmetricDelta(axes.intensity, null);
+
             // Send Stage 1 results to client (scores + identity + analysis_id)
             await writer.write(encoder.encode(`data: ${JSON.stringify({
               type: 'scores',
@@ -2445,6 +2927,8 @@ export default {
               identity: identity,
               prism: prism || null,
               anchor: anchor || null,
+              friction: friction || null,
+              used_fallback: usedFallback,
             })}\n\n`));
 
             // ═══ STAGE 2: Streaming essay call ═══
