@@ -3332,9 +3332,19 @@
                     T.startLLMScan();
 
                     let llmProg = 70;
+                    let llmSec = 0;
+                    const llmMessages = [
+                        { at: 10, msg: '<span class="dim">[server]</span> <span class="info">PRISM + ANCHOR 엔진 분석 완료. AI 에세이 생성 중...</span>' },
+                        { at: 25, msg: '<span class="dim">[server]</span> <span class="info">AI가 프로필 에세이를 작성하고 있습니다. 잠시만 기다려주세요...</span>' },
+                        { at: 45, msg: '<span class="dim">[server]</span> <span class="warn">심층 분석은 최대 90초까지 소요될 수 있습니다...</span>' },
+                        { at: 70, msg: '<span class="dim">[server]</span> <span class="info">거의 완료되었습니다...</span>' },
+                    ];
                     const llmInterval = setInterval(() => {
-                        llmProg = Math.min(llmProg + 1.5, 95);
+                        llmSec++;
+                        llmProg = Math.min(70 + (llmSec * 0.3), 95);
                         T.setProgress(llmProg);
+                        const msg = llmMessages.find(m => m.at === llmSec);
+                        if (msg) T.addLine(msg.msg, 0);
                     }, 1000);
 
                     const messagesSample = extractMessagesSample(messages);

@@ -1791,7 +1791,7 @@ ${descB}
 
 async function callClaude(apiKey, systemPrompt, userPrompt) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 55000);
+  const timeoutId = setTimeout(() => controller.abort(), 120000);
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1822,7 +1822,7 @@ async function callClaude(apiKey, systemPrompt, userPrompt) {
   } catch (e) {
     clearTimeout(timeoutId);
     if (e.name === 'AbortError') {
-      throw new Error('Claude API timeout (55s)');
+      throw new Error('Claude API timeout (120s)');
     }
     throw e;
   }
