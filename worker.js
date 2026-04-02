@@ -1433,39 +1433,47 @@ function sanitizeAxes(axes) {
   return clean;
 }
 
+function deepSanitize(obj, depth) {
+  if (depth === undefined) depth = 0;
+  if (depth > 5) return null;
+  if (obj === null || obj === undefined) return null;
+  if (typeof obj === 'string') return obj.slice(0, 500);
+  if (typeof obj === 'number') return isFinite(obj) ? obj : 0;
+  if (typeof obj === 'boolean') return obj;
+  if (Array.isArray(obj)) {
+    return obj.slice(0, 50).map(function(item) { return deepSanitize(item, depth + 1); }).filter(function(x) { return x !== null; });
+  }
+  if (typeof obj === 'object') {
+    var clean = {};
+    var keys = Object.keys(obj).slice(0, 50);
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i].slice(0, 50);
+      var val = deepSanitize(obj[keys[i]], depth + 1);
+      if (val !== null) clean[key] = val;
+    }
+    return Object.keys(clean).length > 0 ? clean : null;
+  }
+  return null;
+}
+
 function sanitizePrism(prism) {
   if (!prism || typeof prism !== 'object') return null;
-  const clean = {};
+  var clean = {};
 
   if (prism.topic_distribution && typeof prism.topic_distribution === 'object') {
-    clean.topic_distribution = {};
-    for (const [topic, val] of Object.entries(prism.topic_distribution)) {
-      if (typeof val === 'number') {
-        clean.topic_distribution[topic.slice(0, 50)] = Math.max(0, Math.min(1, val));
-      }
-    }
+    clean.topic_distribution = deepSanitize(prism.topic_distribution);
   }
-
-  if (typeof prism.engagement === 'number') {
-    clean.engagement = Math.max(0, Math.min(1, prism.engagement));
+  if (prism.engagement && typeof prism.engagement === 'object') {
+    clean.engagement = deepSanitize(prism.engagement);
   }
-
   if (prism.vocabulary && typeof prism.vocabulary === 'object') {
-    clean.vocabulary = {};
-    for (const [key, val] of Object.entries(prism.vocabulary)) {
-      if (typeof val === 'string') {
-        clean.vocabulary[key.slice(0, 30)] = val.slice(0, 200);
-      }
-    }
+    clean.vocabulary = deepSanitize(prism.vocabulary);
   }
-
   if (prism.curiosity && typeof prism.curiosity === 'object') {
-    clean.curiosity = {};
-    for (const [key, val] of Object.entries(prism.curiosity)) {
-      if (typeof val === 'string') {
-        clean.curiosity[key.slice(0, 30)] = val.slice(0, 200);
-      }
-    }
+    clean.curiosity = deepSanitize(prism.curiosity);
+  }
+  if (prism.metadata && typeof prism.metadata === 'object') {
+    clean.metadata = deepSanitize(prism.metadata);
   }
 
   return Object.keys(clean).length > 0 ? clean : null;
@@ -1473,42 +1481,22 @@ function sanitizePrism(prism) {
 
 function sanitizeAnchor(anchor) {
   if (!anchor || typeof anchor !== 'object') return null;
-  const clean = {};
+  var clean = {};
 
   if (anchor.attachment && typeof anchor.attachment === 'object') {
-    clean.attachment = {};
-    for (const [key, val] of Object.entries(anchor.attachment)) {
-      if (typeof val === 'string') {
-        clean.attachment[key.slice(0, 30)] = val.slice(0, 200);
-      }
-    }
+    clean.attachment = deepSanitize(anchor.attachment);
   }
-
   if (anchor.conflict && typeof anchor.conflict === 'object') {
-    clean.conflict = {};
-    for (const [key, val] of Object.entries(anchor.conflict)) {
-      if (typeof val === 'string') {
-        clean.conflict[key.slice(0, 30)] = val.slice(0, 200);
-      }
-    }
+    clean.conflict = deepSanitize(anchor.conflict);
   }
-
   if (anchor.emotional_availability && typeof anchor.emotional_availability === 'object') {
-    clean.emotional_availability = {};
-    for (const [key, val] of Object.entries(anchor.emotional_availability)) {
-      if (typeof val === 'string') {
-        clean.emotional_availability[key.slice(0, 30)] = val.slice(0, 200);
-      }
-    }
+    clean.emotional_availability = deepSanitize(anchor.emotional_availability);
   }
-
   if (anchor.growth && typeof anchor.growth === 'object') {
-    clean.growth = {};
-    for (const [key, val] of Object.entries(anchor.growth)) {
-      if (typeof val === 'string') {
-        clean.growth[key.slice(0, 30)] = val.slice(0, 200);
-      }
-    }
+    clean.growth = deepSanitize(anchor.growth);
+  }
+  if (anchor.metadata && typeof anchor.metadata === 'object') {
+    clean.metadata = deepSanitize(anchor.metadata);
   }
 
   return Object.keys(clean).length > 0 ? clean : null;

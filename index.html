@@ -1688,44 +1688,13 @@
                 </div>
             </div>
 
-            <!-- Diagnostics Panel -->
+            <!-- Profile Overview: 희소성 + 핵심 특이점 + 영역별 위치 -->
+            <div class="axes-section" id="profileOverviewSection">
+                <div id="profileOverview"></div>
+            </div>
+
+            <!-- 에세이 섹션 -->
             <div class="axes-section">
-                <div class="section-title">분석 신뢰도</div>
-                <div id="diagnosticsPanel"></div>
-            </div>
-
-            <!-- Temporal Analysis -->
-            <div class="axes-section" id="temporalSection" style="display:none;">
-                <div class="section-title">시간에 따른 변화</div>
-                <div id="temporalPanel"></div>
-            </div>
-<!-- Intensity Axes -->
-            <div class="axes-section">
-                <div class="section-title">성향 강도</div>
-                <div id="intensityAxes"></div>
-            </div>
-
-            <!-- Structural Axes -->
-            <div class="axes-section">
-                <div class="section-title">행동 패턴</div>
-                <div class="structural-axes" id="structuralAxes"></div>
-            </div>
-
-            <!-- PRISM: 관심사 프로파일 -->
-            <div class="axes-section prism-section">
-                <div class="prism-section-title">관심사 프로파일 (PRISM)</div>
-                <div id="prismPanel"></div>
-            </div>
-
-            <!-- ANCHOR: 관계 역학 프로파일 -->
-            <div class="axes-section anchor-section">
-                <div class="anchor-section-title">관계 역학 프로파일 (ANCHOR)</div>
-                <div id="anchorPanel"></div>
-            </div>
-
-            <!-- Interpretation Lenses -->
-            <div class="axes-section">
-                <div class="section-title">프로필 분석 (Profile Analysis)</div>
                 <div id="lenses" class="lenses-section"></div>
             </div>
 
@@ -3429,6 +3398,137 @@
             return text;
         }
 
+function buildProfileOverview(axes, profile) {
+            const intensity = axes.intensity || {};
+            const structural = axes.structural || {};
+
+            // ── 핵심 특이점: 0.5에서 가장 먼 intensity 축 4개 ──
+            const AXIS_DISPLAY_NAMES = {
+                A1: '정서 강도', A2: '공감 민감도', A3: '감정 표현 빈도',
+                A4: '자기 확신도', A5: '서포트 성향', A6: '일관성',
+                A12: '친밀감 수용도', A14: '변화 수용성'
+            };
+            const axisEntries = [];
+            for (const [key, val] of Object.entries(intensity)) {
+                if (val !== undefined && val !== null && AXIS_DISPLAY_NAMES[key]) {
+                    axisEntries.push({ key, name: AXIS_DISPLAY_NAMES[key], value: val, deviation: Math.abs(val - 0.5) });
+                }
+            }
+            axisEntries.sort((a, b) => b.deviation - a.deviation);
+            const topTraits = axisEntries.slice(0, 4);
+
+            // ── 영역별 위치 (composite) ──
+            const safeAvg = (keys) => {
+                const vals = keys.map(k => intensity[k]).filter(v => v !== undefined && v !== null);
+                return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0.5;
+            };
+            const domains = [
+                { name: '감정 영역', score: safeAvg(['A1', 'A2', 'A3', 'A4']), desc: '' },
+                { name: '관계 영역', score: safeAvg(['A5', 'A12']), desc: '' },
+                { name: '사고 영역', score: 0.5, desc: '' },
+                { name: '갈등 대응', score: safeAvg(['A14']), desc: '' }
+            ];
+            // Structural axes 반영
+            if (structural.A10) {
+                const logicScore = (structural.A10.styles || {}).logical || 0;
+                domains[2].score = 0.3 + logicScore * 0.5;
+            }
+            if (structural.A8) {
+                const confrontScore = (structural.A8.styles || {}).confrontational || 0;
+                const avoidScore = (structural.A8.styles || {}).avoidant || 0;
+                domains[3].score = safeAvg(['A14']) * 0.5 + confrontScore * 0.3 + (1 - avoidScore) * 0.2;
+            }
+
+            // 영역 설명
+            domains.forEach(d => {
+                if (d.score > 0.75) d.desc = '평균 대비 매우 높음';
+                else if (d.score > 0.6) d.desc = '평균 대비 높은 편';
+                else if (d.score > 0.4) d.desc = '평균 범위';
+                else if (d.score > 0.25) d.desc = '평균 대비 낮은 편';
+                else d.desc = '평균 대비 매우 낮음';
+            });
+
+            // ── 희소성 등급 ──
+            const totalDeviation = axisEntries.reduce((sum, a) => sum + a.deviation, 0);
+            const avgDeviation = axisEntries.length > 0 ? totalDeviation / axisEntries.length : 0;
+            // Higher deviation from center = rarer
+            const rarityPct = Math.max(1, Math.min(30, Math.round((1 - avgDeviation * 2) * 30)));
+            let rarityLabel = '보통';
+            if (rarityPct <= 5) rarityLabel = '매우 드문 조합';
+            else if (rarityPct <= 10) rarityLabel = '드문 조합';
+            else if (rarityPct <= 20) rarityLabel = '다소 드문 조합';
+
+            // ── 주목할 조합 ──
+            let notableCombo = '';
+            if (topTraits.length >= 2) {
+                const t1 = topTraits[0];
+                const t2 = topTraits[1];
+                const dir1 = t1.value > 0.5 ? '높' : '낮';
+                const dir2 = t2.value > 0.5 ? '높' : '낮';
+                notableCombo = `${t1.name}이(가) ${dir1}고 ${t2.name}이(가) ${dir2}은 조합이 이 프로필의 핵심 특징입니다.`;
+            }
+
+            // ── HTML 조립 ──
+            let html = '';
+
+            // 희소성 등급
+            html += `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:16px;margin-bottom:20px;text-align:center;">
+                <div style="font-size:11px;color:var(--ac);font-weight:600;letter-spacing:1px;margin-bottom:6px;">희소성 등급</div>
+                <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;">전체 분석 대상 중 상위 ${rarityPct}%</div>
+                <div style="font-size:12px;color:var(--text-dim);font-style:italic;">${rarityLabel}</div>
+            </div>`;
+
+            // 핵심 특이점
+            html += `<div style="margin-bottom:20px;">
+                <div style="font-size:12px;color:var(--ac);font-weight:600;letter-spacing:0.5px;margin-bottom:12px;">// 핵심 특이점</div>`;
+            topTraits.forEach(t => {
+                const pct = Math.round(t.value * 100);
+                const barColor = pct > 60 ? '#F59E0B' : pct < 40 ? '#60A5FA' : '#9CA3AF';
+                const posLabel = pct > 60 ? `전체 분석 대상 중 상위 ${100 - pct}%` : `전체 분석 대상 중 하위 ${pct}%`;
+                html += `<div style="margin-bottom:14px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                        <span style="font-size:13px;font-weight:600;color:var(--text);">${sanitizeHTML(t.name)}</span>
+                        <span style="font-size:13px;font-weight:700;color:${barColor};">${pct}%</span>
+                    </div>
+                    <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
+                        <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px;"></div>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-dim);margin-top:3px;">${posLabel}</div>
+                </div>`;
+            });
+            html += '</div>';
+
+            // 영역별 위치
+            html += `<div style="margin-bottom:20px;">
+                <div style="font-size:12px;color:var(--ac);font-weight:600;letter-spacing:0.5px;margin-bottom:12px;">// 영역별 위치</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">`;
+            domains.forEach(d => {
+                const pct = Math.round(d.score * 100);
+                const barColor = pct > 60 ? '#F59E0B' : pct < 40 ? '#60A5FA' : '#9CA3AF';
+                html += `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:12px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                        <span style="font-size:12px;font-weight:600;color:var(--text);">${sanitizeHTML(d.name)}</span>
+                        <span style="font-size:12px;font-weight:700;color:${barColor};">${pct}%</span>
+                    </div>
+                    <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-bottom:6px;">
+                        <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px;"></div>
+                    </div>
+                    <div style="font-size:10px;color:var(--text-dim);">${sanitizeHTML(d.desc)}</div>
+                </div>`;
+            });
+            html += '</div></div>';
+
+            // 주목할 조합
+            if (notableCombo) {
+                html += `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:14px;margin-bottom:16px;">
+                    <div style="font-size:12px;color:var(--ac);font-weight:600;margin-bottom:6px;">주목할 조합</div>
+                    <div style="font-size:13px;line-height:1.7;color:var(--text);">${sanitizeHTML(notableCombo)}</div>
+                </div>`;
+            }
+
+            return html;
+        }
+
 function displayResult() {
             const profile = currentProfile;
             const axes = profile.axes;
@@ -3438,281 +3538,27 @@ function displayResult() {
             document.getElementById('typeEmoji').textContent = identity.emoji;
             document.getElementById('typeCode').textContent = sanitizeHTML(identity.code);
             document.getElementById('typeName').textContent = sanitizeHTML(identity.name);
-            const resolution = getResolutionSummary(profile);
-            document.getElementById('typeDesc').textContent = `${sanitizeHTML(identity.tagline)} · 신뢰도 ${sanitizeHTML(resolution.label)} (${formatPercent(resolution.score)})`;
+            document.getElementById('typeDesc').textContent = sanitizeHTML(identity.tagline);
 
-            // Diagnostics panel
-            document.getElementById('diagnosticsPanel').innerHTML = renderDiagnosticsPanel(profile);
-
-            // Temporal panel
-            const temporalHTML = renderTemporalPanel(profile);
-            if (temporalHTML) {
-                document.getElementById('temporalPanel').innerHTML = temporalHTML;
-                document.getElementById('temporalSection').style.display = 'block';
-            }
-
-            // v3: No more partner recommendations section — replaced by identity tagline display
+            // v3: No more partner recommendations section
             document.getElementById('partnerRecommendations').innerHTML = '';
 
-            let intensityHTML = '';
-            const intensityAxes = [
-                { id: 'A1', label: AXIS_LABELS.A1, value: axes.intensity.A1, desc: '상대나 주제에 얼마나 적극적으로 반응하나' },
-                { id: 'A2', label: AXIS_LABELS.A2, value: axes.intensity.A2, desc: '상대 감정을 얼마나 받아주나' },
-                { id: 'A3', label: AXIS_LABELS.A3, value: axes.intensity.A3, desc: '자기 의견을 얼마나 직접 말하나' },
-                { id: 'A4', label: AXIS_LABELS.A4, value: axes.intensity.A4, desc: '기분이나 감정을 얼마나 드러내나' },
-                { id: 'A5', label: AXIS_LABELS.A5, value: axes.intensity.A5, desc: '상대를 얼마나 챙기고 도와주나' },
-                { id: 'A6', label: AXIS_LABELS.A6, value: axes.intensity.A6, desc: '말투와 태도가 얼마나 일정한가' },
-                { id: 'A12', label: AXIS_LABELS.A12, value: axes.intensity.A12, desc: '친밀한 관계가 얼마나 편안한가' },
-                { id: 'A14', label: AXIS_LABELS.A14, value: axes.intensity.A14, desc: '변화에 얼마나 열려있는가' }
-            ];
-
-            intensityAxes.forEach(axis => {
-                if (axis.value === undefined || axis.value === null) return;
-                const width = Math.min(Math.max(axis.value * 100, 2), 100);
-                intensityHTML += `
-                    <div class="axis-item">
-                        <div class="axis-header">
-                            <span class="axis-label">${axis.id} ${axis.label}</span>
-                            <span class="axis-value">${Math.min(axis.value * 100, 100).toFixed(0)}%</span>
-                        </div>
-                        <div class="axis-bar-container">
-                            <div class="axis-bar" style="width: ${width}%; background-color: ${AXIS_COLORS[axis.id]};"></div>
-                        </div>
-                        <div class="axis-description">${axis.desc}</div>
-                    </div>
-                `;
-            });
-            document.getElementById('intensityAxes').innerHTML = intensityHTML;
-
-            let structHTML = '';
-            const structuralAxes = [
-                { id: 'A7', label: AXIS_LABELS.A7, data: axes.structural.A7 },
-                { id: 'A8', label: AXIS_LABELS.A8, data: axes.structural.A8 },
-                { id: 'A9', label: AXIS_LABELS.A9, data: axes.structural.A9 },
-                { id: 'A10', label: AXIS_LABELS.A10, data: axes.structural.A10 },
-                { id: 'A11', label: AXIS_LABELS.A11, data: axes.structural.A11 },
-                { id: 'A13', label: AXIS_LABELS.A13, data: axes.structural.A13 },
-                { id: 'A15', label: AXIS_LABELS.A15, data: axes.structural.A15 },
-                { id: 'A16', label: AXIS_LABELS.A16, data: axes.structural.A16 },
-                { id: 'A17', label: AXIS_LABELS.A17, data: axes.structural.A17 }
-            ];
-
-            structuralAxes.forEach(axis => {
-                if (!axis.data) return; // Skip missing axes
-                const color = AXIS_COLORS[axis.id];
-                let mixHTML = '';
-                const styles = axis.data.styles || {};
-                for (const [style, ratio] of Object.entries(styles)) {
-                    if (ratio > 0.05) {
-                        mixHTML += `<div class="mix-ratio-segment" style="flex: ${ratio}; background-color: ${color}; opacity: ${0.3 + ratio * 0.7};"></div>`;
-                    }
-                }
-
-                structHTML += `
-                    <div class="struct-item">
-                        <div class="struct-label">${sanitizeHTML(axis.id)} ${sanitizeHTML(axis.label)}</div>
-                        <div class="primary-style">${sanitizeHTML(STRUCT_LABELS[axis.data.primary] || axis.data.primary || '-')}</div>
-                        <div class="mix-ratio-bar">${mixHTML}</div>
-                    </div>
-                `;
-            });
-            document.getElementById('structuralAxes').innerHTML = structHTML;
-
-            // Render PRISM section (관심사 프로파일)
-            let prismHTML = '';
-            if (profile.prism) {
-                const prism = profile.prism;
-                prismHTML += '<div style="margin-bottom:16px;">';
-
-                // P1: 주제 분포
-                if (prism.topic_distribution) {
-                    prismHTML += '<div class="dimension-card">';
-                    prismHTML += '<div class="dimension-label">P1: 주제 분포 (Topic Distribution)</div>';
-                    prismHTML += '<div class="dimension-content">';
-                    const topics = prism.topic_distribution.topics || prism.topic_distribution.distribution || {};
-                    const topicLabels = {
-                        daily_life: '일상', work: '직장/업무', technology: '기술', philosophy: '철학',
-                        psychology: '심리', relationships: '관계', health: '건강', finance: '경제/금융',
-                        politics: '정치/사회', art_culture: '예술/문화', science: '과학', travel: '여행',
-                        food: '음식', sports: '스포츠', education: '교육/학습', entertainment: '엔터테인먼트',
-                        humor: '유머', other: '기타'
-                    };
-                    for (const [topic, data] of Object.entries(topics)) {
-                        const weight = typeof data === 'object' ? (data.ratio || data.weight || 0) : data;
-                        if (weight > 0.03) {
-                            const pct = (weight * 100).toFixed(0);
-                            const label = topicLabels[topic] || topic;
-                            prismHTML += `<span class="topic-tag">${sanitizeHTML(label)} ${pct}%</span> `;
-                        }
-                    }
-                    const divScore = prism.topic_distribution.diversity_score || prism.topic_distribution.topic_diversity;
-                    if (divScore) {
-                        prismHTML += `<div style="margin-top:8px;color:var(--text-dim);font-size:12px;">다양성: ${(divScore * 100).toFixed(0)}%</div>`;
-                    }
-                    prismHTML += '</div></div>';
-                }
-
-                // P2: 탐구 깊이
-                if (prism.engagement) {
-                    prismHTML += '<div class="dimension-card">';
-                    prismHTML += '<div class="dimension-label">P2: 탐구 깊이 (Engagement Depth)</div>';
-                    prismHTML += '<div class="dimension-content">';
-                    const depthMap = { surface: '표면적', casual: '일상적', analytical: '분석적', exploratory: '탐구적', creative: '창의적' };
-                    const overallDepth = prism.engagement.overall_depth || 'casual';
-                    const depthLabel = depthMap[overallDepth] || overallDepth;
-                    prismHTML += `깊이 수준: <strong>${sanitizeHTML(depthLabel)}</strong> - 주제에 대한 탐구 강도를 나타냅니다.`;
-                    prismHTML += '</div></div>';
-                }
-
-                // P3: 언어적 풍경
-                if (prism.vocabulary) {
-                    prismHTML += '<div class="dimension-card">';
-                    prismHTML += '<div class="dimension-label">P3: 언어적 풍경 (Vocabulary Landscape)</div>';
-                    prismHTML += '<div class="dimension-content">';
-                    const vocab = prism.vocabulary;
-                    const diversityMap = { high: '높음', moderate: '보통', low: '낮음' };
-                    const diversityLabel = diversityMap[vocab.diversity] || vocab.diversity || '보통';
-                    const registerMap = { formal: '격식체', neutral: '중립', casual: '구어체', narrow: '제한적', wide: '넓음' };
-                    const registerLabel = registerMap[vocab.register_range] || vocab.register_range || '중립';
-                    const abstractionMap = { leans_abstract: '추상적', balanced: '균형', leans_concrete: '구체적' };
-                    const abstractionLabel = abstractionMap[vocab.abstraction] || vocab.abstraction || '균형';
-                    prismHTML += `어휘 다양성: <strong>${sanitizeHTML(diversityLabel)}</strong> · 문체: <strong>${sanitizeHTML(registerLabel)}</strong> · 추상도: <strong>${sanitizeHTML(abstractionLabel)}</strong>`;
-                    prismHTML += '</div></div>';
-                }
-
-                // P4: 호기심 지형
-                if (prism.curiosity) {
-                    prismHTML += '<div class="dimension-card">';
-                    prismHTML += '<div class="dimension-label">P4: 호기심 지형 (Curiosity Signature)</div>';
-                    prismHTML += '<div class="dimension-content">';
-                    const curiosity = prism.curiosity;
-                    const questionRate = ((curiosity.question_ratio || curiosity.question_rate || 0) * 100);
-                    const dvbMap = { deep_diver: '깊이 탐구형', wide_scanner: '넓은 탐색형', balanced: '균형형' };
-                    const curiosityType = dvbMap[curiosity.depth_vs_breadth] || curiosity.curiosity_type || '균형형';
-                    prismHTML += `질문 빈도: <strong>${questionRate.toFixed(0)}%</strong> · 호기심 유형: <strong>${sanitizeHTML(curiosityType)}</strong>`;
-                    prismHTML += '</div></div>';
-                }
-
-                prismHTML += '</div>';
-            } else {
-                prismHTML = '<div style="color:var(--text-dim);font-size:13px;">분석 데이터 부족 - PRISM 분석 결과를 불러올 수 없습니다.</div>';
-            }
-            document.getElementById('prismPanel').innerHTML = prismHTML;
-
-            // Render ANCHOR section (관계 역학 프로파일)
-            let anchorHTML = '';
-            if (profile.anchor) {
-                const anchor = profile.anchor;
-                anchorHTML += '<div style="margin-bottom:16px;">';
-
-                // R1: 관계 안정감 (Attachment)
-                const attachData = anchor.attachment || (anchor.dimensions && anchor.dimensions.attachment);
-                if (attachData) {
-                    anchorHTML += '<div class="dimension-card">';
-                    anchorHTML += '<div class="dimension-label">R1: 관계 안정감 (Attachment Pattern)</div>';
-                    anchorHTML += '<div class="dimension-content">';
-                    const tendencyMap = {
-                        secure: '안정형', leans_secure: '안정 경향', leans_anxious: '불안 경향', leans_avoidant: '회피 경향',
-                        anxious: '불안형', avoidant: '회피형', disorganized: '혼란형', leans_disorganized: '혼란 경향'
-                    };
-                    const tendency = tendencyMap[attachData.primary_tendency] || attachData.primary_tendency || attachData.compatibility || '분석 불가';
-                    anchorHTML += `애착 경향: <strong>${sanitizeHTML(tendency)}</strong>`;
-                    if (attachData.confidence) {
-                        anchorHTML += ` (신뢰도: ${(attachData.confidence * 100).toFixed(0)}%)`;
-                    }
-                    if (attachData.stress_shift) {
-                        const stressMap = { amplified_anxiety: '불안 증폭', withdrawal: '철수', maintain: '유지', seek_reassurance: '확인 추구', stable_under_pressure: '안정 유지' };
-                        anchorHTML += `<br>스트레스 시: <strong>${sanitizeHTML(stressMap[attachData.stress_shift] || attachData.stress_shift)}</strong>`;
-                    }
-                    anchorHTML += '</div></div>';
-                }
-
-                // R2: 갈등 대처 (Conflict)
-                const conflictData = anchor.conflict || (anchor.dimensions && anchor.dimensions.conflict);
-                if (conflictData) {
-                    anchorHTML += '<div class="dimension-card">';
-                    anchorHTML += '<div class="dimension-label">R2: 갈등 대처 (Conflict Mode)</div>';
-                    anchorHTML += '<div class="dimension-content">';
-                    const modeMap = {
-                        direct_engagement: '직접 대면', diplomatic_approach: '외교적 접근',
-                        strategic_withdrawal: '전략적 후퇴', avoidance: '회피', escalation: '격화', withdrawal: '철수'
-                    };
-                    const mode = modeMap[conflictData.default_mode] || conflictData.default_mode || conflictData.compatibility || '분석 불가';
-                    anchorHTML += `갈등 대처 방식: <strong>${sanitizeHTML(mode)}</strong>`;
-                    if (conflictData.recovery_speed) {
-                        const recoveryMap = { fast: '빠름', moderate: '보통', slow: '느림' };
-                        anchorHTML += ` · 회복 속도: <strong>${sanitizeHTML(recoveryMap[conflictData.recovery_speed] || conflictData.recovery_speed)}</strong>`;
-                    }
-                    anchorHTML += '</div></div>';
-                }
-
-                // R3: 정서적 가용성 (Emotional)
-                const emotionalData = anchor.emotional_availability || (anchor.dimensions && anchor.dimensions.emotional);
-                if (emotionalData) {
-                    anchorHTML += '<div class="dimension-card">';
-                    anchorHTML += '<div class="dimension-label">R3: 정서적 가용성 (Emotional Response)</div>';
-                    anchorHTML += '<div class="dimension-content">';
-                    const styleMap = {
-                        empathic_exploration: '공감적 탐구', supportive: '지지적', acknowledging: '인정형', dismissive: '무시형'
-                    };
-                    const style = styleMap[emotionalData.response_style] || emotionalData.response_style || emotionalData.compatibility || '분석 불가';
-                    anchorHTML += `정서적 반응: <strong>${sanitizeHTML(style)}</strong>`;
-                    if (emotionalData.recognition) {
-                        const recogMap = { quick: '빠름', moderate: '보통', slow: '느림' };
-                        anchorHTML += ` · 감정 인식: <strong>${sanitizeHTML(recogMap[emotionalData.recognition] || emotionalData.recognition)}</strong>`;
-                    }
-                    if (emotionalData.emotional_range) {
-                        const rangeMap = { wide: '넓음', moderate: '보통', narrow: '제한적' };
-                        anchorHTML += ` · 감정 범위: <strong>${sanitizeHTML(rangeMap[emotionalData.emotional_range] || emotionalData.emotional_range)}</strong>`;
-                    }
-                    anchorHTML += '</div></div>';
-                }
-
-                // R4: 성장 지향성 (Growth)
-                const growthData = anchor.growth || (anchor.dimensions && anchor.dimensions.growth);
-                if (growthData) {
-                    anchorHTML += '<div class="dimension-card">';
-                    anchorHTML += '<div class="dimension-label">R4: 성장 지향성 (Growth Orientation)</div>';
-                    anchorHTML += '<div class="dimension-content">';
-                    const orientMap = {
-                        active_growth: '적극적 성장', reflective_growth: '성찰적 성장',
-                        stability_oriented: '안정 지향', externally_driven: '외부 동기'
-                    };
-                    const orient = orientMap[growthData.orientation] || growthData.orientation || growthData.compatibility || '분석 불가';
-                    anchorHTML += `성장 지향성: <strong>${sanitizeHTML(orient)}</strong>`;
-                    if (growthData.change_tolerance) {
-                        const toleranceMap = { high: '높음', moderate: '보통', low: '낮음' };
-                        anchorHTML += ` · 변화 수용도: <strong>${sanitizeHTML(toleranceMap[growthData.change_tolerance] || growthData.change_tolerance)}</strong>`;
-                    }
-                    if (growthData.self_awareness) {
-                        const awarenessMap = { high: '높음', moderate: '보통', low: '낮음' };
-                        anchorHTML += ` · 자기 인식: <strong>${sanitizeHTML(awarenessMap[growthData.self_awareness] || growthData.self_awareness)}</strong>`;
-                    }
-                    anchorHTML += '</div></div>';
-                }
-
-                anchorHTML += '</div>';
-            } else {
-                anchorHTML = '<div style="color:var(--text-dim);font-size:13px;">분석 데이터 부족 - ANCHOR 분석 결과를 불러올 수 없습니다.</div>';
-            }
-            document.getElementById('anchorPanel').innerHTML = anchorHTML;
-
-// Render comparison section
+            // ─── Profile Overview: 희소성 + 핵심 특이점 + 영역별 위치 ───
+            const overviewHTML = buildProfileOverview(axes, profile);
+            document.getElementById('profileOverview').innerHTML = overviewHTML;
 
             // Clear sensitive data after results are displayed
             setTimeout(() => {
                 clearSensitiveData();
             }, 500);
 
-
-            // v3 프로필 분석: LLM 7섹션 결과 우선, fallback으로 로컬 분석
+            // ─── 에세이 섹션 렌더링 (합의 문서 구조: 원라이너 요약 박스 + 상세 분석) ───
             let lensesHTML = '';
             const llmSections = profile.llmResult && profile.llmResult.sections;
 
             if (llmSections && Array.isArray(llmSections)) {
-                // v3 7-섹션 출력 (with subsections)
                 llmSections.forEach((section, idx) => {
-                    const isOpen = idx === 0 ? ' active' : '';
+                    const sectionNum = idx + 1;
                     const title = sanitizeHTML(section.title || section.key || '');
                     const summary = formatLLMContent(section.summary || '');
 
@@ -3722,52 +3568,38 @@ function displayResult() {
                             const subTitle = sanitizeHTML(sub.title || '');
                             const subContent = formatLLMContent(sub.content || '');
                             if (subContent) {
-                                subsHTML += `<div style="margin-top:12px;"><div style="font-size:12px;color:#60A5FA;font-weight:600;margin-bottom:4px;">${subTitle}</div><div style="font-size:13px;line-height:1.7;">${subContent}</div></div>`;
+                                subsHTML += `<div style="margin-top:16px;"><div style="font-size:13px;color:#60A5FA;font-weight:700;margin-bottom:6px;">${subTitle}</div><div style="font-size:13.5px;line-height:1.85;color:var(--text);">${subContent}</div></div>`;
                             }
                         });
                     }
 
-                    const displayContent = (summary || subsHTML)
-                        ? `<div style="font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:8px;">${summary}</div>${subsHTML}`
+                    // 원라이너 요약 박스 (합의 문서의 회색 박스)
+                    const summaryBox = summary
+                        ? `<div style="background:rgba(255,255,255,0.04);border-left:3px solid var(--ac);padding:12px 16px;margin-bottom:16px;font-size:13.5px;line-height:1.7;color:var(--text);border-radius:0 6px 6px 0;">${summary}</div>`
+                        : '';
+
+                    // 상세 분석
+                    const detailBlock = subsHTML
+                        ? `<div style="margin-top:4px;"><div style="font-size:11px;color:var(--ac);font-weight:600;letter-spacing:0.5px;margin-bottom:10px;">상세 분석</div>${subsHTML}</div>`
+                        : '';
+
+                    const hasContent = summary || subsHTML;
+                    const displayContent = hasContent
+                        ? `${summaryBox}${detailBlock}`
                         : '<span style="color:var(--dim);font-style:italic;">이 영역은 데이터에서 뚜렷하게 드러나지 않았어요.</span>';
 
                     lensesHTML += `
-                        <div class="lens-card">
-                            <div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')">
-                                <span class="lens-title">${title} <span style="font-size:10px;color:var(--ac);font-weight:400;">AI v3</span></span>
+                        <div class="lens-card" style="margin-bottom:12px;">
+                            <div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')" style="cursor:pointer;">
+                                <span class="lens-title" style="font-weight:700;font-size:15px;">${sectionNum}. ${title}</span>
                                 <span class="lens-toggle">▼</span>
                             </div>
-                            <div class="lens-content${isOpen}">${displayContent}</div>
+                            <div class="lens-content${idx === 0 ? ' active' : ''}">${displayContent}</div>
                         </div>
                     `;
                 });
-            } else if (llmSections && typeof llmSections === 'object' && !Array.isArray(llmSections)) {
-                // Legacy format: sections as key-value object
-                for (const [name, content] of Object.entries(llmSections)) {
-                    const formatted = formatLLMContent(typeof content === 'string' ? content : JSON.stringify(content));
-                    lensesHTML += `
-                        <div class="lens-card">
-                            <div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')">
-                                <span class="lens-title">${sanitizeHTML(name)} <span style="font-size:10px;color:var(--ac);font-weight:400;">AI</span></span>
-                                <span class="lens-toggle">▼</span>
-                            </div>
-                            <div class="lens-content">${formatted}</div>
-                        </div>
-                    `;
-                }
             } else {
-                // Fallback: 기존 로컬 분석
-                for (const [lensName, lensFunc] of Object.entries(LENSES)) {
-                    lensesHTML += `
-                        <div class="lens-card">
-                            <div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')">
-                                <span class="lens-title">${lensName}</span>
-                                <span class="lens-toggle">▼</span>
-                            </div>
-                            <div class="lens-content">${lensFunc(axes)}</div>
-                        </div>
-                    `;
-                }
+                lensesHTML = '<div style="color:var(--text-dim);font-size:13px;">AI 분석 결과를 불러올 수 없습니다.</div>';
             }
             document.getElementById('lenses').innerHTML = lensesHTML;
 
