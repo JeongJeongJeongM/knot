@@ -99,10 +99,14 @@ const PRISM_DEPTH_SIGNALS = {
   'exploratory': [
     '연결되는', '근본적으로', '본질적', '철학적', '존재론적', '메타', '추상적',
     '구조적으로', '패러다임', '프레임워크', '이면에', '심층적',
+    '왜 그런지', '근본 원인', '깊이 파', '파고들', '뜯어보', '분해해',
+    '시스템이', '아키텍처', '설계 철학', '트레이드오프', '본질은',
   ],
   'analytical': [
     '분석하면', '구조가', '패턴이', '원인은', '비교하면', '통계적', '데이터',
     '논리적', '왜냐하면', '근거는', '증거는', '체계적', '상관관계', '인과', '메커니즘',
+    '어떻게 되는', '왜 이런', '문제는', '해결', '고치', '수정', '구현', '설계',
+    '원리가', '작동', '방식이', '로직', '알고리즘', '최적화', '디버그', '버그',
   ],
   'casual': [
     '그런 것 같아', '아마', '좀', '약간', '그냥', '뭐', '대충', '느낌',
@@ -637,7 +641,7 @@ class PrismP2DepthAnalyzer {
       }
     }
     const domainDensity = domainTermCount / (texts.length + PRISM_CONFIG.EPSILON);
-    const domainBoost = domainDensity > 0.5 ? 0.3 : domainDensity > 0.2 ? 0.15 : 0;
+    const domainBoost = domainDensity > 0.3 ? 0.3 : domainDensity > 0.1 ? 0.15 : domainDensity > 0.05 ? 0.08 : 0;
 
     // 2) 주제 지속성 — 같은 주제를 오래 파면 deep, 자주 바꾸면 shallow
     // 간단한 n-gram 기반 연속 유사도: 연속된 메시지 쌍의 단어 겹침
@@ -654,7 +658,7 @@ class PrismP2DepthAnalyzer {
       }
       topicPersistence = similarities / (texts.length - 1);
     }
-    const persistenceBoost = topicPersistence > 0.3 ? 0.2 : topicPersistence > 0.15 ? 0.1 : 0;
+    const persistenceBoost = topicPersistence > 0.2 ? 0.2 : topicPersistence > 0.1 ? 0.12 : topicPersistence > 0.05 ? 0.06 : 0;
 
     // 3) 추상 표현 밀도 — 짧아도 추상적 개념어 쓰면 깊은 사고
     let abstractCount = 0;
@@ -663,10 +667,15 @@ class PrismP2DepthAnalyzer {
       if (matches) abstractCount += matches.length;
     }
     const abstractDensity = abstractCount / (texts.length + PRISM_CONFIG.EPSILON);
-    const abstractBoost = abstractDensity > 0.3 ? 0.15 : abstractDensity > 0.1 ? 0.08 : 0;
+    const abstractBoost = abstractDensity > 0.2 ? 0.15 : abstractDensity > 0.08 ? 0.08 : abstractDensity > 0.03 ? 0.04 : 0;
+
+    // 4) 집요한 탐구 패턴 — 같은 주제에 대해 반복 질문/수정 요청 = 깊이 있는 사고
+    const deepEngagementMarkers = (allText.match(/왜|어떻게|근데|그런데|아니|틀린|잘못|다시|더 자세|설명해|이해가 안|뭔 소리|좀 더|구체적으로|정확히|확인해|검증|테스트|실험/g) || []).length;
+    const engagementDensity = deepEngagementMarkers / (texts.length + PRISM_CONFIG.EPSILON);
+    const engagementBoost = engagementDensity > 0.5 ? 0.15 : engagementDensity > 0.25 ? 0.08 : engagementDensity > 0.1 ? 0.04 : 0;
 
     // 보정된 가중 평균
-    const adjustedWeight = Math.min(0.95, avgWeight + domainBoost + persistenceBoost + abstractBoost);
+    const adjustedWeight = Math.min(0.95, avgWeight + domainBoost + persistenceBoost + abstractBoost + engagementBoost);
     const overall = this._weightToLevel(adjustedWeight);
 
     const depthByTopic = {};
@@ -706,8 +715,11 @@ class PrismP2DepthAnalyzer {
     const maxScore = Math.max(...Object.values(scores));
 
     if (maxScore === 0) {
-      if (text.length < 10) return 'surface';
-      if (text.length < 50) return 'casual';
+      // 길이만으로 depth를 결정하지 않음 — 짧은 메시지도 맥락에서 의미 있을 수 있음
+      if (text.length < 5) return 'surface';
+      if (text.length < 15) return 'casual';
+      // 50자 이상인데 신호가 없으면 casual이 아니라 맥락 판단
+      if (text.length >= 50) return 'casual';
       return 'casual';
     }
 
@@ -3568,8 +3580,9 @@ const SYSTEM_PROMPT_INDIVIDUAL = `당신은 냉철한 행동 심리 관찰자이
 4. 문장 시작 다양화 (매우 중요): "당신은", "당신의"로 문장을 시작하는 것을 최소화하세요. 연속 2문단 이상 "당신"으로 시작하면 안 됩니다. 대신 현상, 시스템, 행동, 감정, 구조를 주어로 사용하세요. 예: "통제 욕구가 표면에 올라온다", "감정의 진폭이 관계를 지배한다", "이 시스템은 회복보다 반응에 최적화되어 있다". 전체 에세이에서 "당신"으로 시작하는 문장이 20% 이하여야 합니다.
 5. 시나리오 기반 서술: 시뮬레이션 결과를 "확정된 미래"가 아닌 "데이터 관성이 보여주는 경향성 시나리오"로 서술하세요. "이렇게 될 것이다"가 아니라 "이런 방향으로 흐를 확률이 지배적이다"는 톤.
 6. 구체적 행동 묘사: 추상적 설명 대신 구체적 장면으로 보여주되, 대화 원문을 인용하지 마세요.
-7. 각 섹션마다: summary (정확히 2문장) + subsections (각 250-300자, 이 범위를 엄격히 준수)
-8. 전체 출력 약 8000-9000자 목표. 반드시 모든 섹션을 빠짐없이 완성하세요. 마지막 섹션까지 JSON을 닫아야 합니다.
+7. 심리 클리셰 금지: ANCHOR 애착 데이터를 정확히 읽으세요. "높은 감정 강도 + 방어적"이라고 해서 자동으로 "사랑받고 싶은 욕구 / 버림받을 공포 / 조건적 사랑에 대한 믿음" 같은 불안정 애착 서사를 대입하지 마세요. 회피형 애착은 불안할 때 사람을 찾는 게 아니라 고립을 선택합니다. 의존성이 없는 사람에게 의존 욕구를 투사하지 마세요. 데이터가 말하는 것만 쓰세요.
+8. 각 섹션마다: summary (정확히 2문장) + subsections (각 250-300자, 이 범위를 엄격히 준수)
+9. 전체 출력 약 8000-9000자 목표. 반드시 모든 섹션을 빠짐없이 완성하세요. 마지막 섹션까지 JSON을 닫아야 합니다.
 
 문체 예시 (존댓말 + 주어 다양화 주목):
 - "통제하는 사람입니다. 다만 그 대상이 타인이 아니라 자기 자신입니다."
@@ -3731,9 +3744,10 @@ ${profileDesc}
   // ── ANCHOR data (distributed across sections) ──
   if (anchor) {
     prompt += `\n## 관계 역학 패턴 (ANCHOR)\n`;
-    prompt += `→ 애착 데이터는 "정서 에너지" + "방어 체계"에 통합\n`;
+    prompt += `→ 애착 데이터는 "정서 에너지" + "방어 체계" + "무의식"에 통합\n`;
     prompt += `→ 갈등/정서적 가용성은 "통제 체계" + "정서 에너지"에 통합\n`;
     prompt += `→ 성장 데이터는 "성장 지향점"에 통합\n`;
+    prompt += `⚠️ 무의식 섹션 필수: 애착 패턴이 회피형(dismissive/avoidant)이면 "버림받을 공포+의존 욕구" 서사를 사용하지 마세요. 대신 "친밀감이 위협이 되는 구조", "불안할 때 사람 대신 고립을 선택하는 회로", "의존성 자체에 대한 거부"를 반영하세요.\n`;
     if (anchor.attachment && Object.keys(anchor.attachment).length > 0) {
       prompt += `애착 특성: ${Object.entries(anchor.attachment)
         .map(([k, v]) => `${k}: ${v}`)
@@ -3846,7 +3860,7 @@ ${profileDesc}
 6. 행동 궤적: 궤적 시뮬레이션 + 자극-반응 시나리오 통합. 시간에 따른 변화와 외부 자극에 대한 반응을 "경향성 시나리오"로 서술. 확정적 예측 톤 금지.
 7. 리스크 모델: 리스크 분석 결과를 서사로 전환. 어떤 조건에서 이 시스템이 한계에 도달하는지.
 8. 성장 지향점: ANCHOR 성장 데이터 + 궤적 드리프트의 역방향. 관성을 거스르는 보정 방향.
-9. 무의식: 전체 데이터를 관통하는 LLM 합성. 수치 뒤에 숨겨진 근원적 동기와 공포.
+9. 무의식: 전체 데이터를 관통하는 LLM 합성. 수치 뒤에 숨겨진 근원적 동기와 공포. 반드시 ANCHOR 애착 데이터를 참조하여 실제 애착 패턴을 반영하세요. 회피형(불안할 때 고립/혼자 처리)과 불안형(불안할 때 매달림/의존)을 정확히 구분하세요. "높은 감정 강도 + 방어적 = 사랑받고 싶은 욕구/버림받을 공포"라는 불안정 애착 클리셰에 자동 수렴하지 마세요. 데이터가 회피/고립 패턴을 보이면 무의식도 그에 맞게 — 친밀감 회피, 자기 충족, 독립성 과잉 방어 등 — 서술하세요.
 
 ## 중요 규칙
 - 엔진 축 번호(A1, A7 등), 시뮬레이션 수치, 밴드 이름 절대 사용 금지
