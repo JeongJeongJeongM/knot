@@ -4156,14 +4156,14 @@ function displayResult() {
                 this.queue = [];
                 this.processing = false;
                 if (this.interval) { clearInterval(this.interval); this.interval = null; }
-                // Reset gauges
-                ['C','B','A','R'].forEach(ax => {
+                // Reset gauges (6축)
+                ['A1','A2','A3','A4','A5','A6'].forEach(ax => {
                     const el = document.getElementById('gauge' + ax);
                     if (el) { el.classList.remove('active','done'); }
                     const fill = document.getElementById('gauge' + ax + 'Fill');
                     if (fill) fill.style.width = '0%';
                     const val = document.getElementById('gauge' + ax + 'Val');
-                    if (val) val.textContent = '--';
+                    if (val) val.textContent = '+0.00';
                 });
                 const pb = document.getElementById('overallProgress');
                 if (pb) pb.style.width = '0%';

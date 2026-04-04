@@ -2709,10 +2709,15 @@ const SERVER_TYPE_AXES = [
     high: { letter: 'E', label: 'Externalize', desc: '위협을 외부로 투사하고 환경을 통제하려 한다' },
     low:  { letter: 'I', label: 'Internalize', desc: '위협을 내면에 흡수하고 자기를 재조정하려 한다' },
     calc: (d) => {
+      // Externalize: 높은 감정표출(A1,A3) + 높은 주장성(A4) → 외부 투사
+      // Internalize: 높은 공감력(A2) + 높은 일관성(A6) → 내면 흡수
       const emotionIntensity = (d.A1 || 0.5) * 0.6 + (d.A3 || 0.5) * 0.4;
       const assertiveness = (d.A4 || 0.5) * 0.5 + (d.A5 || 0.5) * 0.5;
-      const walledness = 1 - ((d.A12 || 0.5) * 0.5 + (d.A14 || 0.5) * 0.5);
-      return Math.max(0, Math.min(1, emotionIntensity * 0.35 + assertiveness * 0.35 + walledness * 0.3));
+      const internalTendency = (d.A2 || 0.5) * 0.5 + (d.A6 || 0.5) * 0.5;
+      // 외향 투사 vs 내면 흡수 = (공격적 에너지) vs (수용적 에너지)
+      const a8 = d._structural?.A8;
+      const conflictBonus = a8?.primary === 'confrontational' ? 0.12 : a8?.primary === 'avoidant' ? -0.12 : 0;
+      return Math.max(0, Math.min(1, emotionIntensity * 0.3 + assertiveness * 0.3 + (1 - internalTendency) * 0.3 + 0.05 + conflictBonus));
     }
   }
 ];
