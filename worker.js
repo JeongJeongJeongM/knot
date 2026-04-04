@@ -109,10 +109,10 @@ const PRISM_DEPTH_SIGNALS = {
     '원리가', '작동', '방식이', '로직', '알고리즘', '최적화', '디버그', '버그',
   ],
   'casual': [
-    '그런 것 같아', '아마', '좀', '약간', '그냥', '뭐', '대충', '느낌',
+    '그런 것 같아', '아마도', '약간', '대충', '느낌적',
   ],
   'surface': [
-    'ㅇㅇ', 'ㅋㅋ', 'ㄹㅇ', 'ㅎㅎ', '그래', '맞아', '오', '와',
+    'ㅇㅇ', 'ㄹㅇ', '그래', '맞아',
   ],
 };
 
@@ -156,12 +156,12 @@ const PRISM_CONCRETE_PATTERNS = [
 
 const PRISM_QUESTION_PATTERNS = {
   'factual': [
-    /몇|언제|어디|누구|뭐가|얼마/,
-    /있어\?|없어\?|했어\?|됐어\?/,
+    /^(몇|언제|어디서|누가|얼마)\b/,
+    /있어\?$|없어\?$|했어\?$|됐어\?$/,
   ],
   'opinion': [
-    /어떻게 생각|어떤 것 같|넌 어때|너는 어떻게/, /의견|생각|느낌|판단/,
-    /좋아\?|싫어\?|괜찮\?/, /맞아\?|맞지\?|그래\?|진짜\?|정말\?|아니야\?/,
+    /어떻게 생각|어떤 것 같|넌 어때|너는 어떻게/, /의견|판단/,
+    /좋아\?|싫어\?|괜찮\?/, /맞아\?|맞지\?|그래\?|아니야\?/,
   ],
   'hypothesis': [
     /만약|가정|혹시|그러면/, /될까|일까|않을까|아닐까/,
@@ -173,6 +173,9 @@ const PRISM_QUESTION_PATTERNS = {
     /구조|체계|시스템|원리/, /중립|편향|객관|주관|윤리|도덕/,
     /철학|존재|본질적|근원|한계|모순|역설|딜레마/,
     /정의가|개념이|논리적|논쟁|반론|비판|문제점|결함/,
+    /왜.*인지|왜.*하는|근데 왜|이게 맞|말이 안 되|논리가|모순이/,
+    /중립.*불가|절대.*없|가능.*한가|문제.*뭐|핵심.*뭐/,
+    /진짜\?$|정말\?$/,
   ],
 };
 
@@ -718,8 +721,13 @@ class PrismP2DepthAnalyzer {
     const maxScore = Math.max(...Object.values(scores));
 
     if (maxScore === 0) {
-      // 길이만으로 depth를 결정하지 않음 — 짧은 메시지도 맥락에서 의미 있을 수 있음
+      // 키워드 매칭 없을 때: 메시지 특성으로 추정
       if (text.length < 5) return 'surface';
+      if (text.length < 15) return 'casual';
+      // 질문하거나 설명하는 메시지는 최소 analytical 가능성
+      const hasQuestion = /\?|왜|어떻게|뭐가|무슨|어째서/.test(text);
+      const hasExplanation = text.length > 80 || /때문|이유|결과|그래서|따라서/.test(text);
+      if (hasQuestion || hasExplanation) return 'analytical';
       return 'casual';
     }
 
@@ -733,10 +741,10 @@ class PrismP2DepthAnalyzer {
   }
 
   _weightToLevel(weight) {
-    if (weight >= 0.85) return 'creative';
-    if (weight >= 0.6) return 'exploratory';
-    if (weight >= 0.4) return 'analytical';
-    if (weight >= 0.2) return 'casual';
+    if (weight >= 0.75) return 'creative';
+    if (weight >= 0.5) return 'exploratory';
+    if (weight >= 0.3) return 'analytical';
+    if (weight >= 0.15) return 'casual';
     return 'surface';
   }
 }
@@ -895,7 +903,7 @@ class PrismP4CuriosityAnalyzer {
       if (isQuestion) {
         questionTurns++;
         const qtype = this._classifyQuestionType(text);
-        questionTypes[qtype]++;
+        if (qtype) questionTypes[qtype]++;
       }
 
       const topicHash = this._topicHash(text);
@@ -992,7 +1000,7 @@ class PrismP4CuriosityAnalyzer {
     }
 
     let maxScore = 0;
-    let result = 'factual';
+    let result = null;
     for (const [qtype, score] of Object.entries(scores)) {
       if (score > maxScore) {
         maxScore = score;
@@ -1000,6 +1008,7 @@ class PrismP4CuriosityAnalyzer {
       }
     }
 
+    // 어떤 패턴에도 안 맞는 질문은 null (분포에서 제외됨)
     return result;
   }
 
@@ -1744,7 +1753,7 @@ const MARKOV_STATES = ['secure', 'anxious', 'avoidant', 'neutral', 'conflict'];
 function anchorClassifyTurnState(text) {
   const tl = text.toLowerCase();
   if (ANCHOR_STRESS_INDICATORS.some(s => tl.includes(s)) ||
-      ANCHOR_CONFLICT_CONTEXT_KEYWORDS.some(s => tl.includes(s))) {
+      ANCHOR_CONFLICT_CONTEXT.some(s => tl.includes(s))) {
     // 갈등 상태
     if (ANCHOR_AVOIDANT_SIGNALS.some(s => tl.includes(s))) return 'avoidant';
     if (ANCHOR_ANXIOUS_SIGNALS.some(s => tl.includes(s))) return 'anxious';
