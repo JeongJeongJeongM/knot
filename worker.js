@@ -2056,8 +2056,8 @@ async function requireAuth(request, env) {
   if (env.KNOT_DB) {
     try {
       env.KNOT_DB.prepare(
-        `INSERT INTO users (google_id, email, name, picture, last_seen) VALUES (?, ?, ?, ?, datetime('now'))
-         ON CONFLICT(google_id) DO UPDATE SET last_seen = datetime('now'), name = excluded.name, picture = excluded.picture`
+        `INSERT INTO users (id, email, name, picture, last_seen) VALUES (?, ?, ?, ?, datetime('now'))
+         ON CONFLICT(id) DO UPDATE SET last_seen = datetime('now'), name = excluded.name, picture = excluded.picture`
       ).bind(user.sub, user.email, user.name, user.picture).run().catch(() => {});
     } catch(e) {}
   }
@@ -4222,6 +4222,80 @@ export default {
         return new Response('Not found', { status: 404 });
       }
 
+      // ──── GET /migrate ── DB Schema Migration ────
+      if (request.method === 'GET' && url.pathname === '/migrate') {
+        const key = url.searchParams.get('key');
+        if (!key || key !== (env.ADMIN_KEY || 'knot-admin-2025')) {
+          return new Response('Unauthorized', { status: 401 });
+        }
+        const db = env.KNOT_DB;
+        if (!db) return new Response('DB not configured', { status: 500 });
+
+        const statements = [
+          // Drop old tables
+          `DROP TABLE IF EXISTS feedback`,
+          `DROP TABLE IF EXISTS essays`,
+          `DROP TABLE IF EXISTS matches`,
+          `DROP TABLE IF EXISTS analyses`,
+          `DROP TABLE IF EXISTS sessions`,
+          `DROP TABLE IF EXISTS users`,
+          // Drop old views
+          `DROP VIEW IF EXISTS v_daily_stats`,
+          `DROP VIEW IF EXISTS v_type_distribution`,
+          `DROP VIEW IF EXISTS v_user_summary`,
+
+          // 1. users
+          `CREATE TABLE users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT, picture TEXT, total_analyses INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')), last_seen TEXT DEFAULT (datetime('now')))`,
+          `CREATE INDEX idx_users_email ON users(email)`,
+
+          // 2. sessions
+          `CREATE TABLE sessions (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), ip TEXT, user_agent TEXT, action TEXT DEFAULT 'login', metadata_json TEXT, created_at TEXT DEFAULT (datetime('now')))`,
+          `CREATE INDEX idx_sessions_user ON sessions(user_id)`,
+          `CREATE INDEX idx_sessions_date ON sessions(created_at)`,
+
+          // 3. analyses
+          `CREATE TABLE analyses (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), type_code TEXT, type_name TEXT, tagline TEXT, axis_fs INTEGER, axis_ah INTEGER, axis_tr INTEGER, axis_ow INTEGER, axis_xv INTEGER, axis_ei INTEGER, axes_json TEXT, prism_json TEXT, anchor_json TEXT, identity_json TEXT, simulation_json TEXT, message_count INTEGER, input_format TEXT, original_count INTEGER, status TEXT DEFAULT 'scoring', created_at TEXT DEFAULT (datetime('now')))`,
+          `CREATE INDEX idx_analyses_user ON analyses(user_id)`,
+          `CREATE INDEX idx_analyses_type ON analyses(type_code)`,
+          `CREATE INDEX idx_analyses_date ON analyses(created_at)`,
+          `CREATE INDEX idx_analyses_status ON analyses(status)`,
+
+          // 4. essays
+          `CREATE TABLE essays (id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL UNIQUE REFERENCES analyses(id), essay_text TEXT, sections_json TEXT, section_count INTEGER DEFAULT 0, char_count INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`,
+          `CREATE INDEX idx_essays_analysis ON essays(analysis_id)`,
+
+          // 5. matches
+          `CREATE TABLE matches (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), analysis_a_id TEXT REFERENCES analyses(id), analysis_b_id TEXT REFERENCES analyses(id), name_a TEXT, name_b TEXT, compatibility INTEGER, tension TEXT, growth TEXT, compatibility_json TEXT, cross_sim_json TEXT, match_identity_json TEXT, essay_text TEXT, sections_json TEXT, profile_a_json TEXT, profile_b_json TEXT, status TEXT DEFAULT 'processing', created_at TEXT DEFAULT (datetime('now')))`,
+          `CREATE INDEX idx_matches_user ON matches(user_id)`,
+          `CREATE INDEX idx_matches_date ON matches(created_at)`,
+
+          // 6. feedback
+          `CREATE TABLE feedback (id TEXT PRIMARY KEY, user_id TEXT REFERENCES users(id), analysis_id TEXT REFERENCES analyses(id), match_id TEXT REFERENCES matches(id), rating INTEGER DEFAULT 0, accuracy TEXT, useful TEXT, issues_json TEXT, comment TEXT, created_at TEXT DEFAULT (datetime('now')))`,
+          `CREATE INDEX idx_feedback_user ON feedback(user_id)`,
+          `CREATE INDEX idx_feedback_analysis ON feedback(analysis_id)`,
+          `CREATE INDEX idx_feedback_date ON feedback(created_at)`,
+
+          // Views
+          `CREATE VIEW v_daily_stats AS SELECT date(created_at) as day, COUNT(*) as analysis_count, COUNT(DISTINCT user_id) as unique_users, AVG(message_count) as avg_messages, COUNT(CASE WHEN status = 'complete' THEN 1 END) as completed, COUNT(CASE WHEN status = 'error' THEN 1 END) as errors FROM analyses GROUP BY date(created_at) ORDER BY day DESC`,
+          `CREATE VIEW v_type_distribution AS SELECT type_code, type_name, COUNT(*) as count, ROUND(AVG(axis_fs), 1) as avg_fs, ROUND(AVG(axis_ah), 1) as avg_ah, ROUND(AVG(axis_tr), 1) as avg_tr, ROUND(AVG(axis_ow), 1) as avg_ow, ROUND(AVG(axis_xv), 1) as avg_xv, ROUND(AVG(axis_ei), 1) as avg_ei FROM analyses WHERE type_code IS NOT NULL GROUP BY type_code ORDER BY count DESC`,
+          `CREATE VIEW v_user_summary AS SELECT u.id, u.email, u.name, u.created_at as joined, u.last_seen, COUNT(DISTINCT a.id) as total_analyses, COUNT(DISTINCT m.id) as total_matches, MAX(a.created_at) as last_analysis FROM users u LEFT JOIN analyses a ON a.user_id = u.id LEFT JOIN matches m ON m.user_id = u.id GROUP BY u.id`,
+        ];
+
+        const results = [];
+        for (const sql of statements) {
+          try {
+            await db.prepare(sql).run();
+            results.push({ sql: sql.slice(0, 60) + '...', ok: true });
+          } catch (e) {
+            results.push({ sql: sql.slice(0, 60) + '...', ok: false, error: e.message });
+          }
+        }
+
+        const success = results.filter(r => r.ok).length;
+        const failed = results.filter(r => !r.ok).length;
+        return jsonResponse({ migration: 'v2', success, failed, total: results.length, results }, 200, corsHeaders);
+      }
+
       // ──── GET /admin ── Dashboard ────
       if (request.method === 'GET' && url.pathname === '/admin') {
         const key = url.searchParams.get('key');
@@ -4257,8 +4331,8 @@ export default {
           db.prepare(`SELECT COUNT(*) as cnt, AVG(rating) as avg_rating, SUM(CASE WHEN accuracy='매우 정확' OR accuracy='대체로 맞음' THEN 1 ELSE 0 END) as positive FROM feedback`).first(),
           db.prepare(`SELECT rating, accuracy, useful, issues_json, comment, created_at FROM feedback ORDER BY created_at DESC LIMIT 10`).all(),
           db.prepare(`SELECT date(created_at) as day, COUNT(*) as cnt FROM analyses WHERE created_at >= date('now', '-30 days') GROUP BY date(created_at) ORDER BY day`).all(),
-          db.prepare(`SELECT COUNT(*) as cnt FROM analyses WHERE sections_json IS NULL`).first(),
-          db.prepare(`SELECT id, type_code, type_name, message_count, created_at FROM analyses ORDER BY created_at DESC LIMIT 15`).all(),
+          db.prepare(`SELECT COUNT(*) as cnt FROM analyses WHERE status != 'complete'`).first(),
+          db.prepare(`SELECT id, user_id, type_code, type_name, axis_fs, axis_ah, axis_tr, axis_ow, axis_xv, axis_ei, message_count, status, created_at FROM analyses ORDER BY created_at DESC LIMIT 15`).all(),
         ]);
 
         // ── Compute axis averages from JSON ──
@@ -4531,6 +4605,25 @@ function switchTab(id, el) {
       try {
         const body = await request.json();
 
+        // ── Weekly limit check: 1 analysis per account per 7 days ──
+        if (env.KNOT_DB && authUser?.sub) {
+          try {
+            const recentAnalysis = await env.KNOT_DB.prepare(
+              `SELECT COUNT(*) as cnt FROM analyses WHERE user_id = ? AND created_at >= datetime('now', '-7 days')`
+            ).bind(authUser.sub).first();
+            if (recentAnalysis && recentAnalysis.cnt >= 1) {
+              return jsonResponse({
+                error: '일주일에 한 번만 분석할 수 있습니다. 다음 분석은 7일 후에 가능합니다.',
+                code: 'WEEKLY_LIMIT',
+                remaining_days: 7
+              }, 429, corsHeaders);
+            }
+          } catch (limitErr) {
+            console.error('[Weekly Limit Check Error]', limitErr.message);
+            // Don't block on limit check failure
+          }
+        }
+
         // ── Preprocessing: normalize any format → [{sender, text}] ──
         const preprocessed = preprocessMessages(body);
         if (preprocessed.processedCount === 0) {
@@ -4632,47 +4725,53 @@ function switchTab(id, el) {
             const identity = computeServerIdentity(axes);
             const analysisId = crypto.randomUUID();
 
-            // ──── Save Stage 1 to D1 analyses table ────
+            // ──── Save Stage 1 to D1 analyses table (v2 schema) ────
+            // Extract individual axis scores (0~100 integer)
+            const axisScores = {};
+            if (axes?.intensity) {
+              const int = axes.intensity;
+              axisScores.fs = Math.round((typeof int.A1 === 'number' ? int.A1 : (int.A1?.value ?? 0.5)) * 100);
+              axisScores.ah = Math.round((typeof int.A2 === 'number' ? int.A2 : (int.A2?.value ?? 0.5)) * 100);
+              axisScores.tr = Math.round((typeof int.A3 === 'number' ? int.A3 : (int.A3?.value ?? 0.5)) * 100);
+              axisScores.ow = Math.round((typeof int.A4 === 'number' ? int.A4 : (int.A4?.value ?? 0.5)) * 100);
+              axisScores.xv = Math.round((typeof int.A5 === 'number' ? int.A5 : (int.A5?.value ?? 0.5)) * 100);
+              axisScores.ei = Math.round((typeof int.A6 === 'number' ? int.A6 : (int.A6?.value ?? 0.5)) * 100);
+            }
+
             try {
               if (env.KNOT_DB) {
-                // Try with user_email first (new schema), fallback to old schema if column doesn't exist
-                try {
-                  await env.KNOT_DB.prepare(
-                    `INSERT INTO analyses (id, type_code, type_name, tagline, axes_json, prism_json, anchor_json, sections_json, identity_json, message_count, user_email, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
-                  ).bind(
-                    analysisId,
-                    identity.code || '',
-                    identity.name || '',
-                    identity.tagline || '',
-                    JSON.stringify(axes),
-                    prism ? JSON.stringify(prism) : null,
-                    anchor ? JSON.stringify(anchor) : null,
-                    null, // sections_json filled after Stage 2
-                    JSON.stringify(identity),
-                    rawMessages.length,
-                    authUser?.email || null
-                  ).run();
-                } catch (schemaErr) {
-                  // Fallback: old schema without user_email
-                  if (schemaErr.message?.includes('no such column')) {
-                    await env.KNOT_DB.prepare(
-                      `INSERT INTO analyses (id, type_code, type_name, tagline, axes_json, prism_json, anchor_json, sections_json, identity_json, message_count, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
-                    ).bind(
-                      analysisId,
-                      identity.code || '',
-                      identity.name || '',
-                      identity.tagline || '',
-                      JSON.stringify(axes),
-                      prism ? JSON.stringify(prism) : null,
-                      anchor ? JSON.stringify(anchor) : null,
-                      null, // sections_json filled after Stage 2
-                      JSON.stringify(identity),
-                      rawMessages.length
-                    ).run();
-                  } else {
-                    throw schemaErr;
-                  }
-                }
+                await env.KNOT_DB.prepare(
+                  `INSERT INTO analyses (id, user_id, type_code, type_name, tagline, axis_fs, axis_ah, axis_tr, axis_ow, axis_xv, axis_ei, axes_json, prism_json, anchor_json, identity_json, message_count, input_format, original_count, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scoring', datetime('now'))`
+                ).bind(
+                  analysisId,
+                  authUser?.sub || 'anonymous',
+                  identity.code || '',
+                  identity.name || '',
+                  identity.tagline || '',
+                  axisScores.fs ?? null,
+                  axisScores.ah ?? null,
+                  axisScores.tr ?? null,
+                  axisScores.ow ?? null,
+                  axisScores.xv ?? null,
+                  axisScores.ei ?? null,
+                  JSON.stringify(axes),
+                  prism ? JSON.stringify(prism) : null,
+                  anchor ? JSON.stringify(anchor) : null,
+                  JSON.stringify(identity),
+                  rawMessages.length,
+                  preprocessed.format || null,
+                  preprocessed.originalCount || null
+                ).run();
+
+                // Update user's total_analyses count
+                env.KNOT_DB.prepare(
+                  `UPDATE users SET total_analyses = total_analyses + 1 WHERE id = ?`
+                ).bind(authUser?.sub || 'anonymous').run().catch(() => {});
+
+                // Log session
+                env.KNOT_DB.prepare(
+                  `INSERT INTO sessions (id, user_id, action, ip, created_at) VALUES (?, ?, 'analyze', ?, datetime('now'))`
+                ).bind(crypto.randomUUID(), authUser?.sub || 'anonymous', request.headers.get('CF-Connecting-IP') || '').run().catch(() => {});
               }
             } catch (dbErr) {
               console.error('[D1 Stage1 Save Error]', dbErr.message);
@@ -4791,18 +4890,18 @@ function switchTab(id, el) {
 
             await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'done', analysis_id: analysisId })}\n\n`));
 
-            // ──── Save Stage 2 essay to D1 ────
+            // ──── Save Stage 2 essay to D1 (v2 schema) ────
             try {
               if (env.KNOT_DB && fullText.length > 100) {
-                // Update analyses row with sections_json
+                // Update analyses status to complete
                 await env.KNOT_DB.prepare(
-                  `UPDATE analyses SET sections_json = ? WHERE id = ?`
-                ).bind(fullText, analysisId).run();
+                  `UPDATE analyses SET status = 'complete' WHERE id = ?`
+                ).bind(analysisId).run();
 
-                // Also insert into essays table
+                // Insert into essays table with text + sections
                 await env.KNOT_DB.prepare(
-                  `INSERT INTO essays (id, analysis_id, essay_json, created_at) VALUES (?, ?, ?, datetime('now'))`
-                ).bind(crypto.randomUUID(), analysisId, fullText).run();
+                  `INSERT INTO essays (id, analysis_id, essay_text, sections_json, char_count, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`
+                ).bind(crypto.randomUUID(), analysisId, fullText, fullText, fullText.length).run();
               }
             } catch (dbErr) {
               console.error('[D1 Stage2 Save Error]', dbErr.message);
@@ -5052,41 +5151,22 @@ function switchTab(id, el) {
       try {
         const body = await request.json();
 
-        // Primary: D1 feedback table
+        // Primary: D1 feedback table (v2 schema)
         if (env.KNOT_DB) {
           const feedbackId = crypto.randomUUID();
-          // Try with user_email first (new schema), fallback to old schema if column doesn't exist
-          try {
-            await env.KNOT_DB.prepare(
-              `INSERT INTO feedback (id, analysis_id, rating, accuracy, useful, issues_json, comment, user_email, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
-            ).bind(
-              feedbackId,
-              body.analysis_id || null,
-              body.rating || 0,
-              body.accuracy || null,
-              body.useful || null,
-              body.issues ? JSON.stringify(body.issues) : null,
-              body.text || body.comment || null,
-              authUser?.email || null
-            ).run();
-          } catch (schemaErr) {
-            // Fallback: old schema without user_email
-            if (schemaErr.message?.includes('no such column')) {
-              await env.KNOT_DB.prepare(
-                `INSERT INTO feedback (id, analysis_id, rating, accuracy, useful, issues_json, comment, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`
-              ).bind(
-                feedbackId,
-                body.analysis_id || null,
-                body.rating || 0,
-                body.accuracy || null,
-                body.useful || null,
-                body.issues ? JSON.stringify(body.issues) : null,
-                body.text || body.comment || null
-              ).run();
-            } else {
-              throw schemaErr;
-            }
-          }
+          await env.KNOT_DB.prepare(
+            `INSERT INTO feedback (id, user_id, analysis_id, match_id, rating, accuracy, useful, issues_json, comment, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+          ).bind(
+            feedbackId,
+            authUser?.sub || null,
+            body.analysis_id || null,
+            body.match_id || null,
+            body.rating || 0,
+            body.accuracy || null,
+            body.useful || null,
+            body.issues ? JSON.stringify(body.issues) : null,
+            body.text || body.comment || null
+          ).run();
         }
 
         // Fallback: also write to KV if available (backward compat, can remove later)
