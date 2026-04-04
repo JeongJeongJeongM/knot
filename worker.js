@@ -2360,12 +2360,18 @@ const MATCH_ARCHETYPES = [
     tension: '낮음', growth: '보통'
   },
   {
-    match: (a, b) => _sdom(a, 'A8') === 'avoidant' && _sdom(b, 'A8') === 'avoidant',
+    match: (a, b) => (_sdom(a, 'A8') === 'avoidance' || _sdom(a, 'A8') === 'strategic_withdrawal') && (_sdom(b, 'A8') === 'avoidance' || _sdom(b, 'A8') === 'strategic_withdrawal'),
     name: '마주 보는 성벽', tagline: '서로의 벽을 인정하지만 넘지 못하는 — 안전하지만 외로운 거리',
     tension: '보통', growth: '낮음'
   },
   {
-    match: (a, b) => (_sdom(a, 'A8') === 'confrontational' && _sdom(b, 'A8') === 'avoidant') || (_sdom(a, 'A8') === 'avoidant' && _sdom(b, 'A8') === 'confrontational'),
+    match: (a, b) => {
+      const aMode = _sdom(a, 'A8');
+      const bMode = _sdom(b, 'A8');
+      const isConfront = m => m === 'direct_engagement' || m === 'escalation';
+      const isAvoid = m => m === 'avoidance' || m === 'strategic_withdrawal';
+      return (isConfront(aMode) && isAvoid(bMode)) || (isAvoid(aMode) && isConfront(bMode));
+    },
     name: '부딪히는 파장', tagline: '한쪽은 부딪히고 다른 쪽은 피하는 — 갈등 언어가 다른 관계',
     tension: '매우 높음', growth: '높음'
   },
@@ -2510,9 +2516,10 @@ function precomputeAxes(rawMessages, prism, anchor) {
   // A3 감정 표현: 감정 어휘 밀도 + ANCHOR emotional_availability
   const expressiveMarkers = (allText.match(/좋아|싫어|슬프|기뻐|화나|무서|불안|행복|사랑|미워|짜증|설레|우울|외로|그리|질투|부러/g) || []).length;
   let a3base = Math.min(1.0, expressiveMarkers / (texts.length * 0.3 + EPS));
-  const eaMode = anchor?.emotional_availability?.response_mode;
-  if (eaMode === 'empathic_resonance') a3base = Math.min(1.0, a3base + 0.1);
-  if (eaMode === 'dismissive_deflection') a3base = Math.max(0, a3base - 0.1);
+  // emotional_availability: response_style = 'dismissive'|'acknowledging'|'supportive'|'empathic_exploration'
+  const eaMode = anchor?.emotional_availability?.response_style;
+  if (eaMode === 'empathic_exploration' || eaMode === 'supportive') a3base = Math.min(1.0, a3base + 0.1);
+  if (eaMode === 'dismissive') a3base = Math.max(0, a3base - 0.1);
   intensity.A3 = a3base;
   confidence.A3 = expressiveMarkers > 5 ? 'high' : expressiveMarkers > 1 ? 'medium' : 'low';
 
@@ -2539,18 +2546,20 @@ function precomputeAxes(rawMessages, prism, anchor) {
   // A12 친밀감 편안함: 자기개방 + ANCHOR self_disclosure
   const intimacyMarkers = (allText.match(/내 경험|솔직히|사실은|비밀인데|나만|개인적으로|우리|같이|너한테만/g) || []).length;
   let a12base = Math.min(1.0, intimacyMarkers / (texts.length * 0.2 + EPS));
-  const disclosureLevel = anchor?.emotional_availability?.self_disclosure_level;
-  if (disclosureLevel === 'high') a12base = Math.min(1.0, a12base + 0.15);
-  if (disclosureLevel === 'low') a12base = Math.max(0, a12base - 0.1);
+  // self_disclosure: 'minimal'|'moderate'|'open'
+  const disclosureLevel = anchor?.emotional_availability?.self_disclosure;
+  if (disclosureLevel === 'open') a12base = Math.min(1.0, a12base + 0.15);
+  if (disclosureLevel === 'minimal') a12base = Math.max(0, a12base - 0.1);
   intensity.A12 = a12base;
   confidence.A12 = intimacyMarkers > 3 ? 'high' : intimacyMarkers > 1 ? 'medium' : 'low';
 
   // A14 변화 수용성: 열린 태도 + ANCHOR conflict flexibility
   const openMarkers = (allText.match(/새로운|다르게|바꿔|시도|도전|변화|혁신|왜 안 돼|실험|탐구/g) || []).length;
   let a14base = Math.min(1.0, openMarkers / (texts.length * 0.2 + EPS));
-  const conflictFlex = anchor?.conflict?.flexibility;
-  if (conflictFlex === 'high') a14base = Math.min(1.0, a14base + 0.1);
-  if (conflictFlex === 'low') a14base = Math.max(0, a14base - 0.1);
+  // pattern_flexibility: 'flexible'|'medium'|'rigid'
+  const conflictFlex = anchor?.conflict?.pattern_flexibility;
+  if (conflictFlex === 'flexible') a14base = Math.min(1.0, a14base + 0.1);
+  if (conflictFlex === 'rigid') a14base = Math.max(0, a14base - 0.1);
   intensity.A14 = a14base;
   confidence.A14 = openMarkers > 3 ? 'medium' : 'low';
 
@@ -2571,14 +2580,16 @@ function precomputeAxes(rawMessages, prism, anchor) {
 
   // A8 갈등 조절: ANCHOR conflict 직접 매핑
   const conflictMode = anchor?.conflict?.default_mode || 'diplomatic_approach';
-  structural.A8 = { primary: conflictMode, styles: { confrontational: conflictMode === 'direct_engagement' ? 0.5 : 0.1, repair: conflictMode === 'diplomatic_approach' ? 0.5 : 0.15, avoidant: conflictMode === 'avoidance' ? 0.5 : 0.1, boundary: conflictMode === 'strategic_withdrawal' ? 0.5 : 0.15 } };
+  const conflictFlexibility = anchor?.conflict?.pattern_flexibility || 'medium';
+  structural.A8 = { primary: conflictMode, flexibility: conflictFlexibility, styles: { confrontational: conflictMode === 'direct_engagement' ? 0.5 : 0.1, repair: conflictMode === 'diplomatic_approach' ? 0.5 : 0.15, avoidant: conflictMode === 'avoidance' ? 0.5 : 0.1, boundary: conflictMode === 'strategic_withdrawal' ? 0.5 : 0.15 } };
   confidence.A8 = anchor?.conflict ? 'high' : 'low';
 
   // A9 감정 처리: ANCHOR emotional_availability response_mode
   let a9primary = 'analytical';
-  if (eaMode === 'empathic_resonance' || eaMode === 'space_holding') a9primary = 'expressive';
-  else if (eaMode === 'dismissive_deflection') a9primary = 'suppressive';
-  else if (eaMode === 'solution_oriented') a9primary = 'analytical';
+  // eaMode: 'dismissive'|'acknowledging'|'supportive'|'empathic_exploration'
+  if (eaMode === 'empathic_exploration' || eaMode === 'supportive') a9primary = 'expressive';
+  else if (eaMode === 'dismissive') a9primary = 'suppressive';
+  else if (eaMode === 'acknowledging') a9primary = 'analytical';
   else if (intensity.A3 > 0.4) a9primary = 'expressive';
   structural.A9 = { primary: a9primary, styles: { expressive: a9primary === 'expressive' ? 0.5 : 0.15, analytical: a9primary === 'analytical' ? 0.5 : 0.15, suppressive: a9primary === 'suppressive' ? 0.5 : 0.1, externalized: 0.1 } };
   confidence.A9 = eaMode ? 'high' : 'medium';
@@ -2790,8 +2801,9 @@ const SERVER_TYPE_AXES = [
     low:  { letter: 'V', label: 'Rigid', desc: '스트레스에 경직되거나 고착된다' },
     calc: (d) => {
       const a2 = d.A2 || 0.5;
-      const a11 = d._structural?.A11;
-      const flexBonus = a11?.primary === 'flexible' ? 0.15 : a11?.primary === 'rigid' ? -0.15 : 0;
+      // A8(갈등)의 pattern_flexibility로 회복 유연성 판단 (A11은 호혜성이므로 부적합)
+      const a8flex = d._structural?.A8?.flexibility;
+      const flexBonus = a8flex === 'flexible' ? 0.15 : a8flex === 'rigid' ? -0.15 : 0;
       return Math.max(0, Math.min(1, a2 * 0.7 + 0.15 + flexBonus));
     }
   },
@@ -2807,7 +2819,8 @@ const SERVER_TYPE_AXES = [
       const internalTendency = (d.A2 || 0.5) * 0.5 + (d.A6 || 0.5) * 0.5;
       const expressionDirect = (d.A3 || 0.5); // 감정 표현만 사용 (A1 제외)
       const a8 = d._structural?.A8;
-      const conflictBonus = a8?.primary === 'confrontational' ? 0.15 : a8?.primary === 'avoidant' ? -0.15 : a8?.primary === 'direct_engagement' ? 0.12 : 0;
+      // A8 primary: 'direct_engagement', 'diplomatic_approach', 'strategic_withdrawal', 'avoidance', 'escalation'
+      const conflictBonus = a8?.primary === 'direct_engagement' ? 0.15 : a8?.primary === 'escalation' ? 0.12 : a8?.primary === 'avoidance' ? -0.15 : a8?.primary === 'strategic_withdrawal' ? -0.1 : 0;
       return Math.max(0, Math.min(1, assertiveness * 0.35 + expressionDirect * 0.2 + (1 - internalTendency) * 0.3 + 0.05 + conflictBonus));
     }
   }
