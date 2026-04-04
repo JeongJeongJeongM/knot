@@ -205,6 +205,152 @@ function prismShannonEntropy(probabilities) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// INTAKE PREPROCESSOR — 불필요 데이터 제거, 용량 최적화
+// ═══════════════════════════════════════════════════════════
+
+const PREPROCESS_CONFIG = {
+  MAX_MESSAGES: 1000,        // 최대 메시지 수 (LLM은 500개만 사용)
+  MAX_MSG_LENGTH: 3000,      // 개별 메시지 최대 길이 (chars)
+  MIN_MSG_LENGTH: 2,         // 너무 짧은 메시지 제거
+  ALLOWED_SENDERS: new Set(['user', 'me', 'human']),
+};
+
+/**
+ * preprocessMessages — 원본 대화 데이터에서 분석에 필요한 것만 추출
+ *
+ * 지원 포맷:
+ *   1) raw_messages: [{ sender, text }, ...] — 기존 포맷
+ *   2) Claude export: { chat_messages: [{ sender, text }, ...] }
+ *   3) ChatGPT export: { mapping: { id: { message: { author: { role }, content: { parts } } } } }
+ *   4) ChatGPT array: [{ message: { author, content } }] 또는 conversations.json 내부
+ *   5) 문자열 배열: ["msg1", "msg2", ...]
+ *
+ * @param {Object} body — 파싱된 JSON body 전체
+ * @returns {{ messages: Array, format: string, originalCount: number, processedCount: number }}
+ */
+function preprocessMessages(body) {
+  let extracted = [];
+  let format = 'unknown';
+
+  // ── 1) 이미 raw_messages 형태로 왔을 때 ──
+  if (body.raw_messages && Array.isArray(body.raw_messages)) {
+    extracted = body.raw_messages;
+    format = 'raw_messages';
+  }
+  // ── 2) Claude export 형태 ──
+  else if (body.chat_messages && Array.isArray(body.chat_messages)) {
+    extracted = body.chat_messages;
+    format = 'claude';
+  }
+  // ── 3) ChatGPT mapping 형태 ──
+  else if (body.mapping && typeof body.mapping === 'object') {
+    extracted = extractFromChatGPTMapping(body.mapping);
+    format = 'chatgpt_mapping';
+  }
+  // ── 4) conversations.json 배열 (여러 대화) ──
+  else if (Array.isArray(body) && body.length > 0 && body[0].mapping) {
+    // 모든 대화에서 메시지 추출 후 합침
+    for (const conv of body) {
+      if (conv.mapping) {
+        extracted = extracted.concat(extractFromChatGPTMapping(conv.mapping));
+      }
+    }
+    format = 'chatgpt_conversations';
+  }
+  // ── 5) 단순 배열 ──
+  else if (Array.isArray(body)) {
+    extracted = body;
+    format = 'array';
+  }
+
+  const originalCount = extracted.length;
+
+  // ── 정규화: 모든 메시지를 { sender, text } 형태로 ──
+  let normalized = extracted.map(msg => {
+    if (typeof msg === 'string') {
+      return { sender: 'user', text: msg };
+    }
+    const sender = (msg.sender || msg.role || msg.author || 'user').toLowerCase();
+    const text = msg.text || msg.content || '';
+    return { sender, text: typeof text === 'string' ? text : String(text) };
+  });
+
+  // ── 사용자 메시지만 필터 (assistant/system 제거) ──
+  normalized = normalized.filter(m => {
+    if (!m.sender) return true;  // sender 없으면 사용자로 간주
+    return PREPROCESS_CONFIG.ALLOWED_SENDERS.has(m.sender) ||
+           !['assistant', 'system', 'bot', 'ai', 'chatgpt'].includes(m.sender);
+  });
+
+  // ── 빈/짧은 메시지 제거 ──
+  normalized = normalized.filter(m =>
+    m.text && m.text.trim().length >= PREPROCESS_CONFIG.MIN_MSG_LENGTH
+  );
+
+  // ── 개별 메시지 길이 트림 ──
+  normalized = normalized.map(m => ({
+    sender: 'user',
+    text: m.text.length > PREPROCESS_CONFIG.MAX_MSG_LENGTH
+      ? m.text.slice(0, PREPROCESS_CONFIG.MAX_MSG_LENGTH) + '...'
+      : m.text
+  }));
+
+  // ── 메시지 수 제한 (최신 N개 유지) ──
+  if (normalized.length > PREPROCESS_CONFIG.MAX_MESSAGES) {
+    normalized = normalized.slice(-PREPROCESS_CONFIG.MAX_MESSAGES);
+  }
+
+  return {
+    messages: normalized,
+    format,
+    originalCount,
+    processedCount: normalized.length,
+  };
+}
+
+/**
+ * ChatGPT mapping 객체에서 메시지 추출
+ */
+function extractFromChatGPTMapping(mapping) {
+  const messages = [];
+  const nodes = Object.values(mapping);
+
+  // 시간순 정렬 시도
+  nodes.sort((a, b) => {
+    const tA = a.message?.create_time || 0;
+    const tB = b.message?.create_time || 0;
+    return tA - tB;
+  });
+
+  for (const node of nodes) {
+    const msg = node.message;
+    if (!msg) continue;
+
+    const role = msg.author?.role || '';
+    if (role === 'system' || role === 'tool') continue;
+
+    // content.parts에서 텍스트 추출
+    let text = '';
+    if (msg.content?.parts && Array.isArray(msg.content.parts)) {
+      text = msg.content.parts
+        .filter(p => typeof p === 'string')
+        .join('\n');
+    } else if (typeof msg.content === 'string') {
+      text = msg.content;
+    }
+
+    if (!text || text.trim().length === 0) continue;
+
+    messages.push({
+      sender: role === 'user' ? 'user' : 'assistant',
+      text: text.trim()
+    });
+  }
+
+  return messages;
+}
+
+// ═══════════════════════════════════════════════════════════
 // L0 PREPROCESSING LAYER — H2AI Core Points #1, #2, #3
 // ═══════════════════════════════════════════════════════════
 
@@ -1834,8 +1980,8 @@ function l4AsymmetricDelta(observed, expected) {
 const RATE_LIMIT_ANALYZE = 10;
 const RATE_LIMIT_MATCH = 10;
 const RATE_LIMIT_WINDOW = 60;
-const MAX_SIZE_ANALYZE = 500 * 1024;
-const MAX_SIZE_MATCH = 500 * 1024;
+const MAX_SIZE_ANALYZE = 10 * 1024 * 1024; // 10MB (전처리가 1000개로 잘라줌)
+const MAX_SIZE_MATCH = 10 * 1024 * 1024;   // 10MB
 const MAX_SIZE_FEEDBACK = 10 * 1024;
 const MAX_SIZE_SHARE = 50 * 1024;
 
@@ -1860,6 +2006,63 @@ async function checkRateLimit(ip, endpoint, limit, env) {
   } catch {
     return true;
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+// GOOGLE AUTH TOKEN VERIFICATION
+// ═══════════════════════════════════════════════════════════
+
+async function verifyGoogleToken(token) {
+  if (!token) return null;
+  try {
+    // Use Google's tokeninfo endpoint to verify
+    const resp = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(token));
+    if (!resp.ok) return null;
+    const data = await resp.json();
+
+    // Verify token is not expired
+    if (data.exp && parseInt(data.exp) * 1000 < Date.now()) return null;
+
+    // Verify audience matches our client ID (if configured)
+    // TODO: Add GOOGLE_CLIENT_ID to env and verify: if (env.GOOGLE_CLIENT_ID && data.aud !== env.GOOGLE_CLIENT_ID) return null;
+
+    return {
+      email: data.email,
+      name: data.name || data.email,
+      picture: data.picture || null,
+      sub: data.sub, // Google user ID
+      verified: data.email_verified === 'true'
+    };
+  } catch (e) {
+    console.error('[Auth] Token verification failed:', e.message);
+    return null;
+  }
+}
+
+async function requireAuth(request, env) {
+  const authHeader = request.headers.get('Authorization') || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  if (!token) {
+    return { error: 'Authentication required', status: 401 };
+  }
+
+  const user = await verifyGoogleToken(token);
+  if (!user) {
+    return { error: 'Invalid or expired token', status: 401 };
+  }
+
+  // Track user in D1 (fire-and-forget, don't block the request)
+  if (env.KNOT_DB) {
+    try {
+      env.KNOT_DB.prepare(
+        `INSERT INTO users (google_id, email, name, picture, last_seen) VALUES (?, ?, ?, ?, datetime('now'))
+         ON CONFLICT(google_id) DO UPDATE SET last_seen = datetime('now'), name = excluded.name, picture = excluded.picture`
+      ).bind(user.sub, user.email, user.name, user.picture).run().catch(() => {});
+    } catch(e) {}
+  }
+
+  return { user };
 }
 
 function sanitizeString(str, maxLen = 100000) {
@@ -1976,69 +2179,427 @@ function sanitizeAnchor(anchor) {
 const SYSTEM_PROMPT_SCORING = `당신은 행동 분석 엔진입니다. 대화 원문을 읽고 정량적 행동 프로필을 JSON으로 출력합니다.
 절대 설명하지 마세요. 오직 유효한 JSON만 출력하세요.
 
-## 출력할 축 (Intensity — 0.0~1.0 실수)
+## 작동 모드
+사전 추정값이 제공된 경우: 대화 원문을 직접 읽고, 추정값의 정확성을 검증하세요. 맞으면 그대로 유지, 틀리면 보정하세요. 특히 [신뢰도: low] 축은 대화 원문 기반으로 재평가하세요.
+사전 추정값이 없는 경우: 대화 원문만으로 전체 프로필을 생성하세요.
 
-| 축 | 이름 | 0.0 극단 | 1.0 극단 |
-|----|------|----------|----------|
-| A1 | 정서 강도 | 무관심, 무감각 | 몰입, 격정 |
-| A2 | 정서 안정성 | 냉담, 무반응 | 깊은 공감, 감정적 |
-| A3 | 감정 표현 | 평화추구, 억제 | 대항적, 공격적 |
-| A4 | 자기 확신 | 겸손, 소극적 | 지배적, 단정적 |
-| A5 | 사회적 주도성 | 관찰자, 수동적 | 개방적, 적극적 |
-| A6 | 권위 수용 | 변동 높음, 불안정 | 일관적, 안정적 |
-| A12 | 친밀감 편안함 | 둔감, 거리감 | 초민감, 깊은 친밀 |
-| A14 | 변화 수용성 | 갈등고착, 경직 | 뛰어난 중재, 유연 |
+## Intensity 축 (0.0~1.0 실수)
+A1 정서 강도 (0=무감각, 1=격정) | A2 정서 안정성 (0=냉담, 1=깊은 공감) | A3 감정 표현 (0=억제, 1=대항적) | A4 자기 확신 (0=소극, 1=지배적) | A5 사회적 주도성 (0=수동, 1=적극) | A6 권위 수용 (0=불안정, 1=일관) | A12 친밀감 편안함 (0=거리감, 1=깊은 친밀) | A14 변화 수용성 (0=경직, 1=유연)
 
-## 출력할 축 (Structural — primary + styles 분포)
-
-| 축 | 이름 | 가능한 primary 값 |
-|----|------|-------------------|
-| A7 | 상호작용 지향 | initiator, responder, balanced |
-| A8 | 갈등 조절 | confrontational, repair, avoidant, boundary |
-| A9 | 감정 처리 | expressive, analytical, suppressive, externalized |
-| A10 | 친밀감 기울기 | surface_locked, slow_burn, depth_seeker, fast_opener |
-| A11 | 호혜성 | giver, taker, balanced |
-| A13 | 인정 욕구 | growth, defensive, avoidant, absorptive |
-| A15 | 관계 투자 | active_investor, passive_maintainer, disengaged |
-| A16 | 의사결정 스타일 | analytical, pragmatic, binary |
-| A17 | 유머/긴장 해소 | tension_breaker, bonding, deflective, aggressive, minimal |
-
-## Structural 축 styles 형식
-각 structural 축은 primary(지배적 유형)와 styles(모든 유형의 비율, 합계 1.0)를 반환합니다.
-예시: {"primary": "confrontational", "styles": {"confrontational": 0.55, "repair": 0.25, "avoidant": 0.10, "boundary": 0.10}}
+## Structural 축 (primary + styles 분포, 합계 1.0)
+A7 상호작용 지향: initiator|responder|balanced
+A8 갈등 조절: confrontational|repair|avoidant|boundary
+A9 감정 처리: expressive|analytical|suppressive|externalized
+A10 친밀감 기울기: surface_locked|slow_burn|depth_seeker|fast_opener
+A11 호혜성: giver|taker|balanced
+A13 인정 욕구: growth|defensive|avoidant|absorptive
+A15 관계 투자: active_investor|passive_maintainer|disengaged
+A16 의사결정: analytical|pragmatic|binary
+A17 유머/긴장 해소: tension_breaker|bonding|deflective|aggressive|minimal
 
 ## 판단 원칙
-1. 대화 원문에서 실제 행동 패턴을 관찰하여 점수를 매기세요
-2. 키워드 빈도가 아니라 맥락과 의도를 읽으세요
-3. 단일 발화에 과도한 비중을 두지 마세요 — 반복 패턴을 찾으세요
-4. 정보가 부족한 축은 0.5 (중립)로 두되, styles는 균등 분배하세요
-5. PRISM/ANCHOR 보조 데이터가 제공되면 참고하되, 대화 원문 관찰이 우선입니다
-6. 반드시 유효한 JSON만 출력하세요. 코드블록, 설명, 주석 금지.
+1. 키워드 빈도가 아니라 맥락과 의도를 읽으세요
+2. 단일 발화에 과도한 비중을 두지 마세요 — 반복 패턴을 찾으세요
+3. 정보가 부족한 축은 0.5 (중립), styles는 균등 분배
+4. 사전 추정값은 참고용 — 대화 원문 관찰이 항상 우선
+5. 유효한 JSON만 출력. 코드블록, 설명, 주석 금지
 
-## 출력 형식 (이 구조 정확히 따르세요)
-{
-  "intensity": {
-    "A1": 0.00, "A2": 0.00, "A3": 0.00, "A4": 0.00,
-    "A5": 0.00, "A6": 0.00, "A12": 0.00, "A14": 0.00
-  },
-  "structural": {
-    "A7": {"primary": "...", "styles": {...}},
-    "A8": {"primary": "...", "styles": {...}},
-    "A9": {"primary": "...", "styles": {...}},
-    "A10": {"primary": "...", "styles": {...}},
-    "A11": {"primary": "...", "styles": {...}},
-    "A13": {"primary": "...", "styles": {...}},
-    "A15": {"primary": "...", "styles": {...}},
-    "A16": {"primary": "...", "styles": {...}},
-    "A17": {"primary": "...", "styles": {...}}
+## 출력 형식
+{"intensity":{"A1":0.00,"A2":0.00,"A3":0.00,"A4":0.00,"A5":0.00,"A6":0.00,"A12":0.00,"A14":0.00},"structural":{"A7":{"primary":"...","styles":{}},"A8":{"primary":"...","styles":{}},"A9":{"primary":"...","styles":{}},"A10":{"primary":"...","styles":{}},"A11":{"primary":"...","styles":{}},"A13":{"primary":"...","styles":{}},"A15":{"primary":"...","styles":{}},"A16":{"primary":"...","styles":{}},"A17":{"primary":"...","styles":{}}}}`;
+
+// ═══════════════════════════════════════════════════════════
+// SERVER-SIDE CALCULATION LOGIC (migrated from client for security)
+// ═══════════════════════════════════════════════════════════
+
+const CONFLICT_MATRIX = {
+    A7: { 'initiator_initiator': 0.4, 'initiator_responder': 0.1, 'initiator_balanced': 0.2, 'responder_initiator': 0.1, 'responder_responder': 0.5, 'responder_balanced': 0.3, 'balanced_initiator': 0.2, 'balanced_responder': 0.3, 'balanced_balanced': 0.2 },
+    A8: { 'confrontational_confrontational': 0.3, 'confrontational_boundary': 0.4, 'confrontational_avoidant': 0.7, 'confrontational_repair': 0.2, 'boundary_confrontational': 0.4, 'boundary_boundary': 0.1, 'boundary_avoidant': 0.5, 'boundary_repair': 0.1, 'avoidant_confrontational': 0.7, 'avoidant_boundary': 0.5, 'avoidant_avoidant': 0.4, 'avoidant_repair': 0.3, 'repair_confrontational': 0.2, 'repair_boundary': 0.1, 'repair_avoidant': 0.3, 'repair_repair': 0.1 },
+    A9: { 'expressive_expressive': 0.2, 'expressive_analytical': 0.5, 'expressive_suppressive': 0.6, 'expressive_externalized': 0.4, 'analytical_expressive': 0.5, 'analytical_analytical': 0.1, 'analytical_suppressive': 0.3, 'analytical_externalized': 0.5, 'suppressive_expressive': 0.6, 'suppressive_analytical': 0.3, 'suppressive_suppressive': 0.3, 'suppressive_externalized': 0.5, 'externalized_expressive': 0.4, 'externalized_analytical': 0.5, 'externalized_suppressive': 0.5, 'externalized_externalized': 0.7 },
+    A10: { 'slow_burn_slow_burn': 0.1, 'slow_burn_fast_opener': 0.4, 'slow_burn_surface_locked': 0.5, 'slow_burn_depth_seeker': 0.3, 'fast_opener_slow_burn': 0.4, 'fast_opener_fast_opener': 0.2, 'fast_opener_surface_locked': 0.7, 'fast_opener_depth_seeker': 0.1, 'surface_locked_slow_burn': 0.5, 'surface_locked_fast_opener': 0.7, 'surface_locked_surface_locked': 0.3, 'surface_locked_depth_seeker': 0.6, 'depth_seeker_slow_burn': 0.3, 'depth_seeker_fast_opener': 0.1, 'depth_seeker_surface_locked': 0.6, 'depth_seeker_depth_seeker': 0.2 },
+    A11: { 'giver_giver': 0.2, 'giver_taker': 0.5, 'giver_balanced': 0.1, 'taker_giver': 0.5, 'taker_taker': 0.7, 'taker_balanced': 0.4, 'balanced_giver': 0.1, 'balanced_taker': 0.4, 'balanced_balanced': 0.25 }
+};
+
+const KOREAN_FUNC_WORDS = {
+  particles: ['은','는','이','가','을','를','에','에서','의','로','으로','와','과','도','만','까지','부터','마다','조차','라도','이나','나','든지','이든지'],
+  pronouns: ['나','너','저','우리','너희','그','그녀','이것','저것','그것','여기','저기','거기','누구','뭐','무엇','어디','언제'],
+  conjunctions: ['그리고','그런데','그래서','하지만','그러나','또','또는','그래도','그러면','왜냐하면','즉','만약','비록','때문에'],
+  adverbs: ['좀','너무','매우','정말','진짜','아주','조금','많이','잘','못','안','다','또','이미','아직','바로','꼭','항상','자주','가끔'],
+  negations: ['안','못','없','아니','절대','전혀','별로','싫','말'],
+  quantifiers: ['모든','각','여러','몇','많은','적은','조금','약간','대부분','전부','다','좀','꽤','상당히'],
+  fillers: ['음','어','그','뭐','아','네','예','응','글쎄','뭐랄까','그냥','일단','아마','혹시']
+};
+
+function computeFunctionWordProfile(messages) {
+  if (!messages || messages.length === 0) return null;
+  const allText = messages.map(m => typeof m === 'string' ? m : (m.text || m.content || '')).join(' ');
+  const totalChars = allText.length || 1;
+  const profile = {};
+  for (const [cat, words] of Object.entries(KOREAN_FUNC_WORDS)) {
+    let count = 0;
+    for (const w of words) {
+      let idx = 0;
+      while ((idx = allText.indexOf(w, idx)) !== -1) { count++; idx += w.length; }
+    }
+    profile[cat] = count / (totalChars / 100);
   }
-}`;
+  return profile;
+}
+
+function computeLSMSimilarity(fwpA, fwpB) {
+  if (!fwpA || !fwpB) return 0.5;
+  const cats = Object.keys(KOREAN_FUNC_WORDS);
+  let totalLSM = 0;
+  for (const cat of cats) {
+    const a = fwpA[cat] || 0;
+    const b = fwpB[cat] || 0;
+    totalLSM += 1 - Math.abs(a - b) / (a + b + 0.0001);
+  }
+  return totalLSM / cats.length;
+}
+
+function _h(v) { return typeof v === 'number' && v >= 0.6; }
+function _l(v) { return typeof v === 'number' && v < 0.4; }
+function _sdom(data, axis) {
+  const axData = data._structural && data._structural[axis];
+  if (!axData) return '';
+  return axData.primary || '';
+}
+
+function _flattenProfile(axes) {
+  const flat = {};
+  if (axes.intensity) {
+    for (const [k, v] of Object.entries(axes.intensity)) {
+      flat[k] = typeof v === 'number' ? v : 0.5;
+    }
+  }
+  flat._structural = axes.structural || {};
+  return flat;
+}
+
+const MATCH_ARCHETYPES = [
+  {
+    match: (a, b) => (_sdom(a, 'A9') === 'expressive' && _sdom(b, 'A9') === 'suppressive') || (_sdom(a, 'A9') === 'suppressive' && _sdom(b, 'A9') === 'expressive'),
+    name: '밀물과 썰물', tagline: '다가가면 물러나고, 물러나면 다가오는 — 끝없는 파도의 관계',
+    tension: '높음', growth: '매우 높음'
+  },
+  {
+    match: (a, b) => _h(a.A1) && _h(b.A1) && _h(a.A4) && _h(b.A4),
+    name: '두 개의 불꽃', tagline: '서로의 열기가 관계를 밝히기도, 태우기도 하는 — 격렬한 공명의 관계',
+    tension: '매우 높음', growth: '높음'
+  },
+  {
+    match: (a, b) => (_sdom(a, 'A16') === 'analytical' && ['pragmatic','binary'].includes(_sdom(b, 'A16'))) || (_sdom(b, 'A16') === 'analytical' && ['pragmatic','binary'].includes(_sdom(a, 'A16'))),
+    name: '번역이 필요한 대화', tagline: '같은 말을 다른 언어로 하는 — 통역이 필요한 관계',
+    tension: '보통', growth: '높음'
+  },
+  {
+    match: (a, b) => Math.abs((a.A4 || 0.5) - (b.A4 || 0.5)) > 0.4,
+    name: '불과 얼음', tagline: '한쪽은 타오르고 다른 쪽은 얼어있는 — 온도차가 만드는 긴장과 매력',
+    tension: '높음', growth: '높음'
+  },
+  {
+    match: (a, b) => _h(a.A6) && _h(b.A6) && _h(a.A5) && _h(b.A5),
+    name: '잔잔한 호수', tagline: '서로에게 기대도 흔들리지 않는 — 안정 위의 안정',
+    tension: '낮음', growth: '보통'
+  },
+  {
+    match: (a, b) => _sdom(a, 'A8') === 'avoidant' && _sdom(b, 'A8') === 'avoidant',
+    name: '마주 보는 성벽', tagline: '서로의 벽을 인정하지만 넘지 못하는 — 안전하지만 외로운 거리',
+    tension: '보통', growth: '낮음'
+  },
+  {
+    match: (a, b) => (_sdom(a, 'A8') === 'confrontational' && _sdom(b, 'A8') === 'avoidant') || (_sdom(a, 'A8') === 'avoidant' && _sdom(b, 'A8') === 'confrontational'),
+    name: '부딪히는 파장', tagline: '한쪽은 부딪히고 다른 쪽은 피하는 — 갈등 언어가 다른 관계',
+    tension: '매우 높음', growth: '높음'
+  },
+  {
+    match: () => true,
+    name: '교차하는 궤도', tagline: '서로 다른 궤도를 돌지만 주기적으로 만나는 — 복합적 역학의 관계',
+    tension: '보통', growth: '보통'
+  },
+];
+
+function serverComputeMatchIdentity(axesA, axesB, identityA, identityB) {
+  const flatA = _flattenProfile(axesA);
+  const flatB = _flattenProfile(axesB);
+  for (const arch of MATCH_ARCHETYPES) {
+    try {
+      if (arch.match(flatA, flatB)) {
+        return {
+          name: arch.name, tagline: arch.tagline,
+          emoji_a: identityA?.emoji || '🔮', emoji_b: identityB?.emoji || '🔮',
+          code: (identityA?.code || '-') + ' × ' + (identityB?.code || '-'),
+          tension: arch.tension, growth: arch.growth
+        };
+      }
+    } catch { continue; }
+  }
+  return {
+    name: '교차하는 궤도', tagline: '복합적 역학의 관계',
+    emoji_a: identityA?.emoji || '🔮', emoji_b: identityB?.emoji || '🔮',
+    code: (identityA?.code || '-') + ' × ' + (identityB?.code || '-'),
+    tension: '보통', growth: '보통'
+  };
+}
+
+function serverComputeCompatibility(axesA, axesB, fwpA, fwpB) {
+  const intensities_a = axesA.intensity || {};
+  const intensities_b = axesB.intensity || {};
+
+  // Intensity friction
+  const intensity_friction = (
+    Math.abs((intensities_a.A1 || 0.5) - (intensities_b.A1 || 0.5)) +
+    Math.abs((intensities_a.A2 || 0.5) - (intensities_b.A2 || 0.5)) +
+    Math.abs((intensities_a.A3 || 0.5) - (intensities_b.A3 || 0.5)) +
+    Math.abs((intensities_a.A4 || 0.5) - (intensities_b.A4 || 0.5)) +
+    Math.abs((intensities_a.A5 || 0.5) - (intensities_b.A5 || 0.5)) +
+    Math.abs((intensities_a.A6 || 0.5) - (intensities_b.A6 || 0.5))
+  ) / 6;
+
+  // Structural friction
+  let structural_friction = 0;
+  let count = 0;
+  const structA = axesA.structural || {};
+  const structB = axesB.structural || {};
+  ['A7', 'A8', 'A9', 'A10', 'A11'].forEach(axisId => {
+    const styleA = structA[axisId]?.primary;
+    const styleB = structB[axisId]?.primary;
+    if (styleA && styleB) {
+      const key = styleA + '_' + styleB;
+      if (CONFLICT_MATRIX[axisId] && CONFLICT_MATRIX[axisId][key] !== undefined) {
+        structural_friction += CONFLICT_MATRIX[axisId][key];
+        count++;
+      }
+    }
+  });
+  structural_friction = count > 0 ? structural_friction / count : 0;
+
+  // LSM friction
+  const lsm_similarity = computeLSMSimilarity(fwpA, fwpB);
+  const lsm_friction = 1 - lsm_similarity;
+
+  // Weighted formula
+  const total_friction = 0.40 * intensity_friction + 0.40 * structural_friction + 0.20 * lsm_friction;
+  const compatibility = (1 - total_friction) * 100;
+
+  return {
+    score: Math.max(0, Math.min(100, compatibility)),
+    intensity_friction,
+    structural_friction,
+    lsm_similarity,
+    lsm_friction,
+    total_friction
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// PRECOMPUTE LAYER — PRISM/ANCHOR/L1 기반 축 사전 추정
+// LLM은 이 추정값을 검증/보정만 수행 → 토큰 절감
+// ═══════════════════════════════════════════════════════════
+
+function precomputeAxes(rawMessages, prism, anchor) {
+  const texts = rawMessages
+    .map(m => typeof m === 'string' ? m : (m.text || ''))
+    .filter(t => t.length > 0);
+
+  if (texts.length < 3) return null;
+
+  const allText = texts.join(' ');
+  const EPS = 0.0001;
+
+  // ── Intensity axes: 키워드 밀도 + PRISM/ANCHOR 데이터 결합 ──
+  const intensity = {};
+  const confidence = {}; // per-axis confidence: 'high'|'medium'|'low'
+
+  // A1 정서 강도: 감탄사/강조 밀도 + ANCHOR attachment 참조
+  const emotionalMarkers = (allText.match(/[!！]{2,}|ㅠ+|ㅜ+|ㅋ+|ㅎ+|하하|진짜|대박|미쳤|ㄹㅇ|레알|씨발|시발|존나/g) || []).length;
+  const a1base = Math.min(1.0, emotionalMarkers / (texts.length * 0.5 + EPS));
+  // ANCHOR anxious attachment boosts emotional intensity
+  const anxiousBoost = anchor?.attachment?.primary_tendency === 'leans_anxious' ? 0.15 : 0;
+  intensity.A1 = Math.min(1.0, Math.max(0, a1base + anxiousBoost));
+  confidence.A1 = emotionalMarkers > 5 ? 'high' : emotionalMarkers > 2 ? 'medium' : 'low';
+
+  // A2 정서 안정성: 문장 길이 일관성 + ANCHOR stress_shift
+  const lengths = texts.map(t => t.length);
+  const lenMean = lengths.reduce((a, b) => a + b, 0) / lengths.length;
+  const lenStd = Math.sqrt(lengths.reduce((sum, l) => sum + (l - lenMean) ** 2, 0) / lengths.length);
+  const lenCV = lenStd / (lenMean + EPS);
+  let a2base = Math.min(1.0, Math.max(0, 1.0 - lenCV));
+  if (anchor?.attachment?.stress_shift === 'becomes_more_anxious') a2base = Math.max(0, a2base - 0.15);
+  if (anchor?.attachment?.stress_shift === 'stable_under_pressure') a2base = Math.min(1.0, a2base + 0.1);
+  intensity.A2 = a2base;
+  confidence.A2 = texts.length > 20 ? 'high' : texts.length > 8 ? 'medium' : 'low';
+
+  // A3 감정 표현: 감정 어휘 밀도 + ANCHOR emotional_availability
+  const expressiveMarkers = (allText.match(/좋아|싫어|슬프|기뻐|화나|무서|불안|행복|사랑|미워|짜증|설레|우울|외로|그리|질투|부러/g) || []).length;
+  let a3base = Math.min(1.0, expressiveMarkers / (texts.length * 0.3 + EPS));
+  const eaMode = anchor?.emotional_availability?.response_mode;
+  if (eaMode === 'empathic_resonance') a3base = Math.min(1.0, a3base + 0.1);
+  if (eaMode === 'dismissive_deflection') a3base = Math.max(0, a3base - 0.1);
+  intensity.A3 = a3base;
+  confidence.A3 = expressiveMarkers > 5 ? 'high' : expressiveMarkers > 1 ? 'medium' : 'low';
+
+  // A4 자기 확신: 단정적 표현 밀도
+  const assertiveMarkers = (allText.match(/확실히|분명히|당연히|반드시|절대|무조건|틀림없이|나는|내가|해야|돼야/g) || []).length;
+  intensity.A4 = Math.min(1.0, assertiveMarkers / (texts.length * 0.3 + EPS));
+  confidence.A4 = assertiveMarkers > 5 ? 'high' : assertiveMarkers > 2 ? 'medium' : 'low';
+
+  // A5 사회적 주도성: 제안/의견 + PRISM curiosity prompt_intent
+  const initiativeMarkers = (allText.match(/해보자|하자|어때|제안|생각에는|방법은|해볼까|이렇게|저렇게|시작하자/g) || []).length;
+  let a5base = Math.min(1.0, initiativeMarkers / (texts.length * 0.2 + EPS));
+  const promptIntent = prism?.curiosity?.prompt_intent;
+  if (promptIntent === 'philosopher' || promptIntent === 'challenger') a5base = Math.min(1.0, a5base + 0.1);
+  intensity.A5 = a5base;
+  confidence.A5 = initiativeMarkers > 3 ? 'high' : initiativeMarkers > 1 ? 'medium' : 'low';
+
+  // A6 권위 수용: 수용/겸양 표현 + ANCHOR growth orientation
+  const acceptanceMarkers = (allText.match(/맞아|그렇지|동의|알겠|이해|감사|고마워|배우|참고|인정/g) || []).length;
+  let a6base = Math.min(1.0, acceptanceMarkers / (texts.length * 0.3 + EPS));
+  if (anchor?.growth?.orientation === 'active_growth') a6base = Math.min(1.0, a6base + 0.1);
+  intensity.A6 = a6base;
+  confidence.A6 = acceptanceMarkers > 3 ? 'medium' : 'low';
+
+  // A12 친밀감 편안함: 자기개방 + ANCHOR self_disclosure
+  const intimacyMarkers = (allText.match(/내 경험|솔직히|사실은|비밀인데|나만|개인적으로|우리|같이|너한테만/g) || []).length;
+  let a12base = Math.min(1.0, intimacyMarkers / (texts.length * 0.2 + EPS));
+  const disclosureLevel = anchor?.emotional_availability?.self_disclosure_level;
+  if (disclosureLevel === 'high') a12base = Math.min(1.0, a12base + 0.15);
+  if (disclosureLevel === 'low') a12base = Math.max(0, a12base - 0.1);
+  intensity.A12 = a12base;
+  confidence.A12 = intimacyMarkers > 3 ? 'high' : intimacyMarkers > 1 ? 'medium' : 'low';
+
+  // A14 변화 수용성: 열린 태도 + ANCHOR conflict flexibility
+  const openMarkers = (allText.match(/새로운|다르게|바꿔|시도|도전|변화|혁신|왜 안 돼|실험|탐구/g) || []).length;
+  let a14base = Math.min(1.0, openMarkers / (texts.length * 0.2 + EPS));
+  const conflictFlex = anchor?.conflict?.flexibility;
+  if (conflictFlex === 'high') a14base = Math.min(1.0, a14base + 0.1);
+  if (conflictFlex === 'low') a14base = Math.max(0, a14base - 0.1);
+  intensity.A14 = a14base;
+  confidence.A14 = openMarkers > 3 ? 'medium' : 'low';
+
+  // ── Structural axes: PRISM/ANCHOR 직접 매핑 ──
+  const structural = {};
+
+  // A7 상호작용 지향: 메시지 길이 + 인과접속사 밀도
+  let causalCount = 0;
+  for (const conj of L1_CAUSAL_CONJUNCTIONS) {
+    const matches = allText.match(new RegExp(conj, 'g'));
+    if (matches) causalCount += matches.length;
+  }
+  const causalDensity = causalCount / (texts.length + EPS);
+  const avgLen = allText.length / (texts.length + EPS);
+  const a7primary = avgLen > 100 && causalDensity > 0.5 ? 'initiator' : avgLen < 30 ? 'responder' : 'balanced';
+  structural.A7 = { primary: a7primary, styles: { initiator: a7primary === 'initiator' ? 0.6 : 0.2, responder: a7primary === 'responder' ? 0.6 : 0.2, balanced: a7primary === 'balanced' ? 0.6 : 0.2 } };
+  confidence.A7 = texts.length > 15 ? 'high' : 'medium';
+
+  // A8 갈등 조절: ANCHOR conflict 직접 매핑
+  const conflictMode = anchor?.conflict?.default_mode || 'diplomatic_approach';
+  structural.A8 = { primary: conflictMode, styles: { confrontational: conflictMode === 'direct_engagement' ? 0.5 : 0.1, repair: conflictMode === 'diplomatic_approach' ? 0.5 : 0.15, avoidant: conflictMode === 'avoidance' ? 0.5 : 0.1, boundary: conflictMode === 'strategic_withdrawal' ? 0.5 : 0.15 } };
+  confidence.A8 = anchor?.conflict ? 'high' : 'low';
+
+  // A9 감정 처리: ANCHOR emotional_availability response_mode
+  let a9primary = 'analytical';
+  if (eaMode === 'empathic_resonance' || eaMode === 'space_holding') a9primary = 'expressive';
+  else if (eaMode === 'dismissive_deflection') a9primary = 'suppressive';
+  else if (eaMode === 'solution_oriented') a9primary = 'analytical';
+  else if (intensity.A3 > 0.4) a9primary = 'expressive';
+  structural.A9 = { primary: a9primary, styles: { expressive: a9primary === 'expressive' ? 0.5 : 0.15, analytical: a9primary === 'analytical' ? 0.5 : 0.15, suppressive: a9primary === 'suppressive' ? 0.5 : 0.1, externalized: 0.1 } };
+  confidence.A9 = eaMode ? 'high' : 'medium';
+
+  // A10 친밀감 기울기: PRISM depth + ANCHOR attachment
+  let domainCount = 0;
+  for (const marker of L1_DOMAIN_MARKERS) { if (allText.includes(marker)) domainCount++; }
+  const domainDensity = domainCount / L1_DOMAIN_MARKERS.length;
+  const depthLevel = prism?.depth?.overall_depth || 'surface';
+  let a10primary = 'slow_burn';
+  if (depthLevel === 'deep' || depthLevel === 'expert') a10primary = 'depth_seeker';
+  else if (anchor?.attachment?.primary_tendency === 'leans_anxious') a10primary = 'fast_opener';
+  else if (anchor?.attachment?.primary_tendency === 'leans_avoidant') a10primary = 'surface_locked';
+  structural.A10 = { primary: a10primary, styles: { surface_locked: a10primary === 'surface_locked' ? 0.5 : 0.1, slow_burn: a10primary === 'slow_burn' ? 0.5 : 0.2, depth_seeker: a10primary === 'depth_seeker' ? 0.5 : 0.1, fast_opener: a10primary === 'fast_opener' ? 0.5 : 0.1 } };
+  confidence.A10 = (prism?.depth && anchor?.attachment) ? 'high' : 'medium';
+
+  // A11 호혜성: 질문/응답 비율로 추정
+  const questionRatio = prism?.curiosity?.question_ratio || 0;
+  let a11primary = 'balanced';
+  if (questionRatio > 0.4) a11primary = 'giver'; // 많이 물어봄 = 상대에게 관심
+  else if (questionRatio < 0.1 && intensity.A4 > 0.5) a11primary = 'taker';
+  structural.A11 = { primary: a11primary, styles: { giver: a11primary === 'giver' ? 0.5 : 0.2, taker: a11primary === 'taker' ? 0.5 : 0.1, balanced: a11primary === 'balanced' ? 0.5 : 0.3 } };
+  confidence.A11 = questionRatio > 0 ? 'medium' : 'low';
+
+  // A13 인정 욕구: ANCHOR growth orientation
+  const growthOrientation = anchor?.growth?.orientation || 'defensive';
+  let a13primary = 'defensive';
+  if (growthOrientation === 'active_growth') a13primary = 'growth';
+  else if (growthOrientation === 'reflective') a13primary = 'absorptive';
+  else if (growthOrientation === 'stability_focused') a13primary = 'avoidant';
+  structural.A13 = { primary: a13primary, styles: { growth: a13primary === 'growth' ? 0.5 : 0.15, defensive: a13primary === 'defensive' ? 0.5 : 0.15, avoidant: a13primary === 'avoidant' ? 0.5 : 0.1, absorptive: a13primary === 'absorptive' ? 0.5 : 0.1 } };
+  confidence.A13 = anchor?.growth ? 'high' : 'low';
+
+  // A15 관계 투자: ANCHOR growth + prompt_intent
+  let a15primary = 'passive_maintainer';
+  if (promptIntent === 'philosopher' || growthOrientation === 'active_growth') a15primary = 'active_investor';
+  else if (anchor?.attachment?.primary_tendency === 'leans_avoidant') a15primary = 'disengaged';
+  structural.A15 = { primary: a15primary, styles: { active_investor: a15primary === 'active_investor' ? 0.5 : 0.2, passive_maintainer: a15primary === 'passive_maintainer' ? 0.5 : 0.3, disengaged: a15primary === 'disengaged' ? 0.5 : 0.1 } };
+  confidence.A15 = 'medium';
+
+  // A16 의사결정 스타일: 인과접속사 밀도 + PRISM vocabulary
+  let a16primary = 'pragmatic';
+  if (causalDensity > 0.3 || domainDensity > 0.15) a16primary = 'analytical';
+  else if (intensity.A4 > 0.6 && causalDensity < 0.1) a16primary = 'binary';
+  structural.A16 = { primary: a16primary, styles: { analytical: a16primary === 'analytical' ? 0.5 : 0.2, pragmatic: a16primary === 'pragmatic' ? 0.5 : 0.3, binary: a16primary === 'binary' ? 0.5 : 0.1 } };
+  confidence.A16 = causalDensity > 0.1 ? 'high' : 'medium';
+
+  // A17 유머/긴장 해소: 웃음 표현 패턴
+  const humorMarkers = (allText.match(/ㅋ{2,}|ㅎ{2,}|하하|ㅉㅉ|큭|푸하|ㄱㅂㅈㄱ|개웃|꿀잼|웃프|ㅠㅋ|ㅋㅠ/g) || []).length;
+  const sarcasticMarkers = (allText.match(/ㅉ|에이|뭔|아 진짜|하|씁|어이없/g) || []).length;
+  let a17primary = 'minimal';
+  if (humorMarkers > texts.length * 0.3) a17primary = 'tension_breaker';
+  else if (humorMarkers > texts.length * 0.15) a17primary = 'bonding';
+  else if (sarcasticMarkers > texts.length * 0.1) a17primary = 'aggressive';
+  structural.A17 = { primary: a17primary, styles: { tension_breaker: a17primary === 'tension_breaker' ? 0.5 : 0.1, bonding: a17primary === 'bonding' ? 0.5 : 0.15, deflective: 0.1, aggressive: a17primary === 'aggressive' ? 0.4 : 0.05, minimal: a17primary === 'minimal' ? 0.5 : 0.1 } };
+  confidence.A17 = humorMarkers > 3 ? 'high' : 'medium';
+
+  // Round all intensity values
+  for (const k of Object.keys(intensity)) {
+    intensity[k] = Math.round(intensity[k] * 100) / 100;
+  }
+
+  return { intensity, structural, confidence };
+}
 
 function buildScoringPrompt(rawMessages, prism, anchor) {
-  let prompt = `다음 대화 메시지를 분석하여 행동 프로필 JSON을 출력하세요.\n\n`;
+  // Precompute axes from PRISM/ANCHOR/keyword analysis
+  const precomputed = precomputeAxes(rawMessages, prism, anchor);
 
-  prompt += `## 대화 원문 (${rawMessages.length}개 메시지)\n`;
-  const truncated = rawMessages.slice(0, 500); // Limit to 500 messages
+  let prompt = '';
+
+  if (precomputed) {
+    prompt += `## 사전 추정 결과 (키워드/패턴 기반 자동 분석)\n`;
+    prompt += `아래는 엔진이 키워드 밀도와 패턴 매칭으로 사전 추정한 값입니다.\n`;
+    prompt += `대화 원문을 직접 읽고, 이 추정값이 맞으면 그대로 유지하고, 틀리면 보정하세요.\n`;
+    prompt += `보정이 필요 없는 축은 추정값 그대로 출력하면 됩니다.\n\n`;
+
+    // High/medium confidence axes — show precomputed values
+    prompt += `### Intensity 사전 추정\n`;
+    const intConf = precomputed.confidence;
+    for (const [axis, val] of Object.entries(precomputed.intensity)) {
+      const conf = intConf[axis] || 'low';
+      prompt += `${axis}: ${val} [신뢰도: ${conf}]\n`;
+    }
+
+    prompt += `\n### Structural 사전 추정\n`;
+    for (const [axis, data] of Object.entries(precomputed.structural)) {
+      const conf = intConf[axis] || 'medium';
+      prompt += `${axis}: ${data.primary} [신뢰도: ${conf}]\n`;
+    }
+
+    prompt += `\n## 대화 원문 (${rawMessages.length}개 메시지) — 사전 추정 검증용\n`;
+  } else {
+    prompt += `다음 대화 메시지를 분석하여 행동 프로필 JSON을 출력하세요.\n\n`;
+    prompt += `## 대화 원문 (${rawMessages.length}개 메시지)\n`;
+  }
+
+  const truncated = rawMessages.slice(0, 500);
   truncated.forEach((msg, i) => {
     const text = typeof msg === 'string' ? msg : (msg.text || '');
     const clean = sanitizeString(text, 2000);
@@ -2048,31 +2609,40 @@ function buildScoringPrompt(rawMessages, prism, anchor) {
     prompt += `\n... (${rawMessages.length - 500}개 메시지 생략)\n`;
   }
 
-  if (prism) {
-    prompt += `\n## 보조 데이터: PRISM (관심사/호기심 — 키워드 기반 자동 분석 결과)\n`;
-    if (prism.topic_distribution && typeof prism.topic_distribution === 'object') {
-      const topics = prism.topic_distribution.topics || prism.topic_distribution;
-      if (topics && typeof topics === 'object') {
-        prompt += `주제 분포: ${JSON.stringify(topics).slice(0, 1000)}\n`;
+  // PRISM/ANCHOR 보조 데이터는 precomputed에 이미 반영 — high-confidence일 때 중복 전송 생략
+  const hasPrecomputed = !!precomputed;
+  const allHighConf = hasPrecomputed && Object.values(precomputed.confidence).every(c => c === 'high');
+
+  if (!allHighConf) {
+    if (prism) {
+      prompt += `\n## 보조 데이터: PRISM\n`;
+      if (prism.topic_distribution && typeof prism.topic_distribution === 'object') {
+        const topics = prism.topic_distribution.topics || prism.topic_distribution;
+        if (topics && typeof topics === 'object') {
+          prompt += `주제 분포: ${JSON.stringify(topics).slice(0, 1000)}\n`;
+        }
+      }
+      if (prism.curiosity && typeof prism.curiosity === 'object') {
+        prompt += `호기심: ${JSON.stringify(prism.curiosity).slice(0, 500)}\n`;
+      }
+      if (prism.vocabulary && typeof prism.vocabulary === 'object') {
+        prompt += `어휘: ${JSON.stringify(prism.vocabulary).slice(0, 500)}\n`;
       }
     }
-    if (prism.curiosity && typeof prism.curiosity === 'object') {
-      prompt += `호기심 패턴: ${JSON.stringify(prism.curiosity).slice(0, 500)}\n`;
-    }
-    if (prism.vocabulary && typeof prism.vocabulary === 'object') {
-      prompt += `언어 특징: ${JSON.stringify(prism.vocabulary).slice(0, 500)}\n`;
-    }
-  }
 
-  if (anchor) {
-    prompt += `\n## 보조 데이터: ANCHOR (관계 역학 — 키워드 기반 자동 분석 결과)\n`;
-    if (anchor.attachment) prompt += `애착: ${JSON.stringify(anchor.attachment).slice(0, 500)}\n`;
-    if (anchor.conflict) prompt += `갈등: ${JSON.stringify(anchor.conflict).slice(0, 500)}\n`;
-    if (anchor.emotional_availability) prompt += `정서적 가용성: ${JSON.stringify(anchor.emotional_availability).slice(0, 500)}\n`;
-    if (anchor.growth) prompt += `성장: ${JSON.stringify(anchor.growth).slice(0, 500)}\n`;
+    if (anchor) {
+      prompt += `\n## 보조 데이터: ANCHOR\n`;
+      if (anchor.attachment) prompt += `애착: ${JSON.stringify(anchor.attachment).slice(0, 500)}\n`;
+      if (anchor.conflict) prompt += `갈등: ${JSON.stringify(anchor.conflict).slice(0, 500)}\n`;
+      if (anchor.emotional_availability) prompt += `정서: ${JSON.stringify(anchor.emotional_availability).slice(0, 500)}\n`;
+      if (anchor.growth) prompt += `성장: ${JSON.stringify(anchor.growth).slice(0, 500)}\n`;
+    }
   }
 
   prompt += `\n위 대화를 읽고 행동 프로필 JSON만 출력하세요.`;
+  if (precomputed) {
+    prompt += ` 사전 추정값과 대화 원문이 일치하면 그대로, 불일치하면 보정하여 최종 JSON을 출력하세요.`;
+  }
   return prompt;
 }
 
@@ -2126,27 +2696,173 @@ const SERVER_TYPE_AXES = [
       const flexBonus = a11?.primary === 'flexible' ? 0.15 : a11?.primary === 'rigid' ? -0.15 : 0;
       return Math.max(0, Math.min(1, a2 * 0.7 + 0.15 + flexBonus));
     }
+  },
+  {
+    id: 'defense', name: '방어 방향',
+    high: { letter: 'E', label: 'Externalize', desc: '위협을 외부로 투사하고 환경을 통제하려 한다' },
+    low:  { letter: 'I', label: 'Internalize', desc: '위협을 내면에 흡수하고 자기를 재조정하려 한다' },
+    calc: (d) => {
+      const emotionIntensity = (d.A1 || 0.5) * 0.6 + (d.A3 || 0.5) * 0.4;
+      const assertiveness = (d.A4 || 0.5) * 0.5 + (d.A5 || 0.5) * 0.5;
+      const walledness = 1 - ((d.A12 || 0.5) * 0.5 + (d.A14 || 0.5) * 0.5);
+      return Math.max(0, Math.min(1, emotionIntensity * 0.35 + assertiveness * 0.35 + walledness * 0.3));
+    }
   }
 ];
 
-const SERVER_IDENTITY_ARCHETYPES = [
-  { match: d => _sh(d.A1) && _sl(d.A4) && _sdom(d,'A9')==='suppressive', name:'얼어붙은 화산', emoji:'🌋', tagline:'안에서 들끓지만 밖으로는 차가운, 통제된 격렬함의 소유자' },
-  { match: d => _sh(d.A1) && _sh(d.A3) && _sdom(d,'A8')==='confrontational', name:'폭풍의 지휘자', emoji:'⚡', tagline:'감정의 폭풍을 에너지로 바꾸는, 주도적인 격렬함의 소유자' },
-  { match: d => _sh(d.A2) && _sl(d.A3) && _sh(d.A4), name:'안개 속의 등불', emoji:'🏮', tagline:'따뜻하게 비추지만 스스로는 흔들리는, 부드러운 공감의 소유자' },
-  { match: d => _sh(d.A1) && _sh(d.A3) && _sdom(d,'A7')==='initiator', name:'길 없는 개척자', emoji:'🗡️', tagline:'기존 질서를 따르지 않는, 자기 길을 만드는 확신의 소유자' },
-  { match: d => _sl(d.A1) && _sl(d.A3) && _sl(d.A4), name:'고요한 관찰자', emoji:'🌑', tagline:'조용히 세상을 읽는, 낮은 온도의 깊은 사유자' },
-  { match: d => _sh(d.A2) && _sh(d.A5) && _sh(d.A6), name:'따뜻한 항구', emoji:'🏖️', tagline:'사람들이 쉬어가는, 안정적이고 개방적인 존재' },
-  { match: d => _sh(d.A4) && _sl(d.A2) && _sdom(d,'A7')==='initiator', name:'칼날 위의 무용수', emoji:'🔪', tagline:'날카로운 확신과 불안정한 감정이 공존하는 존재' },
-  { match: d => _sh(d.A6) && _sl(d.A1) && _sl(d.A3), name:'잔잔한 호수', emoji:'🌊', tagline:'감정의 파동이 적고 일관된, 안정적인 존재' },
-  { match: d => _sh(d.A1) && _sh(d.A2) && _sh(d.A5), name:'불꽃의 중재자', emoji:'🔥', tagline:'뜨겁게 공감하면서 동시에 방향을 제시하는 존재' },
-  { match: () => true, name:'미지의 윤곽', emoji:'🔮', tagline:'아직 정의되지 않은, 복합적인 존재' },
-];
+// ═══════════════════════════════════════════════════════════
+// 64 ARCHETYPES — Full coverage of 6-axis binary space
+// Code: F/S(emotion) × A/H(drive) × T/R(cognition) × O/W(boundary) × X/V(resilience) × E/I(defense)
+// ═══════════════════════════════════════════════════════════
 
-function _sh(v) { return v !== undefined && v >= 0.5; }
-function _sl(v) { return v !== undefined && v < 0.5; }
-function _sdom(d, axis) {
-  return d._structural?.[axis]?.primary || '';
-}
+const ARCHETYPE_MAP = {
+  // ═══════════════════════════════════════════════════════════
+  // F+A (Fire + Assert): 열정적 주도자들 — 16 types
+  // ═══════════════════════════════════════════════════════════
+
+  // FATOX — 열정 + 주도 + 분석 + 개방 + 유연
+  'FATOXE': { name: '폭풍의 지휘자',      emoji: '⚡', tagline: '감정의 폭풍을 전략적 에너지로 전환해 세상을 재편하는 존재. 위협이 오면 더 크게 확장한다' },
+  'FATOXI': { name: '번개를 삼킨 자',     emoji: '🌩️', tagline: '동일한 폭풍의 에너지를 가졌지만, 위기의 순간 그것을 내면에 가두고 혼자 소화하려는 과부하된 전략가' },
+
+  // FATOV — 열정 + 주도 + 분석 + 개방 + 경직
+  'FATOVE': { name: '타오르는 설계자',     emoji: '🔥', tagline: '완벽한 설계를 향한 강렬한 집착을 행동으로 밀어붙이는 멈추지 않는 엔진. 실패하면 더 세게 밀어붙인다' },
+  'FATOVI': { name: '꺼지지 않는 용광로',  emoji: '🫀', tagline: '열정과 경직이 내면에서 끊임없이 충돌하며 스스로를 녹이는, 보이지 않는 과열 상태의 존재' },
+
+  // FATWX — 열정 + 주도 + 분석 + 폐쇄 + 유연
+  'FATWXE': { name: '철벽의 전략가',      emoji: '🏰', tagline: '감정과 논리를 무기 삼아 영역을 구축하고 수호하는, 공격적 방어의 대가. 침범하면 반격한다' },
+  'FATWXI': { name: '갑옷 속의 심장',     emoji: '🖤', tagline: '견고한 벽 안에서 모든 충격을 혼자 흡수하고 재구성하는 침묵의 전사' },
+
+  // FATWV — 열정 + 주도 + 분석 + 폐쇄 + 경직
+  'FATWVE': { name: '얼어붙은 화산',      emoji: '🌋', tagline: '안의 격렬함을 통제된 폭발로 분출하는 존재. 차가운 표면과 뜨거운 내부의 압력차가 파괴력이 된다' },
+  'FATWVI': { name: '압축된 마그마',      emoji: '🪨', tagline: '분출구 없이 내면에서 끓어오르는, 언제 깨질지 모르는 단단한 껍질 아래의 압력' },
+
+  // FAROX — 열정 + 주도 + 공감 + 개방 + 유연
+  'FAROXE': { name: '불꽃의 중재자',      emoji: '🎆', tagline: '뜨거운 공감으로 갈등을 관통하며 방향을 제시하는 열린 심장의 리더. 충돌을 피하지 않고 돌파한다' },
+  'FAROXI': { name: '흡수하는 태양',      emoji: '☀️', tagline: '모든 사람의 고통을 자기 안으로 끌어들여 연소시키는, 넘치는 공감이 자기를 태우는 존재' },
+
+  // FAROV — 열정 + 주도 + 공감 + 개방 + 경직
+  'FAROVE': { name: '금 간 카리스마',     emoji: '👑', tagline: '사람을 끌어당기는 힘으로 세상에 부딪히지만, 자기 균열은 감추지 못하는 존재' },
+  'FAROVI': { name: '왕관 아래의 균열',    emoji: '💎', tagline: '카리스마의 이면에서 내면의 금을 끊임없이 수선하는, 빛나지만 깨지기 쉬운 존재' },
+
+  // FARWX — 열정 + 주도 + 공감 + 폐쇄 + 유연
+  'FARWXE': { name: '선별적 수호자',      emoji: '🛡️', tagline: '가까운 사람을 위해 어떤 위협도 정면으로 돌파하는 문 앞의 불꽃' },
+  'FARWXI': { name: '성벽 안의 촛불',     emoji: '🕯️', tagline: '강렬한 헌신을 내면에 간직한 채 밖으로는 조용히 지키는, 보이지 않는 수호' },
+
+  // FARWV — 열정 + 주도 + 공감 + 폐쇄 + 경직
+  'FARWVE': { name: '무장한 심장',        emoji: '⚔️', tagline: '감정을 드러내는 것을 패배로 여기며 공격으로 자기를 방어하는, 전투적 사랑의 소유자' },
+  'FARWVI': { name: '상처를 삼키는 기사',  emoji: '🗡️', tagline: '풍부한 감정이 표현되지 못한 채 내면에서 자기를 잠식하는, 침묵 속의 헌신자' },
+
+  // ═══════════════════════════════════════════════════════════
+  // F+H (Fire + Harmonize): 예민한 수용자들 — 16 types
+  // ═══════════════════════════════════════════════════════════
+
+  // FHTOX — 열정 + 순응 + 분석 + 개방 + 유연
+  'FHTOXE': { name: '날카로운 감지기',     emoji: '📡', tagline: '세상을 깊이 느끼면서 분석적 거리를 유지하는 따뜻한 관찰자. 위협에는 논리적 반박으로 맞선다' },
+  'FHTOXI': { name: '과부하된 수신기',     emoji: '📻', tagline: '모든 신호를 수신하고 분석하지만 과부하를 내면에서만 처리하려는, 조용한 소진의 존재' },
+
+  // FHTOV — 열정 + 순응 + 분석 + 개방 + 경직
+  'FHTOVE': { name: '적색 경보',          emoji: '🚨', tagline: '세상의 불합리를 예민하게 감지하고 외부에 경고하지만, 자기 유연성은 부족한 파수꾼' },
+  'FHTOVI': { name: '깨진 프리즘',        emoji: '🌈', tagline: '모든 것을 분석하고 느끼지만, 자기에게 돌아오는 빛을 감당하지 못하는 존재' },
+
+  // FHTWX — 열정 + 순응 + 분석 + 폐쇄 + 유연
+  'FHTWXE': { name: '비밀의 연금술사',     emoji: '⚗️', tagline: '닫힌 공간에서 감정을 증류하되, 위협이 오면 정밀한 반격을 설계하는 내면의 전술가' },
+  'FHTWXI': { name: '밀봉된 실험실',      emoji: '🧪', tagline: '감정과 분석을 내면의 실험실에서만 처리하며, 결과를 밖으로 내보내지 않는 존재' },
+
+  // FHTWV — 열정 + 순응 + 분석 + 폐쇄 + 경직
+  'FHTWVE': { name: '얼음 아래 불씨',     emoji: '❄️', tagline: '표면의 고요함 뒤에서 분석과 감정이 충돌하며, 임계점에서 한 번에 터지는 존재' },
+  'FHTWVI': { name: '진공 속의 폭풍',     emoji: '🌀', tagline: '소리 없이 내면에서 격렬하게 돌아가는, 출구 없는 감정의 소용돌이' },
+
+  // FHROX — 열정 + 순응 + 공감 + 개방 + 유연
+  'FHROXE': { name: '따뜻한 방파제',      emoji: '⚓', tagline: '누구든 쉬어갈 수 있는 안정적 존재이되, 파도가 거세지면 단단하게 버티는 항구' },
+  'FHROXI': { name: '스며드는 안개',      emoji: '🌫️', tagline: '모든 감정을 흡수하며 자기 윤곽이 흐려지는, 경계 없는 공감의 존재' },
+
+  // FHROV — 열정 + 순응 + 공감 + 개방 + 경직
+  'FHROVE': { name: '부서지기 쉬운 방패',  emoji: '🌸', tagline: '세상의 감정을 다 받아내려 하지만 자기 회복이 따라가지 못하며, 균열이 밖으로 드러나는 존재' },
+  'FHROVI': { name: '시든 채 피는 꽃',    emoji: '🥀', tagline: '끊임없이 공감하고 수용하지만, 자기 내면의 시듦을 돌보지 못하는 존재' },
+
+  // FHRWX — 열정 + 순응 + 공감 + 폐쇄 + 유연
+  'FHRWXE': { name: '숨은 공감자',        emoji: '🌿', tagline: '깊이 느끼고 조용히 돌보되, 위협 앞에서는 가시를 세우는 보이지 않는 생명력' },
+  'FHRWXI': { name: '뿌리 깊은 이끼',     emoji: '🍀', tagline: '고요하게 세상을 흡수하며 자기만의 리듬으로 자라는, 눈에 띄지 않는 깊은 존재' },
+
+  // FHRWV — 열정 + 순응 + 공감 + 폐쇄 + 경직
+  'FHRWVE': { name: '가시 돋친 봉오리',    emoji: '🌹', tagline: '풍부한 감정이 표현의 출구를 찾지 못해, 때로 가시의 형태로 분출되는 존재' },
+  'FHRWVI': { name: '갇힌 심장',          emoji: '🔒', tagline: '풍부한 감정이 표현의 출구를 찾지 못한 채 내면에서 응축되어 굳어가는 존재' },
+
+  // ═══════════════════════════════════════════════════════════
+  // S+A (Still + Assert): 냉정한 주도자들 — 16 types
+  // ═══════════════════════════════════════════════════════════
+
+  // SATOX — 절제 + 주도 + 분석 + 개방 + 유연
+  'SATOXE': { name: '냉정한 항해사',      emoji: '🧭', tagline: '감정의 안개 없이 판을 읽고 방향을 설계하는 열린 전략가. 위기에는 더 냉철해진다' },
+  'SATOXI': { name: '고독한 관제탑',      emoji: '🗼', tagline: '모든 것을 조망하고 조율하지만, 자기의 신호는 어디에도 보내지 않는 존재' },
+
+  // SATOV — 절제 + 주도 + 분석 + 개방 + 경직
+  'SATOVE': { name: '강철 설계자',        emoji: '⚙️', tagline: '논리적 완벽함을 추구하며 예상 밖의 변수에는 시스템을 재설계해서 밀어붙이는 존재' },
+  'SATOVI': { name: '과부하된 회로',      emoji: '💻', tagline: '논리적 완벽함을 추구하지만, 예상 밖의 변수 앞에서 내부 시스템이 경직되는 존재' },
+
+  // SATWX — 절제 + 주도 + 분석 + 폐쇄 + 유연
+  'SATWXE': { name: '그림자 지휘관',      emoji: '🎭', tagline: '조용히 통제하되 위협이 오면 그림자에서 나와 상황을 재편하는, 보이지 않는 손' },
+  'SATWXI': { name: '얼음 왕좌',         emoji: '❆', tagline: '모든 것을 통제하되 그 대가를 내면에서 홀로 감당하는, 고독한 지배자' },
+
+  // SATWV — 절제 + 주도 + 분석 + 폐쇄 + 경직
+  'SATWVE': { name: '요새의 왕',         emoji: '🗿', tagline: '완전한 통제를 추구하며 도전에는 더 높은 벽으로 응답하는 난공불락의 존재' },
+  'SATWVI': { name: '진공의 성채',        emoji: '♟️', tagline: '완전한 통제와 완전한 고립이 공존하는, 안에서도 밖에서도 숨이 막히는 구조물' },
+
+  // SAROX — 절제 + 주도 + 공감 + 개방 + 유연
+  'SAROXE': { name: '안개 속의 등불',     emoji: '🏮', tagline: '따뜻하게 비추되 자신은 드러내지 않는 절제된 공감의 소유자. 위협에는 빛을 더 밝힌다' },
+  'SAROXI': { name: '깊은 우물',         emoji: '🪣', tagline: '타인의 갈증을 채워주지만 자기 수위는 아무도 모르는, 바닥을 보여주지 않는 존재' },
+
+  // SAROV — 절제 + 주도 + 공감 + 개방 + 경직
+  'SAROVE': { name: '칼날 위의 무용수',    emoji: '🔪', tagline: '공감과 주도력을 갖추었지만 내면의 균열이 발밑을 흔들며, 위기에는 더 날카로워지는 존재' },
+  'SAROVI': { name: '균열된 강철',        emoji: '⛓️', tagline: '단단해 보이지만 내부의 균열이 점점 깊어지는, 무게를 혼자 지는 존재' },
+
+  // SARWX — 절제 + 주도 + 공감 + 폐쇄 + 유연
+  'SARWXE': { name: '선별적 조종사',      emoji: '🎯', tagline: '가까운 사람에게만 깊은 돌봄을 제공하되, 외부 위협은 정밀하게 차단하는 관계의 설계자' },
+  'SARWXI': { name: '닫힌 서재',         emoji: '📕', tagline: '깊은 이해와 돌봄을 소유하지만, 열쇠를 가진 사람만 들어올 수 있는 존재' },
+
+  // SARWV — 절제 + 주도 + 공감 + 폐쇄 + 경직
+  'SARWVE': { name: '닫힌 문의 수호자',    emoji: '🚪', tagline: '보호는 하지만 들이지는 않는, 경계에 서서 위협을 정면으로 차단하는 존재' },
+  'SARWVI': { name: '잠긴 금고',         emoji: '🔐', tagline: '소중한 것을 지키려 모든 것을 잠갔지만, 자기조차 열 수 없게 된 존재' },
+
+  // ═══════════════════════════════════════════════════════════
+  // S+H (Still + Harmonize): 고요한 관찰자들 — 16 types
+  // ═══════════════════════════════════════════════════════════
+
+  // SHTOX — 절제 + 순응 + 분석 + 개방 + 유연
+  'SHTOXE': { name: '잔잔한 호수',        emoji: '🌊', tagline: '감정의 파동이 적고 세상을 넓게 받아들이는 고요한 분석가. 바람이 불면 물결로 응답한다' },
+  'SHTOXI': { name: '심해의 조류',        emoji: '🐋', tagline: '표면은 고요하지만 깊은 곳에서 거대한 흐름을 혼자 감당하는, 보이지 않는 깊이' },
+
+  // SHTOV — 절제 + 순응 + 분석 + 개방 + 경직
+  'SHTOVE': { name: '부서진 렌즈',        emoji: '🔍', tagline: '세상을 분석적으로 관찰하지만 변화의 충격에 금이 가며, 왜곡된 상을 외부에 투사하는 존재' },
+  'SHTOVI': { name: '정지된 위성',        emoji: '🛰️', tagline: '궤도를 돌며 모든 것을 관찰하지만, 지상과의 연결이 끊긴 채 혼자 표류하는 존재' },
+
+  // SHTWX — 절제 + 순응 + 분석 + 폐쇄 + 유연
+  'SHTWXE': { name: '고요한 관찰자',      emoji: '🌑', tagline: '세상을 읽되 참여하지 않는 낮은 온도의 깊은 사유자. 침범당하면 조용히 거리를 넓힌다' },
+  'SHTWXI': { name: '우주의 먼지',        emoji: '🌌', tagline: '존재하되 존재를 주장하지 않는, 무한히 적응하며 스스로를 희석시키는 존재' },
+
+  // SHTWV — 절제 + 순응 + 분석 + 폐쇄 + 경직
+  'SHTWVE': { name: '얼어붙은 시계',      emoji: '🕰️', tagline: '멈춘 것처럼 보이지만 내부에서 정밀하게 작동하는, 때가 되면 시간을 알리는 존재' },
+  'SHTWVI': { name: '사라지는 그림자',     emoji: '🫥', tagline: '존재감을 최소화하며, 내면의 경직이 자기를 점점 지워가는 존재' },
+
+  // SHROX — 절제 + 순응 + 공감 + 개방 + 유연
+  'SHROXE': { name: '투명한 거울',        emoji: '🪞', tagline: '상대를 있는 그대로 비추는, 자기 색이 없는 수용의 존재. 위협에는 반사로 대응한다' },
+  'SHROXI': { name: '녹아내리는 경계',     emoji: '💧', tagline: '수용적이되 자기와 타인의 경계가 녹아, 자기 윤곽을 잃어가는 존재' },
+
+  // SHROV — 절제 + 순응 + 공감 + 개방 + 경직
+  'SHROVE': { name: '흔들리는 수면',      emoji: '🫧', tagline: '수용적이지만 내면의 바닥이 불안정하며, 흔들림이 밖으로 물결처럼 퍼지는 존재' },
+  'SHROVI': { name: '침묵의 산호',        emoji: '🪸', tagline: '조용히 세상을 흡수하지만 경직된 내면이 서서히 석회화되는, 아름답지만 부서지는 존재' },
+
+  // SHRWX — 절제 + 순응 + 공감 + 폐쇄 + 유연
+  'SHRWXE': { name: '모래 속의 조개',     emoji: '🐚', tagline: '자기만의 세계에 만족하며 조용히 적응하되, 위협이 오면 껍질을 단단히 닫는 존재' },
+  'SHRWXI': { name: '해저의 동굴',        emoji: '🦪', tagline: '깊은 곳에서 고요하게 존재하며, 모든 것을 내면에서 천천히 소화하는 은둔의 존재' },
+
+  // SHRWV — 절제 + 순응 + 공감 + 폐쇄 + 경직
+  'SHRWVE': { name: '닫힌 조가비',        emoji: '🪹', tagline: '가장 깊이 닫혀 있지만, 압력이 임계점을 넘으면 한 번에 깨지는 존재' },
+  'SHRWVI': { name: '깊은 심연',          emoji: '🕳️', tagline: '가장 깊이 닫혀 있고, 변화의 빛이 가장 늦게 도달하는, 존재의 가장 안쪽 층' },
+};
+
+// Fallback for any edge case
+const ARCHETYPE_FALLBACK = { name: '미지의 윤곽', emoji: '🔮', tagline: '아직 정의되지 않은, 복합적인 존재' };
 
 function serverFlattenProfile(axes) {
   const flat = {};
@@ -2160,7 +2876,7 @@ function serverFlattenProfile(axes) {
 function computeServerIdentity(axes) {
   const flat = serverFlattenProfile(axes);
 
-  // 5-axis type code
+  // 6-axis type code
   const axisResults = [];
   let code = '';
   for (const axis of SERVER_TYPE_AXES) {
@@ -2171,13 +2887,8 @@ function computeServerIdentity(axes) {
     axisResults.push({ id: axis.id, name: axis.name, score, letter, isHigh, high: axis.high, low: axis.low });
   }
 
-  // Archetype matching
-  let archetype = SERVER_IDENTITY_ARCHETYPES[SERVER_IDENTITY_ARCHETYPES.length - 1];
-  for (const arch of SERVER_IDENTITY_ARCHETYPES) {
-    try {
-      if (arch.match(flat)) { archetype = arch; break; }
-    } catch { continue; }
-  }
+  // Direct archetype lookup by type code (64 types)
+  const archetype = ARCHETYPE_MAP[code] || ARCHETYPE_FALLBACK;
 
   return {
     name: archetype.name,
@@ -2190,67 +2901,633 @@ function computeServerIdentity(axes) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// STAGE 2: ESSAY SYSTEM PROMPT (기존)
+// SIMULATION LAYER — Lightweight dynamics engine
+// 10-step trajectory, stimulus-response delta, defense classification
 // ═══════════════════════════════════════════════════════════
 
-const SYSTEM_PROMPT_INDIVIDUAL = `당신은 냉철한 행동 심리 관찰자입니다. 데이터를 기반으로 한 사람의 심리 프로필을 작성합니다.
+/**
+ * Extract 5 simulation axes from Stage 1 axes data
+ * Maps to: E(emotion), C(control), T(cognition), O(openness), X(resilience)
+ */
+function extractSimAxes(axes) {
+  const flat = serverFlattenProfile(axes);
+  const result = {};
+  for (const ax of SERVER_TYPE_AXES) {
+    try { result[ax.id] = Math.max(0, Math.min(1, ax.calc(flat))); }
+    catch { result[ax.id] = 0.5; }
+  }
+  return result; // { emotion, drive, cognition, boundary, resilience, defense }
+}
+
+/**
+ * Sigmoid activation for bounded dynamics
+ */
+function sigmoid(x) {
+  return 1 / (1 + Math.exp(-x));
+}
+
+/**
+ * 10-step trajectory simulation
+ * Models how the 5 axes evolve over time given their interaction dynamics
+ *
+ * Interaction terms (simplified):
+ * - drive(C) suppresses emotion(E) volatility: high control dampens emotional swings
+ * - boundary(O) amplifies emotion(E): openness allows emotional expression
+ * - resilience(X) dampens all oscillation: acts as global stabilizer
+ * - cognition(T) moderates drive(C): analytical thinking refines control
+ */
+function runTrajectorySimulation(simAxes, steps = 10) {
+  const { emotion: E0, drive: C0, cognition: T0, boundary: O0, resilience: X0 } = simAxes;
+
+  const trajectory = [{ step: 0, E: E0, C: C0, T: T0, O: O0, X: X0 }];
+
+  let E = E0, C = C0, T = T0, O = O0, X = X0;
+
+  // Interaction coefficients (kept minimal: only key relationships)
+  const dt = 0.15; // time step size
+
+  for (let i = 1; i <= steps; i++) {
+    // Compute deltas based on axis interactions
+    const dE = dt * (
+      -0.3 * C * (E - 0.5)      // control suppresses emotion deviation
+      + 0.2 * O * (E - 0.3)     // openness amplifies emotion
+      - 0.15 * X * (E - E0)     // resilience pulls back to baseline
+    );
+
+    const dC = dt * (
+      0.1 * T * (C - 0.4)       // cognition reinforces control
+      - 0.1 * E * (1 - C)       // high emotion erodes control
+      - 0.1 * X * (C - C0)      // resilience stabilizes
+    );
+
+    const dT = dt * (
+      -0.05 * E * (1 - T)       // emotional flooding slightly impairs cognition
+      + 0.05 * C * T             // control supports analytical thinking
+    );
+
+    const dO = dt * (
+      -0.15 * (1 - X) * (O - 0.5) // low resilience closes boundaries
+      + 0.1 * E * (1 - O)         // emotion pushes for openness
+    );
+
+    const dX = dt * (
+      -0.1 * Math.abs(E - E0)   // emotional volatility drains resilience
+      - 0.05 * Math.abs(C - C0) // control effort drains resilience
+      + 0.05 * T * X            // cognition + resilience reinforcement loop
+    );
+
+    E = Math.max(0, Math.min(1, E + dE));
+    C = Math.max(0, Math.min(1, C + dC));
+    T = Math.max(0, Math.min(1, T + dT));
+    O = Math.max(0, Math.min(1, O + dO));
+    X = Math.max(0, Math.min(1, X + dX));
+
+    trajectory.push({
+      step: i,
+      E: Math.round(E * 1000) / 1000,
+      C: Math.round(C * 1000) / 1000,
+      T: Math.round(T * 1000) / 1000,
+      O: Math.round(O * 1000) / 1000,
+      X: Math.round(X * 1000) / 1000,
+    });
+  }
+
+  // Compute trajectory summary metrics
+  const final = trajectory[trajectory.length - 1];
+  const drift = {
+    E: Math.round((final.E - E0) * 1000) / 1000,
+    C: Math.round((final.C - C0) * 1000) / 1000,
+    T: Math.round((final.T - T0) * 1000) / 1000,
+    O: Math.round((final.O - O0) * 1000) / 1000,
+    X: Math.round((final.X - X0) * 1000) / 1000,
+  };
+
+  // Volatility: average step-to-step change per axis
+  const volatility = { E: 0, C: 0, T: 0, O: 0, X: 0 };
+  for (let i = 1; i < trajectory.length; i++) {
+    for (const k of ['E', 'C', 'T', 'O', 'X']) {
+      volatility[k] += Math.abs(trajectory[i][k] - trajectory[i - 1][k]);
+    }
+  }
+  for (const k of ['E', 'C', 'T', 'O', 'X']) {
+    volatility[k] = Math.round((volatility[k] / steps) * 1000) / 1000;
+  }
+
+  // Dominant pattern detection
+  const patterns = [];
+  if (drift.E > 0.05 && drift.C < -0.03) patterns.push('emotional_escalation');
+  if (drift.C > 0.05 && drift.E < -0.03) patterns.push('control_tightening');
+  if (drift.X < -0.05) patterns.push('resilience_erosion');
+  if (drift.O < -0.05) patterns.push('boundary_closure');
+  if (Math.abs(drift.E) < 0.02 && Math.abs(drift.C) < 0.02) patterns.push('stable_equilibrium');
+  if (drift.E > 0.03 && drift.O > 0.03) patterns.push('emotional_opening');
+
+  return { trajectory, drift, volatility, patterns, initial: simAxes, final: { E: final.E, C: final.C, T: final.T, O: final.O, X: final.X } };
+}
+
+/**
+ * Stimulus-response simulation
+ * Injects 4 external stimuli and computes state transitions
+ */
+const STIMULUS_PROFILES = {
+  stress: {
+    label: '고강도 스트레스',
+    desc: '업무 과부하, 마감 압박, 예상치 못한 위기 상황',
+    delta: { E: 0.25, C: -0.15, T: -0.05, O: -0.10, X: -0.15 },
+  },
+  intimacy: {
+    label: '친밀감 증가',
+    desc: '깊은 신뢰 관계, 정서적 안전감이 확보된 환경',
+    delta: { E: 0.10, C: -0.08, T: 0.0, O: 0.20, X: 0.05 },
+  },
+  conflict: {
+    label: '대인 갈등',
+    desc: '가까운 사람과의 의견 충돌, 비난, 거부 경험',
+    delta: { E: 0.20, C: 0.12, T: 0.05, O: -0.18, X: -0.10 },
+  },
+  loss: {
+    label: '상실 경험',
+    desc: '관계 단절, 실패, 기대의 붕괴',
+    delta: { E: 0.30, C: -0.12, T: -0.08, O: -0.15, X: -0.22 },
+  },
+};
+
+function computeStimulusResponse(simAxes) {
+  const responses = {};
+
+  for (const [stimKey, stim] of Object.entries(STIMULUS_PROFILES)) {
+    const shifted = {};
+    const deltas = {};
+
+    for (const axis of ['E', 'C', 'T', 'O', 'X']) {
+      const axisKey = axis === 'E' ? 'emotion' : axis === 'C' ? 'drive' : axis === 'T' ? 'cognition' : axis === 'O' ? 'boundary' : 'resilience';
+      const base = simAxes[axisKey];
+      const raw = base + stim.delta[axis];
+      shifted[axis] = Math.max(0, Math.min(1, Math.round(raw * 1000) / 1000));
+      deltas[axis] = Math.round((shifted[axis] - base) * 1000) / 1000;
+    }
+
+    // Compute vulnerability score for this stimulus
+    const vulnerability = Math.round(
+      (Math.abs(deltas.E) * 0.3 + Math.abs(deltas.C) * 0.25 +
+       Math.abs(deltas.X) * 0.25 + Math.abs(deltas.O) * 0.2) * 100
+    ) / 100;
+
+    // Run mini trajectory (5 steps) from the shifted state
+    const shiftedAxes = {
+      emotion: shifted.E, drive: shifted.C, cognition: shifted.T,
+      boundary: shifted.O, resilience: shifted.X
+    };
+    const recovery = runTrajectorySimulation(shiftedAxes, 5);
+    const recoveryDrift = recovery.drift;
+
+    // Does the system recover or deteriorate?
+    const resilientAxes = ['C', 'T', 'X'].filter(k => {
+      const ak = k === 'C' ? 'drive' : k === 'T' ? 'cognition' : 'resilience';
+      return recovery.final[k] >= simAxes[ak] - 0.02;
+    });
+    const recoveryRate = resilientAxes.length / 3;
+
+    responses[stimKey] = {
+      label: stim.label,
+      desc: stim.desc,
+      shifted,
+      deltas,
+      vulnerability,
+      recoveryRate: Math.round(recoveryRate * 100) / 100,
+      recoveryPattern: recoveryRate >= 0.66 ? 'resilient' : recoveryRate >= 0.33 ? 'partial' : 'fragile',
+    };
+  }
+
+  return responses;
+}
+
+/**
+ * Defense pattern classification
+ * Rule-based inference from axis combinations + ANCHOR data
+ */
+const DEFENSE_RULES = [
+  {
+    code: 'PROJECTION',
+    name: '합리화된 전가',
+    desc: '감정을 인지적 틀로 포장하여 외부에 귀인. 분석력이 감정을 은폐하는 도구로 전환된다.',
+    match: (s, a) => s.emotion >= 0.5 && s.cognition >= 0.6 && s.drive >= 0.5 && s.boundary < 0.45,
+  },
+  {
+    code: 'FORTRESS',
+    name: '지적 요새화',
+    desc: '자기 논리에 갇혀 외부 정보를 오류로 처리. 통제력과 분석력은 높지만 새로운 관점이 침투하지 못한다.',
+    match: (s, a) => s.drive >= 0.6 && s.boundary < 0.4 && s.cognition >= 0.5,
+  },
+  {
+    code: 'EXPLOSION',
+    name: '정서적 폭주',
+    desc: '감쇠 기제 부족으로 인한 감정의 강제 배출. 감정 에너지가 높지만 통제 시스템이 이를 수용하지 못한다.',
+    match: (s, a) => s.emotion >= 0.6 && s.drive < 0.4,
+  },
+  {
+    code: 'DIFFUSION',
+    name: '경계 해체',
+    desc: '자기와 타인의 경계가 흐려져 외부 정서에 과도하게 동조. 개방성은 높지만 자기 보호 기제가 약하다.',
+    match: (s, a) => s.boundary >= 0.65 && s.drive < 0.45 && s.emotion >= 0.5,
+  },
+  {
+    code: 'SHUTDOWN',
+    name: '수동적 회피',
+    desc: '갈등 상황에서 시스템이 셧다운. 회복 탄성과 개방성이 모두 낮아 외부 자극을 차단하는 것으로 대응한다.',
+    match: (s, a) => s.resilience < 0.4 && s.boundary < 0.4,
+  },
+];
+
+function classifyDefensePattern(simAxes, anchor) {
+  for (const rule of DEFENSE_RULES) {
+    if (rule.match(simAxes, anchor)) {
+      return { code: rule.code, name: rule.name, desc: rule.desc };
+    }
+  }
+  return {
+    code: 'ADAPTIVE',
+    name: '적응적 방어',
+    desc: '특정 방어 패턴에 고착되지 않고 상황에 따라 유연하게 대응. 축 간 균형이 극단적이지 않다.',
+  };
+}
+
+/**
+ * Risk model — computes system collapse triggers and thresholds
+ */
+function computeRiskModel(simAxes, trajectoryResult, stimulusResult) {
+  const risks = [];
+
+  // Rule 1: Emotional overload risk
+  if (simAxes.emotion >= 0.7 && simAxes.resilience < 0.4) {
+    risks.push({
+      trigger: '정서 과부하',
+      desc: '높은 감정 강도와 낮은 회복 탄성의 결합. 감정적 사건이 연쇄적 시스템 불안정을 유발할 수 있다.',
+      severity: 'high',
+    });
+  }
+
+  // Rule 2: Control collapse under stress
+  const stressResp = stimulusResult.stress;
+  if (stressResp && stressResp.shifted.C < 0.3 && stressResp.recoveryPattern === 'fragile') {
+    risks.push({
+      trigger: '통제 붕괴',
+      desc: '스트레스 상황에서 통제 시스템이 임계점 이하로 하락하며 회복이 어렵다.',
+      severity: 'high',
+    });
+  }
+
+  // Rule 3: Isolation spiral
+  if (simAxes.boundary < 0.35 && simAxes.drive >= 0.6) {
+    risks.push({
+      trigger: '고립 나선',
+      desc: '높은 통제 욕구와 닫힌 경계의 결합. 타인의 접근을 차단하면서 자기 확인 루프에 갇힐 수 있다.',
+      severity: 'medium',
+    });
+  }
+
+  // Rule 4: Resilience erosion trajectory
+  if (trajectoryResult.drift.X < -0.05) {
+    risks.push({
+      trigger: '회복력 소진',
+      desc: '시간이 지남에 따라 회복 탄성이 자연 감소하는 궤적. 축적된 스트레스가 시스템 내구성을 점진적으로 약화시킨다.',
+      severity: 'medium',
+    });
+  }
+
+  // Rule 5: Loss vulnerability
+  const lossResp = stimulusResult.loss;
+  if (lossResp && lossResp.vulnerability > 0.15 && lossResp.recoveryPattern !== 'resilient') {
+    risks.push({
+      trigger: '상실 취약성',
+      desc: '관계 단절이나 기대 붕괴에 대한 시스템 반응이 과도하며, 자연 회복이 불완전하다.',
+      severity: 'medium',
+    });
+  }
+
+  // Compute overall risk level
+  const highCount = risks.filter(r => r.severity === 'high').length;
+  const medCount = risks.filter(r => r.severity === 'medium').length;
+  const overallRisk = highCount >= 2 ? 'critical' : highCount >= 1 ? 'elevated' : medCount >= 2 ? 'moderate' : 'stable';
+
+  return { risks, overallRisk, riskCount: risks.length };
+}
+
+/**
+ * Master simulation function — orchestrates all simulation components
+ */
+function runSimulation(axes, anchor) {
+  const simAxes = extractSimAxes(axes);
+  const trajectory = runTrajectorySimulation(simAxes);
+  const stimulus = computeStimulusResponse(simAxes);
+  const defense = classifyDefensePattern(simAxes, anchor);
+  const risk = computeRiskModel(simAxes, trajectory, stimulus);
+
+  return {
+    axes: simAxes,
+    trajectory,
+    stimulus,
+    defense,
+    risk,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// CROSS-SIMULATION — 두 사람의 시뮬레이션 교차 분석
+// ═══════════════════════════════════════════════════════════
+
+function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
+  const axA = simA.axes;
+  const axB = simB.axes;
+
+  // ── 1. 축 거리 분석: 어디가 가깝고 어디가 먼지 ──
+  const axisDelta = {};
+  const axisNames = { emotion: '정서', drive: '동력', cognition: '인지', boundary: '경계', resilience: '회복' };
+  let totalDist = 0;
+  for (const key of Object.keys(axisNames)) {
+    const d = Math.abs((axA[key] || 0.5) - (axB[key] || 0.5));
+    axisDelta[key] = { delta: Math.round(d * 100) / 100, a: Math.round((axA[key] || 0.5) * 100) / 100, b: Math.round((axB[key] || 0.5) * 100) / 100 };
+    totalDist += d;
+  }
+  const avgDist = Math.round((totalDist / Object.keys(axisNames).length) * 100) / 100;
+
+  // 가장 가까운 축 / 가장 먼 축
+  const sorted = Object.entries(axisDelta).sort((a, b) => a[1].delta - b[1].delta);
+  const closest = { axis: sorted[0][0], name: axisNames[sorted[0][0]], delta: sorted[0][1].delta };
+  const farthest = { axis: sorted[sorted.length - 1][0], name: axisNames[sorted[sorted.length - 1][0]], delta: sorted[sorted.length - 1][1].delta };
+
+  // ── 2. 궤적 수렴/발산 분석 ──
+  const trajA = simA.trajectory;
+  const trajB = simB.trajectory;
+  let convergence = 'parallel'; // 기본: 평행
+  if (trajA && trajB) {
+    const driftDiff = Math.abs((trajA.drift || 0) - (trajB.drift || 0));
+    const volDiff = Math.abs((trajA.volatility || 0) - (trajB.volatility || 0));
+    if (driftDiff < 0.15 && volDiff < 0.15) convergence = 'convergent'; // 비슷한 궤적
+    else if (driftDiff > 0.4 || volDiff > 0.4) convergence = 'divergent'; // 크게 다른 궤적
+  }
+
+  // ── 3. 자극-반응 호환성: A의 반응이 B의 트리거가 되는지 ──
+  const stimA = simA.stimulus;
+  const stimB = simB.stimulus;
+  const triggerLoops = [];
+  if (stimA && stimB) {
+    // A의 conflict 반응이 높고 B의 conflict 회복이 느리면 → 갈등 루프
+    const aConflictDelta = stimA.conflict?.delta || 0;
+    const bConflictRecovery = stimB.conflict?.recovery_steps || 3;
+    if (Math.abs(aConflictDelta) > 0.3 && bConflictRecovery > 3) {
+      triggerLoops.push({ type: 'conflict_escalation', desc: 'A의 갈등 반응이 B의 회복 속도를 초과' });
+    }
+    // B의 conflict 반응이 높고 A의 conflict 회복이 느리면 → 역방향
+    const bConflictDelta = stimB.conflict?.delta || 0;
+    const aConflictRecovery = stimA.conflict?.recovery_steps || 3;
+    if (Math.abs(bConflictDelta) > 0.3 && aConflictRecovery > 3) {
+      triggerLoops.push({ type: 'conflict_escalation_reverse', desc: 'B의 갈등 반응이 A의 회복 속도를 초과' });
+    }
+    // A가 intimacy에 큰 반응 + B가 intimacy에 작은 반응 → 친밀감 불균형
+    const aIntDelta = Math.abs(stimA.intimacy?.delta || 0);
+    const bIntDelta = Math.abs(stimB.intimacy?.delta || 0);
+    if (aIntDelta > 0.2 && bIntDelta < 0.1) {
+      triggerLoops.push({ type: 'intimacy_asymmetry', desc: 'A의 친밀감 민감도가 B보다 현저히 높음' });
+    } else if (bIntDelta > 0.2 && aIntDelta < 0.1) {
+      triggerLoops.push({ type: 'intimacy_asymmetry_reverse', desc: 'B의 친밀감 민감도가 A보다 현저히 높음' });
+    }
+    // stress 반응 비대칭
+    const aStressDelta = Math.abs(stimA.stress?.delta || 0);
+    const bStressDelta = Math.abs(stimB.stress?.delta || 0);
+    if (aStressDelta > 0.3 && bStressDelta < 0.1) {
+      triggerLoops.push({ type: 'stress_asymmetry', desc: 'A가 스트레스에 크게 흔들릴 때 B는 무반응' });
+    } else if (bStressDelta > 0.3 && aStressDelta < 0.1) {
+      triggerLoops.push({ type: 'stress_asymmetry_reverse', desc: 'B가 스트레스에 크게 흔들릴 때 A는 무반응' });
+    }
+  }
+
+  // ── 4. 방어 패턴 충돌 매트릭스 ──
+  const defA = simA.defense;
+  const defB = simB.defense;
+  let defenseClash = { type: 'neutral', desc: '방어 패턴 간 특별한 충돌 없음' };
+  if (defA && defB) {
+    const cA = defA.code;
+    const cB = defB.code;
+    // 위험한 조합들
+    if (cA === 'PROJECTION' && cB === 'PROJECTION') defenseClash = { type: 'mirror_toxic', desc: '서로에게 투사하는 거울 — 상대의 결함이 자기 것인 줄 모른다' };
+    else if ((cA === 'FORTRESS' && cB === 'SHUTDOWN') || (cA === 'SHUTDOWN' && cB === 'FORTRESS')) defenseClash = { type: 'wall_void', desc: '한쪽이 벽을 세우면 다른 쪽이 사라진다 — 접점이 소멸하는 구조' };
+    else if ((cA === 'EXPLOSION' && cB === 'SHUTDOWN') || (cA === 'SHUTDOWN' && cB === 'EXPLOSION')) defenseClash = { type: 'fire_ice', desc: '한쪽이 폭발하면 다른 쪽이 얼어붙는다 — 반응 자체가 트리거가 되는 루프' };
+    else if ((cA === 'EXPLOSION' && cB === 'EXPLOSION')) defenseClash = { type: 'double_fire', desc: '둘 다 폭발형 — 갈등이 통제 불능으로 에스컬레이션' };
+    else if ((cA === 'PROJECTION' && cB === 'FORTRESS') || (cA === 'FORTRESS' && cB === 'PROJECTION')) defenseClash = { type: 'blame_wall', desc: '한쪽이 투사하면 다른 쪽이 차단 — 갈등이 해결 없이 축적' };
+    else if ((cA === 'DIFFUSION' && cB === 'DIFFUSION')) defenseClash = { type: 'double_fog', desc: '둘 다 경계가 흐려져 감정 책임 소재가 불분명 — 만성적 혼란' };
+    else if ((cA === 'ADAPTIVE' && cB === 'ADAPTIVE')) defenseClash = { type: 'mirror_flex', desc: '둘 다 적응형 — 유연하지만 진짜 갈등을 회피할 위험' };
+    else if ((cA === 'ADAPTIVE' || cB === 'ADAPTIVE') && (cA !== 'EXPLOSION' && cB !== 'EXPLOSION')) defenseClash = { type: 'one_flex', desc: '한쪽의 적응력이 충돌을 완충 — 단, 적응하는 쪽의 소진 위험' };
+  }
+
+  // ── 5. 리스크 교차 ──
+  const riskA = simA.risk;
+  const riskB = simB.risk;
+  const sharedRisks = [];
+  if (riskA?.flags && riskB?.flags) {
+    const flagsA = riskA.flags.map(f => f.code || f);
+    const flagsB = riskB.flags.map(f => f.code || f);
+    const shared = flagsA.filter(f => flagsB.includes(f));
+    shared.forEach(f => sharedRisks.push(f));
+  }
+
+  // ── 6. 종합 호환성 스코어 (0-100) ──
+  let compat = 50;
+  // 축 거리가 작을수록 +
+  compat += Math.round((1 - avgDist) * 20);
+  // 궤적 수렴이면 +
+  if (convergence === 'convergent') compat += 10;
+  else if (convergence === 'divergent') compat -= 10;
+  // 트리거 루프 갯수만큼 -
+  compat -= triggerLoops.length * 5;
+  // 방어 충돌 심각도
+  if (defenseClash.type === 'mirror_toxic' || defenseClash.type === 'fire_ice' || defenseClash.type === 'double_fire') compat -= 15;
+  else if (defenseClash.type === 'wall_void' || defenseClash.type === 'blame_wall') compat -= 10;
+  else if (defenseClash.type === 'mirror_flex' || defenseClash.type === 'one_flex') compat += 5;
+  // 공유 리스크가 있으면 -
+  compat -= sharedRisks.length * 3;
+  compat = Math.max(5, Math.min(95, compat));
+
+  // 긴장도
+  let tension = '보통';
+  if (triggerLoops.length >= 2 || defenseClash.type.includes('toxic') || defenseClash.type.includes('fire')) tension = '높음';
+  else if (triggerLoops.length === 0 && defenseClash.type === 'neutral') tension = '낮음';
+
+  // 성장 가능성
+  let growth = '보통';
+  if (convergence === 'convergent' && (defenseClash.type === 'one_flex' || defenseClash.type === 'mirror_flex')) growth = '높음';
+  else if (convergence === 'divergent' && triggerLoops.length >= 2) growth = '낮음';
+
+  // ── 7. 애착 패턴 교차 분류 ──
+  const ATTACHMENT_CROSS = {
+    'leans_secure×leans_secure': { type: 'stable_pair', desc: '둘 다 안정형 — 갈등이 와도 복원력이 높지만, 자극이 부족할 수 있다' },
+    'leans_secure×leans_anxious': { type: 'anchor_seeker', desc: '한쪽의 안정감이 다른 쪽의 불안을 진정시키지만, 진정 역할이 고착되면 소진된다' },
+    'leans_secure×leans_avoidant': { type: 'patience_test', desc: '한쪽의 안정감이 다른 쪽의 벽을 천천히 녹이지만, 인내의 한계가 관계의 한계가 된다' },
+    'leans_secure×leans_disorganized': { type: 'ground_wire', desc: '한쪽의 안정감이 다른 쪽의 혼란에 접지 역할을 하지만, 혼란의 강도가 접지 용량을 초과할 수 있다' },
+    'leans_anxious×leans_anxious': { type: 'mutual_spiral', desc: '둘 다 확인을 구하지만 누구도 줄 수 없다 — 불안이 불안을 증폭하는 피드백 루프' },
+    'leans_anxious×leans_avoidant': { type: 'pursuit_withdrawal', desc: '추격-도주의 고전적 함정 — 한쪽이 다가갈수록 다른 쪽이 멀어지고, 멀어질수록 더 다가간다' },
+    'leans_anxious×leans_disorganized': { type: 'chaos_amplifier', desc: '불안과 혼란이 서로를 증폭 — 관계의 예측 불가능성이 극대화된다' },
+    'leans_avoidant×leans_avoidant': { type: 'parallel_isolation', desc: '둘 다 거리를 유지 — 편안하지만 진짜 연결이 형성되지 않을 수 있다' },
+    'leans_avoidant×leans_disorganized': { type: 'ghost_dance', desc: '한쪽은 사라지고 다른 쪽은 혼란스러워한다 — 접점이 형성되었다 소멸하기를 반복' },
+    'leans_disorganized×leans_disorganized': { type: 'double_chaos', desc: '둘 다 접근과 회피를 동시에 — 관계 자체가 예측 불가능한 난류' },
+  };
+
+  let attachmentCross = { type: 'unknown', desc: '애착 데이터 부족' };
+  if (anchorA?.attachment?.primary_tendency && anchorB?.attachment?.primary_tendency) {
+    const pairKey = anchorA.attachment.primary_tendency + '×' + anchorB.attachment.primary_tendency;
+    const reversePairKey = anchorB.attachment.primary_tendency + '×' + anchorA.attachment.primary_tendency;
+    attachmentCross = ATTACHMENT_CROSS[pairKey] || ATTACHMENT_CROSS[reversePairKey] || { type: 'uncommon', desc: '일반적이지 않은 조합 — 개별 맥락 해석 필요' };
+  }
+
+  // ── 8. 갈등 스타일 호환성 ──
+  const CONFLICT_CROSS = {
+    'direct_engagement×direct_engagement': { type: 'head_on', desc: '둘 다 정면 충돌형 — 갈등 해결이 빠르지만 파괴력도 높다', score: 0.5 },
+    'direct_engagement×diplomatic_approach': { type: 'speed_gap', desc: '한쪽은 바로 꺼내고 다른 쪽은 돌려 말한다 — 속도 차이가 오해를 만든다', score: 0.6 },
+    'direct_engagement×strategic_withdrawal': { type: 'chase_retreat', desc: '한쪽이 직면하면 다른 쪽이 후퇴 — 해결이 지연되며 좌절감 축적', score: 0.3 },
+    'direct_engagement×avoidance': { type: 'wall_punch', desc: '한쪽이 문제를 제기하면 다른 쪽이 무시 — 가장 파괴적인 비대칭', score: 0.1 },
+    'diplomatic_approach×diplomatic_approach': { type: 'polite_loop', desc: '둘 다 조심스러워 핵심에 도달하지 못한다 — 표면적 평화, 내면적 축적', score: 0.5 },
+    'diplomatic_approach×strategic_withdrawal': { type: 'gentle_fade', desc: '부드럽게 접근하지만 상대가 빠진다 — 천천히 접점이 줄어든다', score: 0.4 },
+    'diplomatic_approach×avoidance': { type: 'soft_wall', desc: '신중하게 다가가지만 벽에 부딪힌다 — 노력의 방향이 흡수되지 않는다', score: 0.3 },
+    'strategic_withdrawal×strategic_withdrawal': { type: 'mutual_retreat', desc: '둘 다 물러서서 재접근을 기다린다 — 아무도 돌아오지 않을 수 있다', score: 0.3 },
+    'strategic_withdrawal×avoidance': { type: 'double_exit', desc: '한쪽이 잠시 빠지고 다른 쪽은 영원히 빠진다 — 갈등 해소 경로 자체가 없다', score: 0.1 },
+    'avoidance×avoidance': { type: 'frozen_conflict', desc: '갈등이 언급되지도 처리되지도 않는다 — 지뢰밭 위에 앉아 있는 구조', score: 0.1 },
+  };
+
+  let conflictCross = { type: 'unknown', desc: '갈등 데이터 부족', score: 0.5 };
+  if (anchorA?.conflict?.default_mode && anchorB?.conflict?.default_mode) {
+    const pairKey = anchorA.conflict.default_mode + '×' + anchorB.conflict.default_mode;
+    const reversePairKey = anchorB.conflict.default_mode + '×' + anchorA.conflict.default_mode;
+    conflictCross = CONFLICT_CROSS[pairKey] || CONFLICT_CROSS[reversePairKey] || { type: 'uncommon', desc: '비표준 갈등 스타일 조합', score: 0.5 };
+  }
+
+  // ── 9. 회복 리듬 불일치 ──
+  const RECOVERY_MAP = { 'fast': 1, 'moderate': 2, 'slow': 3 };
+  let recoveryMismatch = { delta: 0, desc: '회복 데이터 부족' };
+  if (anchorA?.conflict?.recovery_speed && anchorB?.conflict?.recovery_speed) {
+    const rA = RECOVERY_MAP[anchorA.conflict.recovery_speed] || 2;
+    const rB = RECOVERY_MAP[anchorB.conflict.recovery_speed] || 2;
+    const delta = Math.abs(rA - rB);
+    if (delta === 0) recoveryMismatch = { delta: 0, desc: '비슷한 회복 속도 — 갈등 후 재접근 타이밍이 맞는다' };
+    else if (delta === 1) recoveryMismatch = { delta: 1, desc: '약간의 회복 속도 차이 — 한쪽이 먼저 준비되고 기다린다' };
+    else recoveryMismatch = { delta: 2, desc: '큰 회복 속도 차이 — 한쪽은 이미 회복했는데 다른 쪽은 아직 냉각 중. 재접근 타이밍 충돌' };
+  }
+
+  // ── 10. PRISM 주제 겹침률 ──
+  let topicOverlap = { jaccard: 0, shared: [], uniqueA: [], uniqueB: [], desc: '주제 데이터 부족' };
+  if (prismA?.topic_distribution && prismB?.topic_distribution) {
+    const topicsA = prismA.topic_distribution.topics || prismA.topic_distribution;
+    const topicsB = prismB.topic_distribution.topics || prismB.topic_distribution;
+    if (typeof topicsA === 'object' && typeof topicsB === 'object') {
+      const keysA = new Set(Object.keys(topicsA));
+      const keysB = new Set(Object.keys(topicsB));
+      const shared = [...keysA].filter(k => keysB.has(k));
+      const union = new Set([...keysA, ...keysB]);
+      const jaccard = union.size > 0 ? Math.round((shared.length / union.size) * 100) / 100 : 0;
+      const uniqueA = [...keysA].filter(k => !keysB.has(k));
+      const uniqueB = [...keysB].filter(k => !keysA.has(k));
+      let desc = '';
+      if (jaccard > 0.6) desc = '높은 주제 겹침 — 대화 소재가 풍부하지만 새로운 자극이 부족할 수 있다';
+      else if (jaccard > 0.3) desc = '적당한 주제 겹침 — 공통 기반 위에 서로 다른 세계를 보여줄 수 있다';
+      else if (jaccard > 0) desc = '낮은 주제 겹침 — 서로 다른 세계의 사람들. 호기심이 있으면 확장, 없으면 단절';
+      else desc = '주제 겹침 없음 — 완전히 다른 관심사. 접점을 만들어야 한다';
+      topicOverlap = { jaccard, shared, uniqueA: uniqueA.slice(0, 5), uniqueB: uniqueB.slice(0, 5), desc };
+    }
+  }
+
+  // ── 호환성 스코어에 새 데이터 반영 ──
+  compat += Math.round(conflictCross.score * 10 - 5); // 갈등 호환성 반영 (-5 ~ +5)
+  if (attachmentCross.type === 'pursuit_withdrawal' || attachmentCross.type === 'mutual_spiral') compat -= 8;
+  else if (attachmentCross.type === 'stable_pair') compat += 8;
+  else if (attachmentCross.type === 'anchor_seeker' || attachmentCross.type === 'patience_test') compat += 3;
+  if (recoveryMismatch.delta >= 2) compat -= 5;
+  if (topicOverlap.jaccard > 0.3) compat += 3;
+  compat = Math.max(5, Math.min(95, compat));
+
+  // 긴장도/성장 재계산
+  if (attachmentCross.type === 'pursuit_withdrawal' || attachmentCross.type === 'chaos_amplifier') tension = '높음';
+  if (attachmentCross.type === 'stable_pair' && conflictCross.score >= 0.5) growth = '높음';
+  if (attachmentCross.type === 'double_chaos' || conflictCross.score <= 0.1) growth = '낮음';
+
+  return {
+    axisDelta,
+    avgDistance: avgDist,
+    closest,
+    farthest,
+    convergence,
+    triggerLoops,
+    defenseClash,
+    sharedRisks,
+    attachmentCross,
+    conflictCross,
+    recoveryMismatch,
+    topicOverlap,
+    compatibility: compat,
+    tension,
+    growth,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// STAGE 2: ESSAY SYSTEM PROMPT
+// ═══════════════════════════════════════════════════════════
+
+const SYSTEM_PROMPT_INDIVIDUAL = `당신은 냉철한 행동 심리 관찰자이자 시스템 분석가입니다. 데이터와 시뮬레이션 결과를 기반으로 한 사람의 심리 프로필을 작성합니다.
 
 핵심 규칙:
-1. 엔진 용어 금지: 축 번호(A1, A7 등), 수치(0.82, 65% 등), 밴드(very_high 등), 기술 용어를 절대 사용하지 마세요.
+1. 엔진 용어 금지: 축 번호(A1, A7 등), 수치(0.82, 65% 등), 밴드(very_high 등), 기술 용어를 절대 사용하지 마세요. 시뮬레이션 데이터의 수치도 직접 노출하지 마세요. 수치를 "관성", "경향성", "시나리오" 같은 서술로 전환하세요.
 2. 개인 식별 정보 금지: 대화에서 언급된 구체적인 이름, 서비스명, 플랫폼명, 직업명, 특정 프로젝트명, 욕설, 은어를 절대 사용하지 마세요. "이 사람은 게임을 개발한다"가 아니라 "무언가를 설계하고 구축하는 과정에 몰입하는 사람이다"처럼 추상화하세요.
 3. 냉철한 관찰자 톤: 감정을 배제하고 팩트 기반으로 서술. "당신은 ~하다"는 단정형. 위로하거나 미화하지 않는다. 날카롭고 직설적.
-4. 구체적 행동 묘사: 추상적 설명 대신 구체적 장면으로 보여주되, 대화 원문을 인용하지 마세요.
-5. PRISM 데이터 (관심사/호기심 패턴): 어떤 주제에 끌리는지, 질문과 탐구 방식, 언어적 특징을 해석하세요.
-6. ANCHOR 데이터 (관계 역학 패턴): 관계 속 작동 방식, 안정감, 갈등 대처, 정서적 개방성, 성장 방향을 분석하세요.
-7. 각 섹션마다: summary (2-3문장 요약) + subsections (각 150-300자 상세)
-8. 중요: 반드시 모든 섹션을 빠짐없이 완성하세요. 마지막 섹션까지 JSON을 닫아야 합니다. 분량이 넘칠 것 같으면 각 subsection을 짧게 쓰되 모든 섹션을 완성하세요.
+4. 시나리오 기반 서술: 시뮬레이션 결과를 "확정된 미래"가 아닌 "데이터 관성이 보여주는 경향성 시나리오"로 서술하세요. "당신은 이렇게 될 것이다"가 아니라 "당신의 시스템은 이런 방향으로 흐를 확률이 지배적이다"는 톤.
+5. 구체적 행동 묘사: 추상적 설명 대신 구체적 장면으로 보여주되, 대화 원문을 인용하지 마세요.
+6. 각 섹션마다: summary (2-3문장 요약) + subsections (각 200-400자 상세)
+7. 중요: 반드시 모든 섹션을 빠짐없이 완성하세요. 마지막 섹션까지 JSON을 닫아야 합니다. 분량이 넘칠 것 같으면 각 subsection을 짧게 쓰되 모든 섹션을 완성하세요.
 
-문체 예시 (이 톤을 유지하되, 더 날카롭게):
+문체 예시:
 - "당신은 통제하는 사람이다. 다만 그 대상이 타인이 아니라 자기 자신이다."
 - "감정이 없는 게 아니다. 감정을 인정하는 게 패배라고 생각하는 것이다."
-- "관계에서 먼저 떠나는 쪽은 항상 당신이다. 버림받기 전에 버리는 전략."
+- "당신의 시스템은 스트레스 환경에서 통제력을 끌어올리는 방향으로 반응한다. 그 대가는 경계의 수축이다."
+- "시간이 흐를수록 감정 에너지는 증폭되고 회복 탄성은 줄어드는 궤적이다. 이 관성에 개입하지 않으면 임계점은 예상보다 빨리 온다."
 - "호기심은 있다. 다만 그것이 깊이로 이어지는 경우는 드물다."`;
 
-const SYSTEM_PROMPT_MATCHING = `당신은 냉철한 관계 역학 관찰자입니다. 두 사람의 데이터를 기반으로 관계 역학을 분석합니다.
+const SYSTEM_PROMPT_MATCHING = `당신은 냉철한 관계 역학 시스템 분석가입니다. 두 사람의 프로필과 시뮬레이션 데이터를 기반으로 관계 역학을 분석합니다.
 
 핵심 규칙:
-1. 엔진 용어 금지: 축 번호, 수치, 밴드, 기술 용어를 절대 사용하지 마세요.
-2. 개인 식별 정보 금지: 구체적 이름, 서비스명, 플랫폼명, 직업명, 특정 프로젝트명, 욕설, 은어를 절대 사용하지 마세요.
-3. 냉철한 관찰자 톤: 감정을 배제하고 팩트 기반으로 서술. 날카롭고 직설적. 판단이 아닌 관찰.
-4. 관계 역학 중심: "둘 사이에서 무슨 일이 벌어지는지"에 집중.
-5. PRISM 비교: 대화 주제 접점과 탐구 스타일의 맞물림을 분석.
-6. ANCHOR 비교: 애착 패턴 교차, 갈등 역학, 정서적 안정감과 성장 가능성을 분석.
-7. 각 섹션마다: summary (2-3문장) + subsections (각 150-300자)
-8. 중요: 반드시 모든 섹션을 빠짐없이 완성하세요. 마지막 섹션까지 JSON을 닫아야 합니다. 분량이 넘칠 것 같으면 각 subsection을 짧게 쓰되 모든 섹션을 완성하세요.
+1. 엔진 용어 금지: 축 번호(A1 등), 수치(0.82 등), 밴드 이름, 시뮬레이션 파라미터명을 절대 노출하지 마세요. 수치를 "관성", "경향성", "시나리오" 같은 서술로 전환하세요.
+2. 개인 식별 정보 금지: 구체적 이름, 서비스명, 플랫폼명, 직업명, 욕설, 은어 절대 사용 금지. 추상화하세요.
+3. 냉철한 관찰자 톤: 감정 배제, 팩트 기반 서술. 날카롭고 직설적. 위로하거나 미화하지 않는다.
+4. 시뮬레이션 데이터 해석: 방어 패턴 충돌, 자극-반응 루프, 궤적 수렴/발산을 "확정된 미래"가 아닌 "경향성 시나리오"로 서술하세요.
+5. 관계 역학 중심: "둘 사이에서 어떤 시스템이 작동하는지"에 집중. 개인 분석 반복 금지 — 교차점만.
+6. 각 섹션마다: summary (2-3문장) + subsections (각 200-400자)
+7. 반드시 모든 섹션을 빠짐없이 완성. 마지막 섹션까지 JSON을 닫으세요.
 
 문체 예시:
 - "A에게 B는 도전이다. B에게 A는 소음이다."
 - "둘 다 먼저 손 내미는 법을 모른다. 이 관계의 데드락은 여기서 시작된다."
-- "호환성이 높다는 건 편하다는 뜻이 아니다. 서로를 건드릴 수 있다는 뜻이다."`;
+- "호환성이 높다는 건 편하다는 뜻이 아니다. 서로를 건드릴 수 있다는 뜻이다."
+- "A의 방어벽이 올라가는 순간, B의 시스템은 사라진다. 이건 선택이 아니라 회로다."`;
 
 const INDIVIDUAL_SECTIONS = [
-  { key: 'first_impression', title: '첫인상', subsections: ['에너지 유형', '대인 시그널', '오해받기 쉬운 지점'] },
-  { key: 'mechanism', title: '작동원리', subsections: ['핵심 동기', '방어 전략', '의사결정 구조'] },
-  { key: 'crack', title: '균열', subsections: ['주요 모순', '파급 효과', '본인의 자각 수준'] },
-  { key: 'contextual_faces', title: '맥락별 얼굴', subsections: ['혼자일 때', '친밀한 관계에서', '집단 속에서'] },
-  { key: 'simulation', title: '시뮬레이션', subsections: ['배신당했을 때', '사랑에 빠졌을 때', '권력을 쥐었을 때', '실패했을 때'] },
-  { key: 'unconscious', title: '무의식', subsections: ['반복 패턴', '회피하는 감정', '인정하지 않는 욕구'] },
-  { key: 'growth', title: '성장 방향', subsections: ['현재 정체 지점', '성장 조건', '가능성의 범위'] },
-  { key: 'interests', title: '관심사 지형', subsections: ['주제 지도', '탐구 깊이', '언어적 풍경'] },
-  { key: 'curiosity', title: '호기심 패턴', subsections: ['질문 스타일', '탐구 방향', '지적 호기심의 특징'] },
-  { key: 'attachment', title: '관계 안에서의 나', subsections: ['안정감의 원천', '불안 신호', '거리 조절 방식'] },
-  { key: 'relational_dynamics', title: '관계 역학', subsections: ['갈등 대처', '정서적 가용성', '성장 지향'] },
+  { key: 'persona', title: '페르소나', subsections: ['한 줄 정의', '상태 벡터 해석', '핵심 긴장'] },
+  { key: 'cognitive_topology', title: '사유의 지형', subsections: ['주제 지도', '사유의 깊이', '호기심의 패턴', '언어적 풍경'] },
+  { key: 'control_system', title: '통제 체계', subsections: ['환경 장악력', '의사결정 스타일', '통제의 대가'] },
+  { key: 'emotional_energy', title: '정서 에너지', subsections: ['감정의 진폭', '정서적 가용성', '에너지 발생과 소멸'] },
+  { key: 'defense_system', title: '방어 체계', subsections: ['방어 패턴', '작동 조건', '방어의 비용'] },
+  { key: 'behavioral_trajectory', title: '행동 궤적', subsections: ['시간에 따른 상태 변화', '상황별 반응 시나리오', '반복되는 루프'] },
+  { key: 'risk_model', title: '리스크 모델', subsections: ['붕괴 트리거', '임계점 도달 조건', '시스템 내구성'] },
+  { key: 'growth_direction', title: '성장 지향점', subsections: ['현재 정체 지점', '보정 방향', '가능성의 범위'] },
+  { key: 'unconscious', title: '무의식', subsections: ['반복 패턴', '회피하는 감정', '근원적 공포와 핵심 동기'] },
 ];
 
 const MATCHING_SECTIONS = [
-  { key: 'first_meeting', title: '첫 만남', subsections: ['서로에게 읽히는 첫 신호', '초반 역학'] },
-  { key: 'attraction', title: '끌림의 구조', subsections: ['A가 상대에게서 보는 것', 'B가 상대에게서 보는 것'] },
-  { key: 'collision', title: '충돌 지점', subsections: ['거리 조절 전쟁', '싸우는 방식의 충돌', '지뢰밭'] },
-  { key: 'trap', title: '관계의 함정', subsections: ['추격-도주의 고착', '역할 고정'] },
-  { key: 'needs', title: '서로에게 필요한 것', subsections: ['A가 이 관계에서 얻을 수 있는 것', 'B가 이 관계에서 얻을 수 있는 것'] },
-  { key: 'possibility', title: '이 관계의 가능성', subsections: ['최선의 시나리오', '최악의 시나리오', '이 관계를 유지하려면'] },
-  { key: 'shared_world', title: '공유 세계', subsections: ['대화 소재의 접점', '탐구 스타일의 조화'] },
-  { key: 'emotional_dance', title: '감정의 춤', subsections: ['애착 패턴의 교차', '갈등에서의 역학', '정서적 균형'] },
+  { key: 'first_impression', title: '첫 인상', subsections: ['서로에게 읽히는 첫 신호', '초반 권력 역학'] },
+  { key: 'attraction_structure', title: '끌림의 구조', subsections: ['A가 상대에게서 보는 것', 'B가 상대에게서 보는 것', '끌림의 함정'] },
+  { key: 'defense_collision', title: '방어 체계 충돌', subsections: ['방어 패턴 교차 분석', '트리거 루프', '방어의 비용'] },
+  { key: 'stimulus_dynamics', title: '자극-반응 역학', subsections: ['스트레스 하의 상호작용', '친밀감의 비대칭', '갈등의 에스컬레이션 경로'] },
+  { key: 'trajectory_forecast', title: '궤적 예보', subsections: ['수렴과 발산의 조건', '시간에 따른 관계 변화', '반복되는 루프'] },
+  { key: 'shared_world', title: '공유 세계', subsections: ['대화 소재의 접점', '탐구 스타일의 조화', '지적 긴장과 자극'] },
+  { key: 'risk_map', title: '관계 리스크 맵', subsections: ['공유 리스크', '개별 붕괴 트리거', '임계점 시나리오'] },
+  { key: 'emotional_dynamics', title: '감정 역학', subsections: ['애착 패턴의 교차', '정서적 가용성의 비대칭', '갈등 후 회복 리듬'] },
+  { key: 'possibility', title: '이 관계의 가능성', subsections: ['최선의 시나리오', '최악의 시나리오', '이 관계가 살아남으려면'] },
 ];
 
 const INTENSITY_AXIS_NAMES = {
@@ -2325,10 +3602,10 @@ function describeProfileForPrompt(axes) {
   return lines.join('\n');
 }
 
-function buildAnalyzePrompt(axes, identity, messagesSample, lensSummary, prism, anchor) {
+function buildAnalyzePrompt(axes, identity, messagesSample, lensSummary, prism, anchor, simulation) {
   const profileDesc = describeProfileForPrompt(axes);
 
-  let prompt = `다음 분석 데이터를 바탕으로 개인 심리 프로필을 작성해주세요.
+  let prompt = `다음 분석 데이터와 시뮬레이션 결과를 바탕으로 개인 심리 프로필을 작성해주세요.
 
 ## 프로필 요약
 정체성: ${identity.name} (${identity.tagline})
@@ -2337,8 +3614,9 @@ function buildAnalyzePrompt(axes, identity, messagesSample, lensSummary, prism, 
 ${profileDesc}
 `;
 
+  // ── PRISM data (for 사유의 지형 section) ──
   if (prism) {
-    prompt += `\n## 관심사·호기심 패턴 (PRISM)\n`;
+    prompt += `\n## 관심사·호기심 패턴 (PRISM) → "사유의 지형" 섹션에 통합\n`;
     if (prism.topic_distribution && Object.keys(prism.topic_distribution).length > 0) {
       prompt += `주제 분포: ${Object.entries(prism.topic_distribution)
         .map(([k, v]) => `${k} (${Math.round(v * 100)}%)`)
@@ -2359,8 +3637,12 @@ ${profileDesc}
     }
   }
 
+  // ── ANCHOR data (distributed across sections) ──
   if (anchor) {
     prompt += `\n## 관계 역학 패턴 (ANCHOR)\n`;
+    prompt += `→ 애착 데이터는 "정서 에너지" + "방어 체계"에 통합\n`;
+    prompt += `→ 갈등/정서적 가용성은 "통제 체계" + "정서 에너지"에 통합\n`;
+    prompt += `→ 성장 데이터는 "성장 지향점"에 통합\n`;
     if (anchor.attachment && Object.keys(anchor.attachment).length > 0) {
       prompt += `애착 특성: ${Object.entries(anchor.attachment)
         .map(([k, v]) => `${k}: ${v}`)
@@ -2383,6 +3665,59 @@ ${profileDesc}
     }
   }
 
+  // ── SIMULATION data (core new addition) ──
+  if (simulation) {
+    prompt += `\n## 시뮬레이션 엔진 출력 (경향성 시나리오 — 확정적 예측이 아님)\n`;
+    prompt += `⚠️ 아래 데이터는 현재 축 점수의 수학적 관성을 시뮬레이션한 결과입니다. "이렇게 될 것이다"가 아닌 "이런 방향으로 흐를 경향이 있다"로 해석하세요.\n\n`;
+
+    // State vector
+    if (simulation.axes) {
+      const sa = simulation.axes;
+      prompt += `### 상태 벡터 (초기 좌표) → "페르소나"에 임베드\n`;
+      prompt += `정서(E): ${sa.emotion.toFixed(2)} | 통제(C): ${sa.drive.toFixed(2)} | 인지(T): ${sa.cognition.toFixed(2)} | 개방(O): ${sa.boundary.toFixed(2)} | 탄성(X): ${sa.resilience.toFixed(2)}\n\n`;
+    }
+
+    // Trajectory
+    if (simulation.trajectory) {
+      const t = simulation.trajectory;
+      prompt += `### 궤적 시뮬레이션 (10스텝) → "행동 궤적" 섹션\n`;
+      prompt += `드리프트: E${t.drift.E >= 0 ? '+' : ''}${t.drift.E}, C${t.drift.C >= 0 ? '+' : ''}${t.drift.C}, T${t.drift.T >= 0 ? '+' : ''}${t.drift.T}, O${t.drift.O >= 0 ? '+' : ''}${t.drift.O}, X${t.drift.X >= 0 ? '+' : ''}${t.drift.X}\n`;
+      prompt += `변동성: E=${t.volatility.E}, C=${t.volatility.C}\n`;
+      prompt += `감지된 패턴: ${t.patterns.length > 0 ? t.patterns.join(', ') : '특이 패턴 없음'}\n\n`;
+    }
+
+    // Stimulus responses
+    if (simulation.stimulus) {
+      prompt += `### 자극-반응 시나리오 → "행동 궤적" 섹션\n`;
+      for (const [key, resp] of Object.entries(simulation.stimulus)) {
+        prompt += `[${resp.label}] 취약도: ${resp.vulnerability} | 회복: ${resp.recoveryPattern} | 주요 변동: `;
+        const bigDeltas = Object.entries(resp.deltas)
+          .filter(([, v]) => Math.abs(v) >= 0.05)
+          .map(([k, v]) => `${k}${v >= 0 ? '+' : ''}${v}`)
+          .join(', ');
+        prompt += `${bigDeltas || '경미'}\n`;
+      }
+      prompt += '\n';
+    }
+
+    // Defense pattern
+    if (simulation.defense) {
+      prompt += `### 방어 패턴 분류 → "방어 체계" 섹션\n`;
+      prompt += `유형: ${simulation.defense.name} (${simulation.defense.code})\n`;
+      prompt += `설명: ${simulation.defense.desc}\n\n`;
+    }
+
+    // Risk model
+    if (simulation.risk) {
+      prompt += `### 리스크 분석 → "리스크 모델" 섹션\n`;
+      prompt += `전체 리스크: ${simulation.risk.overallRisk} (${simulation.risk.riskCount}개 요인)\n`;
+      simulation.risk.risks.forEach(r => {
+        prompt += `- [${r.severity}] ${r.trigger}: ${r.desc}\n`;
+      });
+      prompt += '\n';
+    }
+  }
+
   if (lensSummary) {
     prompt += `\n## 렌즈 요약\n${sanitizeString(lensSummary, 5000)}\n`;
   }
@@ -2391,6 +3726,7 @@ ${profileDesc}
     prompt += `\n## 대화 샘플 (참고용)\n${sanitizeString(messagesSample, 50000)}\n`;
   }
 
+  // ── Section structure ──
   prompt += `\n## 작성할 구조
 아래 ${INDIVIDUAL_SECTIONS.length}개 섹션 각각에 대해 작성하세요:\n`;
 
@@ -2403,12 +3739,23 @@ ${profileDesc}
   });
 
   prompt += `
+
+## 섹션별 데이터 매핑 가이드
+1. 페르소나: 상태 벡터 5축 좌표를 서사적으로 풀어낸 한 줄 정의. 이 사람이 어떤 "시스템"인지 압축.
+2. 사유의 지형: PRISM 데이터(주제 분포, 어휘, 호기심) 중심. 이 사람의 지적 세계를 매핑.
+3. 통제 체계: 통제(C)축 + ANCHOR 갈등 데이터. 환경을 어떻게 장악하거나 놓는지.
+4. 정서 에너지: 정서(E)축 + ANCHOR 정서적 가용성 + 애착 데이터. 감정의 물리학.
+5. 방어 체계: 시뮬레이션 방어 패턴 분류 결과를 서사로 전환. 이 사람이 위협에 어떻게 반응하는지.
+6. 행동 궤적: 궤적 시뮬레이션 + 자극-반응 시나리오 통합. 시간에 따른 변화와 외부 자극에 대한 반응을 "경향성 시나리오"로 서술. 확정적 예측 톤 금지.
+7. 리스크 모델: 리스크 분석 결과를 서사로 전환. 어떤 조건에서 이 시스템이 한계에 도달하는지.
+8. 성장 지향점: ANCHOR 성장 데이터 + 궤적 드리프트의 역방향. 관성을 거스르는 보정 방향.
+9. 무의식: 전체 데이터를 관통하는 LLM 합성. 수치 뒤에 숨겨진 근원적 동기와 공포.
+
 ## 중요 규칙
-- 엔진 축 번호(A1, A7 등), 수치(0.82 등), 밴드 이름 절대 사용 금지
+- 엔진 축 번호(A1, A7 등), 시뮬레이션 수치, 밴드 이름 절대 사용 금지
 - 자연스러운 에세이/칼럼 톤 (번역체 금지)
 - 구체적인 행동/상황 묘사 위주
-- PRISM 데이터가 있다면 관심사 지형, 호기심 패턴 섹션에 통합
-- ANCHOR 데이터가 있다면 관계 안에서의 나, 관계 역학 섹션에 통합
+- 시뮬레이션 데이터를 "확정된 미래"로 서술하지 마세요. "경향성", "관성", "시나리오"로 서술하세요.
 - 반드시 유효한 JSON만 출력하세요. \`\`\`json 코드블록으로 감싸지 마세요.
 - JSON 문자열 안의 큰따옴표는 반드시 \\"로 이스케이프하세요.
 - JSON 문자열 안에 줄바꿈을 넣지 마세요.
@@ -2417,51 +3764,166 @@ ${profileDesc}
   return prompt;
 }
 
-function buildMatchPrompt(profileA, profileB, identityA, identityB, matchIdentity, prismA, prismB, anchorA, anchorB) {
+function buildMatchPrompt(profileA, profileB, identityA, identityB, matchIdentity, prismA, prismB, anchorA, anchorB, simA, simB, crossSim) {
   const descA = describeProfileForPrompt(profileA.axes || profileA);
   const descB = describeProfileForPrompt(profileB.axes || profileB);
 
-  let prompt = `다음 두 사람의 분석 데이터를 바탕으로 관계 프로파일링을 작성해주세요.
+  let prompt = `다음 두 사람의 분석 데이터와 시뮬레이션 교차 분석을 바탕으로 관계 프로파일링을 작성해주세요.
 
-## Person A: ${identityA.name} (${identityA.tagline})
+## Person A: ${identityA.name} ${identityA.emoji || ''} [${identityA.code || ''}]
+${identityA.tagline || ''}
 ${descA}
 
-## Person B: ${identityB.name} (${identityB.tagline})
+## Person B: ${identityB.name} ${identityB.emoji || ''} [${identityB.code || ''}]
+${identityB.tagline || ''}
 ${descB}
+`;
 
-## 관계 요약
+  // ── 시뮬레이션 교차 분석 데이터 ──
+  if (crossSim) {
+    prompt += `\n## 크로스 시뮬레이션 결과
+
+### 축 거리 분석
+평균 거리: ${crossSim.avgDistance} (0=동일, 1=정반대)
+가장 가까운 축: ${crossSim.closest.name} (차이 ${crossSim.closest.delta})
+가장 먼 축: ${crossSim.farthest.name} (차이 ${crossSim.farthest.delta})
+
+### 궤적 수렴/발산
+패턴: ${crossSim.convergence === 'convergent' ? '수렴 — 시간이 갈수록 유사한 방향으로 이동' : crossSim.convergence === 'divergent' ? '발산 — 시간이 갈수록 다른 방향으로 이동' : '평행 — 각자의 궤적을 유지'}
+`;
+
+    if (crossSim.triggerLoops.length > 0) {
+      prompt += `\n### 자극-반응 트리거 루프 (${crossSim.triggerLoops.length}개 감지)\n`;
+      crossSim.triggerLoops.forEach((loop, i) => {
+        prompt += `${i + 1}. ${loop.desc}\n`;
+      });
+    }
+
+    prompt += `\n### 방어 패턴 충돌
+A의 방어: ${simA?.defense?.name || '미분류'} (${simA?.defense?.code || '-'})
+B의 방어: ${simB?.defense?.name || '미분류'} (${simB?.defense?.code || '-'})
+충돌 유형: ${crossSim.defenseClash.desc}
+`;
+
+    if (crossSim.sharedRisks.length > 0) {
+      prompt += `\n### 공유 리스크: ${crossSim.sharedRisks.join(', ')}\n`;
+    }
+
+    if (crossSim.attachmentCross) {
+      prompt += `\n### 애착 패턴 교차
+유형: ${crossSim.attachmentCross.type}
+해석: ${crossSim.attachmentCross.desc}\n`;
+    }
+
+    if (crossSim.conflictCross) {
+      prompt += `\n### 갈등 스타일 호환성
+유형: ${crossSim.conflictCross.type}
+해석: ${crossSim.conflictCross.desc}
+호환 점수: ${Math.round((crossSim.conflictCross.score || 0.5) * 100)}%\n`;
+    }
+
+    if (crossSim.recoveryMismatch) {
+      prompt += `\n### 회복 리듬 불일치
+${crossSim.recoveryMismatch.desc}\n`;
+    }
+
+    if (crossSim.topicOverlap) {
+      prompt += `\n### 주제 겹침 분석
+겹침률: ${Math.round((crossSim.topicOverlap.jaccard || 0) * 100)}%
+공유 주제: ${(crossSim.topicOverlap.shared || []).join(', ') || '없음'}
+A 고유 주제: ${(crossSim.topicOverlap.uniqueA || []).join(', ') || '없음'}
+B 고유 주제: ${(crossSim.topicOverlap.uniqueB || []).join(', ') || '없음'}
+해석: ${crossSim.topicOverlap.desc}\n`;
+    }
+
+    prompt += `\n### 종합 지표
+호환성: ${crossSim.compatibility}%
+긴장도: ${crossSim.tension}
+성장 가능성: ${crossSim.growth}
+`;
+  } else {
+    // Fallback: crossSim 없으면 기존 matchIdentity 사용
+    prompt += `\n## 관계 요약
 관계 이름: ${matchIdentity.name} (${matchIdentity.tagline})
 호환성: ${matchIdentity.compatibility}%
 긴장도: ${matchIdentity.tension}
 성장 가능성: ${matchIdentity.growth}
 `;
+  }
 
+  // ── 개별 시뮬레이션 요약 ──
+  if (simA || simB) {
+    prompt += `\n## 개별 시뮬레이션 요약\n`;
+    if (simA) {
+      prompt += `\n### A의 시뮬레이션`;
+      if (simA.trajectory) prompt += `\n궤적 드리프트: ${simA.trajectory.drift}, 변동성: ${simA.trajectory.volatility}`;
+      if (simA.stimulus) {
+        const stim = simA.stimulus;
+        prompt += `\n자극 반응: 스트레스(${stim.stress?.delta || 0}), 친밀감(${stim.intimacy?.delta || 0}), 갈등(${stim.conflict?.delta || 0}), 상실(${stim.loss?.delta || 0})`;
+      }
+      if (simA.defense) prompt += `\n방어 패턴: ${simA.defense.name}`;
+      if (simA.risk?.flags?.length > 0) prompt += `\n리스크 플래그: ${simA.risk.flags.map(f => f.label || f.code || f).join(', ')}`;
+      prompt += `\n`;
+    }
+    if (simB) {
+      prompt += `\n### B의 시뮬레이션`;
+      if (simB.trajectory) prompt += `\n궤적 드리프트: ${simB.trajectory.drift}, 변동성: ${simB.trajectory.volatility}`;
+      if (simB.stimulus) {
+        const stim = simB.stimulus;
+        prompt += `\n자극 반응: 스트레스(${stim.stress?.delta || 0}), 친밀감(${stim.intimacy?.delta || 0}), 갈등(${stim.conflict?.delta || 0}), 상실(${stim.loss?.delta || 0})`;
+      }
+      if (simB.defense) prompt += `\n방어 패턴: ${simB.defense.name}`;
+      if (simB.risk?.flags?.length > 0) prompt += `\n리스크 플래그: ${simB.risk.flags.map(f => f.label || f.code || f).join(', ')}`;
+      prompt += `\n`;
+    }
+  }
+
+  // ── PRISM 비교 (공유 세계 데이터) ──
   if (prismA || prismB) {
-    prompt += `\n## 공유 세계 (관심사·호기심 비교)\n`;
-    if (prismA && prismA.topic_distribution) {
-      prompt += `${identityA.name}의 주제: ${Object.keys(prismA.topic_distribution).join(', ')}\n`;
+    prompt += `\n## PRISM 비교 (관심사·호기심)\n`;
+    if (prismA?.topic_distribution) {
+      const topics = prismA.topic_distribution.topics || prismA.topic_distribution;
+      if (topics && typeof topics === 'object') {
+        const topTopics = Object.entries(topics).sort((a, b) => (b[1].weight || b[1] || 0) - (a[1].weight || a[1] || 0)).slice(0, 5);
+        prompt += `A 주요 관심사: ${topTopics.map(([k]) => k).join(', ')}\n`;
+      }
     }
-    if (prismB && prismB.topic_distribution) {
-      prompt += `${identityB.name}의 주제: ${Object.keys(prismB.topic_distribution).join(', ')}\n`;
+    if (prismB?.topic_distribution) {
+      const topics = prismB.topic_distribution.topics || prismB.topic_distribution;
+      if (topics && typeof topics === 'object') {
+        const topTopics = Object.entries(topics).sort((a, b) => (b[1].weight || b[1] || 0) - (a[1].weight || a[1] || 0)).slice(0, 5);
+        prompt += `B 주요 관심사: ${topTopics.map(([k]) => k).join(', ')}\n`;
+      }
     }
-    if (prismA && prismA.curiosity && prismB && prismB.curiosity) {
-      prompt += `호기심 스타일 비교: ${identityA.name}은 ${Object.keys(prismA.curiosity).join('/')}, ${identityB.name}은 ${Object.keys(prismB.curiosity).join('/')}\n`;
+    if (prismA?.curiosity && prismB?.curiosity) {
+      prompt += `호기심 스타일: A=${prismA.curiosity.prompt_intent || '미분류'}, B=${prismB.curiosity.prompt_intent || '미분류'}\n`;
+    }
+    if (prismA?.depth && prismB?.depth) {
+      prompt += `사유 깊이: A=${prismA.depth.overall_depth || '미분류'}, B=${prismB.depth.overall_depth || '미분류'}\n`;
     }
   }
 
+  // ── ANCHOR 비교 (관계 역학 데이터) ──
   if (anchorA || anchorB) {
-    prompt += `\n## 감정의 춤 (관계 역학 비교)\n`;
-    if (anchorA && anchorA.attachment && anchorB && anchorB.attachment) {
-      prompt += `애착 패턴: ${identityA.name}은 ${Object.keys(anchorA.attachment).join('/')}, ${identityB.name}은 ${Object.keys(anchorB.attachment).join('/')}\n`;
+    prompt += `\n## ANCHOR 비교 (관계 역학)\n`;
+    if (anchorA?.attachment && anchorB?.attachment) {
+      prompt += `애착 패턴: A=${anchorA.attachment.primary_tendency || '미분류'}, B=${anchorB.attachment.primary_tendency || '미분류'}\n`;
+      if (anchorA.attachment.stress_shift) prompt += `A 스트레스 하 변화: ${anchorA.attachment.stress_shift}\n`;
+      if (anchorB.attachment.stress_shift) prompt += `B 스트레스 하 변화: ${anchorB.attachment.stress_shift}\n`;
     }
-    if (anchorA && anchorA.conflict && anchorB && anchorB.conflict) {
-      prompt += `갈등 대처: ${identityA.name}은 ${Object.keys(anchorA.conflict).join('/')}, ${identityB.name}은 ${Object.keys(anchorB.conflict).join('/')}\n`;
+    if (anchorA?.conflict && anchorB?.conflict) {
+      prompt += `갈등 대처: A=${anchorA.conflict.default_mode || '미분류'}(유연성:${anchorA.conflict.flexibility || '미분류'}), B=${anchorB.conflict.default_mode || '미분류'}(유연성:${anchorB.conflict.flexibility || '미분류'})\n`;
+      prompt += `회복 속도: A=${anchorA.conflict.recovery_speed || '미분류'}, B=${anchorB.conflict.recovery_speed || '미분류'}\n`;
     }
-    if (anchorA && anchorA.emotional_availability && anchorB && anchorB.emotional_availability) {
-      prompt += `정서 개방성: ${identityA.name}은 ${Object.keys(anchorA.emotional_availability).join('/')}, ${identityB.name}은 ${Object.keys(anchorB.emotional_availability).join('/')}\n`;
+    if (anchorA?.emotional_availability && anchorB?.emotional_availability) {
+      prompt += `정서 반응: A=${anchorA.emotional_availability.response_mode || '미분류'}, B=${anchorB.emotional_availability.response_mode || '미분류'}\n`;
+    }
+    if (anchorA?.growth && anchorB?.growth) {
+      prompt += `성장 지향: A=${anchorA.growth.orientation || '미분류'}, B=${anchorB.growth.orientation || '미분류'}\n`;
     }
   }
 
+  // ── 섹션 구조 ──
   prompt += `\n## 작성할 구조
 아래 ${MATCHING_SECTIONS.length}개 섹션 각각에 대해 작성하세요:\n`;
 
@@ -2477,15 +3939,24 @@ ${descB}
   });
 
   prompt += `
+## 섹션별 데이터 매핑 가이드
+1. 첫 인상: 두 페르소나의 첫인상 + 축 거리 분석(가장 가까운/먼 축)을 서사로. 권력 역학의 초기 세팅.
+2. 끌림의 구조: 축 거리의 "보완"과 "충돌" 양면. 가까운 축은 공감, 먼 축은 호기심 또는 갈등의 원천.
+3. 방어 체계 충돌: 크로스 시뮬레이션의 방어 패턴 충돌 결과를 서사로 전환. 두 방어 시스템이 만났을 때 어떤 역학이 발생하는지.
+4. 자극-반응 역학: 트리거 루프 데이터 기반. A의 반응이 B의 트리거가 되는 구체적 시나리오. 스트레스/친밀감/갈등별 비대칭.
+5. 궤적 예보: 궤적 수렴/발산 데이터 기반. 시간에 따라 이 관계가 어디로 향하는지 "경향성"으로 서술.
+6. 공유 세계: PRISM 비교 데이터 중심. 관심사 접점, 탐구 스타일 호환성, 지적 자극 가능성.
+7. 관계 리스크 맵: 공유 리스크 + 개별 리스크의 교차. 어떤 조건에서 이 관계가 한계에 도달하는지.
+8. 감정 역학: ANCHOR 비교 데이터 중심. 애착 패턴 교차(secure×anxious 등), 정서적 가용성의 비대칭(한쪽은 공감, 한쪽은 해결 지향 등), 갈등 후 회복 리듬 차이(한쪽은 빠른 회복, 한쪽은 장기 냉각). 시뮬레이션 자극-반응 데이터와 결합.
+9. 이 관계의 가능성: 전체 데이터 종합. 최선/최악 시나리오 + 생존 조건.
+
 ## 중요 규칙
-- 엔진 축 번호, 수치, 밴드 이름 절대 사용 금지
-- 에세이/칼럼 톤 (번역체 금지)
-- "위험하다" 대신 "이런 패턴이 반복될 수 있다" 식으로 관찰적 서술
-- PRISM 데이터가 있다면 공유 세계, 대화 가능성 분석에 통합
-- ANCHOR 데이터가 있다면 감정의 춤, 안정감과 갈등 역학 분석에 통합
-- 반드시 유효한 JSON만 출력하세요. \`\`\`json 코드블록으로 감싸지 마세요.
-- JSON 문자열 안의 큰따옴표는 반드시 \\"로 이스케이프하세요.
-- JSON 문자열 안에 줄바꿈을 넣지 마세요.
+- 엔진 축 번호, 수치, 밴드 이름 절대 사용 금지 — 서사적 언어로 전환
+- 시뮬레이션 데이터를 "확정된 미래"로 서술 금지 — "경향성", "시나리오", "관성"으로 서술
+- 에세이/칼럼 톤 (번역체 금지), 냉철하고 직설적
+- 반드시 유효한 JSON만 출력. \`\`\`json 코드블록 금지.
+- JSON 문자열 안의 큰따옴표는 반드시 \\"로 이스케이프.
+- JSON 문자열 안에 줄바꿈 금지.
 - 출력 형식: {"sections": [{"key": "...", "title": "...", "summary": "...", "subsections": [{"title": "...", "content": "..."}]}]}`;
 
   return prompt;
@@ -2601,8 +4072,8 @@ async function callClaude(apiKey, systemPrompt, userPrompt) {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 16384,
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 8192,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
     }),
@@ -2733,6 +4204,7 @@ export default {
     }
 
     if (request.method !== 'POST') {
+      // ──── GET /share/:id ────
       if (request.method === 'GET' && url.pathname.startsWith('/share/')) {
         const shareId = url.pathname.split('/share/')[1];
         if (shareId && env.SHARE_STORE) {
@@ -2749,6 +4221,247 @@ export default {
         }
         return new Response('Not found', { status: 404 });
       }
+
+      // ──── GET /admin ── Dashboard ────
+      if (request.method === 'GET' && url.pathname === '/admin') {
+        const key = url.searchParams.get('key');
+        if (!key || key !== (env.ADMIN_KEY || 'knot-admin-2025')) {
+          return new Response('Unauthorized', { status: 401 });
+        }
+
+        const db = env.KNOT_DB;
+        if (!db) {
+          return new Response('DB not configured', { status: 500 });
+        }
+
+        // ── Queries ──
+        const [
+          totalAnalyses,
+          todayAnalyses,
+          weekAnalyses,
+          avgMsgCount,
+          typeDistribution,
+          axisAvgs,
+          feedbackStats,
+          feedbackRecent,
+          dailyCounts,
+          errorRate,
+          recentAnalyses,
+        ] = await Promise.all([
+          db.prepare(`SELECT COUNT(*) as cnt FROM analyses`).first(),
+          db.prepare(`SELECT COUNT(*) as cnt FROM analyses WHERE created_at >= date('now')`).first(),
+          db.prepare(`SELECT COUNT(*) as cnt FROM analyses WHERE created_at >= date('now', '-7 days')`).first(),
+          db.prepare(`SELECT AVG(message_count) as avg_msg FROM analyses`).first(),
+          db.prepare(`SELECT type_code, type_name, COUNT(*) as cnt FROM analyses WHERE type_code IS NOT NULL AND type_code != '' GROUP BY type_code ORDER BY cnt DESC LIMIT 20`).all(),
+          db.prepare(`SELECT axes_json FROM analyses WHERE axes_json IS NOT NULL ORDER BY created_at DESC LIMIT 100`).all(),
+          db.prepare(`SELECT COUNT(*) as cnt, AVG(rating) as avg_rating, SUM(CASE WHEN accuracy='매우 정확' OR accuracy='대체로 맞음' THEN 1 ELSE 0 END) as positive FROM feedback`).first(),
+          db.prepare(`SELECT rating, accuracy, useful, issues_json, comment, created_at FROM feedback ORDER BY created_at DESC LIMIT 10`).all(),
+          db.prepare(`SELECT date(created_at) as day, COUNT(*) as cnt FROM analyses WHERE created_at >= date('now', '-30 days') GROUP BY date(created_at) ORDER BY day`).all(),
+          db.prepare(`SELECT COUNT(*) as cnt FROM analyses WHERE sections_json IS NULL`).first(),
+          db.prepare(`SELECT id, type_code, type_name, message_count, created_at FROM analyses ORDER BY created_at DESC LIMIT 15`).all(),
+        ]);
+
+        // ── Compute axis averages from JSON ──
+        const axisKeys = ['A1','A2','A3','A4','A5','A6'];
+        const axisSums = {};
+        const axisCounts = {};
+        axisKeys.forEach(k => { axisSums[k] = 0; axisCounts[k] = 0; });
+        let validAxes = 0;
+        if (axisAvgs.results) {
+          axisAvgs.results.forEach(row => {
+            try {
+              const axes = JSON.parse(row.axes_json);
+              if (axes.intensity) {
+                axisKeys.forEach(k => {
+                  if (axes.intensity[k] !== undefined) {
+                    axisSums[k] += axes.intensity[k];
+                    axisCounts[k]++;
+                  }
+                });
+                validAxes++;
+              }
+            } catch {}
+          });
+        }
+        const axisAvgValues = {};
+        axisKeys.forEach(k => {
+          axisAvgValues[k] = axisCounts[k] > 0 ? (axisSums[k] / axisCounts[k]).toFixed(2) : '–';
+        });
+
+        // ── 6-letter code distribution ──
+        const codeLetterCounts = { F:0, S:0, A:0, H:0, T:0, R:0, O:0, W:0, X:0, V:0, E:0, I:0 };
+        let codeTotal = 0;
+        if (typeDistribution.results) {
+          typeDistribution.results.forEach(row => {
+            if (row.type_code && row.type_code.length === 6) {
+              for (const ch of row.type_code) {
+                if (codeLetterCounts[ch] !== undefined) codeLetterCounts[ch] += row.cnt;
+              }
+              codeTotal += row.cnt;
+            }
+          });
+        }
+
+        // ── Build HTML ──
+        const e = escapeHTML;
+        const total = totalAnalyses?.cnt || 0;
+        const today = todayAnalyses?.cnt || 0;
+        const week = weekAnalyses?.cnt || 0;
+        const avgMsg = avgMsgCount?.avg_msg ? Math.round(avgMsgCount.avg_msg) : 0;
+        const fbCount = feedbackStats?.cnt || 0;
+        const fbAvg = feedbackStats?.avg_rating ? feedbackStats.avg_rating.toFixed(1) : '–';
+        const fbPositive = feedbackStats?.positive || 0;
+        const errCount = errorRate?.cnt || 0;
+        const successRate = total > 0 ? (((total - errCount) / total) * 100).toFixed(1) : '–';
+
+        // Daily chart data
+        const dailyData = (dailyCounts.results || []);
+        const maxDaily = Math.max(...dailyData.map(d => d.cnt), 1);
+
+        // Type distribution rows
+        const typeRows = (typeDistribution.results || []).map(r =>
+          `<tr><td style="color:var(--ac);font-weight:600;">${e(r.type_code)}</td><td>${e(r.type_name)}</td><td style="text-align:right;">${r.cnt}</td></tr>`
+        ).join('');
+
+        // Feedback rows
+        const fbRows = (feedbackRecent.results || []).map(r => {
+          const issues = r.issues_json ? JSON.parse(r.issues_json).join(', ') : '';
+          return `<tr><td>${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</td><td>${e(r.accuracy || '')}</td><td>${e(r.useful || '')}</td><td style="font-size:10px;">${e(issues)}</td><td style="font-size:10px;">${e(r.created_at || '').slice(0,10)}</td></tr>`;
+        }).join('');
+
+        // Recent analyses rows
+        const recentRows = (recentAnalyses.results || []).map(r =>
+          `<tr><td style="color:var(--ac);font-size:10px;">${e(r.type_code || '–')}</td><td>${e(r.type_name || '–')}</td><td style="text-align:right;">${r.message_count || 0}</td><td style="font-size:10px;">${e(r.created_at || '').slice(0,16)}</td></tr>`
+        ).join('');
+
+        // Daily chart bars
+        const dailyBars = dailyData.map(d => {
+          const pct = (d.cnt / maxDaily * 100).toFixed(0);
+          const day = d.day.slice(5);
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;"><div style="width:100%;height:80px;display:flex;align-items:flex-end;"><div style="width:100%;background:var(--ac);border-radius:2px 2px 0 0;height:${pct}%;min-height:1px;"></div></div><div style="font-size:8px;color:#666;transform:rotate(-45deg);white-space:nowrap;">${day}</div></div>`;
+        }).join('');
+
+        // 6-axis distribution bars
+        const axisLabels = { A1:'정서강도', A2:'안정성', A3:'감정표현', A4:'주장성', A5:'주도성', A6:'수용성' };
+        const axisBarHTML = axisKeys.map(k => {
+          const val = axisAvgValues[k];
+          const pct = val !== '–' ? (parseFloat(val) * 100).toFixed(0) : 0;
+          return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="width:50px;font-size:10px;color:#999;text-align:right;">${axisLabels[k]}</div><div style="flex:1;height:6px;background:#1a1a2e;border-radius:3px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:var(--ac);border-radius:3px;"></div></div><div style="width:30px;font-size:10px;color:var(--ac);text-align:right;">${val}</div></div>`;
+        }).join('');
+
+        // 6-letter axis ratios
+        const axisPairs = [['F','S','정서'],['A','H','동력'],['T','R','인지'],['O','W','경계'],['X','V','회복'],['E','I','방어']];
+        const axisPairHTML = axisPairs.map(([h,l,name]) => {
+          const hc = codeLetterCounts[h] || 0;
+          const lc = codeLetterCounts[l] || 0;
+          const t = hc + lc || 1;
+          const hp = ((hc/t)*100).toFixed(0);
+          return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div style="width:24px;font-size:10px;color:#999;">${name}</div><div style="width:16px;font-size:11px;color:var(--ac);font-weight:700;text-align:center;">${h}</div><div style="flex:1;height:6px;background:#1a1a2e;border-radius:3px;overflow:hidden;display:flex;"><div style="width:${hp}%;height:100%;background:var(--ac);"></div><div style="flex:1;height:100%;background:#60A5FA;"></div></div><div style="width:16px;font-size:11px;color:#60A5FA;font-weight:700;text-align:center;">${l}</div><div style="width:50px;font-size:9px;color:#666;text-align:right;">${hc}:${lc}</div></div>`;
+        }).join('');
+
+        const dashboardHTML = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>KNOT Admin</title><style>
+:root{--bg:#08080D;--ac:#F5A623;--text:#E8E8E8;--dim:#999;--panel:#0c0c14;--bar:#12121e;--border:#1a1a2e;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;padding:20px;min-height:100vh;}
+.wrap{max-width:720px;margin:0 auto;}
+.logo{font-size:28px;font-weight:900;color:var(--ac);letter-spacing:6px;text-align:center;margin-bottom:4px;}
+.sub{font-size:10px;color:var(--dim);text-align:center;letter-spacing:3px;text-transform:uppercase;margin-bottom:24px;}
+.tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border);}
+.tab{padding:8px 16px;font-size:11px;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;font-family:'Courier New',monospace;letter-spacing:0.5px;text-transform:uppercase;}
+.tab.active{color:var(--ac);border-bottom-color:var(--ac);}
+.tab:hover{color:var(--text);}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;}
+.panel-bar{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--bar);border-bottom:1px solid var(--border);}
+.dot{width:8px;height:8px;border-radius:50%;}
+.dot.r{background:#ff5f57;}.dot.y{background:#ffbd2e;}.dot.g{background:#28c840;}
+.panel-title{font-size:11px;color:var(--dim);margin-left:8px;}
+.panel-body{padding:14px 16px;}
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+@media(max-width:500px){.metric-grid{grid-template-columns:repeat(2,1fr);}}
+.metric{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
+.metric-val{font-size:20px;font-weight:800;color:var(--ac);margin-bottom:4px;}
+.metric-label{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px;}
+table{width:100%;border-collapse:collapse;font-size:11px;}
+th{text-align:left;color:var(--ac);font-size:10px;padding:6px 8px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:0.5px;}
+td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--dim);}
+tr:hover td{color:var(--text);}
+.section{display:none;}.section.active{display:block;}
+.chart-wrap{display:flex;gap:2px;align-items:flex-end;padding:8px 0 20px;}
+.empty{text-align:center;padding:30px;color:#555;font-size:12px;}
+</style></head><body>
+<div class="wrap">
+<div class="logo">KNOT_</div>
+<div class="sub">Admin Dashboard</div>
+<div class="tabs">
+<div class="tab active" onclick="switchTab('ops',this)">운영</div>
+<div class="tab" onclick="switchTab('insight',this)">유저 인사이트</div>
+<div class="tab" onclick="switchTab('feedback',this)">피드백</div>
+</div>
+
+<div id="ops" class="section active">
+<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">overview.metrics</span></div><div class="panel-body">
+<div class="metric-grid">
+<div class="metric"><div class="metric-val">${total}</div><div class="metric-label">전체 분석</div></div>
+<div class="metric"><div class="metric-val">${today}</div><div class="metric-label">오늘</div></div>
+<div class="metric"><div class="metric-val">${week}</div><div class="metric-label">이번 주</div></div>
+<div class="metric"><div class="metric-val">${avgMsg}</div><div class="metric-label">평균 메시지</div></div>
+<div class="metric"><div class="metric-val">${successRate}%</div><div class="metric-label">성공률</div></div>
+<div class="metric"><div class="metric-val">${fbCount}</div><div class="metric-label">피드백 수</div></div>
+</div></div></div>
+
+<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">daily.volume</span></div><div class="panel-body">
+${dailyData.length > 0 ? `<div class="chart-wrap">${dailyBars}</div>` : '<div class="empty">데이터 없음</div>'}
+</div></div>
+
+<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">recent.analyses</span></div><div class="panel-body">
+${recentRows ? `<table><thead><tr><th>코드</th><th>이름</th><th style="text-align:right;">메시지</th><th>일시</th></tr></thead><tbody>${recentRows}</tbody></table>` : '<div class="empty">데이터 없음</div>'}
+</div></div>
+</div>
+
+<div id="insight" class="section">
+<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">type.distribution</span></div><div class="panel-body">
+${typeRows ? `<table><thead><tr><th>코드</th><th>아키타입</th><th style="text-align:right;">횟수</th></tr></thead><tbody>${typeRows}</tbody></table>` : '<div class="empty">데이터 없음</div>'}
+</div></div>
+
+<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">axis.balance</span></div><div class="panel-body">
+<div style="font-size:10px;color:var(--ac);margin-bottom:10px;">// 6축 편향 분포</div>
+${codeTotal > 0 ? axisPairHTML : '<div class="empty">데이터 없음</div>'}
+</div></div>
+
+<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">intensity.averages</span></div><div class="panel-body">
+<div style="font-size:10px;color:var(--ac);margin-bottom:10px;">// 강도축 평균 (최근 100건)</div>
+${validAxes > 0 ? axisBarHTML : '<div class="empty">데이터 없음</div>'}
+</div></div>
+</div>
+
+<div id="feedback" class="section">
+<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">feedback.summary</span></div><div class="panel-body">
+<div class="metric-grid" style="grid-template-columns:repeat(3,1fr);">
+<div class="metric"><div class="metric-val">${fbAvg}</div><div class="metric-label">평균 평점</div></div>
+<div class="metric"><div class="metric-val">${fbCount}</div><div class="metric-label">응답 수</div></div>
+<div class="metric"><div class="metric-val">${fbCount > 0 ? ((fbPositive/fbCount)*100).toFixed(0) : '–'}%</div><div class="metric-label">긍정률</div></div>
+</div></div></div>
+
+<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">feedback.recent</span></div><div class="panel-body">
+${fbRows ? `<table><thead><tr><th>평점</th><th>정확도</th><th>유용성</th><th>이슈</th><th>날짜</th></tr></thead><tbody>${fbRows}</tbody></table>` : '<div class="empty">피드백 없음</div>'}
+</div></div>
+</div>
+
+</div>
+<script>
+function switchTab(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+</script></body></html>`;
+
+        return new Response(dashboardHTML, {
+          headers: { 'Content-Type': 'text/html;charset=UTF-8', 'Cache-Control': 'no-store' },
+        });
+      }
+
       return jsonResponse({ error: 'Method not allowed' }, 405, corsHeaders);
     }
 
@@ -2803,6 +4516,13 @@ export default {
         return jsonResponse({ error: '분석 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' }, 429, corsHeaders);
       }
 
+      // Auth check
+      const auth = await requireAuth(request, env);
+      if (auth.error) {
+        return jsonResponse({ error: auth.error }, auth.status, corsHeaders);
+      }
+      const authUser = auth.user;
+
       const contentLength = parseInt(request.headers.get('Content-Length') || '0');
       if (contentLength > MAX_SIZE_ANALYZE) {
         return jsonResponse({ error: '요청 크기 초과' }, 413, corsHeaders);
@@ -2811,16 +4531,19 @@ export default {
       try {
         const body = await request.json();
 
-        // raw_messages is now the primary input (frontend no longer computes axes)
-        const rawMessages = body.raw_messages;
-        if (!rawMessages || !Array.isArray(rawMessages) || rawMessages.length === 0) {
-          return jsonResponse({ error: 'raw_messages 배열이 필요합니다' }, 400, corsHeaders);
+        // ── Preprocessing: normalize any format → [{sender, text}] ──
+        const preprocessed = preprocessMessages(body);
+        if (preprocessed.processedCount === 0) {
+          return jsonResponse({
+            error: '분석할 수 있는 메시지가 없습니다',
+            format: preprocessed.format,
+            originalCount: preprocessed.originalCount
+          }, 400, corsHeaders);
         }
+        const rawMessages = preprocessed.messages;
 
         // Run PRISM deterministically server-side
-        const prismMessages = rawMessages.map(msg =>
-          typeof msg === 'string' ? { sender: 'user', text: msg } : msg
-        );
+        const prismMessages = rawMessages;
         let prism = null;
         try {
           const prismResult = analyzePrism(prismMessages);
@@ -2843,6 +4566,11 @@ export default {
           const scoringPrompt = buildScoringPrompt(rawMessages, prism, anchor);
           return jsonResponse({
             diag: true,
+            preprocessing: {
+              format: preprocessed.format,
+              originalCount: preprocessed.originalCount,
+              processedCount: preprocessed.processedCount,
+            },
             message_count: rawMessages.length,
             prism_ok: !!prism,
             anchor_ok: !!anchor,
@@ -2858,6 +4586,16 @@ export default {
 
         (async () => {
           try {
+            // Send preprocessing meta
+            await writer.write(encoder.encode(`data: ${JSON.stringify({
+              type: 'meta',
+              preprocessing: {
+                format: preprocessed.format,
+                originalCount: preprocessed.originalCount,
+                processedCount: preprocessed.processedCount
+              }
+            })}\n\n`));
+
             // ═══ STAGE 1: Non-streaming scoring call ═══
             await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'status', stage: 1, message: '행동 패턴 분석 중...' })}\n\n`));
 
@@ -2897,20 +4635,44 @@ export default {
             // ──── Save Stage 1 to D1 analyses table ────
             try {
               if (env.KNOT_DB) {
-                await env.KNOT_DB.prepare(
-                  `INSERT INTO analyses (id, type_code, type_name, tagline, axes_json, prism_json, anchor_json, sections_json, identity_json, message_count, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
-                ).bind(
-                  analysisId,
-                  identity.code || '',
-                  identity.name || '',
-                  identity.tagline || '',
-                  JSON.stringify(axes),
-                  prism ? JSON.stringify(prism) : null,
-                  anchor ? JSON.stringify(anchor) : null,
-                  null, // sections_json filled after Stage 2
-                  JSON.stringify(identity),
-                  rawMessages.length
-                ).run();
+                // Try with user_email first (new schema), fallback to old schema if column doesn't exist
+                try {
+                  await env.KNOT_DB.prepare(
+                    `INSERT INTO analyses (id, type_code, type_name, tagline, axes_json, prism_json, anchor_json, sections_json, identity_json, message_count, user_email, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+                  ).bind(
+                    analysisId,
+                    identity.code || '',
+                    identity.name || '',
+                    identity.tagline || '',
+                    JSON.stringify(axes),
+                    prism ? JSON.stringify(prism) : null,
+                    anchor ? JSON.stringify(anchor) : null,
+                    null, // sections_json filled after Stage 2
+                    JSON.stringify(identity),
+                    rawMessages.length,
+                    authUser?.email || null
+                  ).run();
+                } catch (schemaErr) {
+                  // Fallback: old schema without user_email
+                  if (schemaErr.message?.includes('no such column')) {
+                    await env.KNOT_DB.prepare(
+                      `INSERT INTO analyses (id, type_code, type_name, tagline, axes_json, prism_json, anchor_json, sections_json, identity_json, message_count, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+                    ).bind(
+                      analysisId,
+                      identity.code || '',
+                      identity.name || '',
+                      identity.tagline || '',
+                      JSON.stringify(axes),
+                      prism ? JSON.stringify(prism) : null,
+                      anchor ? JSON.stringify(anchor) : null,
+                      null, // sections_json filled after Stage 2
+                      JSON.stringify(identity),
+                      rawMessages.length
+                    ).run();
+                  } else {
+                    throw schemaErr;
+                  }
+                }
               }
             } catch (dbErr) {
               console.error('[D1 Stage1 Save Error]', dbErr.message);
@@ -2919,7 +4681,27 @@ export default {
             // #12: L4 Asymmetric Delta 계산 (중립 0.5 기준)
             const friction = l4AsymmetricDelta(axes.intensity, null);
 
-            // Send Stage 1 results to client (scores + identity + analysis_id)
+            // ═══ SIMULATION LAYER ═══
+            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'status', stage: 'sim', message: '시뮬레이션 엔진 가동 중...' })}\n\n`));
+            let simulation = null;
+            try {
+              simulation = runSimulation(axes, anchor);
+            } catch (simErr) {
+              console.error('[Simulation Error]', simErr.message);
+            }
+
+            // Compute diagnostics for client display
+            const diagnostics = {
+              friction: friction || null,
+              message_count: rawMessages.length,
+              prism_topics: prism?.topics || null,
+              anchor_attachment: anchor?.attachment?.primary_tendency || null,
+              has_prism: !!prism,
+              has_anchor: !!anchor,
+              used_fallback: usedFallback,
+            };
+
+            // Send Stage 1 + Simulation results to client
             await writer.write(encoder.encode(`data: ${JSON.stringify({
               type: 'scores',
               analysis_id: analysisId,
@@ -2928,15 +4710,17 @@ export default {
               prism: prism || null,
               anchor: anchor || null,
               friction: friction || null,
+              simulation: simulation || null,
               used_fallback: usedFallback,
+              diagnostics: diagnostics,
             })}\n\n`));
 
             // ═══ STAGE 2: Streaming essay call ═══
             await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'status', stage: 2, message: '에세이 작성 중...' })}\n\n`));
 
-            // Build essay prompt using confirmed scores (NOT raw messages)
+            // Build essay prompt using confirmed scores + simulation data
             const lensSummary = sanitizeString(body.lens_summary || '', 5000);
-            const essayPrompt = buildAnalyzePrompt(axes, identity, null, lensSummary, prism, anchor);
+            const essayPrompt = buildAnalyzePrompt(axes, identity, null, lensSummary, prism, anchor, simulation);
 
             const apiResp = await fetch('https://api.anthropic.com/v1/messages', {
               method: 'POST',
@@ -3049,6 +4833,13 @@ export default {
         return jsonResponse({ error: '매칭 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' }, 429, corsHeaders);
       }
 
+      // Auth check
+      const auth = await requireAuth(request, env);
+      if (auth.error) {
+        return jsonResponse({ error: auth.error }, auth.status, corsHeaders);
+      }
+      const authUser = auth.user;
+
       const contentLength = parseInt(request.headers.get('Content-Length') || '0');
       if (contentLength > MAX_SIZE_MATCH) {
         return jsonResponse({ error: '요청 크기 초과' }, 413, corsHeaders);
@@ -3062,47 +4853,46 @@ export default {
         const identityB = body.identityB || { name: 'Person B', tagline: '' };
         const matchIdentity = body.matchIdentity || { name: '교차하는 궤도', tagline: '복합적 역학의 관계', compatibility: 50, tension: '보통', growth: '보통' };
 
-        // Handle PRISM A/B: either use pre-computed or compute from raw_messages_a/b
+        // ── Preprocess raw messages A/B if provided ──
+        let messagesA = null, messagesB = null;
+        if (body.raw_messages_a) {
+          const ppA = preprocessMessages({ raw_messages: Array.isArray(body.raw_messages_a) ? body.raw_messages_a : [] });
+          if (ppA.processedCount > 0) messagesA = ppA.messages;
+        }
+        if (body.raw_messages_b) {
+          const ppB = preprocessMessages({ raw_messages: Array.isArray(body.raw_messages_b) ? body.raw_messages_b : [] });
+          if (ppB.processedCount > 0) messagesB = ppB.messages;
+        }
+
+        // Handle PRISM A/B: either use pre-computed or compute from preprocessed messages
         let prismA = sanitizePrism(body.prismA);
-        if (!prismA && body.raw_messages_a && Array.isArray(body.raw_messages_a)) {
-          const messages = body.raw_messages_a.map(msg =>
-            typeof msg === 'string' ? { sender: 'user', text: msg } : msg
-          );
-          const prismResult = analyzePrism(messages);
+        if (!prismA && messagesA) {
+          const prismResult = analyzePrism(messagesA);
           if (prismResult.success !== false && !prismResult.error) {
             prismA = sanitizePrism(prismResult);
           }
         }
 
         let prismB = sanitizePrism(body.prismB);
-        if (!prismB && body.raw_messages_b && Array.isArray(body.raw_messages_b)) {
-          const messages = body.raw_messages_b.map(msg =>
-            typeof msg === 'string' ? { sender: 'user', text: msg } : msg
-          );
-          const prismResult = analyzePrism(messages);
+        if (!prismB && messagesB) {
+          const prismResult = analyzePrism(messagesB);
           if (prismResult.success !== false && !prismResult.error) {
             prismB = sanitizePrism(prismResult);
           }
         }
 
-        // Handle ANCHOR A/B: either use pre-computed or compute from raw_messages_a/b
+        // Handle ANCHOR A/B: either use pre-computed or compute from preprocessed messages
         let anchorA = sanitizeAnchor(body.anchorA);
-        if (!anchorA && body.raw_messages_a && Array.isArray(body.raw_messages_a)) {
-          const messages = body.raw_messages_a.map(msg =>
-            typeof msg === 'string' ? { sender: 'user', text: msg } : msg
-          );
-          const anchorResult = analyzeAnchor(messages);
+        if (!anchorA && messagesA) {
+          const anchorResult = analyzeAnchor(messagesA);
           if (anchorResult.success !== false && !anchorResult.error) {
             anchorA = sanitizeAnchor(anchorResult);
           }
         }
 
         let anchorB = sanitizeAnchor(body.anchorB);
-        if (!anchorB && body.raw_messages_b && Array.isArray(body.raw_messages_b)) {
-          const messages = body.raw_messages_b.map(msg =>
-            typeof msg === 'string' ? { sender: 'user', text: msg } : msg
-          );
-          const anchorResult = analyzeAnchor(messages);
+        if (!anchorB && messagesB) {
+          const anchorResult = analyzeAnchor(messagesB);
           if (anchorResult.success !== false && !anchorResult.error) {
             anchorB = sanitizeAnchor(anchorResult);
           }
@@ -3112,7 +4902,49 @@ export default {
           return jsonResponse({ error: 'Missing profile data' }, 400, corsHeaders);
         }
 
-        const userPrompt = buildMatchPrompt(profileA, profileB, identityA, identityB, matchIdentity, prismA, prismB, anchorA, anchorB);
+        // ═══ Run simulations for both profiles ═══
+        let simA = null, simB = null, crossSim = null;
+        try {
+          const axesA = profileA.axes || profileA;
+          const axesB = profileB.axes || profileB;
+          simA = runSimulation(axesA, anchorA);
+          simB = runSimulation(axesB, anchorB);
+          crossSim = computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB);
+        } catch (simErr) {
+          console.error('[Match Simulation Error]', simErr.message);
+        }
+
+        // Compute matchIdentity server-side (don't trust client computation)
+        let serverMatchIdentity = null;
+        try {
+          serverMatchIdentity = serverComputeMatchIdentity(
+            profileA.axes || profileA, profileB.axes || profileB, identityA, identityB
+          );
+        } catch (e) {
+          console.error('[Match Identity Error]', e.message);
+        }
+
+        // Compute compatibility server-side
+        let serverCompatibility = null;
+        try {
+          // Extract raw messages if available for LSM
+          const fwpA = body.raw_messages_a ? computeFunctionWordProfile(body.raw_messages_a) : null;
+          const fwpB = body.raw_messages_b ? computeFunctionWordProfile(body.raw_messages_b) : null;
+          serverCompatibility = serverComputeCompatibility(
+            profileA.axes || profileA, profileB.axes || profileB, fwpA, fwpB
+          );
+        } catch (e) {
+          console.error('[Compatibility Error]', e.message);
+        }
+
+        // Use server computations, with crossSim overrides
+        const effectiveMatchIdentity = {
+          ...(serverMatchIdentity || matchIdentity),
+          ...(crossSim ? { compatibility: crossSim.compatibility, tension: crossSim.tension, growth: crossSim.growth } : {}),
+          ...(serverCompatibility ? { compatibilityDetail: serverCompatibility } : {})
+        };
+
+        const userPrompt = buildMatchPrompt(profileA, profileB, identityA, identityB, effectiveMatchIdentity, prismA, prismB, anchorA, anchorB, simA, simB, crossSim);
 
         // Stream mode for match too
         const encoder = new TextEncoder();
@@ -3121,7 +4953,7 @@ export default {
 
         (async () => {
           try {
-            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'meta', prismA: prismA || null, prismB: prismB || null, anchorA: anchorA || null, anchorB: anchorB || null })}\n\n`));
+            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'meta', prismA: prismA || null, prismB: prismB || null, anchorA: anchorA || null, anchorB: anchorB || null, simulationA: simA, simulationB: simB, crossSimulation: crossSim, matchIdentity: effectiveMatchIdentity, compatibility: serverCompatibility })}\n\n`));
 
             const apiResp = await fetch('https://api.anthropic.com/v1/messages', {
               method: 'POST',
@@ -3206,6 +5038,13 @@ export default {
 
     // ──── POST /feedback ────
     if (path === '/feedback') {
+      // Auth check
+      const auth = await requireAuth(request, env);
+      if (auth.error) {
+        return jsonResponse({ error: auth.error }, auth.status, corsHeaders);
+      }
+      const authUser = auth.user;
+
       const contentLength = parseInt(request.headers.get('Content-Length') || '0');
       if (contentLength > MAX_SIZE_FEEDBACK) {
         return jsonResponse({ error: '요청 크기 초과' }, 413, corsHeaders);
@@ -3216,17 +5055,38 @@ export default {
         // Primary: D1 feedback table
         if (env.KNOT_DB) {
           const feedbackId = crypto.randomUUID();
-          await env.KNOT_DB.prepare(
-            `INSERT INTO feedback (id, analysis_id, rating, accuracy, useful, issues_json, comment, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`
-          ).bind(
-            feedbackId,
-            body.analysis_id || null,
-            body.rating || 0,
-            body.accuracy || null,
-            body.useful || null,
-            body.issues ? JSON.stringify(body.issues) : null,
-            body.text || body.comment || null
-          ).run();
+          // Try with user_email first (new schema), fallback to old schema if column doesn't exist
+          try {
+            await env.KNOT_DB.prepare(
+              `INSERT INTO feedback (id, analysis_id, rating, accuracy, useful, issues_json, comment, user_email, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+            ).bind(
+              feedbackId,
+              body.analysis_id || null,
+              body.rating || 0,
+              body.accuracy || null,
+              body.useful || null,
+              body.issues ? JSON.stringify(body.issues) : null,
+              body.text || body.comment || null,
+              authUser?.email || null
+            ).run();
+          } catch (schemaErr) {
+            // Fallback: old schema without user_email
+            if (schemaErr.message?.includes('no such column')) {
+              await env.KNOT_DB.prepare(
+                `INSERT INTO feedback (id, analysis_id, rating, accuracy, useful, issues_json, comment, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+              ).bind(
+                feedbackId,
+                body.analysis_id || null,
+                body.rating || 0,
+                body.accuracy || null,
+                body.useful || null,
+                body.issues ? JSON.stringify(body.issues) : null,
+                body.text || body.comment || null
+              ).run();
+            } else {
+              throw schemaErr;
+            }
+          }
         }
 
         // Fallback: also write to KV if available (backward compat, can remove later)

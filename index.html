@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://knot-exodia.ashirmallo.workers.dev https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self' https://knot-exodia.ashirmallo.workers.dev;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://knot-exodia.ashirmallo.workers.dev https://cdnjs.cloudflare.com https://accounts.google.com; img-src 'self' data: blob: https:; connect-src 'self' https://knot-exodia.ashirmallo.workers.dev https://accounts.google.com;">
     <title>KNOT - AI Behavioral Analysis Engine</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root {
@@ -215,7 +216,7 @@
 
         /* Analyzing Screen */
                 .analyzing {
-            padding: 40px 20px;
+            padding: 30px 0;
         }
 
         .analyzing-header {
@@ -228,6 +229,7 @@
             color: var(--ac);
             margin-bottom: 6px;
             letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
         }
 
         .analyzing-header .analyzing-sub {
@@ -281,13 +283,13 @@
             font-size: 11px;
             color: var(--text-dim);
             margin-left: 8px;
-            font-family: monospace;
+            font-family: 'Courier New', monospace;
         }
 
         .terminal-body {
             padding: 12px;
             font-family: 'Courier New', monospace;
-            font-size: 11.5px;
+            font-size: 12px;
             line-height: 1.7;
             max-height: 230px;
             overflow-y: auto;
@@ -406,7 +408,7 @@
 
         .gauge-value {
             font-size: 12px;
-            font-family: monospace;
+            font-family: 'Courier New', monospace;
             color: var(--text-dim);
             transition: color 0.3s;
         }
@@ -680,11 +682,8 @@
             display: none;
             padding: 14px 16px;
             border-top: 1px solid #1a1a2e;
-            font-size: 12px;
-            line-height: 1.7;
-            color: var(--text-dim);
             font-size: 13px;
-            line-height: 1.6;
+            line-height: 1.7;
             color: var(--text);
         }
 
@@ -809,7 +808,7 @@
             border: none;
             color: var(--text);
             font-size: 12px;
-            font-family: monospace;
+            font-family: 'Courier New', monospace;
             outline: none;
         }
         .share-url-result button {
@@ -851,40 +850,47 @@
         .share-page-dots span.active { background: var(--ac); }
 
         /* Feedback Survey Styles */
-        .feedback-survey { padding: 15px 0; }
-        .feedback-stars { display: flex; gap: 8px; margin: 12px 0; }
+        .feedback-survey { padding: 8px 0; }
+        .feedback-stars { display: flex; gap: 8px; margin: 10px 0; }
         .feedback-star {
-            font-size: 28px; cursor: pointer; opacity: 0.3;
+            font-size: 24px; cursor: pointer; opacity: 0.3;
             transition: opacity 0.2s, transform 0.2s;
         }
         .feedback-star:hover, .feedback-star.active { opacity: 1; transform: scale(1.15); }
-        .feedback-q { margin: 18px 0 8px; font-size: 13px; font-weight: 600; color: var(--fg); }
-        .feedback-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+        .feedback-q {
+            margin: 16px 0 8px; font-size: 12px; font-weight: 600;
+            color: var(--ac); font-family: 'Courier New', monospace;
+            letter-spacing: 0.3px;
+        }
+        .feedback-q::before { content: '// '; color: #444; }
+        .feedback-options { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
         .feedback-chip {
-            padding: 6px 14px; border-radius: 4px; font-size: 11px;
+            padding: 5px 12px; border-radius: 4px; font-size: 11px;
             border: 1px solid #1a1a2e; cursor: pointer;
-            background: transparent; color: var(--text-dim); transition: all 0.2s;
+            background: rgba(255,255,255,0.02); color: var(--text-dim); transition: all 0.2s;
             font-family: 'Courier New', monospace;
         }
         .feedback-chip:hover { border-color: var(--ac); }
         .feedback-chip.selected { background: var(--ac); color: #000; border-color: var(--ac); }
         .feedback-text {
-            width: 100%; padding: 10px; border-radius: 8px;
-            border: 1px solid var(--border); background: rgba(255,255,255,0.05);
-            color: var(--fg); font-size: 13px; resize: vertical; min-height: 60px;
-            margin: 8px 0;
+            width: 100%; padding: 10px; border-radius: 6px;
+            border: 1px solid #1a1a2e; background: rgba(0,0,0,0.3);
+            color: var(--text); font-size: 12px; resize: vertical; min-height: 60px;
+            margin: 8px 0; font-family: 'Courier New', monospace;
         }
-        .feedback-text::placeholder { color: rgba(255,255,255,0.3); }
+        .feedback-text::placeholder { color: #555; }
         .feedback-submit {
-            padding: 10px 24px; border-radius: 8px; border: none;
-            background: var(--ac); color: #000; font-weight: 600;
-            cursor: pointer; font-size: 13px; margin-top: 12px;
-            transition: opacity 0.2s;
+            padding: 10px 24px; border-radius: 4px; border: 1px solid var(--ac);
+            background: transparent; color: var(--ac); font-weight: 600;
+            cursor: pointer; font-size: 11px; margin-top: 12px;
+            font-family: 'Courier New', monospace; letter-spacing: 0.5px;
+            text-transform: uppercase; transition: all 0.3s; width: 100%;
         }
-        .feedback-submit:hover { opacity: 0.85; }
-        .feedback-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+        .feedback-submit:hover { background: rgba(245,166,35,0.1); box-shadow: 0 0 12px rgba(245,166,35,0.15); }
+        .feedback-submit:disabled { opacity: 0.3; cursor: not-allowed; }
         .feedback-thanks {
-            text-align: center; padding: 20px; font-size: 14px; color: var(--ac);
+            text-align: center; padding: 16px; font-size: 12px; color: var(--ac);
+            font-family: 'Courier New', monospace;
         }
 
         .export-section {
@@ -1000,7 +1006,7 @@
         }
 
         .match-placeholder-text {
-            font-size: 13px;
+            font-size: 12px;
             margin-bottom: 12px;
             line-height: 1.6;
         }
@@ -1033,7 +1039,7 @@
         }
 
         .match-title {
-            font-size: 14px;
+            font-size: 20px;
             font-weight: 600;
             margin-bottom: 10px;
             letter-spacing: 2px;
@@ -1102,7 +1108,7 @@
 
         .match-narrative {
             background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
+            border: 1px solid #1a1a2e;
             border-radius: 8px;
             padding: 20px;
             font-size: 13px;
@@ -1262,7 +1268,7 @@
         .trend-badge.stable { background: rgba(255,255,255,0.08); color: var(--text-dim); }
         .temporal-section {
             background-color: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
+            border: 1px solid #1a1a2e;
             border-radius: 10px;
             padding: 16px;
             margin-bottom: 12px;
@@ -1280,7 +1286,7 @@
         }
         .temporal-card {
             background-color: rgba(255,255,255,0.04);
-            border: 1px solid var(--border);
+            border: 1px solid #1a1a2e;
             border-radius: 6px;
             padding: 10px;
             text-align: center;
@@ -1323,7 +1329,7 @@
         }
 
         textarea {
-            font-family: 'Noto Sans KR', sans-serif;
+            font-family: 'Courier New', monospace;
         }
 
         /* Type System Styles */
@@ -1337,6 +1343,7 @@
             position: relative;
             overflow: hidden;
             box-shadow: 0 0 30px rgba(245,166,35,0.08);
+            font-family: 'Courier New', monospace;
         }
         .type-badge::before {
             content: '';
@@ -1366,12 +1373,14 @@
             font-weight: 600;
             margin-bottom: 8px;
             letter-spacing: 1px;
+            font-family: 'Courier New', monospace;
         }
 
         .type-desc {
             font-size: 11px;
             color: var(--text-dim);
             line-height: 1.6;
+            font-family: 'Courier New', monospace;
         }
 
         .partner-section {
@@ -1521,8 +1530,48 @@
     </style>
 </head>
 <body>
-    <!-- Landing Screen -->
-    <div class="screen landing active">
+    <!-- Login Screen (NEW - First Screen) -->
+    <div class="screen login active">
+        <div class="container" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;">
+
+            <!-- Logo Block -->
+            <div style="text-align:center;margin-bottom:48px;">
+                <div class="logo" style="font-size:48px;letter-spacing:12px;margin-bottom:8px;">KNOT</div>
+                <div style="font-size:11px;color:var(--text-dim);font-family:'Courier New',monospace;letter-spacing:3px;">AI BEHAVIORAL ANALYSIS ENGINE</div>
+            </div>
+
+            <!-- Login Terminal Panel -->
+            <div class="landing-panel" style="width:100%;max-width:420px;">
+                <div class="landing-panel-bar">
+                    <div class="terminal-dot r"></div>
+                    <div class="terminal-dot y"></div>
+                    <div class="terminal-dot g"></div>
+                    <span class="landing-panel-title">// auth.gateway</span>
+                </div>
+                <div class="landing-panel-body" style="padding:32px 24px;text-align:center;">
+                    <div style="font-family:'Courier New',monospace;font-size:12px;color:var(--ac);margin-bottom:6px;">
+                        <span style="color:#555;">&gt;</span> STATUS: AWAITING_AUTH
+                    </div>
+                    <div style="font-size:13px;color:var(--text-dim);margin-bottom:24px;font-family:'Courier New',monospace;line-height:1.6;">
+                        서비스 이용을 위해<br>Google 계정으로 인증해주세요
+                    </div>
+                    <div id="googleSignInBtn" style="display:inline-block;margin-bottom:20px;"></div>
+                    <div style="font-size:10px;color:#444;font-family:'Courier New',monospace;line-height:1.8;margin-top:8px;">
+                        <span style="color:#333;">├</span> 로그인 정보는 세션 내에서만 유지됩니다<br>
+                        <span style="color:#333;">└</span> 인증된 사용자만 분석 기능을 이용할 수 있습니다
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version Info -->
+            <div style="margin-top:40px;font-size:10px;color:#333;font-family:'Courier New',monospace;text-align:center;">
+                v1.0 — SOFT LAUNCH
+            </div>
+        </div>
+    </div>
+
+    <!-- Landing Screen (File Upload) -->
+    <div class="screen landing">
         <div class="container">
             <div class="logo">KNOT</div>
             <div class="subtitle">AI Behavioral Analysis & Matching Engine</div>
@@ -1550,7 +1599,14 @@
                 </div>
             </div>
 
-            <div class="upload-zone" id="uploadZone">
+            <!-- Signed-in user bar -->
+            <div id="authUserSection" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:8px 12px;background:#0c0c14;border:1px solid #1a1a2e;border-radius:8px;">
+                <img id="authUserAvatar" src="" style="width:28px;height:28px;border-radius:50%;border:1px solid #1a1a2e;" />
+                <span id="authUserName" style="font-size:12px;color:var(--text-dim);font-family:'Courier New',monospace;flex:1;"></span>
+                <button onclick="signOut()" style="font-size:11px;color:#666;background:none;border:1px solid #333;border-radius:4px;padding:3px 8px;cursor:pointer;font-family:'Courier New',monospace;">로그아웃</button>
+            </div>
+
+            <div class="upload-zone" id="uploadArea" data-zone="uploadZone">
                 <div class="upload-zone-bar">
                     <div class="terminal-dot r" style="width:8px;height:8px;border-radius:50%;"></div>
                     <div class="terminal-dot y" style="width:8px;height:8px;border-radius:50%;"></div>
@@ -1590,12 +1646,12 @@
                 <span class="landing-panel-title">theoretical.foundations</span>
             </div>
             <div class="landing-panel-body">
-                <p style="color:var(--text-dim);font-size:13px;line-height:1.8;margin:0 0 12px 0;">KNOT의 행동 분석은 다음 연구들을 참고하여 설계되었습니다.</p>
-                <div style="font-size:13px;line-height:2.2;color:var(--text-dim);">
-                    <span style="color:#555;">├</span> <span style="color:var(--ac);">언어 스타일 매칭</span> — Ireland et al. (2011), Language Style Matching<br>
-                    <span style="color:#555;">├</span> <span style="color:var(--ac);">행동 유형 분류</span> — 주성분 축소 기반 차원 투영 (PCR)<br>
-                    <span style="color:#555;">├</span> <span style="color:var(--ac);">호환성 분석</span> — 다축 가중 매칭 모델<br>
-                    <span style="color:#555;">└</span> <span style="color:var(--ac);">갭 분석</span> — 양방향 리스크 벡터 집계
+                <p style="color:var(--text-dim);font-size:12px;line-height:1.8;margin:0 0 14px 0;">KNOT의 행동 분석은 다음 연구들을 참고하여 설계되었습니다.</p>
+                <div style="font-size:12px;line-height:2.2;color:var(--text-dim);">
+                    <span style="color:#555;">├</span> <span style="color:var(--ac);">언어 스타일 매칭</span> — 기능어 빈도 기반 관계 지속성 예측<br>
+                    <span style="color:#555;">├</span> <span style="color:var(--ac);">애착 이론</span> — 애착 유형 분류 및 스트레스 반응 모델<br>
+                    <span style="color:#555;">├</span> <span style="color:var(--ac);">관계 역학</span> — 갈등 패턴 분류 및 관계 안정성 예측<br>
+                    <span style="color:#555;">└</span> <span style="color:var(--ac);">대화 분석</span> — 다차원 행동 신호 추출
                 </div>
             </div>
         </div>
@@ -1688,14 +1744,33 @@
                 </div>
             </div>
 
-            <!-- Profile Overview: 희소성 + 핵심 특이점 + 영역별 위치 -->
-            <div class="axes-section" id="profileOverviewSection">
-                <div id="profileOverview"></div>
+            <!-- Profile Overview -->
+            <div class="landing-panel" id="profileOverviewSection">
+                <div class="landing-panel-bar">
+                    <div class="terminal-dot r"></div>
+                    <div class="terminal-dot y"></div>
+                    <div class="terminal-dot g"></div>
+                    <span class="landing-panel-title">profile.overview</span>
+                </div>
+                <div class="landing-panel-body">
+                    <div id="profileOverview"></div>
+                </div>
             </div>
 
+            <!-- Simulation (terminal panel, built by JS) -->
+            <div id="simulationCards"></div>
+
             <!-- 에세이 섹션 -->
-            <div class="axes-section">
-                <div id="lenses" class="lenses-section"></div>
+            <div class="landing-panel">
+                <div class="landing-panel-bar">
+                    <div class="terminal-dot r"></div>
+                    <div class="terminal-dot y"></div>
+                    <div class="terminal-dot g"></div>
+                    <span class="landing-panel-title">analysis.report</span>
+                </div>
+                <div class="landing-panel-body" style="padding:12px 14px;">
+                    <div id="lenses" class="lenses-section"></div>
+                </div>
             </div>
 
             <!-- Partner Recommendations (v3: hidden, reserved for future) -->
@@ -1705,16 +1780,30 @@
             </div>
 
             <!-- Feedback Survey -->
-            <div class="axes-section" id="feedbackSection" style="display:none;">
-                <div class="section-title">분석 품질 평가</div>
-                <div id="feedbackContent"></div>
+            <div id="feedbackSection" style="display:none;">
+                <div class="landing-panel">
+                    <div class="landing-panel-bar">
+                        <div class="terminal-dot r"></div>
+                        <div class="terminal-dot y"></div>
+                        <div class="terminal-dot g"></div>
+                        <span class="landing-panel-title">feedback.survey</span>
+                    </div>
+                    <div class="landing-panel-body" style="padding:14px 18px;">
+                        <div id="feedbackContent"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Compatibility Match Section -->
-            <div class="axes-section">
-                <div class="section-title">궁합 분석</div>
-                <div class="match-placeholder">
-                    <div class="match-placeholder-text">
+            <div class="landing-panel">
+                <div class="landing-panel-bar">
+                    <div class="terminal-dot r"></div>
+                    <div class="terminal-dot y"></div>
+                    <div class="terminal-dot g"></div>
+                    <span class="landing-panel-title">match.init</span>
+                </div>
+                <div class="landing-panel-body" style="text-align:center;">
+                    <div style="font-size:12px;color:var(--text-dim);line-height:1.8;margin-bottom:16px;">
                         두 개의 프로필을 비교하여 대화 호환성을 분석합니다.<br>
                         다른 사람의 분석 결과를 공유받아 매칭을 시작하세요.
                     </div>
@@ -1722,24 +1811,32 @@
                 </div>
             </div>
 
-            <!-- Share Card Section -->
-            <div class="export-section" style="margin-top: 20px;">
-                <div class="export-title">공유하기</div>
-                <button class="share-card-btn" onclick="generateMultiShareCards()">📸 분석 이미지 저장</button>
-                <button class="share-url-btn" id="shareUrlBtn" onclick="generateShareURL()">🔗 공유 링크 만들기</button>
-                <div class="share-url-result" id="shareUrlResult">
-                    <input type="text" id="shareUrlInput" readonly>
-                    <button onclick="copyShareURL()">복사</button>
+            <!-- Share & Export Section -->
+            <div class="landing-panel" style="margin-top:20px;">
+                <div class="landing-panel-bar">
+                    <div class="terminal-dot r"></div>
+                    <div class="terminal-dot y"></div>
+                    <div class="terminal-dot g"></div>
+                    <span class="landing-panel-title">export.tools</span>
                 </div>
-            </div>
-
-            <!-- Export Section -->
-            <div class="export-section">
-                <div class="export-title">프로필 코드</div>
-                <div class="profile-code" id="profileCode">생성 중...</div>
-                <button onclick="copyProfileCode()">코드 복사</button>
-                <button class="secondary-btn" onclick="switchToMatch()">매칭 시작</button>
-                <button class="secondary-btn" onclick="goToLanding()">새 분석</button>
+                <div class="landing-panel-body" style="text-align:center;">
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:10px;color:var(--ac);font-family:'Courier New',monospace;letter-spacing:1px;margin-bottom:10px;">// 공유</div>
+                        <button class="share-card-btn" onclick="generateMultiShareCards()">분석 이미지 저장</button>
+                        <button class="share-url-btn" id="shareUrlBtn" onclick="generateShareURL()" style="margin-left:6px;">공유 링크 만들기</button>
+                        <div class="share-url-result" id="shareUrlResult">
+                            <input type="text" id="shareUrlInput" readonly style="font-family:'Courier New',monospace;">
+                            <button onclick="copyShareURL()">복사</button>
+                        </div>
+                    </div>
+                    <div style="border-top:1px solid #1a1a2e;padding-top:16px;">
+                        <div style="font-size:10px;color:var(--ac);font-family:'Courier New',monospace;letter-spacing:1px;margin-bottom:10px;">// 프로필 코드</div>
+                        <div class="profile-code" id="profileCode" style="font-family:'Courier New',monospace;font-size:10px;word-break:break-all;background:rgba(0,0,0,0.3);padding:10px;border-radius:6px;border:1px solid #1a1a2e;margin-bottom:12px;">생성 중...</div>
+                        <button onclick="copyProfileCode()">코드 복사</button>
+                        <button class="secondary-btn" onclick="switchToMatch()">매칭 시작</button>
+                        <button class="secondary-btn" onclick="goToLanding()">새 분석</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1761,75 +1858,82 @@
     <div class="screen match">
         <div class="container">
             <div class="match-header">
-                <div class="match-title">호환성 분석</div>
+                <div class="match-title" style="font-family:'Courier New',monospace;">호환성 분석</div>
                 <div style="margin-bottom: 15px;">
                     <button class="secondary-btn" onclick="goToResult()">← 돌아가기</button>
                 </div>
-                <div class="compatibility-score" id="compatScore">-</div>
-                <div class="compatibility-label">호환성 점수</div>
             </div>
 
-            <div class="match-upload">
-                <div style="margin-bottom: 15px;">
-                    <div style="font-size: 13px; margin-bottom: 10px;">두 번째 프로필 업로드</div>
-                    <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 15px;">파일 또는 프로필 코드 붙여넣기</div>
-                    
+            <div class="landing-panel" style="margin-bottom:20px;">
+                <div class="landing-panel-bar">
+                    <div class="terminal-dot r"></div>
+                    <div class="terminal-dot y"></div>
+                    <div class="terminal-dot g"></div>
+                    <span class="landing-panel-title">profile.upload</span>
+                </div>
+                <div class="landing-panel-body" style="text-align:center;">
+                    <div style="font-size:12px;margin-bottom:8px;color:var(--text);">두 번째 프로필 업로드</div>
+                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:15px;">파일 또는 프로필 코드 붙여넣기</div>
+
                     <button onclick="(function(){var i=document.createElement('input');i.type='file';i.accept='.json,.zip';i.style.display='none';i.onchange=function(){if(this.files[0]){analyzeMatchConversation(this.files[0]);}document.body.removeChild(this);};document.body.appendChild(i);i.click();})()">파일 선택</button>
-                    <div style="margin: 15px 0;">또는</div>
-                    <textarea id="matchCodeInput" placeholder="프로필 코드 입력..." style="width: 100%; height: 80px; padding: 10px; background-color: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 11px; resize: none;"></textarea>
-                    <button onclick="loadProfileFromCode()" style="margin-top: 10px;">코드에서 로드</button>
+                    <div style="margin:15px 0;font-size:11px;color:var(--text-dim);">또는</div>
+                    <textarea id="matchCodeInput" placeholder="프로필 코드 입력..." style="width:100%;height:80px;padding:10px;background-color:rgba(0,0,0,0.3);border:1px solid #1a1a2e;border-radius:6px;color:var(--text);font-size:11px;font-family:'Courier New',monospace;resize:none;"></textarea>
+                    <button onclick="loadProfileFromCode()" style="margin-top:10px;">코드에서 로드</button>
                 </div>
             </div>
 
             <div id="matchResultsContainer" class="hidden">
+                <!-- Relationship Identity -->
+                <div id="matchRelationIdentity"></div>
+
+                <!-- Dashboard Cards -->
+                <div id="matchDashboard"></div>
+
                 <!-- Type Comparison -->
-                <div class="match-types-section">
-                    <div class="section-title">유형 비교</div>
-                    <div class="type-comparison">
-                        <div class="type-card">
-                            <div class="type-card-emoji" id="matchType1Emoji">🔮</div>
-                            <div class="type-card-code" id="matchType1Code">-</div>
-                            <div class="type-card-name" id="matchType1Name">로딩 중...</div>
+                <div id="matchTypeComparison"></div>
+
+                <!-- Cross-Simulation Summary -->
+                <div id="matchCrossSim"></div>
+
+                <!-- Essay Sections -->
+                <div id="matchEssaySection" style="display:none;">
+                    <div class="landing-panel">
+                        <div class="landing-panel-bar">
+                            <div class="terminal-dot r"></div>
+                            <div class="terminal-dot y"></div>
+                            <div class="terminal-dot g"></div>
+                            <span class="landing-panel-title">analysis.essays</span>
                         </div>
-                        <div class="type-card">
-                            <div class="type-card-emoji" id="matchType2Emoji">🔮</div>
-                            <div class="type-card-code" id="matchType2Code">-</div>
-                            <div class="type-card-name" id="matchType2Name">로딩 중...</div>
+                        <div class="landing-panel-body" style="padding:12px 14px;">
+                            <div id="matchEssays" class="lenses-section"></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="friction-visualization">
-                    <div class="section-title">축별 마찰도</div>
-                    <div id="frictionAxes"></div>
-                </div>
-
-                <!-- Enhanced Matching Analysis -->
-                <div class="match-analysis-section">
-                    <div class="section-title">향상된 호환성 분석</div>
-
-                    <div class="analysis-subsection">
-                        <div class="analysis-title">강점</div>
-                        <ul class="analysis-list" id="matchStrengths"></ul>
-                    </div>
-
-                    <div class="analysis-subsection">
-                        <div class="analysis-title">위험 요소</div>
-                        <ul class="analysis-list" id="matchRisks"></ul>
-                    </div>
-
-                    <div class="analysis-subsection">
-                        <div class="analysis-title">성장 방향</div>
-                        <p class="analysis-paragraph" id="matchGrowth"></p>
-                    </div>
-
-                    <div class="analysis-subsection">
-                        <div class="analysis-title">장기 전망</div>
-                        <p class="analysis-paragraph" id="matchOutlook"></p>
+                <!-- Fallback Analysis (non-LLM) -->
+                <div id="matchFallbackAnalysis" style="display:none;">
+                    <div class="axes-section">
+                        <div class="section-title">호환성 분석</div>
+                        <div class="analysis-subsection">
+                            <div style="font-size:12px;font-weight:600;color:var(--ac);margin-bottom:8px;">강점</div>
+                            <ul class="analysis-list" id="matchStrengths" style="font-size:12px;line-height:1.7;color:var(--text-dim);list-style:none;padding:0;"></ul>
+                        </div>
+                        <div class="analysis-subsection" style="margin-top:16px;">
+                            <div style="font-size:12px;font-weight:600;color:var(--ac);margin-bottom:8px;">위험 요소</div>
+                            <ul class="analysis-list" id="matchRisks" style="font-size:12px;line-height:1.7;color:var(--text-dim);list-style:none;padding:0;"></ul>
+                        </div>
+                        <div class="analysis-subsection" style="margin-top:16px;">
+                            <div style="font-size:12px;font-weight:600;color:var(--ac);margin-bottom:8px;">성장 방향</div>
+                            <p id="matchGrowth" style="font-size:12px;line-height:1.7;color:var(--text-dim);"></p>
+                        </div>
+                        <div class="analysis-subsection" style="margin-top:16px;">
+                            <div style="font-size:12px;font-weight:600;color:var(--ac);margin-bottom:8px;">장기 전망</div>
+                            <p id="matchOutlook" style="font-size:12px;line-height:1.7;color:var(--text-dim);"></p>
+                        </div>
                     </div>
                 </div>
 
-                <button class="secondary-btn mt-30" onclick="goToLanding()">새 분석</button>
+                <button class="secondary-btn" style="margin-top:24px;" onclick="goToLanding()">새 분석</button>
             </div>
         </div>
     </div>
@@ -1871,228 +1975,108 @@
             A12: '친밀감 편안함', A13: '피드백 반응', A14: '변화 수용성', A15: '관계 투자', A16: '인지 방식', A17: '유머 스타일'
         };
 
-        const CONFLICT_MATRIX = {
-            A7: { 'initiator_initiator': 0.4, 'initiator_responder': 0.1, 'initiator_balanced': 0.2, 'responder_initiator': 0.1, 'responder_responder': 0.5, 'responder_balanced': 0.3, 'balanced_initiator': 0.2, 'balanced_responder': 0.3, 'balanced_balanced': 0.2 },
-            A8: { 'confrontational_confrontational': 0.3, 'confrontational_boundary': 0.4, 'confrontational_avoidant': 0.7, 'confrontational_repair': 0.2, 'boundary_confrontational': 0.4, 'boundary_boundary': 0.1, 'boundary_avoidant': 0.5, 'boundary_repair': 0.1, 'avoidant_confrontational': 0.7, 'avoidant_boundary': 0.5, 'avoidant_avoidant': 0.4, 'avoidant_repair': 0.3, 'repair_confrontational': 0.2, 'repair_boundary': 0.1, 'repair_avoidant': 0.3, 'repair_repair': 0.1 },
-            A9: { 'expressive_expressive': 0.2, 'expressive_analytical': 0.5, 'expressive_suppressive': 0.6, 'expressive_externalized': 0.4, 'analytical_expressive': 0.5, 'analytical_analytical': 0.1, 'analytical_suppressive': 0.3, 'analytical_externalized': 0.5, 'suppressive_expressive': 0.6, 'suppressive_analytical': 0.3, 'suppressive_suppressive': 0.3, 'suppressive_externalized': 0.5, 'externalized_expressive': 0.4, 'externalized_analytical': 0.5, 'externalized_suppressive': 0.5, 'externalized_externalized': 0.7 },
-            A10: { 'slow_burn_slow_burn': 0.1, 'slow_burn_fast_opener': 0.4, 'slow_burn_surface_locked': 0.5, 'slow_burn_depth_seeker': 0.3, 'fast_opener_slow_burn': 0.4, 'fast_opener_fast_opener': 0.2, 'fast_opener_surface_locked': 0.7, 'fast_opener_depth_seeker': 0.1, 'surface_locked_slow_burn': 0.5, 'surface_locked_fast_opener': 0.7, 'surface_locked_surface_locked': 0.3, 'surface_locked_depth_seeker': 0.6, 'depth_seeker_slow_burn': 0.3, 'depth_seeker_fast_opener': 0.1, 'depth_seeker_surface_locked': 0.6, 'depth_seeker_depth_seeker': 0.2 },
-            A11: { 'giver_giver': 0.2, 'giver_taker': 0.5, 'giver_balanced': 0.1, 'taker_giver': 0.5, 'taker_taker': 0.7, 'taker_balanced': 0.4, 'balanced_giver': 0.1, 'balanced_taker': 0.4, 'balanced_balanced': 0.25 }
-        };
+        const CONFLICT_MATRIX = {}; // Server-side only
 
         // ============ LSM (Language Style Matching) ============
-    // Korean function word categories (Ireland et al. 2011 adapted for Korean)
-    const KOREAN_FUNC_WORDS = {
-      particles: ['은','는','이','가','을','를','에','에서','의','로','으로','와','과','도','만','까지','부터','마다','조차','라도','이나','나','든지','이든지'],
-      pronouns: ['나','너','저','우리','너희','그','그녀','이것','저것','그것','여기','저기','거기','누구','뭐','무엇','어디','언제'],
-      conjunctions: ['그리고','그런데','그래서','하지만','그러나','또','또는','그래도','그러면','왜냐하면','즉','만약','비록','때문에'],
-      adverbs: ['좀','너무','매우','정말','진짜','아주','조금','많이','잘','못','안','다','또','이미','아직','바로','꼭','항상','자주','가끔'],
-      negations: ['안','못','없','아니','절대','전혀','별로','싫','말'],
-      quantifiers: ['모든','각','여러','몇','많은','적은','조금','약간','대부분','전부','다','좀','꽤','상당히'],
-      fillers: ['음','어','그','뭐','아','네','예','응','글쎄','뭐랄까','그냥','일단','아마','혹시']
-    };
-
-    function computeFunctionWordProfile(messages) {
-      if (!messages || messages.length === 0) return null;
-      const userMsgs = messages.filter(m => {
-        const role = (typeof m === 'string') ? 'user' : (m.role || 'user');
-        return role.toLowerCase() === 'user';
-      });
-      const allText = userMsgs.map(m => typeof m === 'string' ? m : (m.text || m.content || '')).join(' ');
-      const totalChars = allText.length || 1;
-      const profile = {};
-      for (const [cat, words] of Object.entries(KOREAN_FUNC_WORDS)) {
-        let count = 0;
-        for (const w of words) {
-          let idx = 0;
-          while ((idx = allText.indexOf(w, idx)) !== -1) { count++; idx += w.length; }
-        }
-        profile[cat] = count / (totalChars / 100);
-      }
-      return profile;
-    }
-
-    function computeLSMSimilarity(fwpA, fwpB) {
-      if (!fwpA || !fwpB) return 0.5;
-      const cats = Object.keys(KOREAN_FUNC_WORDS);
-      let totalLSM = 0;
-      for (const cat of cats) {
-        const a = fwpA[cat] || 0;
-        const b = fwpB[cat] || 0;
-        totalLSM += 1 - Math.abs(a - b) / (a + b + 0.0001);
-      }
-      return totalLSM / cats.length;
-    }
+    // LSM computation moved to server
+    const KOREAN_FUNC_WORDS = {};
+    function computeFunctionWordProfile(messages) { return null; }
+    function computeLSMSimilarity(fwpA, fwpB) { return 0.5; }
 
     // ============ V3 IDENTITY SYSTEM ============
-        // ═══ 5축 타입 코드 시스템 ═══
+        // ═══ 6축 타입 코드 시스템 ═══
         // F/S (Fire/Still) - 정서 표출
         // A/H (Assert/Harmonize) - 사회 동력
         // T/R (Think/Relate) - 인지 기반
         // O/W (Open/Wall) - 경계 방식
         // X/V (Flex/Rigid) - 회복 탄성
+        // E/I (Externalize/Internalize) - 방어 방향
         const TYPE_AXES = [
-            {
-                id: 'emotion', name: '정서 표출',
-                high: { letter: 'F', label: 'Fire', desc: '감정을 강하게 느끼고 적극적으로 표현한다' },
-                low:  { letter: 'S', label: 'Still', desc: '감정을 내면에서 처리하고 절제된 방식으로 표현한다' },
-                calc: (d) => ((d.A1 || 0.5) * 0.6 + (d.A3 || 0.5) * 0.4)
-            },
-            {
-                id: 'drive', name: '사회 동력',
-                high: { letter: 'A', label: 'Assert', desc: '상황을 주도하고 방향을 설정한다' },
-                low:  { letter: 'H', label: 'Harmonize', desc: '상황을 관찰하고 흐름에 맞춰 움직인다' },
-                calc: (d) => {
-                    const base = ((d.A4 || 0.5) * 0.4 + (d.A5 || 0.5) * 0.4);
-                    const struct = d._structural?.A7?.primary === 'initiator' ? 0.2 : d._structural?.A7?.primary === 'responder' ? 0 : 0.1;
-                    return base + struct;
-                }
-            },
-            {
-                id: 'cognition', name: '인지 기반',
-                high: { letter: 'T', label: 'Think', desc: '논리와 분석을 기반으로 판단한다' },
-                low:  { letter: 'R', label: 'Relate', desc: '공감과 관계를 고려하여 판단한다' },
-                calc: (d) => {
-                    const a10 = d._structural?.A10;
-                    const a16 = d._structural?.A16;
-                    let score = 0.5;
-                    if (a10) score += (a10.styles?.logical || 0) * 0.3 - (a10.styles?.emotional || 0) * 0.3;
-                    if (a16) score += (a16.primary === 'analytical' ? 0.15 : a16.primary === 'binary' ? -0.1 : 0);
-                    return Math.max(0, Math.min(1, score));
-                }
-            },
-            {
-                id: 'boundary', name: '경계 방식',
-                high: { letter: 'O', label: 'Open', desc: '경계를 열어두고 변화를 수용한다' },
-                low:  { letter: 'W', label: 'Wall', desc: '경계를 세우고 안전한 영역을 지킨다' },
-                calc: (d) => ((d.A12 || 0.5) * 0.5 + (d.A14 || 0.5) * 0.5)
-            },
-            {
-                id: 'resilience', name: '회복 탄성',
-                high: { letter: 'X', label: 'Flex', desc: '스트레스에 유연하게 적응한다' },
-                low:  { letter: 'V', label: 'Rigid', desc: '스트레스에 경직되거나 고착된다' },
-                calc: (d) => {
-                    const a2 = d.A2 || 0.5;
-                    const a11 = d._structural?.A11;
-                    const flexBonus = a11?.primary === 'flexible' ? 0.15 : a11?.primary === 'rigid' ? -0.15 : 0;
-                    return Math.max(0, Math.min(1, a2 * 0.7 + 0.15 + flexBonus));
-                }
-            }
+            { id: 'emotion', name: '정서 표출', high: { letter: 'F', label: 'Fire', desc: '감정을 강하게 느끼고 적극적으로 표현한다' }, low: { letter: 'S', label: 'Still', desc: '감정을 내면에서 처리하고 절제된 방식으로 표현한다' }, calc: () => 0.5 },
+            { id: 'drive', name: '사회 동력', high: { letter: 'A', label: 'Assert', desc: '상황을 주도하고 방향을 설정한다' }, low: { letter: 'H', label: 'Harmonize', desc: '상황을 관찰하고 흐름에 맞춰 움직인다' }, calc: () => 0.5 },
+            { id: 'cognition', name: '인지 기반', high: { letter: 'T', label: 'Think', desc: '논리와 분석을 기반으로 판단한다' }, low: { letter: 'R', label: 'Relate', desc: '공감과 관계를 고려하여 판단한다' }, calc: () => 0.5 },
+            { id: 'boundary', name: '경계 방식', high: { letter: 'O', label: 'Open', desc: '경계를 열어두고 변화를 수용한다' }, low: { letter: 'W', label: 'Wall', desc: '경계를 세우고 안전한 영역을 지킨다' }, calc: () => 0.5 },
+            { id: 'resilience', name: '회복 탄성', high: { letter: 'X', label: 'Flex', desc: '스트레스에 유연하게 적응한다' }, low: { letter: 'V', label: 'Rigid', desc: '스트레스에 경직되거나 고착된다' }, calc: () => 0.5 },
+            { id: 'defense', name: '방어 방향', high: { letter: 'E', label: 'Externalize', desc: '위협을 외부로 투사하고 환경을 통제하려 한다' }, low: { letter: 'I', label: 'Internalize', desc: '위협을 내면에 흡수하고 자기를 재조정하려 한다' }, calc: () => 0.5 }
         ];
 
-        // 아키타입 (5축 코드와 별개로 서브네임 제공)
-        const IDENTITY_ARCHETYPES = [
-            {
-                match: d => _h(d.A1) && _l(d.A4) && _sdom(d, 'A9') === 'suppressive',
-                name: '얼어붙은 화산', emoji: '🌋',
-                tagline: '안에서 들끓지만 밖으로는 차가운, 통제된 격렬함의 소유자'
-            },
-            {
-                match: d => _h(d.A1) && _h(d.A3) && _sdom(d, 'A8') === 'confrontational',
-                name: '폭풍의 지휘자', emoji: '⚡',
-                tagline: '감정의 폭풍을 에너지로 바꾸는, 주도적인 격렬함의 소유자'
-            },
-            {
-                match: d => _h(d.A2) && _l(d.A3) && _h(d.A4),
-                name: '안개 속의 등불', emoji: '🏮',
-                tagline: '따뜻하게 비추지만 스스로는 흔들리는, 부드러운 공감의 소유자'
-            },
-            {
-                match: d => _h(d.A1) && _h(d.A3) && _sdom(d, 'A7') === 'initiator',
-                name: '길 없는 개척자', emoji: '🗡️',
-                tagline: '기존 질서를 따르지 않는, 자기 길을 만드는 확신의 소유자'
-            },
-            {
-                match: d => _l(d.A1) && _l(d.A3) && _l(d.A4),
-                name: '고요한 관찰자', emoji: '🌑',
-                tagline: '조용히 세상을 읽는, 낮은 온도의 깊은 사유자'
-            },
-            {
-                match: d => _h(d.A2) && _h(d.A5) && _h(d.A6),
-                name: '따뜻한 항구', emoji: '🏖️',
-                tagline: '사람들이 쉬어가는, 안정적이고 개방적인 존재'
-            },
-            {
-                match: d => _h(d.A4) && _l(d.A6) && _sdom(d, 'A9') === 'expressive',
-                name: '심연의 해류', emoji: '🌊',
-                tagline: '감정의 깊이가 바닥을 모르는, 격렬하고 불안한 열정의 소유자'
-            },
-            {
-                match: d => _h(d.A3) && _h(d.A6) && _sdom(d, 'A16') === 'analytical',
-                name: '쇠로 된 나침반', emoji: '🧭',
-                tagline: '감정이 아닌 논리로 방향을 잡는, 흔들리지 않는 판단의 소유자'
-            },
-            {
-                match: d => _h(d.A5) && _sdom(d, 'A10') === 'fast_opener' && _sdom(d, 'A15') === 'active_investor',
-                name: '자유로운 바람', emoji: '🍃',
-                tagline: '경계를 넘나들며 변화를 즐기는, 유연한 적응의 소유자'
-            },
-            {
-                match: d => _h(d.A1) && _l(d.A4) && _sdom(d, 'A8') === 'avoidant',
-                name: '갑옷 입은 심장', emoji: '🛡️',
-                tagline: '뜨거운 심장 위에 차가운 갑옷을 두른, 자기 보호의 전문가'
-            },
-            {
-                match: d => _sdom(d, 'A17') === 'deflective' && _sdom(d, 'A13') === 'absorptive' && _h(d.A4),
-                name: '금 간 거울', emoji: '🪞',
-                tagline: '자기를 웃음으로 감추는, 상처 위의 유머리스트'
-            },
-            {
-                match: d => _h(d.A4) && _l(d.A6) && _sdom(d, 'A9') === 'externalized',
-                name: '불꽃 산책자', emoji: '🔥',
-                tagline: '감정을 밖으로 쏟아내는, 예측 불가의 열정가'
-            },
-            // Default fallback
-            {
-                match: () => true,
-                name: '미지의 윤곽', emoji: '🔮',
-                tagline: '하나의 유형에 담기지 않는, 복합적인 존재'
-            },
-        ];
+        // 64 아키타입 맵 (6축 코드 → 이름/이모지/태그라인)
+        const ARCHETYPE_MAP = {
+            // ═══ F+A (Fire + Assert): 열정적 주도자들 ═══
+            'FATOXE': { name: '폭풍의 지휘자', emoji: '⚡', tagline: '감정의 폭풍을 전략적 에너지로 전환해 세상을 재편하는 존재. 위협이 오면 더 크게 확장한다' },
+            'FATOXI': { name: '번개를 삼킨 자', emoji: '🌩️', tagline: '동일한 폭풍의 에너지를 가졌지만, 위기의 순간 그것을 내면에 가두고 혼자 소화하려는 과부하된 전략가' },
+            'FATOVE': { name: '타오르는 설계자', emoji: '🔥', tagline: '완벽한 설계를 향한 강렬한 집착을 행동으로 밀어붙이는 멈추지 않는 엔진. 실패하면 더 세게 밀어붙인다' },
+            'FATOVI': { name: '꺼지지 않는 용광로', emoji: '🫀', tagline: '열정과 경직이 내면에서 끊임없이 충돌하며 스스로를 녹이는, 보이지 않는 과열 상태의 존재' },
+            'FATWXE': { name: '철벽의 전략가', emoji: '🏰', tagline: '감정과 논리를 무기 삼아 영역을 구축하고 수호하는, 공격적 방어의 대가. 침범하면 반격한다' },
+            'FATWXI': { name: '갑옷 속의 심장', emoji: '🖤', tagline: '견고한 벽 안에서 모든 충격을 혼자 흡수하고 재구성하는 침묵의 전사' },
+            'FATWVE': { name: '얼어붙은 화산', emoji: '🌋', tagline: '안의 격렬함을 통제된 폭발로 분출하는 존재. 차가운 표면과 뜨거운 내부의 압력차가 파괴력이 된다' },
+            'FATWVI': { name: '압축된 마그마', emoji: '🪨', tagline: '분출구 없이 내면에서 끓어오르는, 언제 깨질지 모르는 단단한 껍질 아래의 압력' },
+            'FAROXE': { name: '불꽃의 중재자', emoji: '🎆', tagline: '뜨거운 공감으로 갈등을 관통하며 방향을 제시하는 열린 심장의 리더. 충돌을 피하지 않고 돌파한다' },
+            'FAROXI': { name: '흡수하는 태양', emoji: '☀️', tagline: '모든 사람의 고통을 자기 안으로 끌어들여 연소시키는, 넘치는 공감이 자기를 태우는 존재' },
+            'FAROVE': { name: '금 간 카리스마', emoji: '👑', tagline: '사람을 끌어당기는 힘으로 세상에 부딪히지만, 자기 균열은 감추지 못하는 존재' },
+            'FAROVI': { name: '왕관 아래의 균열', emoji: '💎', tagline: '카리스마의 이면에서 내면의 금을 끊임없이 수선하는, 빛나지만 깨지기 쉬운 존재' },
+            'FARWXE': { name: '선별적 수호자', emoji: '🛡️', tagline: '가까운 사람을 위해 어떤 위협도 정면으로 돌파하는 문 앞의 불꽃' },
+            'FARWXI': { name: '성벽 안의 촛불', emoji: '🕯️', tagline: '강렬한 헌신을 내면에 간직한 채 밖으로는 조용히 지키는, 보이지 않는 수호' },
+            'FARWVE': { name: '무장한 심장', emoji: '⚔️', tagline: '감정을 드러내는 것을 패배로 여기며 공격으로 자기를 방어하는, 전투적 사랑의 소유자' },
+            'FARWVI': { name: '상처를 삼키는 기사', emoji: '🗡️', tagline: '풍부한 감정이 표현되지 못한 채 내면에서 자기를 잠식하는, 침묵 속의 헌신자' },
+
+            // ═══ F+H (Fire + Harmonize): 예민한 수용자들 ═══
+            'FHTOXE': { name: '날카로운 감지기', emoji: '📡', tagline: '세상을 깊이 느끼면서 분석적 거리를 유지하는 따뜻한 관찰자. 위협에는 논리적 반박으로 맞선다' },
+            'FHTOXI': { name: '과부하된 수신기', emoji: '📻', tagline: '모든 신호를 수신하고 분석하지만 과부하를 내면에서만 처리하려는, 조용한 소진의 존재' },
+            'FHTOVE': { name: '적색 경보', emoji: '🚨', tagline: '세상의 불합리를 예민하게 감지하고 외부에 경고하지만, 자기 유연성은 부족한 파수꾼' },
+            'FHTOVI': { name: '깨진 프리즘', emoji: '🌈', tagline: '모든 것을 분석하고 느끼지만, 자기에게 돌아오는 빛을 감당하지 못하는 존재' },
+            'FHTWXE': { name: '비밀의 연금술사', emoji: '⚗️', tagline: '닫힌 공간에서 감정을 증류하되, 위협이 오면 정밀한 반격을 설계하는 내면의 전술가' },
+            'FHTWXI': { name: '밀봉된 실험실', emoji: '🧪', tagline: '감정과 분석을 내면의 실험실에서만 처리하며, 결과를 밖으로 내보내지 않는 존재' },
+            'FHTWVE': { name: '얼음 아래 불씨', emoji: '❄️', tagline: '표면의 고요함 뒤에서 분석과 감정이 충돌하며, 임계점에서 한 번에 터지는 존재' },
+            'FHTWVI': { name: '진공 속의 폭풍', emoji: '🌀', tagline: '소리 없이 내면에서 격렬하게 돌아가는, 출구 없는 감정의 소용돌이' },
+            'FHROXE': { name: '따뜻한 방파제', emoji: '⚓', tagline: '누구든 쉬어갈 수 있는 안정적 존재이되, 파도가 거세지면 단단하게 버티는 항구' },
+            'FHROXI': { name: '스며드는 안개', emoji: '🌫️', tagline: '모든 감정을 흡수하며 자기 윤곽이 흐려지는, 경계 없는 공감의 존재' },
+            'FHROVE': { name: '부서지기 쉬운 방패', emoji: '🌸', tagline: '세상의 감정을 다 받아내려 하지만 자기 회복이 따라가지 못하며, 균열이 밖으로 드러나는 존재' },
+            'FHROVI': { name: '시든 채 피는 꽃', emoji: '🥀', tagline: '끊임없이 공감하고 수용하지만, 자기 내면의 시듦을 돌보지 못하는 존재' },
+            'FHRWXE': { name: '숨은 공감자', emoji: '🌿', tagline: '깊이 느끼고 조용히 돌보되, 위협 앞에서는 가시를 세우는 보이지 않는 생명력' },
+            'FHRWXI': { name: '뿌리 깊은 이끼', emoji: '🍀', tagline: '고요하게 세상을 흡수하며 자기만의 리듬으로 자라는, 눈에 띄지 않는 깊은 존재' },
+            'FHRWVE': { name: '가시 돋친 봉오리', emoji: '🌹', tagline: '풍부한 감정이 표현의 출구를 찾지 못해, 때로 가시의 형태로 분출되는 존재' },
+            'FHRWVI': { name: '갇힌 심장', emoji: '🔒', tagline: '풍부한 감정이 표현의 출구를 찾지 못한 채 내면에서 응축되어 굳어가는 존재' },
+
+            // ═══ S+A (Still + Assert): 냉정한 주도자들 ═══
+            'SATOXE': { name: '냉정한 항해사', emoji: '🧭', tagline: '감정의 안개 없이 판을 읽고 방향을 설계하는 열린 전략가. 위기에는 더 냉철해진다' },
+            'SATOXI': { name: '고독한 관제탑', emoji: '🗼', tagline: '모든 것을 조망하고 조율하지만, 자기의 신호는 어디에도 보내지 않는 존재' },
+            'SATOVE': { name: '강철 설계자', emoji: '⚙️', tagline: '논리적 완벽함을 추구하며 예상 밖의 변수에는 시스템을 재설계해서 밀어붙이는 존재' },
+            'SATOVI': { name: '과부하된 회로', emoji: '💻', tagline: '논리적 완벽함을 추구하지만, 예상 밖의 변수 앞에서 내부 시스템이 경직되는 존재' },
+            'SATWXE': { name: '그림자 지휘관', emoji: '🎭', tagline: '조용히 통제하되 위협이 오면 그림자에서 나와 상황을 재편하는, 보이지 않는 손' },
+            'SATWXI': { name: '얼음 왕좌', emoji: '❆', tagline: '모든 것을 통제하되 그 대가를 내면에서 홀로 감당하는, 고독한 지배자' },
+            'SATWVE': { name: '요새의 왕', emoji: '🗿', tagline: '완전한 통제를 추구하며 도전에는 더 높은 벽으로 응답하는 난공불락의 존재' },
+            'SATWVI': { name: '진공의 성채', emoji: '♟️', tagline: '완전한 통제와 완전한 고립이 공존하는, 안에서도 밖에서도 숨이 막히는 구조물' },
+            'SAROXE': { name: '안개 속의 등불', emoji: '🏮', tagline: '따뜻하게 비추되 자신은 드러내지 않는 절제된 공감의 소유자. 위협에는 빛을 더 밝힌다' },
+            'SAROXI': { name: '깊은 우물', emoji: '🪣', tagline: '타인의 갈증을 채워주지만 자기 수위는 아무도 모르는, 바닥을 보여주지 않는 존재' },
+            'SAROVE': { name: '칼날 위의 무용수', emoji: '🔪', tagline: '공감과 주도력을 갖추었지만 내면의 균열이 발밑을 흔들며, 위기에는 더 날카로워지는 존재' },
+            'SAROVI': { name: '균열된 강철', emoji: '⛓️', tagline: '단단해 보이지만 내부의 균열이 점점 깊어지는, 무게를 혼자 지는 존재' },
+            'SARWXE': { name: '선별적 조종사', emoji: '🎯', tagline: '가까운 사람에게만 깊은 돌봄을 제공하되, 외부 위협은 정밀하게 차단하는 관계의 설계자' },
+            'SARWXI': { name: '닫힌 서재', emoji: '📕', tagline: '깊은 이해와 돌봄을 소유하지만, 열쇠를 가진 사람만 들어올 수 있는 존재' },
+            'SARWVE': { name: '닫힌 문의 수호자', emoji: '🚪', tagline: '보호는 하지만 들이지는 않는, 경계에 서서 위협을 정면으로 차단하는 존재' },
+            'SARWVI': { name: '잠긴 금고', emoji: '🔐', tagline: '소중한 것을 지키려 모든 것을 잠갔지만, 자기조차 열 수 없게 된 존재' },
+
+            // ═══ S+H (Still + Harmonize): 고요한 관찰자들 ═══
+            'SHTOXE': { name: '잔잔한 호수', emoji: '🌊', tagline: '감정의 파동이 적고 세상을 넓게 받아들이는 고요한 분석가. 바람이 불면 물결로 응답한다' },
+            'SHTOXI': { name: '심해의 조류', emoji: '🐋', tagline: '표면은 고요하지만 깊은 곳에서 거대한 흐름을 혼자 감당하는, 보이지 않는 깊이' },
+            'SHTOVE': { name: '부서진 렌즈', emoji: '🔍', tagline: '세상을 분석적으로 관찰하지만 변화의 충격에 금이 가며, 왜곡된 상을 외부에 투사하는 존재' },
+            'SHTOVI': { name: '정지된 위성', emoji: '🛰️', tagline: '궤도를 돌며 모든 것을 관찰하지만, 지상과의 연결이 끊긴 채 혼자 표류하는 존재' },
+            'SHTWXE': { name: '고요한 관찰자', emoji: '🌑', tagline: '세상을 읽되 참여하지 않는 낮은 온도의 깊은 사유자. 침범당하면 조용히 거리를 넓힌다' },
+            'SHTWXI': { name: '우주의 먼지', emoji: '🌌', tagline: '존재하되 존재를 주장하지 않는, 무한히 적응하며 스스로를 희석시키는 존재' },
+            'SHTWVE': { name: '얼어붙은 시계', emoji: '🕰️', tagline: '멈춘 것처럼 보이지만 내부에서 정밀하게 작동하는, 때가 되면 시간을 알리는 존재' },
+            'SHTWVI': { name: '사라지는 그림자', emoji: '🫥', tagline: '존재감을 최소화하며, 내면의 경직이 자기를 점점 지워가는 존재' },
+            'SHROXE': { name: '투명한 거울', emoji: '🪞', tagline: '상대를 있는 그대로 비추는, 자기 색이 없는 수용의 존재. 위협에는 반사로 대응한다' },
+            'SHROXI': { name: '녹아내리는 경계', emoji: '💧', tagline: '수용적이되 자기와 타인의 경계가 녹아, 자기 윤곽을 잃어가는 존재' },
+            'SHROVE': { name: '흔들리는 수면', emoji: '🫧', tagline: '수용적이지만 내면의 바닥이 불안정하며, 흔들림이 밖으로 물결처럼 퍼지는 존재' },
+            'SHROVI': { name: '침묵의 산호', emoji: '🪸', tagline: '조용히 세상을 흡수하지만 경직된 내면이 서서히 석회화되는, 아름답지만 부서지는 존재' },
+            'SHRWXE': { name: '모래 속의 조개', emoji: '🐚', tagline: '자기만의 세계에 만족하며 조용히 적응하되, 위협이 오면 껍질을 단단히 닫는 존재' },
+            'SHRWXI': { name: '해저의 동굴', emoji: '🦪', tagline: '깊은 곳에서 고요하게 존재하며, 모든 것을 내면에서 천천히 소화하는 은둔의 존재' },
+            'SHRWVE': { name: '닫힌 조가비', emoji: '🪹', tagline: '가장 깊이 닫혀 있지만, 압력이 임계점을 넘으면 한 번에 깨지는 존재' },
+            'SHRWVI': { name: '깊은 심연', emoji: '🕳️', tagline: '가장 깊이 닫혀 있고, 변화의 빛이 가장 늦게 도달하는, 존재의 가장 안쪽 층' },
+        };
 
         // Match archetypes for pair analysis
-        const MATCH_ARCHETYPES = [
-            {
-                match: (a, b) => (_sdom(a, 'A9') === 'expressive' && _sdom(b, 'A9') === 'suppressive') || (_sdom(a, 'A9') === 'suppressive' && _sdom(b, 'A9') === 'expressive'),
-                name: '밀물과 썰물', tagline: '다가가면 물러나고, 물러나면 다가오는 — 끝없는 파도의 관계',
-                tension: '높음', growth: '매우 높음'
-            },
-            {
-                match: (a, b) => _h(a.A1) && _h(b.A1) && _h(a.A4) && _h(b.A4),
-                name: '두 개의 불꽃', tagline: '서로의 열기가 관계를 밝히기도, 태우기도 하는 — 격렬한 공명의 관계',
-                tension: '매우 높음', growth: '높음'
-            },
-            {
-                match: (a, b) => (_sdom(a, 'A16') === 'analytical' && ['pragmatic','binary'].includes(_sdom(b, 'A16'))) || (_sdom(b, 'A16') === 'analytical' && ['pragmatic','binary'].includes(_sdom(a, 'A16'))),
-                name: '번역이 필요한 대화', tagline: '같은 말을 다른 언어로 하는 — 통역이 필요한 관계',
-                tension: '보통', growth: '높음'
-            },
-            {
-                match: (a, b) => Math.abs((a.A4 || 0.5) - (b.A4 || 0.5)) > 0.4,
-                name: '불과 얼음', tagline: '한쪽은 타오르고 다른 쪽은 얼어있는 — 온도차가 만드는 긴장과 매력',
-                tension: '높음', growth: '높음'
-            },
-            {
-                match: (a, b) => _h(a.A6) && _h(b.A6) && _h(a.A5) && _h(b.A5),
-                name: '잔잔한 호수', tagline: '서로에게 기대도 흔들리지 않는 — 안정 위의 안정',
-                tension: '낮음', growth: '보통'
-            },
-            {
-                match: (a, b) => _sdom(a, 'A8') === 'avoidant' && _sdom(b, 'A8') === 'avoidant',
-                name: '마주 보는 성벽', tagline: '서로의 벽을 인정하지만 넘지 못하는 — 안전하지만 외로운 거리',
-                tension: '보통', growth: '낮음'
-            },
-            {
-                match: (a, b) => (_sdom(a, 'A8') === 'confrontational' && _sdom(b, 'A8') === 'avoidant') || (_sdom(a, 'A8') === 'avoidant' && _sdom(b, 'A8') === 'confrontational'),
-                name: '부딪히는 파장', tagline: '한쪽은 부딪히고 다른 쪽은 피하는 — 갈등 언어가 다른 관계',
-                tension: '매우 높음', growth: '높음'
-            },
-            // Default
-            {
-                match: () => true,
-                name: '교차하는 궤도', tagline: '서로 다른 궤도를 돌지만 주기적으로 만나는 — 복합적 역학의 관계',
-                tension: '보통', growth: '보통'
-            },
-        ];
+        const MATCH_ARCHETYPES = [{ match: () => true, name: '교차하는 궤도', tagline: '복합적 역학의 관계', tension: '보통', growth: '보통' }];
 
         // Identity helper functions
         function _h(v) { return typeof v === 'number' && v >= 0.6; }
@@ -2117,7 +2101,7 @@
         function computeIdentity(axes) {
             const flat = _flattenProfile(axes);
 
-            // 5축 코드 계산
+            // 6축 코드 계산
             const axisResults = [];
             let code = '';
             for (const axis of TYPE_AXES) {
@@ -2128,13 +2112,8 @@
                 axisResults.push({ ...axis, score, letter, isHigh });
             }
 
-            // 아키타입 매칭 (서브네임)
-            let archetype = IDENTITY_ARCHETYPES[IDENTITY_ARCHETYPES.length - 1];
-            for (const arch of IDENTITY_ARCHETYPES) {
-                try {
-                    if (arch.match(flat)) { archetype = arch; break; }
-                } catch { continue; }
-            }
+            // 64 아키타입 직접 룩업
+            const archetype = ARCHETYPE_MAP[code] || { name: '미지의 윤곽', emoji: '🔮', tagline: '하나의 유형에 담기지 않는, 복합적인 존재' };
 
             return {
                 name: archetype.name,
@@ -2170,26 +2149,7 @@
             };
         }
 
-        function _calcCompatibility(a, b) {
-            let score = 50;
-            // Emotion regulation
-            const d9a = _sdom(a, 'A9'), d9b = _sdom(b, 'A9');
-            if (d9a === d9b && d9a) score += 10;
-            else if ((d9a === 'expressive' && d9b === 'suppressive') || (d9a === 'suppressive' && d9b === 'expressive')) score -= 15;
-            // Expression gap
-            const gap = Math.abs((a.A4 || 0.5) - (b.A4 || 0.5));
-            if (gap > 0.4) score -= 10; else if (gap < 0.2) score += 5;
-            // Conflict style
-            const d8a = _sdom(a, 'A8'), d8b = _sdom(b, 'A8');
-            if ((d8a === 'confrontational' && d8b === 'avoidant') || (d8a === 'avoidant' && d8b === 'confrontational')) score -= 10;
-            else if (d8a === 'repair' || d8b === 'repair') score += 10;
-            else if (d8a === d8b && d8a) score += 5;
-            // Stability
-            if (Math.abs((a.A6 || 0.5) - (b.A6 || 0.5)) < 0.2) score += 5;
-            // Collaboration
-            if (_h(a.A5) && _h(b.A5)) score += 10;
-            return Math.max(10, Math.min(90, score));
-        }
+        function _calcCompatibility(a, b) { return 50; }
 
         let currentProfile = null;
         let matchProfile = null;
@@ -2367,588 +2327,51 @@
 
         // ============ BEHAVIORAL RATE COMPUTATION ============
         function computeRates(messages) {
-            const text = messages.join(' ').toLowerCase();
+            // Computation moved to server-side for security
             const totalMsgs = messages.length;
-
-            if (totalMsgs === 0) {
-                return {
-                    interest_rate: 0, sharing_rate: 0, empathy_rate: 0, feedback_pos_rate: 0,
-                    feedback_neg_rate: 0, disinterest_rate: 0, hostile_rate: 0, distress_rate: 0,
-                    task_assign_rate: 0, boundary_rate: 0, status_update_rate: 0, availability_rate: 0,
-                    turn_count_norm: 0, self_loop_rate: 0, initiative_rate: 0, response_rate: 0
-                };
-            }
-
-            const msgLengths = messages.map(m => m.length);
-            const avgLen = msgLengths.reduce((a, b) => a + b, 0) / totalMsgs;
-            const volatility = Math.sqrt(msgLengths.reduce((a, m) => a + Math.pow(m - avgLen, 2), 0) / totalMsgs) / (avgLen + 1);
-
-            const interests = /(what|how|why|interesting|curious|tell me|explain|question|\?|궁금|설명해|뭐야|어떻게|왜|흥미)/gi;
-            const sharing = /(i think|i feel|my|me|i've|i'm|personally|내가|나는|내 생각|내 감정|나는)/gi;
-            const empathy = /(understand|sorry|feel you|support|help|care|공감|미안|도와줄|힘내|응원)/gi;
-            const feedbackPos = /(great|good|awesome|nice|thank|love|correct|agree|맞아|좋아|잘했|고마워|완벽)/gi;
-            const feedbackNeg = /(wrong|bad|disagree|no|hate|negative|criticism|틀렸|안 돼|싫어|비판)/gi;
-            const disinterest = /^(ok|no|yeah|maybe|\.{2,}|ㅋ|ㅎ|ㅜ|어)$/gi;
-            const hostile = /(angry|hate|damn|hell|fuck|stupid|ugh|짜증|화나|죽겠|빡쳐|개새끼|시|ㅡㅡ)/gi;
-            const distress = /(sad|depressed|overwhelmed|stressed|tired|alone|외로|힘들|우울|피곤)/gi;
-            const taskAssign = /(need to|should|must|have to|do|make|create|해야|해줄|만들어|해|ㄱ)/gi;
-            const boundary = /(no|stop|don't|can't|refuse|limit|못|안 돼|싫어|말고|하지마)/gi;
-            const statusUpdate = /(did|done|finished|completed|working on|완료|했어|끝났|작업중)/gi;
-            const availability = /(available|ready|let me|can|willing|ok|괜찮아|할게|됐어)/gi;
-
-            const countMatches = (pattern, str) => (str.match(pattern) || []).length;
-
-            const interest_rate = Math.min(countMatches(interests, text) / (totalMsgs * 0.5), 1);
-            const sharing_rate = Math.min(countMatches(sharing, text) / (totalMsgs * 0.5), 1);
-            const empathy_rate = Math.min(countMatches(empathy, text) / (totalMsgs * 0.5), 1);
-            const feedback_pos_rate = Math.min(countMatches(feedbackPos, text) / (totalMsgs * 0.4), 1);
-            const feedback_neg_rate = Math.min(countMatches(feedbackNeg, text) / (totalMsgs * 0.4), 1);
-            const disinterest_rate = (messages.filter(m => disinterest.test(m)).length) / totalMsgs;
-            const hostile_rate = Math.min(countMatches(hostile, text) / (totalMsgs * 0.3), 1);
-            const distress_rate = Math.min(countMatches(distress, text) / (totalMsgs * 0.3), 1);
-            const task_assign_rate = Math.min(countMatches(taskAssign, text) / (totalMsgs * 0.4), 1);
-            const boundary_rate = Math.min(countMatches(boundary, text) / (totalMsgs * 0.4), 1);
-            const status_update_rate = Math.min(countMatches(statusUpdate, text) / (totalMsgs * 0.4), 1);
-            const availability_rate = Math.min(countMatches(availability, text) / (totalMsgs * 0.4), 1);
-
-            const turn_count_norm = Math.min(totalMsgs / 200, 1);
-            const self_loop_rate = 1 - volatility;
-            const initiative_rate = 0.4;
-            const response_rate = 0.6;
-
-            // ============ RESOLUTION SCORING ============
-            const totalChars = messages.reduce((a, m) => a + m.length, 0);
-            const totalTokens = Math.round(totalChars / 3.5); // rough token estimate
-
-            // Message quality metrics
-            const shortMsgs = messages.filter(m => m.length < 10).length;
-            const longMsgs = messages.filter(m => m.length > 80).length;
-            const shortMsgRate = shortMsgs / totalMsgs;
-            const longMsgRate = longMsgs / totalMsgs;
-            const fillerPattern = /^(ㅋ+|ㅎ+|ㅜ+|ㅠ+|ok|ㅇㅇ|ㅇㅋ|ㄱㄱ|ㄴㄴ|ㅇ|어|응|네|넵|ㅎㅎ|ㅋㅋ|\.{2,}|wow|lol|haha)$/i;
-            const fillerMsgs = messages.filter(m => fillerPattern.test(m.trim())).length;
-            const fillerRate = fillerMsgs / totalMsgs;
-            const substantiveMsgs = messages.filter(m => m.length > 15 && !fillerPattern.test(m.trim())).length;
-            const substantiveRate = substantiveMsgs / totalMsgs;
-
-            // Question rate
-            const questionMsgs = messages.filter(m => /\?|궁금|뭐|어떻|왜|어디|누가|언제/.test(m)).length;
-            const questionMsgRate = questionMsgs / totalMsgs;
-
-            // Exclaim/laughter rates
-            const exclaimMsgs = messages.filter(m => /!|시발|씨발|진짜|대박|헐/.test(m)).length;
-            const exclaimMsgRate = exclaimMsgs / totalMsgs;
-            const laughterMsgs = messages.filter(m => /ㅋ|ㅎ|haha|lol|😂|🤣/.test(m)).length;
-            const laughterMsgRate = laughterMsgs / totalMsgs;
-
-            // Lexical diversity (unique words / total words)
-            const allWords = messages.join(' ').split(/\s+/).filter(w => w.length > 1);
-            const uniqueWords = new Set(allWords);
-            const lexicalDiversity = allWords.length > 0 ? clamp01(uniqueWords.size / allWords.length) : 0.5;
-
-            // Unique message ratio
-            const uniqueMsgSet = new Set(messages.map(m => m.trim().toLowerCase()));
-            const uniqueMsgRatio = uniqueMsgSet.size / totalMsgs;
-
-            // Repetition rate
-            const msgCounts = {};
-            messages.forEach(m => { const k = m.trim().toLowerCase(); msgCounts[k] = (msgCounts[k] || 0) + 1; });
-            const repeatedMsgs = Object.values(msgCounts).filter(c => c > 1).reduce((a, b) => a + b, 0);
-            const repetitionRate = clamp01(repeatedMsgs / totalMsgs);
-
-            // Length volatility
-            const lengthStdDev = Math.sqrt(msgLengths.reduce((a, l) => a + Math.pow(l - avgLen, 2), 0) / totalMsgs);
-            const lengthVolatility = clamp01(lengthStdDev / (avgLen + 1));
-
-            // Tone volatility (sentiment swing between adjacent msgs)
-            let toneSwings = 0;
-            const posPattern = /좋|감사|ㅋㅋ|ㅎㅎ|great|good|nice|love|맞아|완벽/i;
-            const negPattern = /싫|짜증|ㅡㅡ|bad|hate|wrong|안돼|시발/i;
-            for (let i = 1; i < messages.length; i++) {
-                const prevPos = posPattern.test(messages[i-1]);
-                const prevNeg = negPattern.test(messages[i-1]);
-                const curPos = posPattern.test(messages[i]);
-                const curNeg = negPattern.test(messages[i]);
-                if ((prevPos && curNeg) || (prevNeg && curPos)) toneSwings++;
-            }
-            const toneVolatility = clamp01(toneSwings / Math.max(1, totalMsgs - 1) * 3);
-
-            // Session shift volatility (using chunks of ~20 msgs as proxy sessions)
-            const chunkSize = Math.max(10, Math.floor(totalMsgs / 5));
-            const sessionChunks = [];
-            for (let i = 0; i < totalMsgs; i += chunkSize) {
-                sessionChunks.push(messages.slice(i, i + chunkSize));
-            }
-            const sessionVectors = sessionChunks.map(chunk => ({
-                avgLen: mean(chunk.map(m => m.length)),
-                sharingRate: chunk.filter(m => /내가|나는|내 |나의|i |my |i'm/i.test(m)).length / chunk.length,
-                questionRate: chunk.filter(m => /\?/.test(m)).length / chunk.length
-            }));
-            let sessionShiftVolatility = 0;
-            if (sessionVectors.length > 1) {
-                const diffs = [];
-                for (let i = 1; i < sessionVectors.length; i++) {
-                    const p = sessionVectors[i-1], c = sessionVectors[i];
-                    diffs.push((Math.abs(c.avgLen - p.avgLen) / (p.avgLen + 1) + Math.abs(c.sharingRate - p.sharingRate) + Math.abs(c.questionRate - p.questionRate)) / 3);
-                }
-                sessionShiftVolatility = clamp01(mean(diffs));
-            }
-
-            // Deep disclosure detection
-            const deepMsgs = messages.filter(m => /사실은|솔직히|고백|비밀|아무한테도|처음으로|actually|honestly|never told|secret/i.test(m)).length;
-            const deepDisclosureRate = clamp01(deepMsgs / totalMsgs * 5);
-
-            // Start activation (first msg in each "session chunk" being proactive)
-            const startMsgs = sessionChunks.map(c => c[0] || '');
-            const startActivation = clamp01(startMsgs.filter(m => m.length > 20 || /\?/.test(m)).length / Math.max(1, startMsgs.length));
-
-            // Response tone rate
-            const responseToneMsgs = messages.filter(m => /ㅇㅇ|응|네|맞아|그치|알겠|okay|yes|right|agreed/i.test(m)).length;
-            const responseToneRate = clamp01(responseToneMsgs / totalMsgs);
-
-            // === Coverage Score ===
-            const coverageScore = clamp01(
-                saturate(totalMsgs / 50, 1.0) * 0.46 +
-                saturate(totalTokens / 1000, 1.0) * 0.28 +
-                saturate(sessionChunks.length / 4, 1.0) * 0.18 +
-                0.35 * 0.08  // no timestamp data in KNOT
-            );
-
-            // === Density Score ===
-            const densityScore = clamp01(
-                substantiveRate * 0.34 +
-                clamp01(avgLen / 80) * 0.16 +
-                lexicalDiversity * 0.18 +
-                uniqueMsgRatio * 0.14 +
-                (1 - fillerRate) * 0.18
-            );
-
-            // === Consistency Score ===
-            const consistencyScore = clamp01(
-                (1 - lengthVolatility) * 0.28 +
-                (1 - toneVolatility) * 0.36 +
-                (1 - sessionShiftVolatility) * 0.24 +
-                (1 - repetitionRate) * 0.12
-            );
-
-            // === Resolution ===
-            const resolution = clamp01(
-                coverageScore * 0.42 +
-                densityScore * 0.30 +
-                consistencyScore * 0.28
-            );
-
-            // === Shrink Factor ===
-            let shrinkBase = 0.72;
-            if (totalMsgs < 8) shrinkBase = 0.62;
-            else if (totalMsgs < 15) shrinkBase = 0.68;
-            const shrinkFactor = clamp01(shrinkBase + resolution * 0.28);
-
-            // ============ TEMPORAL ANALYSIS ============
-            // Split messages into early/late thirds for trend analysis
-            const third = Math.max(1, Math.floor(totalMsgs / 3));
-            const earlyMsgs = messages.slice(0, third);
-            const lateMsgs = messages.slice(-third);
-
-            function computeSegmentRates(segment) {
-                const seg = segment.join(' ').toLowerCase();
-                const segLen = segment.length || 1;
-                const sharingR = clamp01((seg.match(/내가|나는|내 |i |my |i'm|나의/gi) || []).length / (segLen * 0.5));
-                const deepR = clamp01(segment.filter(m => /사실은|솔직히|고백|비밀|처음으로|honestly/i.test(m)).length / segLen * 5);
-                const emotionR = clamp01((seg.match(/ㅋ|ㅎ|!|시발|진짜|대박|😂|🤣|좋아|싫어|힘들|우울/gi) || []).length / (segLen * 0.5));
-                const boundaryR = clamp01((seg.match(/못|안 돼|싫어|말고|하지마|stop|don't/gi) || []).length / (segLen * 0.4));
-                return { sharing: sharingR, deep: deepR, emotion: emotionR, boundary: boundaryR };
-            }
-
-            const earlyRates = computeSegmentRates(earlyMsgs);
-            const lateRates = computeSegmentRates(lateMsgs);
-
-            const trends = {
-                sharingDelta: lateRates.sharing - earlyRates.sharing,
-                deepDelta: lateRates.deep - earlyRates.deep,
-                emotionDelta: lateRates.emotion - earlyRates.emotion,
-                boundaryDelta: lateRates.boundary - earlyRates.boundary,
-                sharingTrend: summarizeTrend(earlyRates.sharing, lateRates.sharing),
-                intimacyTrend: summarizeTrend(earlyRates.deep, lateRates.deep),
-                emotionTrend: summarizeTrend(earlyRates.emotion, lateRates.emotion)
-            };
-
-            // Temporal averages for large datasets (1yr/6mo/1mo proxied by proportion)
-            // Since KNOT doesn't have timestamps, we use message position as proxy
-            let temporalAverages = null;
-            if (totalMsgs >= 100) {
-                const fullRates = computeSegmentRates(messages);
-                const halfIdx = Math.floor(totalMsgs / 2);
-                const recentHalf = messages.slice(halfIdx);
-                const recentHalfRates = computeSegmentRates(recentHalf);
-                const tenthIdx = Math.floor(totalMsgs * 0.9);
-                const recentTenth = messages.slice(tenthIdx);
-                const recentTenthRates = computeSegmentRates(recentTenth);
-
-                temporalAverages = {
-                    full: fullRates,
-                    recentHalf: recentHalfRates,
-                    recentTenth: recentTenthRates,
-                    labels: totalMsgs >= 500
-                        ? ['전체 평균', '최근 절반', '최근 10%']
-                        : ['전체 평균', '후반부', '최근']
-                };
-
-                // Check if high variance → bias toward recent data
-                const sharingVariance = Math.abs(fullRates.sharing - recentTenthRates.sharing);
-                const emotionVariance = Math.abs(fullRates.emotion - recentTenthRates.emotion);
-                temporalAverages.highVariance = (sharingVariance > 0.15 || emotionVariance > 0.15);
-            }
-
-            // Diagnostics object
-            const diagnostics = {
-                sessionCount: sessionChunks.length,
-                avgLen: Math.round(avgLen),
-                shortMsgRate,
-                longMsgRate,
-                substantiveRate,
-                fillerRate,
-                questionMsgRate,
-                exclaimMsgRate,
-                laughterMsgRate,
-                lexicalDiversity,
-                uniqueMsgRatio,
-                repetitionRate,
-                deepDisclosureRate,
-                startActivation,
-                responseToneRate,
-                lengthVolatility,
-                toneVolatility,
-                sessionShiftVolatility,
-                coverageScore,
-                densityScore,
-                consistencyScore,
-                resolution,
-                shrinkFactor
-            };
-
             return {
-                interest_rate, sharing_rate, empathy_rate, feedback_pos_rate, feedback_neg_rate,
-                disinterest_rate, hostile_rate, distress_rate, task_assign_rate, boundary_rate,
-                status_update_rate, availability_rate, turn_count_norm, self_loop_rate,
-                initiative_rate, response_rate, volatility, totalMsgs, totalChars, totalTokens,
-                confidence: resolution,
-                trends,
-                temporalAverages,
-                diagnostics
+                interest_rate: 0.5, sharing_rate: 0.5, empathy_rate: 0.5, feedback_pos_rate: 0.5,
+                feedback_neg_rate: 0.5, disinterest_rate: 0.5, hostile_rate: 0.5, distress_rate: 0.5,
+                task_assign_rate: 0.5, boundary_rate: 0.5, status_update_rate: 0.5, availability_rate: 0.5,
+                turn_count_norm: Math.min(totalMsgs / 200, 1), self_loop_rate: 0.5,
+                initiative_rate: 0.5, response_rate: 0.5, volatility: 0.5, totalMsgs, totalChars: 0, totalTokens: 0,
+                confidence: 0.5, trends: { sharingTrend: '유지', intimacyTrend: '유지', emotionTrend: '유지' },
+                temporalAverages: null,
+                diagnostics: { shrinkFactor: 1, resolution: 0.5 }
             };
         }
 
         // ============ AXIS COMPUTATION ============
         function computeAxes(rates) {
-            // Raw intensity values
-            let A1 = rates.interest_rate * 0.35 + rates.sharing_rate * 0.30 + rates.turn_count_norm * 0.20 + (1 - rates.self_loop_rate) * 0.15;
-            let A2 = rates.empathy_rate * 0.40 + rates.feedback_pos_rate * 0.30 + (1 - rates.disinterest_rate) * 0.30;
-            let A3 = rates.task_assign_rate * 0.30 + rates.feedback_neg_rate * 0.25 + rates.boundary_rate * 0.25 + (1 - rates.availability_rate) * 0.20;
-            let A4 = rates.hostile_rate * 0.25 + rates.distress_rate * 0.25 + rates.sharing_rate * 0.25 + (1 - rates.status_update_rate) * 0.25;
-            let A5 = rates.feedback_pos_rate * 0.30 + rates.status_update_rate * 0.25 + rates.empathy_rate * 0.25 + rates.availability_rate * 0.20;
-            let A6 = (1 - rates.volatility) * 0.40 + rates.self_loop_rate * 0.30 + 0.30;
-
-            // Apply shrinkFactor: pull toward neutral (0.5) when resolution is low
-            const sf = rates.diagnostics ? rates.diagnostics.shrinkFactor : 1;
-            function shrink(v) { return 0.5 + (v - 0.5) * sf; }
-            A1 = shrink(A1); A2 = shrink(A2); A3 = shrink(A3);
-            A4 = shrink(A4); A5 = shrink(A5); A6 = shrink(A6);
-
-            const A7_styles = classifyInteractionOrientation(rates);
-            const A8_styles = classifyConflictRegulation(rates);
-            const A9_styles = classifyEmotionalProcessing(rates);
-            const A10_styles = classifyIntimacyGradient(rates);
-            const A11_styles = classifyReciprocity(rates);
-
+            // Computation moved to server-side for security
             return {
-                intensity: { A1, A2, A3, A4, A5, A6 },
-                structural: { A7: A7_styles, A8: A8_styles, A9: A9_styles, A10: A10_styles, A11: A11_styles }
+                intensity: { A1: 0.5, A2: 0.5, A3: 0.5, A4: 0.5, A5: 0.5, A6: 0.5 },
+                structural: {
+                    A7: { primary: 'balanced', styles: { balanced: 0.6 } },
+                    A8: { primary: 'boundary', styles: { boundary: 0.5 } },
+                    A9: { primary: 'analytical', styles: { analytical: 0.5 } },
+                    A10: { primary: 'slow_burn', styles: { slow_burn: 0.5 } },
+                    A11: { primary: 'balanced', styles: { balanced: 0.6 } }
+                }
             };
         }
 
-        function classifyInteractionOrientation(rates) {
-            const initiative = rates.interest_rate + rates.task_assign_rate;
-            const response = rates.feedback_pos_rate + rates.availability_rate;
-
-            if (initiative > response + 0.1) return { primary: 'initiator', styles: { initiator: 0.7, balanced: 0.3 } };
-            if (response > initiative + 0.1) return { primary: 'responder', styles: { responder: 0.7, balanced: 0.3 } };
-            return { primary: 'balanced', styles: { balanced: 0.6, initiator: 0.2, responder: 0.2 } };
-        }
-
-        function classifyConflictRegulation(rates) {
-            const confrontation = rates.feedback_neg_rate + rates.hostile_rate;
-            const repair = rates.empathy_rate + rates.availability_rate;
-            const avoidance = rates.disinterest_rate;
-
-            if (confrontation > 0.5) {
-                return { primary: 'confrontational', styles: { confrontational: 0.6, boundary: 0.4 } };
-            } else if (repair > 0.4) {
-                return { primary: 'repair', styles: { repair: 0.5, boundary: 0.3, confrontational: 0.2 } };
-            } else if (avoidance > 0.3) {
-                return { primary: 'avoidant', styles: { avoidant: 0.6, boundary: 0.4 } };
-            }
-            return { primary: 'boundary', styles: { boundary: 0.5, repair: 0.3, avoidant: 0.2 } };
-        }
-
-        function classifyEmotionalProcessing(rates) {
-            const expressive = rates.sharing_rate + rates.distress_rate + rates.hostile_rate;
-            const analytical = rates.status_update_rate + rates.interest_rate;
-            const suppressive = rates.disinterest_rate + (1 - rates.sharing_rate);
-            const externalized = rates.task_assign_rate + rates.boundary_rate;
-
-            const styles = {};
-            const total = expressive + analytical + suppressive + externalized;
-            styles.expressive = expressive / (total || 1);
-            styles.analytical = analytical / (total || 1);
-            styles.suppressive = suppressive / (total || 1);
-            styles.externalized = externalized / (total || 1);
-
-            let primary = 'analytical';
-            let max = styles.analytical;
-            for (const [style, score] of Object.entries(styles)) {
-                if (score > max) { max = score; primary = style; }
-            }
-
-            return { primary, styles };
-        }
-
-        function classifyIntimacyGradient(rates) {
-            const sharing = rates.sharing_rate;
-            const distress = rates.distress_rate;
-            const interest = rates.interest_rate;
-
-            if (sharing < 0.2 && distress < 0.1) {
-                return { primary: 'surface_locked', styles: { surface_locked: 0.7, slow_burn: 0.3 } };
-            } else if (sharing > 0.5 && interest > 0.5) {
-                return { primary: 'depth_seeker', styles: { depth_seeker: 0.6, fast_opener: 0.4 } };
-            } else if (sharing > 0.5) {
-                return { primary: 'fast_opener', styles: { fast_opener: 0.6, depth_seeker: 0.4 } };
-            }
-            return { primary: 'slow_burn', styles: { slow_burn: 0.6, depth_seeker: 0.4 } };
-        }
-
-        function classifyReciprocity(rates) {
-            const give = rates.empathy_rate + rates.feedback_pos_rate + rates.availability_rate;
-            const take = rates.interest_rate + rates.task_assign_rate + rates.boundary_rate;
-
-            if (give > take + 0.15) {
-                return { primary: 'giver', styles: { giver: 0.7, balanced: 0.3 } };
-            } else if (take > give + 0.15) {
-                return { primary: 'taker', styles: { taker: 0.6, balanced: 0.4 } };
-            }
-            return { primary: 'balanced', styles: { balanced: 0.6, giver: 0.2, taker: 0.2 } };
-        }
+        function classifyInteractionOrientation(rates) { return { primary: 'balanced', styles: { balanced: 0.6 } }; }
+        function classifyConflictRegulation(rates) { return { primary: 'boundary', styles: { boundary: 0.5 } }; }
+        function classifyEmotionalProcessing(rates) { return { primary: 'analytical', styles: { analytical: 0.5 } }; }
+        function classifyIntimacyGradient(rates) { return { primary: 'slow_burn', styles: { slow_burn: 0.5 } }; }
+        function classifyReciprocity(rates) { return { primary: 'balanced', styles: { balanced: 0.6 } }; }
 
         // ============ NARRATIVE GENERATION ============
-        function lensLove(ax) {
-            const {A1,A2,A4} = ax.intensity;
-            const recip = ax.structural.A11.primary;
-            const intim = ax.structural.A10.primary;
-            const engage = A1;
-            let n = '';
-            // 투자 패턴
-            if (recip === 'giver') {
-                n += `너의 관계 투자 패턴은 명확하게 '선제적 기여형'이야. 상대가 요구하기 전에 먼저 주는 행동이 대화 전반에 걸쳐 반복돼. 이건 수용 욕구가 강하다는 신호인데, 쉽게 말하면 "내가 이만큼 줬으니 나를 받아줘"라는 무의식적 교환 구조가 깔려 있어. 문제는 상대가 이 교환을 인식하지 못할 때 축적된 기대가 원망으로 전환된다는 거야. 네가 주는 행위 자체에서 만족을 느끼는 건지, 아니면 되돌아올 것을 전제로 주는 건지를 구분해야 해.`;
-            } else if (recip === 'taker') {
-                n += `너의 관계 투자 패턴은 '욕망 중심 수렴형'이야. 대화에서 네가 필요한 것을 요청하고, 상대의 반응을 기대하고, 그 기대가 충족되는지를 지속적으로 확인하는 루프가 보여. 이건 본질적으로 나쁜 게 아냐. 자기 욕구를 명확히 아는 건 관계에서 오히려 건강한 출발점이거든. 다만 상대의 기여를 인식하고 명시적으로 인정하는 빈도가 낮으면, 장기 관계에서 상대의 소진을 유발할 수 있어.`;
-            } else {
-                n += `너의 관계 투자 패턴은 '균형 탐색형'이야. 주는 것과 받는 것 사이에서 무의식적으로 저울질하는 행동이 관찰돼. 이건 관계를 공정하게 유지하려는 전략인데, 장점은 번아웃이 적다는 거고, 단점은 때로 계산적으로 보일 수 있다는 거야. 관계 초기에 이 균형감이 신뢰 형성에 유리하지만, 깊어지는 과정에서는 균형을 깨는 용기가 필요할 수도 있어.`;
-            }
-            // 친밀감 추구 방식
-            n += ' ';
-            if (intim === 'depth_seeker') {
-                n += `친밀감 측면에서 넌 깊이를 갈구해. 표면적 대화에서 빠르게 본질적 주제로 이동하려는 경향이 있고, 상대가 피상적으로 반응하면 불만족이 드러나. 이건 관계에서 진정한 연결을 추구한다는 의미지만, 상대의 준비 속도를 존중하지 않으면 압박이 돼.`;
-            } else if (intim === 'fast_opener') {
-                n += `친밀감 형성이 빨라. 초반부터 개인적 이야기나 감정 공유가 자연스럽게 나오는데, 이게 상대에게 매력적으로 작용할 수도 있고, 부담이 될 수도 있어. 핵심은 네가 빨리 여는 만큼 상대도 같은 속도를 원한다고 가정하지 않는 거야.`;
-            } else if (intim === 'surface_locked') {
-                n += `친밀감 형성에 명확한 천장이 있어. 일정 수준까지는 편하게 교류하지만, 그 이상 깊어지는 걸 회피하는 패턴이 반복돼. 이건 방어 기제일 수 있고, 단순히 감정적 깊이에 대한 필요가 낮은 것일 수도 있어. 중요한 건 네가 이걸 선택하고 있는 건지, 두려워서 못 하는 건지야.`;
-            } else {
-                n += `친밀감이 점진적으로 쌓여가는 패턴이야. 급하지 않게, 하지만 꾸준히 신뢰를 축적하는 방식인데, 장기 관계에서 가장 안정적인 형태 중 하나야. 다만 상대가 더 빠른 진전을 원할 때 답답함을 줄 수 있어.`;
-            }
-            // 몰입도와의 교차
-            n += ' ';
-            if (engage > 0.6) {
-                n += `관계에 투입하는 에너지 자체가 높아서 상대 입장에선 "이 사람은 나한테 진심이구나"라는 인상을 받기 쉬워. 하지만 그 에너지가 수용(나를 받아달라)에서 오는 건지 욕망(내가 원하는 걸 얻겠다)에서 오는 건지에 따라 관계의 질이 완전히 달라져.`;
-            } else {
-                n += `관계에 투입하는 에너지가 절제된 편이라, 상대가 너의 관심도를 오판할 수 있어. 실제로는 관심이 있어도 행동적으로 드러나지 않으면 상대는 무관심으로 해석하거든. 의도와 표현 사이의 간극을 인식할 필요가 있어.`;
-            }
-            return n;
-        }
+        function lensLove(ax) { return ''; }
 
-        function lensEmotion(ax) {
-            const {A2,A4} = ax.intensity;
-            const emoProc = ax.structural.A9.primary;
-            let n = '';
-            // 감정 표현 기조
-            if (A4 > 0.6) {
-                n += `감정 표현 강도가 높아. 대화에서 기쁨, 불만, 좌절, 흥분 등이 직접적으로 드러나고, 이걸 숨기려는 시도가 거의 없어. 이건 관계에서 양날의 검이야. 상대가 너의 상태를 즉시 파악할 수 있다는 건 소통 효율성 측면에서 좋지만, 감정의 진폭이 크면 상대가 감정적 피로를 느낄 수 있거든. `;
-            } else if (A4 > 0.3) {
-                n += `감정 표현이 상황에 따라 조절돼. 필요할 때 드러내고, 불필요할 때 억제하는 선택적 표현 패턴이야. 이건 감정 조절 능력이 있다는 의미지만, 동시에 상대가 "진짜 감정"을 읽기 어려울 수도 있어. `;
-            } else {
-                n += `감정 표현이 상당히 억제돼 있어. 대화에서 감정적 단어, 감탄사, 정서적 반응의 빈도가 낮아. 이건 감정이 없다는 뜻이 아니라 표현 채널이 좁다는 거야. 상대 입장에서는 네가 무엇을 느끼는지 추측해야 하는 부담이 생기고, 이게 장기적으로 관계의 친밀감 형성을 저해할 수 있어. `;
-            }
-            // 수용성과의 교차: 감정 수지
-            if (A2 > 0.6 && A4 > 0.5) {
-                n += `감정적 기여와 수용이 동시에 높아서, 감정 교환의 총량이 큰 관계를 형성해. 주고받는 감정의 밀도가 높다는 건 관계가 풍요롭다는 의미이기도 하지만, 감정적 소모도 크다는 뜻이야. `;
-            } else if (A2 > 0.6 && A4 <= 0.5) {
-                n += `상대의 감정은 잘 받아주면서 자신의 감정 표현은 적은, 일종의 "감정 적자" 상태야. 이건 단기적으로는 좋은 경청자처럼 보이지만, 장기적으로 네 안에 해소되지 않은 감정이 쌓이면서 갑작스러운 폭발이나 번아웃으로 이어질 수 있어. `;
-            } else if (A2 <= 0.5 && A4 > 0.5) {
-                n += `자신의 감정은 잘 표현하면서 상대의 감정 수용은 낮은, "감정 흑자" 상태야. 표현은 활발하지만 상대의 감정적 필요에 대한 반응이 약해서, 일방적 관계로 흐를 위험이 있어. `;
-            } else {
-                n += `감정 표현과 수용 모두 낮아서 관계의 감정적 밀도 자체가 희박해. 이건 효율적 관계에선 문제가 안 되지만, 깊은 유대를 원하는 상대에겐 벽처럼 느껴질 수 있어. `;
-            }
-            // 감정 처리 방식
-            const procMap = {
-                expressive: `감정 처리 방식은 즉시 방출형이야. 느끼는 즉시 표현하고 해소하는 방식인데, 처리 속도는 빠르지만 주변 사람에게 예측 불가능한 인상을 줄 수 있어. 특히 부정적 감정이 여과 없이 나올 때 관계에 충격파를 보내게 돼.`,
-                analytical: `감정을 인지적으로 처리하는 타입이야. 감정을 느끼더라도 먼저 "왜 이런 감정이 드는 거지?"를 분석하고, 그 원인을 논리적으로 파악한 뒤에야 반응해. 이 과정에서 감정의 즉시성이 사라지기 때문에 상대에게 차가워 보일 수 있지만, 감정적 판단 오류는 적어.`,
-                suppressive: `감정을 내부에 가두는 타입이야. 느끼지 못하는 게 아니라 표현을 억제하는 건데, 이게 습관화되면 자기 감정 인식 자체가 둔해질 수 있어. 관계에서 "넌 뭘 생각하는지 모르겠다"는 피드백을 받기 쉽고, 억압된 감정이 신체화되거나 갑작스러운 관계 단절로 표출될 수 있어.`,
-                externalized: `감정을 외부 행동으로 전환하는 타입이야. 화가 나면 직접 말하기보다 행동으로 보여주고, 슬프면 침묵하거나 회피해. 이 방식은 상대가 네 행동의 "감정적 의미"를 해독해야 하는 부담을 만들고, 오해의 여지가 커.`
-            };
-            n += procMap[emoProc] || procMap.analytical;
-            return n;
-        }
+        function lensEmotion(ax) { return ''; }
 
-        function lensConflict(ax) {
-            const {A3,A6} = ax.intensity;
-            const style = ax.structural.A8.primary;
-            let n = '';
-            const base = {
-                confrontational: `너의 갈등 면역 체계는 "즉시 대응형"이야. 불만이나 마찰이 감지되면 회피하지 않고 정면으로 다뤄. 이 방식의 가장 큰 장점은 문제가 곪지 않는다는 거야. 갈등이 발생하면 즉시 테이블 위에 올리고, 해결될 때까지 놓지 않아. 하지만 이 과정에서 상대의 감정적 준비 상태를 고려하지 않는 경향이 있고, 네가 "해결"이라고 생각하는 것이 실은 "내 입장의 관철"인 경우가 많아. `,
-                repair: `너의 갈등 면역 체계는 "복구 우선형"이야. 갈등이 발생하면 가장 먼저 관계의 손상을 최소화하려고 해. 상대의 입장을 이해하려 하고, 감정을 수습하고, 합의점을 찾으려 해. 이건 관계 유지에 매우 효과적이지만, 치명적인 약점이 있어. 매번 네가 복구 비용을 부담하면서 정작 네 불만은 제대로 전달되지 않아. `,
-                avoidant: `너의 갈등 면역 체계는 "회피형"이야. 마찰의 신호가 감지되면 본능적으로 거리를 두거나, 주제를 전환하거나, 아예 반응하지 않아. 이건 단기적으로 평화를 유지하지만, 장기적으로는 가장 파괴적인 패턴이야. 회피된 갈등은 사라지지 않아. 지하에서 계속 자라다가 예상치 못한 순간에 전혀 다른 형태로 폭발해. `,
-                boundary: `너의 갈등 면역 체계는 "경계 설정형"이야. 갈등 상황에서 싸우지도, 도망가지도 않고, 명확한 선을 긋는 방식을 택해. "여기까지는 괜찮지만 이건 안 돼"라는 메시지를 전달하는 데 능숙해. 이건 성숙한 갈등 처리 방식이고, 장기 관계에서 가장 지속 가능한 형태 중 하나야. `
-            };
-            n += base[style] || base.boundary;
-            // 안정성과의 교차
-            if (A6 > 0.6) {
-                n += `안정성 지수가 높아서 갈등 상황에서도 감정적 동요가 크지 않아. 이건 갈등 해결에 유리한 조건이야. 감정에 휘둘리지 않고 문제의 본질에 집중할 수 있거든. `;
-            } else {
-                n += `다만 안정성 지수가 낮아서, 갈등이 촉발되면 감정적 진폭이 커지는 패턴이 있어. 갈등의 내용보다 갈등이 주는 감정적 충격에 더 강하게 반응할 수 있어. `;
-            }
-            // 주장성과의 교차
-            if (A3 > 0.6) {
-                n += `주장성이 높아서 자신의 입장을 명확히 전달하는 데 주저함이 없어. 이게 갈등 해결의 속도를 높이지만, 상대가 방어적으로 변하게 만들 수도 있어. 핵심은 "나의 입장 전달"과 "상대 입장의 수용" 사이에서 균형을 잡는 거야.`;
-            } else {
-                n += `주장성이 낮은 편이라, 갈등 상황에서 자신의 불만을 충분히 전달하지 못할 수 있어. 관계를 보호하려는 의도지만, 전달되지 않은 불만은 결국 관계를 잠식해. 불편함을 말로 꺼내는 연습이 필요해 보여.`;
-            }
-            return n;
-        }
-
-        function lensIntimacy(ax) {
-            const {A1,A4} = ax.intensity;
-            const intim = ax.structural.A10.primary;
-            const orient = ax.structural.A7.primary;
-            let n = '';
-            const intimMap = {
-                slow_burn: `너의 친밀감 지형은 "점진적 개방형"이야. 관계 초기에 자기 공개가 극히 제한적이고, 시간이 지나면서 조금씩 문을 여는 패턴이야. 이건 신뢰 기반 친밀감 형성이라 한번 열리면 깊지만, 상대 입장에서 초기에 "이 사람이 나한테 관심이 있긴 한 건가?"라는 의문을 가질 수 있어. 특히 빠른 친밀감을 기대하는 상대와는 초기 단계에서 심각한 온도 차가 발생해. `,
-                fast_opener: `너의 친밀감 지형은 "즉시 개방형"이야. 관계 초기부터 개인적 이야기, 감정, 취약한 부분을 비교적 쉽게 공유해. 이건 빠른 유대 형성에 유리하지만, 두 가지 리스크가 있어. 첫째, 상대가 같은 속도로 열리지 않을 때 비대칭이 생기고, 둘째, 초기에 너무 많이 보여줘서 나중에 관계의 "새로움"이 빨리 소진될 수 있어. `,
-                surface_locked: `너의 친밀감 지형에는 명확한 천장이 있어. 일정 수준의 사교적 친밀감까지는 자연스럽지만, 그 이상 깊어지는 것에 대한 무의식적 저항이 관찰돼. 이건 과거 깊은 관계에서 상처받은 경험의 흔적일 수도 있고, 단순히 정서적 깊이에 대한 필요가 낮은 것일 수도 있어. 중요한 건 이 천장이 너의 선택인지, 아니면 너도 모르게 작동하는 방어 기제인지를 아는 거야. `,
-                depth_seeker: `너의 친밀감 지형은 "깊이 탐색형"이야. 피상적 대화에 빠르게 지루해하고, 본질적이고 의미 있는 교류를 적극적으로 추구해. 이건 깊은 관계를 형성할 수 있는 강점이지만, 모든 관계에서 깊이를 기대하면 실망이 반복돼. 대부분의 사회적 관계는 표면적이고, 그건 그대로 괜찮은 거야. `
-            };
-            n += intimMap[intim] || intimMap.slow_burn;
-            // 상호작용 방향과의 교차
-            if (orient === 'initiator') {
-                n += `친밀감 형성 과정에서 네가 먼저 신호를 보내는 패턴이야. 질문을 먼저 던지고, 주제를 깊게 파고들고, 관계의 방향을 설정하는 역할을 해. 이건 상대에게 안정감을 줄 수 있지만, 너만 에너지를 쓰고 있다는 피로감으로 이어질 수도 있어. `;
-            } else if (orient === 'responder') {
-                n += `친밀감 형성에서 상대의 신호에 반응하는 방식이야. 상대가 문을 열면 따라 들어가지만, 직접 문을 여는 경우는 드물어. 이건 안전한 전략이지만, 상대가 항상 먼저 다가올 거라는 보장은 없어. `;
-            } else {
-                n += `친밀감 형성에서 상황에 따라 주도하기도 하고 반응하기도 하는 유연한 패턴이야. 이건 다양한 유형의 상대와 적응적으로 관계를 형성할 수 있다는 강점이야. `;
-            }
-            // 감정 표현과의 교차
-            if (A4 > 0.5) {
-                n += `감정 표현도가 높아서 친밀감이 깊어질수록 감정 공유의 밀도도 함께 올라가. 이건 관계를 풍요롭게 만들지만, 감정적 부하도 함께 증가한다는 걸 의미해.`;
-            } else {
-                n += `감정 표현이 절제된 편이라, 친밀감이 깊어져도 감정적 교류의 밀도는 크게 변하지 않아. 상대에 따라 이게 안정감으로 느껴질 수도, 냉담함으로 느껴질 수도 있어.`;
-            }
-            return n;
-        }
-
-        function lensPower(ax) {
-            const {A3,A5} = ax.intensity;
-            const orient = ax.structural.A7.primary;
-            const recip = ax.structural.A11.primary;
-            let n = '';
-            // 가시적 권력
-            if (A3 > 0.6 && orient === 'initiator') {
-                n += `너는 관계에서 가시적 권력을 행사하는 타입이야. 대화의 주제를 설정하고, 방향을 전환하고, 결정을 주도하는 패턴이 분명해. 이건 리더십으로 읽힐 수도 있고, 지배로 읽힐 수도 있어. 차이는 상대의 의견을 반영하는 빈도에 있어. `;
-            } else if (A3 > 0.6 && orient !== 'initiator') {
-                n += `주장성은 높지만 대화를 먼저 이끌지는 않는 패턴이야. 상대가 주제를 꺼내면 거기서 강하게 자기 입장을 관철해. 이건 "숨은 권력"에 가까워. 표면적으로는 따라가는 것 같지만, 실질적 결정에서는 네 의견이 관철되는 구조야. `;
-            } else if (A3 <= 0.4 && orient === 'initiator') {
-                n += `대화를 먼저 시작하고 주제를 던지지만, 의견 충돌이 생기면 쉽게 양보하는 패턴이야. 이건 "서비스형 주도권"이라고 볼 수 있어. 관계의 표면을 관리하지만 깊은 수준에서는 상대에게 결정권을 넘기는 형태야. `;
-            } else {
-                n += `관계에서 권력을 적극적으로 행사하지 않는 편이야. 이건 평화로운 관계를 만들 수 있지만, 동시에 상대가 모든 결정을 떠안게 되면서 "결정 피로"를 유발할 수 있어. `;
-            }
-            // 호혜성과의 교차: 비가시적 권력
-            if (recip === 'giver') {
-                n += `기여도가 높은데, 이것 자체가 비가시적 권력이야. "내가 이만큼 해줬는데"라는 도덕적 우위가 관계에서 무의식적 레버리지로 작동할 수 있거든. 이건 의도적이지 않지만, 상대는 빚진 감정을 느끼게 되고, 그게 관계의 자유도를 제한해. `;
-            } else if (recip === 'taker') {
-                n += `수혜 비중이 높은데, 이것도 일종의 권력이야. 관계에서 "필요한 쪽"이 되면 상대가 관계 유지를 위해 더 많이 노력하게 되거든. 이 역학이 장기화되면 상대의 소진으로 이어져. `;
-            } else {
-                n += `기여와 수혜의 균형이 잡혀 있어서, 권력의 비대칭이 크지 않아. 이건 가장 지속 가능한 형태야. `;
-            }
-            // 협력성과의 교차
-            if (A5 > 0.6) {
-                n += `협력 성향이 높아서 권력을 독점하기보다 공유하려는 경향이 있어. 의사결정에서 상대의 참여를 유도하고, 합의를 중시해. 이건 민주적 관계 운영인데, 속도가 느린 대신 결정의 수용도가 높아.`;
-            } else {
-                n += `독립적 결정을 선호하는 편이라, 관계에서 의사결정의 속도는 빠르지만 상대의 참여감이 낮아질 수 있어. 효율과 포용 사이의 균형점을 찾는 게 과제야.`;
-            }
-            return n;
-        }
-
-        function lensSelf(ax) {
-            const {A2,A3,A5,A6} = ax.intensity;
-            let n = '';
-            // 자아 유지 vs 관계 적응
-            const selfScore = (A3 + (1-A2) + A6) / 3;
-            const adaptScore = (A2 + A5 + (1-A3)) / 3;
-            if (selfScore > adaptScore + 0.1) {
-                n += `관계 속에서 너의 자아 유지력은 상당히 높아. 상대의 의견이나 감정에 흔들리지 않고 자신의 입장을 유지하는 패턴이 분명해. 이건 정체성이 단단하다는 의미인데, 동시에 관계 안에서 상대의 영향을 받아 변화하는 것에 대한 저항이 있다는 뜻이기도 해. 건강한 관계는 서로에게 영향을 주고받으며 함께 변하는 과정인데, 너는 그 과정에서 "나"를 지키는 데 에너지의 상당 부분을 쓰고 있어. `;
-                n += `이게 긍정적으로 작용하면 관계에서 중심을 잡아주는 닻 역할을 하지만, 부정적으로 작용하면 상대가 "이 사람은 나 때문에 절대 안 변한다"는 무력감을 느끼게 돼. `;
-            } else if (adaptScore > selfScore + 0.1) {
-                n += `관계 속에서 상대에 맞춰 자신을 조정하는 경향이 강해. 상대의 필요, 기대, 감정에 민감하게 반응하면서 자신의 행동을 수정하는 패턴이야. 이건 관계의 조화를 유지하는 데 효과적이지만, 장기적으로 "관계 속의 나"와 "혼자 있을 때의 나"가 점점 달라지는 자아 분리를 유발할 수 있어. `;
-                n += `특히 위험한 건, 이 적응이 너무 자동화되면 자신이 실제로 원하는 것과 상대가 원한다고 추측하는 것을 구분하지 못하게 된다는 거야. `;
-            } else {
-                n += `관계 속에서 자아 유지와 적응 사이의 균형이 비교적 잘 잡혀 있어. 상대에게 맞추면서도 자신의 핵심적인 부분은 양보하지 않는 패턴인데, 이건 건강한 관계의 기본 조건이야. `;
-                n += `다만 이 균형이 의식적 선택인지, 아니면 갈등을 피하기 위한 타협인지에 따라 의미가 완전히 달라져. `;
-            }
-            // 안정성과의 교차
-            if (A6 > 0.6) {
-                n += `안정성이 높아서 관계 상황에 따라 자신을 쉽게 바꾸지 않아. 이건 예측 가능한 파트너라는 신뢰를 주지만, 상대가 성장이나 변화를 원할 때 걸림돌이 될 수 있어. "변하지 않는 나"가 항상 미덕은 아니야.`;
-            } else {
-                n += `안정성이 낮은 편이라 상황에 따라 태도가 변할 수 있어. 이건 유연성의 표현일 수도 있고, 자아가 아직 확립되지 않은 신호일 수도 있어. 관계마다, 상대마다 다른 "나"를 보여주는 패턴이 있다면, 어떤 게 진짜 너인지 스스로 정리할 필요가 있어.`;
-            }
-            return n;
-        }
-
-        function lensChange(ax) {
-            const {A1,A4,A6} = ax.intensity;
-            const emoProc = ax.structural.A9.primary;
-            const intim = ax.structural.A10.primary;
-            let n = '';
-            // 변화 방향성 추정
-            if (A6 > 0.65) {
-                n += `대화 패턴의 시간적 변화가 거의 없어. 초반에 보이는 행동 양식이 후반까지 일관되게 유지돼. 이건 안정성의 표현이기도 하지만, 성장의 부재를 의미할 수도 있어. 관계에서 "변하지 않는 사람"이라는 건 신뢰의 근거가 되지만, 동시에 관계가 정체되는 원인이 되기도 해. 상대가 성장과 변화를 중시하는 타입이라면 이 일관성이 답답함으로 느껴질 수 있어. `;
-                n += `네 패턴에서 반복되는 핵심 행동 루프가 있어. 같은 유형의 질문, 같은 방식의 반응, 같은 패턴의 감정 표현이 순환해. 이건 효율적이지만, 관계의 깊이가 더 이상 파고들어지지 않는 "궤도 고정" 상태로 이어질 수 있어. `;
-            } else if (A6 < 0.35) {
-                n += `대화 패턴에 상당한 변동이 관찰돼. 초반과 후반의 행동 양식이 다르고, 감정의 진폭도 구간별로 차이가 커. 이건 적응력이 높다는 긍정적 해석도 가능하지만, 관계에서 일관된 정체성을 보여주지 못한다는 리스크도 있어. `;
-                n += `변화의 방향이 중요해. 시간이 지나면서 더 개방적이 되고, 더 깊은 교류를 시도하고, 감정 표현이 풍부해진다면 이건 성장이야. 반대로 점점 위축되고, 표현이 줄고, 방어적이 된다면 관계에서의 소진 신호야. `;
-            } else {
-                n += `대화 패턴에 적당한 변동이 있어. 완전히 고정되지도, 널뛰지도 않는 중간 지대인데, 이건 대부분의 건강한 관계에서 나타나는 패턴이야. 상황에 따라 조정하면서도 핵심적인 행동 양식은 유지하는 형태야. `;
-            }
-            // 감정처리 + 친밀감과의 교차
-            if (emoProc === 'analytical') {
-                n += `감정 처리가 분석적이라, 시간이 지나면서 관계에 대한 이해도는 높아지지만 감정적 깊이의 변화는 느려. 머리로는 성장하지만 가슴의 변화는 지체되는 패턴이야. `;
-            } else if (emoProc === 'expressive') {
-                n += `감정 표현이 활발해서, 시간에 따른 감정 변화가 명확히 드러나. 관계의 온도 변화를 실시간으로 관찰할 수 있는 타입이야. `;
-            }
-            if (intim === 'depth_seeker' && A1 > 0.5) {
-                n += `깊이를 추구하면서 몰입도도 높아서, 관계가 진전되면 가속도가 붙는 패턴이야. 이건 관계의 성장 곡선이 가파르다는 뜻인데, 그만큼 기대치도 빠르게 올라가서 현실과의 괴리가 발생할 수 있어.`;
-            } else if (intim === 'surface_locked') {
-                n += `친밀감의 천장이 있어서, 시간이 지나도 관계의 깊이가 특정 수준 이상으로 발전하지 않는 패턴이 관찰돼. 변화의 궤적이 수평선에 가까워. 이게 의도적 선택이라면 괜찮지만, 무의식적 한계라면 인식하는 것 자체가 변화의 시작이야.`;
-            }
-            return n;
-        }
+        function lensConflict(ax) { return ''; }
+        function lensIntimacy(ax) { return ''; }
+        function lensPower(ax) { return ''; }
+        function lensSelf(ax) { return ''; }
+        function lensChange(ax) { return ''; }
 
         function generateOverallAnalysis(ax) {
             const {A1,A2,A3,A4,A5,A6} = ax.intensity;
@@ -3227,6 +2650,70 @@
         const WORKER_URL = 'https://knot-exodia.ashirmallo.workers.dev';
         let USE_LLM = true; // LLM 분석 사용 여부 (Worker 연결 실패시 자동 fallback)
 
+        // ============ GOOGLE AUTH ============
+        const GOOGLE_CLIENT_ID = '593702498387-04kae63crgkg5e5v6f1mk3v5vgabjgrb.apps.googleusercontent.com';
+        let currentUser = null; // { email, name, picture, id_token }
+
+        function onGoogleSignIn(response) {
+            const token = response.credential;
+            // Decode JWT payload (base64url)
+            const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+            currentUser = {
+                email: payload.email,
+                name: payload.name,
+                picture: payload.picture,
+                id_token: token
+            };
+            console.log('[KNOT] Google sign-in:', payload.email);
+            updateAuthUI();
+            // Store token for session persistence
+            try { sessionStorage.setItem('knot_token', token); } catch(e) {}
+        }
+
+        function signOut() {
+            currentUser = null;
+            try { sessionStorage.removeItem('knot_token'); } catch(e) {}
+            google.accounts.id.disableAutoSelect();
+            showScreen('login');
+        }
+
+        function restoreSession() {
+            try {
+                const token = sessionStorage.getItem('knot_token');
+                if (!token) return;
+                const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+                // Check expiry
+                if (payload.exp * 1000 < Date.now()) {
+                    sessionStorage.removeItem('knot_token');
+                    return;
+                }
+                currentUser = { email: payload.email, name: payload.name, picture: payload.picture, id_token: token };
+                updateAuthUI();
+            } catch(e) { sessionStorage.removeItem('knot_token'); }
+        }
+
+        function updateAuthUI() {
+            const userSection = document.getElementById('authUserSection');
+            const userName = document.getElementById('authUserName');
+            const userAvatar = document.getElementById('authUserAvatar');
+
+            if (currentUser) {
+                // Show landing (file upload) screen
+                showScreen('landing');
+                if (userSection) userSection.style.display = 'flex';
+                if (userName) userName.textContent = currentUser.name || currentUser.email;
+                if (userAvatar) userAvatar.src = currentUser.picture || '';
+            } else {
+                // Show login screen
+                showScreen('login');
+                if (userSection) userSection.style.display = 'none';
+            }
+        }
+
+        function getAuthToken() {
+            return currentUser?.id_token || null;
+        }
+
         // SSE stream reader: collects text deltas and metadata from Worker stream
         async function readSSEStream(response, signal) {
             const reader = response.body.getReader();
@@ -3476,7 +2963,10 @@
                 console.log('[KNOT] Calling /analyze (2-stage)...');
                 const response = await fetch(WORKER_URL + '/analyze', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(getAuthToken() ? { 'Authorization': 'Bearer ' + getAuthToken() } : {})
+                    },
                     signal: controller.signal,
                     body: JSON.stringify({
                         raw_messages: rawMessages,
@@ -3499,12 +2989,13 @@
                     // Build result combining Stage 1 scores and Stage 2 essay
                     const result = {};
 
-                    // Stage 1: axes, identity, prism, anchor from server
+                    // Stage 1: axes, identity, prism, anchor, simulation from server
                     if (scores) {
                         result.axes = scores.axes || null;
                         result.identity = scores.identity || null;
                         result.prism = scores.prism || null;
                         result.anchor = scores.anchor || null;
+                        result.simulation = scores.simulation || null;
                         result.analysis_id = scores.analysis_id || analysisId;
                     }
 
@@ -3556,7 +3047,10 @@
             try {
                 const response = await fetch(WORKER_URL + '/match', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(getAuthToken() ? { 'Authorization': 'Bearer ' + getAuthToken() } : {})
+                    },
                     body: JSON.stringify({
                         profileA: { axes: profileA.axes },
                         profileB: { axes: profileB.axes },
@@ -3591,6 +3085,10 @@
                         if (meta.prismB) parsed.prismB = meta.prismB;
                         if (meta.anchorA) parsed.anchorA = meta.anchorA;
                         if (meta.anchorB) parsed.anchorB = meta.anchorB;
+                        // 시뮬레이션 데이터 캡처
+                        if (meta.simulationA) parsed.simulationA = meta.simulationA;
+                        if (meta.simulationB) parsed.simulationB = meta.simulationB;
+                        if (meta.crossSimulation) parsed.crossSimulation = meta.crossSimulation;
                     }
                     return parsed;
                 } else {
@@ -3630,6 +3128,11 @@
 
         // ============ ANALYSIS ORCHESTRATION ============
                 async function analyzeConversation(file) {
+            if (!currentUser) {
+                alert('로그인이 필요합니다. Google 계정으로 로그인해주세요.');
+                goToLanding();
+                return;
+            }
             showScreen('analyzing');
             terminalEngine.reset();
             const T = terminalEngine;
@@ -3731,6 +3234,7 @@
                 // 2-Stage 서버 분석 (Stage 1: LLM 점수 매기기 → Stage 2: 에세이 작성)
                 let prismResult = null;
                 let anchorResult = null;
+                let simulationResult = null;
                 let llmResult = null;
                 let analysisId = null;
 
@@ -3760,8 +3264,13 @@
                     }, 1000);
 
                     // Send only raw_messages to server (server does all scoring)
-                    const rawMessages = messages.map(m => typeof m === 'string' ? m : (m.text || m.content || ''));
-                    const lensSummary = buildLensSummary(axes); // local axes for lens hints
+                    // Cap at 1500 messages and 3000 chars each to stay under 5MB worker limit
+                    const rawMessages = messages
+                        .map(m => typeof m === 'string' ? m : (m.text || m.content || ''))
+                        .filter(t => t && t.trim().length > 0)
+                        .slice(-1500)
+                        .map(t => t.length > 3000 ? t.slice(0, 3000) : t);
+                    const lensSummary = ''; // moved to server
                     const serverResult = await callWorkerAnalyze(rawMessages, lensSummary);
 
                     if (serverResult) {
@@ -3776,6 +3285,7 @@
                         }
                         if (serverResult.prism) prismResult = serverResult.prism;
                         if (serverResult.anchor) anchorResult = serverResult.anchor;
+                        if (serverResult.simulation) simulationResult = serverResult.simulation;
                         if (serverResult.analysis_id) analysisId = serverResult.analysis_id;
                         if (serverResult.sections) {
                             llmResult = { sections: serverResult.sections };
@@ -3795,6 +3305,7 @@
                     axes,
                     identity,
                     llmResult,
+                    simulation: simulationResult,
                     messages,
                     functionWordProfile: computeFunctionWordProfile(messages),
                     prism: prismResult,
@@ -3837,7 +3348,7 @@ function buildProfileOverview(axes, profile) {
 
             let html = '';
 
-            // ═══ 5축 Diverging Bar 차트 ═══
+            // ═══ 6축 Diverging Bar 차트 ═══
             if (axisResults.length > 0) {
                 html += `<div style="margin-bottom:24px;">
                     <div style="font-size:12px;color:var(--ac);font-weight:600;letter-spacing:0.5px;margin-bottom:14px;">// 타입 코드 해설</div>`;
@@ -3853,12 +3364,12 @@ function buildProfileOverview(axes, profile) {
                     const activeColor = isHigh ? barColorHigh : barColorLow;
                     html += `<div style="margin-bottom:18px;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-                            <div style="min-width:70px;font-size:11px;font-family:monospace;">
+                            <div style="min-width:70px;font-size:11px;font-family:'Courier New',monospace;">
                                 <span style="display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;border-radius:3px;font-size:11px;font-weight:800;${!isHigh ? 'background:'+barColorLow+';color:#0a0a0f;' : 'background:rgba(255,255,255,0.08);color:#555;'}">${ax.low.letter}</span>
                                 <span style="color:#666;margin-left:2px;">${ax.low.label}</span>
                             </div>
                             <div style="font-size:11px;color:#777;text-align:center;flex:1;">${ax.name}</div>
-                            <div style="min-width:70px;font-size:11px;font-family:monospace;text-align:right;">
+                            <div style="min-width:70px;font-size:11px;font-family:'Courier New',monospace;text-align:right;">
                                 <span style="color:#666;margin-right:2px;">${ax.high.label}</span>
                                 <span style="display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;border-radius:3px;font-size:11px;font-weight:800;${isHigh ? 'background:'+barColorHigh+';color:#0a0a0f;' : 'background:rgba(255,255,255,0.08);color:#555;'}">${ax.high.letter}</span>
                             </div>
@@ -3898,7 +3409,7 @@ function buildProfileOverview(axes, profile) {
                 html += `<div style="margin-bottom:12px;">
                     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
                         <span style="font-size:12px;color:#ccc;">${sanitizeHTML(t.name)}</span>
-                        <span style="font-size:11px;font-family:monospace;font-weight:700;color:${barColor};">${pct}%</span>
+                        <span style="font-size:11px;font-family:'Courier New',monospace;font-weight:700;color:${barColor};">${pct}%</span>
                     </div>
                     <div style="height:6px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden;">
                         <div style="width:${pct}%;height:100%;background:${barColor};border-radius:3px;transition:width 1s cubic-bezier(0.25,0.46,0.45,0.94);"></div>
@@ -3911,6 +3422,245 @@ function buildProfileOverview(axes, profile) {
         }
 
         // 레이더 차트 제거됨 — Diverging Bar로 대체
+
+        // ─── 시뮬레이션 인사이트 렌더링 ───
+        // ─── 터미널 패널 래퍼 (Screens 1&2 통일감) ───
+        function terminalPanel(title, bodyHTML, opts = {}) {
+            const mb = opts.mb || 20;
+            return `<div style="background:#0c0c14;border:1px solid #1a1a2e;border-radius:10px;overflow:hidden;margin-bottom:${mb}px;">` +
+                `<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:#12121e;border-bottom:1px solid #1a1a2e;">` +
+                `<div style="width:8px;height:8px;border-radius:50%;background:#ff5f57;"></div>` +
+                `<div style="width:8px;height:8px;border-radius:50%;background:#ffbd2e;"></div>` +
+                `<div style="width:8px;height:8px;border-radius:50%;background:#28c840;"></div>` +
+                `<span style="font-size:11px;color:#999;margin-left:8px;font-family:'Courier New',monospace;">${title}</span>` +
+                `</div>` +
+                `<div style="padding:16px 18px;">${bodyHTML}</div>` +
+                `</div>`;
+        }
+
+        function buildSimulationInsight(sim) {
+            if (!sim) return '';
+
+            let body = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+
+            // Card 1: 궤적 (Trajectory)
+            body += '<div style="background:rgba(255,255,255,0.02);border:1px solid #1a1a2e;border-radius:8px;padding:12px 14px;">';
+            body += '<div style="font-size:10px;color:var(--ac);font-weight:700;letter-spacing:0.3px;margin-bottom:6px;font-family:\'Courier New\',monospace;">// 궤적</div>';
+            if (sim.trajectory) {
+                const t = sim.trajectory;
+                const driftLabel = t.drift > 0.1 ? '상승' : t.drift < -0.1 ? '하강' : '안정';
+                const volLabel = t.volatility > 0.5 ? '높음' : t.volatility > 0.25 ? '보통' : '낮음';
+                body += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;">경향: <span style="color:var(--ac);font-weight:600;">${driftLabel}</span></div>`;
+                body += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;">변동성: <span style="color:var(--ac);font-weight:600;">${volLabel}</span></div>`;
+                if (t.phase) body += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;">단계: <span style="color:var(--ac);font-weight:600;">${sanitizeHTML(t.phase)}</span></div>`;
+            } else {
+                body += '<div style="font-size:11px;color:var(--text-dim);">데이터 없음</div>';
+            }
+            body += '</div>';
+
+            // Card 2: 방어 패턴 (Defense Pattern)
+            body += '<div style="background:rgba(255,255,255,0.02);border:1px solid #1a1a2e;border-radius:8px;padding:12px 14px;">';
+            body += '<div style="font-size:10px;color:var(--ac);font-weight:700;letter-spacing:0.3px;margin-bottom:6px;font-family:\'Courier New\',monospace;">// 방어</div>';
+            if (sim.defense) {
+                const d = sim.defense;
+                if (d.primary) body += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;"><span style="color:var(--ac);font-weight:600;">${sanitizeHTML(d.primary)}</span></div>`;
+                if (d.secondary) body += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;">2차: <span style="color:var(--ac);font-weight:600;">${sanitizeHTML(d.secondary)}</span></div>`;
+                if (d.trigger) body += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;margin-top:4px;">${sanitizeHTML(d.trigger)}</div>`;
+            } else {
+                body += '<div style="font-size:11px;color:var(--text-dim);">데이터 없음</div>';
+            }
+            body += '</div>';
+
+            // Card 3: 자극-반응 (Stimulus-Response)
+            body += '<div style="background:rgba(255,255,255,0.02);border:1px solid #1a1a2e;border-radius:8px;padding:12px 14px;">';
+            body += '<div style="font-size:10px;color:var(--ac);font-weight:700;letter-spacing:0.3px;margin-bottom:6px;font-family:\'Courier New\',monospace;">// 자극-반응</div>';
+            if (sim.stimulus) {
+                const s = sim.stimulus;
+                const stimTypes = [
+                    { key: 'conflict', label: '갈등' },
+                    { key: 'intimacy', label: '친밀' },
+                    { key: 'stress', label: '스트레스' },
+                    { key: 'novelty', label: '새로움' },
+                ];
+                for (const st of stimTypes) {
+                    const data = s[st.key];
+                    if (data && data.delta !== undefined) {
+                        const delta = data.delta;
+                        const arrow = delta > 0.1 ? '↑' : delta < -0.1 ? '↓' : '→';
+                        const color = Math.abs(delta) > 0.3 ? '#f87171' : Math.abs(delta) > 0.15 ? '#f59e0b' : 'var(--ac)';
+                        body += `<span style="display:inline-block;padding:4px 8px;background:rgba(255,255,255,0.03);border:1px solid #1a1a2e;border-radius:4px;font-size:10px;margin:2px 2px 2px 0;font-family:'Courier New',monospace;"><span style="color:var(--text-dim);">${st.label}</span> <span style="color:${color};font-weight:600;">${arrow}</span></span>`;
+                    }
+                }
+            } else {
+                body += '<div style="font-size:11px;color:var(--text-dim);">데이터 없음</div>';
+            }
+            body += '</div>';
+
+            // Card 4: 리스크 (Risk)
+            body += '<div style="background:rgba(255,255,255,0.02);border:1px solid #1a1a2e;border-radius:8px;padding:12px 14px;">';
+            body += '<div style="font-size:10px;color:var(--ac);font-weight:700;letter-spacing:0.3px;margin-bottom:6px;font-family:\'Courier New\',monospace;">// 리스크</div>';
+            if (sim.risk) {
+                const r = sim.risk;
+                if (r.level) {
+                    const levelColor = r.level === 'high' ? '#f87171' : r.level === 'medium' ? '#f59e0b' : '#28c840';
+                    const levelLabel = r.level === 'high' ? '높음' : r.level === 'medium' ? '보통' : '낮음';
+                    body += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;">수준: <span style="color:${levelColor};font-weight:600;">${levelLabel}</span></div>`;
+                }
+                if (r.factors && r.factors.length > 0) {
+                    body += `<div style="font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4;">${r.factors.slice(0,2).map(f => sanitizeHTML(f)).join(' · ')}</div>`;
+                }
+            } else {
+                body += '<div style="font-size:11px;color:var(--text-dim);">데이터 없음</div>';
+            }
+            body += '</div>';
+
+            body += '</div>';
+            return terminalPanel('simulation.engine', body);
+        }
+
+        // ─── 교차 시뮬레이션 인사이트 렌더링 (매칭용) ───
+        function buildCrossSimInsight(cross, matchId) {
+            if (!cross) return '';
+            let html = '';
+
+            // a) Relationship Identity — terminal panel
+            if (matchId) {
+                let idBody = `<div style="text-align:center;padding:8px 0;">`;
+                idBody += `<div style="font-size:32px;margin-bottom:8px;">${sanitizeHTML(matchId.emoji_a)} × ${sanitizeHTML(matchId.emoji_b)}</div>`;
+                idBody += `<div style="font-size:15px;color:var(--ac);font-weight:700;margin:8px 0 4px;font-family:'Courier New',monospace;">${sanitizeHTML(matchId.name)}</div>`;
+                idBody += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;max-width:360px;margin:0 auto;">${sanitizeHTML(matchId.tagline)}</div>`;
+                idBody += `</div>`;
+                html += terminalPanel('relationship.identity', idBody);
+            }
+
+            // b) Dashboard Cards — terminal panel with 3-col gauge grid
+            let dashBody = `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">`;
+
+            const compatColor = matchId && matchId.compatibility >= 70 ? '#28c840' : matchId && matchId.compatibility >= 40 ? '#ffbd2e' : '#ff5f57';
+            dashBody += `<div style="text-align:center;padding:14px 8px;background:rgba(255,255,255,0.02);border:1px solid #1a1a2e;border-radius:8px;">`;
+            dashBody += `<div style="font-size:20px;font-weight:800;font-family:'Courier New',monospace;color:${compatColor};">${matchId ? matchId.compatibility : '–'}%</div>`;
+            dashBody += `<div style="font-size:9px;color:var(--text-dim);margin-top:4px;font-family:'Courier New',monospace;">호환성</div>`;
+            dashBody += `</div>`;
+
+            dashBody += `<div style="text-align:center;padding:14px 8px;background:rgba(255,255,255,0.02);border:1px solid #1a1a2e;border-radius:8px;">`;
+            dashBody += `<div style="font-size:20px;font-weight:800;font-family:'Courier New',monospace;color:var(--text);">${matchId ? sanitizeHTML(matchId.tension) : '–'}</div>`;
+            dashBody += `<div style="font-size:9px;color:var(--text-dim);margin-top:4px;font-family:'Courier New',monospace;">긴장도</div>`;
+            dashBody += `</div>`;
+
+            dashBody += `<div style="text-align:center;padding:14px 8px;background:rgba(255,255,255,0.02);border:1px solid #1a1a2e;border-radius:8px;">`;
+            dashBody += `<div style="font-size:20px;font-weight:800;font-family:'Courier New',monospace;color:var(--ac);">${matchId ? sanitizeHTML(matchId.growth) : '–'}</div>`;
+            dashBody += `<div style="font-size:9px;color:var(--text-dim);margin-top:4px;font-family:'Courier New',monospace;">성장 잠재력</div>`;
+            dashBody += `</div>`;
+
+            dashBody += `</div>`;
+            html += terminalPanel('compatibility.metrics', dashBody);
+
+            // c) Type Comparison — terminal panel with 2-col
+            if (matchId) {
+                let typeBody = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">`;
+                const codeA = matchId.code ? matchId.code.split(' × ')[0] : '–';
+                const codeB = matchId.code ? matchId.code.split(' × ')[1] : '–';
+                typeBody += `<div style="text-align:center;padding:14px;background:rgba(255,255,255,0.02);border:1px solid #1a1a2e;border-radius:8px;">`;
+                typeBody += `<div style="font-size:24px;margin-bottom:6px;">${sanitizeHTML(matchId.emoji_a)}</div>`;
+                typeBody += `<div style="font-size:10px;color:var(--ac);font-family:'Courier New',monospace;margin-bottom:4px;">${sanitizeHTML(codeA)}</div>`;
+                typeBody += `<div style="font-size:11px;color:var(--text);">프로필 A</div>`;
+                typeBody += `</div>`;
+                typeBody += `<div style="text-align:center;padding:14px;background:rgba(255,255,255,0.02);border:1px solid #1a1a2e;border-radius:8px;">`;
+                typeBody += `<div style="font-size:24px;margin-bottom:6px;">${sanitizeHTML(matchId.emoji_b)}</div>`;
+                typeBody += `<div style="font-size:10px;color:var(--ac);font-family:'Courier New',monospace;margin-bottom:4px;">${sanitizeHTML(codeB)}</div>`;
+                typeBody += `<div style="font-size:11px;color:var(--text);">프로필 B</div>`;
+                typeBody += `</div>`;
+                typeBody += `</div>`;
+                html += terminalPanel('type.comparison', typeBody);
+            }
+
+            // d) Cross-Simulation Cards — terminal panel
+            let crossBody = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">`;
+
+            // Card 1: 궤적 수렴
+            crossBody += `<div style="background:rgba(255,255,255,0.02);border:1px solid #1a1a2e;border-radius:8px;padding:12px 14px;">`;
+            crossBody += `<div style="font-size:10px;color:var(--ac);font-weight:700;letter-spacing:0.3px;margin-bottom:6px;font-family:'Courier New',monospace;">// 궤적 수렴</div>`;
+            if (cross.convergence) {
+                const convLabel = { convergent: '수렴', parallel: '평행', divergent: '발산' };
+                const convColor = { convergent: '#28c840', parallel: '#ffbd2e', divergent: '#ff5f57' };
+                crossBody += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;">방향: <span style="color:${convColor[cross.convergence] || '#ffbd2e'};font-weight:600;">${convLabel[cross.convergence] || cross.convergence}</span></div>`;
+            } else {
+                crossBody += `<div style="font-size:11px;color:var(--text-dim);">데이터 없음</div>`;
+            }
+            crossBody += `</div>`;
+
+            // Card 2: 방어 충돌
+            crossBody += `<div style="background:rgba(255,255,255,0.02);border:1px solid #1a1a2e;border-radius:8px;padding:12px 14px;">`;
+            crossBody += `<div style="font-size:10px;color:var(--ac);font-weight:700;letter-spacing:0.3px;margin-bottom:6px;font-family:'Courier New',monospace;">// 방어 충돌</div>`;
+            if (cross.defenseClash && cross.defenseClash.type) {
+                crossBody += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;"><span style="color:var(--ac);font-weight:600;">${sanitizeHTML(cross.defenseClash.type)}</span></div>`;
+                if (cross.defenseClash.desc) crossBody += `<div style="font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4;">${sanitizeHTML(cross.defenseClash.desc)}</div>`;
+            } else {
+                crossBody += `<div style="font-size:11px;color:var(--text-dim);">데이터 없음</div>`;
+            }
+            crossBody += `</div>`;
+
+            // Card 3: 애착 패턴
+            crossBody += `<div style="background:rgba(255,255,255,0.02);border:1px solid #1a1a2e;border-radius:8px;padding:12px 14px;">`;
+            crossBody += `<div style="font-size:10px;color:var(--ac);font-weight:700;letter-spacing:0.3px;margin-bottom:6px;font-family:'Courier New',monospace;">// 애착 패턴</div>`;
+            if (cross.attachmentCross) {
+                crossBody += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;"><span style="color:var(--ac);font-weight:600;">${sanitizeHTML(cross.attachmentCross.type || cross.attachmentCross)}</span></div>`;
+                if (cross.attachmentCross.desc) crossBody += `<div style="font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4;">${sanitizeHTML(cross.attachmentCross.desc)}</div>`;
+            } else {
+                crossBody += `<div style="font-size:11px;color:var(--text-dim);">데이터 없음</div>`;
+            }
+            crossBody += `</div>`;
+
+            // Card 4: 트리거 루프
+            crossBody += `<div style="background:rgba(255,255,255,0.02);border:1px solid #1a1a2e;border-radius:8px;padding:12px 14px;">`;
+            crossBody += `<div style="font-size:10px;color:var(--ac);font-weight:700;letter-spacing:0.3px;margin-bottom:6px;font-family:'Courier New',monospace;">// 트리거 루프</div>`;
+            if (cross.triggerLoops && cross.triggerLoops.length > 0) {
+                crossBody += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;">감지됨: <span style="color:var(--ac);font-weight:600;">${cross.triggerLoops.length}개</span></div>`;
+                if (cross.triggerLoops[0]) crossBody += `<div style="font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4;">${sanitizeHTML((cross.triggerLoops[0].desc || cross.triggerLoops[0].type).substring(0, 30))}</div>`;
+            } else {
+                crossBody += `<div style="font-size:11px;color:var(--text-dim);">감지 안됨</div>`;
+            }
+            crossBody += `</div>`;
+
+            crossBody += `</div>`;
+
+            // Axis Distance Bars (inside cross panel)
+            if (cross.axisDelta) {
+                crossBody += `<div style="margin-top:12px;">`;
+                crossBody += `<div style="font-size:10px;color:var(--ac);font-family:'Courier New',monospace;margin-bottom:8px;">// 축 거리</div>`;
+                const axes = ['정서', '동력', '인지', '경계', '회복', '방어'];
+                for (let i = 0; i < Math.min(axes.length, cross.axisDelta.length); i++) {
+                    const dist = cross.axisDelta[i] || 0;
+                    const barColor = dist < 0.2 ? '#28c840' : dist < 0.4 ? '#ffbd2e' : '#ff5f57';
+                    const width = Math.max(Math.min(dist * 100, 100), 2);
+                    crossBody += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">`;
+                    crossBody += `<div style="font-size:10px;color:var(--text-dim);width:36px;text-align:right;font-family:'Courier New',monospace;">${axes[i]}</div>`;
+                    crossBody += `<div style="flex:1;height:5px;background:rgba(255,255,255,0.04);border-radius:2px;overflow:hidden;"><div style="width:${width}%;height:100%;background:${barColor};border-radius:2px;"></div></div>`;
+                    crossBody += `</div>`;
+                }
+                crossBody += `</div>`;
+            }
+
+            // Inline Chips (inside cross panel)
+            let chipsHTML = '';
+            if (cross.conflictCross && cross.conflictCross.compatibility !== undefined) {
+                chipsHTML += `<span style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.03);border:1px solid #1a1a2e;border-radius:4px;font-size:10px;font-family:'Courier New',monospace;">갈등 호환: <span style="color:var(--ac);font-weight:600;">${cross.conflictCross.compatibility}%</span></span>`;
+            }
+            if (cross.recoveryMismatch) {
+                const level = typeof cross.recoveryMismatch === 'object' ? cross.recoveryMismatch.level || '알 수 없음' : cross.recoveryMismatch;
+                chipsHTML += `<span style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.03);border:1px solid #1a1a2e;border-radius:4px;font-size:10px;font-family:'Courier New',monospace;">회복 리듬: <span style="color:var(--ac);font-weight:600;">${sanitizeHTML(level)}</span></span>`;
+            }
+            if (cross.topicOverlap && cross.topicOverlap.jaccard !== undefined) {
+                chipsHTML += `<span style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.03);border:1px solid #1a1a2e;border-radius:4px;font-size:10px;font-family:'Courier New',monospace;">토픽: <span style="color:var(--ac);font-weight:600;">${(cross.topicOverlap.jaccard * 100).toFixed(0)}%</span></span>`;
+            }
+            if (chipsHTML) {
+                crossBody += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;">${chipsHTML}</div>`;
+            }
+
+            html += terminalPanel('cross.simulation', crossBody);
+
+            return html;
+        }
 
 function displayResult() {
             const profile = currentProfile;
@@ -3929,6 +3679,10 @@ function displayResult() {
             // ─── Profile Overview: 희소성 + 핵심 특이점 + 영역별 위치 ───
             const overviewHTML = buildProfileOverview(axes, profile);
             document.getElementById('profileOverview').innerHTML = overviewHTML;
+
+            // ─── 시뮬레이션 인사이트 (프로필 오버뷰 안에 통합) ───
+            const simCardsHTML = profile.simulation ? buildSimulationInsight(profile.simulation) : '';
+            document.getElementById('simulationCards').innerHTML = simCardsHTML;
 
             // Clear sensitive data after results are displayed
             setTimeout(() => {
@@ -3951,7 +3705,7 @@ function displayResult() {
                             const subTitle = sanitizeHTML(sub.title || '');
                             const subContent = formatLLMContent(sub.content || '');
                             if (subContent) {
-                                subsHTML += `<div style="margin-top:16px;"><div style="font-size:13px;color:#60A5FA;font-weight:700;margin-bottom:6px;">${subTitle}</div><div style="font-size:13.5px;line-height:1.85;color:var(--text);">${subContent}</div></div>`;
+                                subsHTML += `<div style="margin-top:16px;"><div style="font-size:13px;color:var(--ac);font-weight:600;margin-bottom:6px;">${subTitle}</div><div style="font-size:13px;line-height:1.7;color:var(--text);">${subContent}</div></div>`;
                             }
                         });
                     }
@@ -3974,7 +3728,7 @@ function displayResult() {
                     lensesHTML += `
                         <div class="lens-card" style="margin-bottom:12px;">
                             <div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')" style="cursor:pointer;">
-                                <span class="lens-title" style="font-weight:700;font-size:15px;">${sectionNum}. ${title}</span>
+                                <span class="lens-title" style="font-weight:600;font-size:13px;">${sectionNum}. ${title}</span>
                                 <span class="lens-toggle">▼</span>
                             </div>
                             <div class="lens-content${idx === 0 ? ' active' : ''}">${displayContent}</div>
@@ -4219,100 +3973,16 @@ function displayResult() {
 
         // ============ MATCHING ============
         function computeCompatibility(profileA, profileB) {
-        const intensities_a = profileA.axes.intensity;
-        const intensities_b = profileB.axes.intensity;
-
-        // L6 Intensity similarity (normalized 0-1, lower = more similar)
-        const intensity_friction = (
-            Math.abs(intensities_a.A1 - intensities_b.A1) +
-            Math.abs(intensities_a.A2 - intensities_b.A2) +
-            Math.abs(intensities_a.A3 - intensities_b.A3) +
-            Math.abs(intensities_a.A4 - intensities_b.A4) +
-            Math.abs(intensities_a.A5 - intensities_b.A5) +
-            Math.abs(intensities_a.A6 - intensities_b.A6)
-        ) / 6;
-
-        // L6 Structural friction via collision matrix
-        let structural_friction = 0;
-        let count = 0;
-        const structKeys = ['A7', 'A8', 'A9', 'A10', 'A11'];
-        structKeys.forEach(axisId => {
-            const styleA = profileA.axes.structural[axisId].primary;
-            const styleB = profileB.axes.structural[axisId].primary;
-            const key = styleA + '_' + styleB;
-            if (CONFLICT_MATRIX[axisId] && CONFLICT_MATRIX[axisId][key] !== undefined) {
-                structural_friction += CONFLICT_MATRIX[axisId][key];
-                count++;
-            }
-        });
-        structural_friction = count > 0 ? structural_friction / count : 0;
-
-        // L6 LSM similarity (0-1, higher = more similar)
-        const lsm_similarity = computeLSMSimilarity(
-            profileA.functionWordProfile,
-            profileB.functionWordProfile
-        );
-        const lsm_friction = 1 - lsm_similarity;
-
-        // L6 weighted formula: 0.40 intensity + 0.40 structural + 0.20 LSM
-        const total_friction = 0.40 * intensity_friction + 0.40 * structural_friction + 0.20 * lsm_friction;
-        const compatibility = (1 - total_friction) * 100;
-
-        return {
-            score: Math.max(0, Math.min(100, compatibility)),
-            intensity_friction,
-            structural_friction,
-            lsm_similarity,
-            lsm_friction,
-            total_friction
-        };
-    }
+            // Server computes this now — return placeholder
+            return { score: 50, intensity_friction: 0, structural_friction: 0, lsm_similarity: 0.5, lsm_friction: 0.5, total_friction: 0.5 };
+        }
 
         async function displayMatch() {
             const result = computeCompatibility(currentProfile, matchProfile);
 
-            document.getElementById('compatScore').textContent = result.score.toFixed(0) + '%';
-
-            let frictionHTML = '';
-            const allAxes = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'A10', 'A11'];
-
-            allAxes.forEach(axisId => {
-                let friction = 0;
-                if (axisId.match(/A[1-6]/)) {
-                    const a = currentProfile.axes.intensity[axisId];
-                    const b = matchProfile.axes.intensity[axisId];
-                    friction = Math.abs(a - b);
-                } else {
-                    const styleA = currentProfile.axes.structural[axisId].primary;
-                    const styleB = matchProfile.axes.structural[axisId].primary;
-                    const key = styleA + '_' + styleB;
-                    friction = CONFLICT_MATRIX[axisId][key] || 0.5;
-                }
-
-                const width = Math.max(friction * 100, 2);
-                frictionHTML += `
-                    <div class="friction-axis">
-                        <div class="friction-label">${axisId} ${AXIS_LABELS[axisId]}</div>
-                        <div class="friction-bar-container">
-                            <div class="friction-bar" style="width: ${width}%;"></div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            document.getElementById('frictionAxes').innerHTML = frictionHTML;
-
             // Display identity comparison (v3)
             const idA = currentProfile.identity || { emoji: '🔮', code: '-', name: '-' };
             const idB = matchProfile.identity || { emoji: '🔮', code: '-', name: '-' };
-
-            document.getElementById('matchType1Emoji').textContent = idA.emoji;
-            document.getElementById('matchType1Code').textContent = idA.code;
-            document.getElementById('matchType1Name').textContent = idA.name;
-
-            document.getElementById('matchType2Emoji').textContent = idB.emoji;
-            document.getElementById('matchType2Code').textContent = idB.code;
-            document.getElementById('matchType2Name').textContent = idB.name;
 
             // Compute match identity
             const matchId = computeMatchIdentity(currentProfile.axes, matchProfile.axes, idA, idB);
@@ -4322,10 +3992,17 @@ function displayResult() {
             if (USE_LLM) {
                 const llmMatch = await callWorkerMatch(currentProfile, matchProfile, idA, idB, matchId);
                 if (llmMatch && llmMatch.sections && Array.isArray(llmMatch.sections)) {
-                    // v3 matching response — render 6 sections
+                    // v3 matching response — render with new layout
+
+                    // 1. Render Relationship Identity + Dashboard + Type Comparison + Cross-Sim
+                    const identityHTML = buildCrossSimInsight(llmMatch.crossSimulation, matchId);
+                    document.getElementById('matchRelationIdentity').innerHTML = identityHTML;
+
+                    // 2. Build and render essay sections
                     let matchSectionsHTML = '';
                     llmMatch.sections.forEach((section, idx) => {
                         const isOpen = idx === 0 ? ' active' : '';
+                        const sectionNum = idx + 1;
                         const title = sanitizeHTML(section.title || '');
                         const summary = formatLLMContent(section.summary || '');
                         let subsHTML = '';
@@ -4334,17 +4011,24 @@ function displayResult() {
                                 const subTitle = sanitizeHTML(sub.title || '');
                                 const subContent = formatLLMContent(sub.content || '');
                                 if (subContent) {
-                                    subsHTML += `<div style="margin-top:12px;"><div style="font-size:12px;color:#60A5FA;font-weight:600;margin-bottom:4px;">${subTitle}</div><div style="font-size:13px;line-height:1.7;">${subContent}</div></div>`;
+                                    subsHTML += `<div style="margin-top:12px;"><div style="font-size:12px;color:var(--ac);font-weight:600;margin-bottom:4px;">${subTitle}</div><div style="font-size:13px;line-height:1.7;">${subContent}</div></div>`;
                                 }
                             });
                         }
-                        matchSectionsHTML += `<div class="lens-card"><div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')"><span class="lens-title">${title} <span style="font-size:10px;color:var(--ac);font-weight:400;">AI v3</span></span><span class="lens-toggle">▼</span></div><div class="lens-content${isOpen}"><div style="font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:8px;">${summary}</div>${subsHTML}</div></div>`;
+                        const summaryBox = summary
+                            ? `<div style="background:rgba(255,255,255,0.04);border-left:3px solid var(--ac);padding:12px 16px;margin-bottom:12px;font-size:13px;line-height:1.7;color:var(--text);border-radius:0 6px 6px 0;">${summary}</div>`
+                            : '';
+                        matchSectionsHTML += `<div class="lens-card" style="margin-bottom:12px;"><div class="lens-header" onclick="this.parentElement.querySelector('.lens-content').classList.toggle('active')" style="cursor:pointer;"><span class="lens-title" style="font-weight:600;font-size:13px;">${sectionNum}. ${title}</span><span class="lens-toggle">▼</span></div><div class="lens-content${isOpen}">${summaryBox}${subsHTML}</div></div>`;
                     });
-                    // Show match identity + sections
-                    document.getElementById('matchStrengths').innerHTML = `<div style="text-align:center;margin-bottom:15px;"><div style="font-size:20px;">${sanitizeHTML(matchId.emoji_a)} × ${sanitizeHTML(matchId.emoji_b)}</div><div style="font-size:16px;color:var(--ac);margin:5px 0;">${sanitizeHTML(matchId.name)}</div><div style="font-size:12px;color:var(--text-dim);">${sanitizeHTML(matchId.tagline)}</div><div style="margin-top:8px;font-size:11px;">호환성 ${matchId.compatibility}% · 긴장도 ${sanitizeHTML(matchId.tension)} · 성장 ${sanitizeHTML(matchId.growth)}</div></div>`;
-                    document.getElementById('matchRisks').innerHTML = matchSectionsHTML;
-                    document.getElementById('matchGrowth').textContent = '';
-                    document.getElementById('matchOutlook').textContent = '';
+
+                    document.getElementById('matchEssays').innerHTML = matchSectionsHTML;
+                    document.getElementById('matchEssaySection').style.display = '';
+                    document.getElementById('matchFallbackAnalysis').style.display = 'none';
+
+                    // Hide type comparison and fallback sections since they're in the integrated cross-sim
+                    document.getElementById('matchTypeComparison').innerHTML = '';
+                    document.getElementById('matchCrossSim').innerHTML = '';
+
                     analysis = null;
                 } else if (llmMatch && llmMatch.strengths) {
                     analysis = llmMatch;
@@ -4355,14 +4039,27 @@ function displayResult() {
                 analysis = generateEnhancedAnalysis(currentProfile, matchProfile, result);
             }
 
-            // Display strengths/risks/growth (only if analysis is non-null, i.e. fallback mode)
+            // Display fallback analysis (only if analysis is non-null, i.e. no LLM sections)
             if (analysis) {
+                // Show match relationship identity (terminal panel)
+                let idBody = `<div style="text-align:center;padding:8px 0;">`;
+                idBody += `<div style="font-size:32px;margin-bottom:8px;">${sanitizeHTML(matchId.emoji_a)} × ${sanitizeHTML(matchId.emoji_b)}</div>`;
+                idBody += `<div style="font-size:15px;color:var(--ac);font-weight:700;margin:8px 0 4px;font-family:'Courier New',monospace;">${sanitizeHTML(matchId.name)}</div>`;
+                idBody += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;max-width:360px;margin:0 auto;">${sanitizeHTML(matchId.tagline)}</div>`;
+                idBody += `</div>`;
+                document.getElementById('matchRelationIdentity').innerHTML = terminalPanel('relationship.identity', idBody);
+
                 const strengthsHTML = analysis.strengths.map(s => `<li>${s}</li>`).join('');
                 document.getElementById('matchStrengths').innerHTML = strengthsHTML;
                 const risksHTML = analysis.risks.map(r => `<li>${r}</li>`).join('');
                 document.getElementById('matchRisks').innerHTML = risksHTML;
-                document.getElementById('matchGrowth').textContent = analysis.growth;
-                document.getElementById('matchOutlook').textContent = analysis.outlook;
+                document.getElementById('matchGrowth').innerHTML = analysis.growth;
+                document.getElementById('matchOutlook').innerHTML = analysis.outlook;
+
+                document.getElementById('matchEssaySection').style.display = 'none';
+                document.getElementById('matchFallbackAnalysis').style.display = '';
+                document.getElementById('matchTypeComparison').innerHTML = '';
+                document.getElementById('matchCrossSim').innerHTML = '';
             }
 
             document.getElementById('matchResultsContainer').classList.remove('hidden');
@@ -4565,7 +4262,11 @@ function displayResult() {
         function goToLanding() {
             currentProfile = null;
             matchProfile = null;
-            showScreen('landing');
+            if (currentUser) {
+                showScreen('landing');
+            } else {
+                showScreen('login');
+            }
         }
 
         function goToResult() {
@@ -4581,7 +4282,7 @@ function displayResult() {
         // ============ FILE UPLOAD HANDLERS ============
         // fileInput handler removed - created dynamically via uploadZone click
 
-        document.getElementById('uploadZone').addEventListener('click', function() {
+        document.getElementById('uploadArea').addEventListener('click', function() {
             var inp = document.createElement('input');
             inp.type = 'file';
             inp.accept = '.json,.zip';
@@ -4591,24 +4292,51 @@ function displayResult() {
             inp.click();
         });
 
-        document.getElementById('uploadZone').addEventListener('dragover', (e) => {
+        document.getElementById('uploadArea').addEventListener('dragover', (e) => {
             e.preventDefault();
-            document.getElementById('uploadZone').style.backgroundColor = 'rgba(245, 166, 35, 0.1)';
+            document.getElementById('uploadArea').style.backgroundColor = 'rgba(245, 166, 35, 0.1)';
         });
 
-        document.getElementById('uploadZone').addEventListener('dragleave', () => {
-            document.getElementById('uploadZone').style.backgroundColor = '';
+        document.getElementById('uploadArea').addEventListener('dragleave', () => {
+            document.getElementById('uploadArea').style.backgroundColor = '';
         });
 
-        document.getElementById('uploadZone').addEventListener('drop', (e) => {
+        document.getElementById('uploadArea').addEventListener('drop', (e) => {
             e.preventDefault();
-            document.getElementById('uploadZone').style.backgroundColor = '';
+            document.getElementById('uploadArea').style.backgroundColor = '';
             if (e.dataTransfer.files[0]) {
                 analyzeConversation(e.dataTransfer.files[0]);
             }
         });
 
         // matchFileInput handler removed - created dynamically
+
+        // ============ GOOGLE SIGN-IN INITIALIZATION ============
+        try {
+            google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: onGoogleSignIn,
+                auto_select: true,
+            });
+            // Render the sign-in button
+            const btnContainer = document.getElementById('googleSignInBtn');
+            if (btnContainer) {
+                google.accounts.id.renderButton(btnContainer, {
+                    theme: 'filled_black',
+                    size: 'large',
+                    shape: 'rectangular',
+                    text: 'signin_with',
+                    width: 280,
+                });
+            }
+            // Try restore session
+            restoreSession();
+            if (!currentUser) {
+                google.accounts.id.prompt(); // Show One Tap
+            }
+        } catch(e) {
+            console.warn('[KNOT] Google Sign-In init failed:', e);
+        }
 
         // ============ INSTAGRAM SHARE CARD ============
         function roundRect(ctx, x, y, w, h, r) {
