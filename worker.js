@@ -720,9 +720,6 @@ class PrismP2DepthAnalyzer {
     if (maxScore === 0) {
       // 길이만으로 depth를 결정하지 않음 — 짧은 메시지도 맥락에서 의미 있을 수 있음
       if (text.length < 5) return 'surface';
-      if (text.length < 15) return 'casual';
-      // 50자 이상인데 신호가 없으면 casual이 아니라 맥락 판단
-      if (text.length >= 50) return 'casual';
       return 'casual';
     }
 
@@ -1564,7 +1561,7 @@ function R3EmotionalAnalyzer_analyze(texts) {
   const solRatio = solution / (total + ANCHOR_CONFIG.EPSILON);
   const spaceRatio = space / (total + ANCHOR_CONFIG.EPSILON);
   if (solRatio > 0.15 && spaceRatio > 0.15 && magnitudeNorm > 0.2) {
-    sol_vs_space = "alpha_integrated";
+    sol_vs_space = "balanced";
   }
 
   // #7: 자기 개방도는 H2AI 보정된 가중치 사용
@@ -1873,8 +1870,8 @@ function l1FallbackDecisionTree(texts, prism, anchor) {
 
   // A2 정서 안정성: 인과 접속사 + 문장 길이 일관성
   const lengths = texts.map(t => t.length);
-  const lenMean = lengths.reduce((a, b) => a + b, 0) / lengths.length;
-  const lenStd = Math.sqrt(lengths.reduce((sum, l) => sum + (l - lenMean) ** 2, 0) / lengths.length);
+  const lenMean = lengths.length > 0 ? lengths.reduce((a, b) => a + b, 0) / lengths.length : 0;
+  const lenStd = lengths.length > 0 ? Math.sqrt(lengths.reduce((sum, l) => sum + (l - lenMean) ** 2, 0) / lengths.length) : 0;
   const lenCV = lenStd / (lenMean + PRISM_CONFIG.EPSILON);
   fallbackIntensity.A2 = Math.min(1.0, Math.max(0, 1.0 - lenCV));
 
@@ -2508,8 +2505,10 @@ function precomputeAxes(rawMessages, prism, anchor) {
   const flipRate = polarityFlips / (texts.length + EPS);
   // 4) 종합: 낮은 변동 + 낮은 극성 전환 = 높은 안정성
   let a2base = Math.min(1.0, Math.max(0, 1.0 - (emoCV * 0.5 + flipRate * 3.0)));
-  if (anchor?.attachment?.stress_shift === 'becomes_more_anxious') a2base = Math.max(0, a2base - 0.15);
-  if (anchor?.attachment?.stress_shift === 'stable_under_pressure') a2base = Math.min(1.0, a2base + 0.1);
+  // stress_shift: 'stable_under_pressure'|'mild_anxious_under_pressure'|'withdrawal_under_pressure'|'escalation_under_pressure'|'inconsistent_under_pressure'
+  const stressShift = anchor?.attachment?.stress_shift;
+  if (stressShift === 'mild_anxious_under_pressure' || stressShift === 'escalation_under_pressure' || stressShift === 'inconsistent_under_pressure') a2base = Math.max(0, a2base - 0.15);
+  if (stressShift === 'stable_under_pressure') a2base = Math.min(1.0, a2base + 0.1);
   intensity.A2 = a2base;
   confidence.A2 = texts.length > 20 ? 'high' : texts.length > 8 ? 'medium' : 'low';
 
@@ -2598,13 +2597,13 @@ function precomputeAxes(rawMessages, prism, anchor) {
   let domainCount = 0;
   for (const marker of L1_DOMAIN_MARKERS) { if (allText.includes(marker)) domainCount++; }
   const domainDensity = domainCount / L1_DOMAIN_MARKERS.length;
-  const depthLevel = prism?.depth?.overall_depth || 'surface';
+  const depthLevel = prism?.engagement?.overall_depth || 'surface';
   let a10primary = 'slow_burn';
   if (depthLevel === 'creative' || depthLevel === 'exploratory') a10primary = 'depth_seeker';
   else if (anchor?.attachment?.primary_tendency === 'leans_anxious') a10primary = 'fast_opener';
   else if (anchor?.attachment?.primary_tendency === 'leans_avoidant') a10primary = 'surface_locked';
   structural.A10 = { primary: a10primary, styles: { surface_locked: a10primary === 'surface_locked' ? 0.5 : 0.1, slow_burn: a10primary === 'slow_burn' ? 0.5 : 0.2, depth_seeker: a10primary === 'depth_seeker' ? 0.5 : 0.1, fast_opener: a10primary === 'fast_opener' ? 0.5 : 0.1 } };
-  confidence.A10 = (prism?.depth && anchor?.attachment) ? 'high' : 'medium';
+  confidence.A10 = (prism?.engagement?.overall_depth && anchor?.attachment) ? 'high' : 'medium';
 
   // A11 호혜성: 질문비율 + 공감/지지 표현 + 상대 언급 복합 판단
   const questionRatio = prism?.curiosity?.question_ratio || 0;
@@ -3389,31 +3388,32 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
   const triggerLoops = [];
   if (stimA && stimB) {
     // A의 conflict 반응이 높고 B의 conflict 회복이 느리면 → 갈등 루프
-    const aConflictDelta = stimA.conflict?.delta || 0;
-    const bConflictRecovery = stimB.conflict?.recovery_steps || 3;
-    if (Math.abs(aConflictDelta) > 0.3 && bConflictRecovery > 3) {
+    // deltas = {E, C, T, O, X}, vulnerability = number, recoveryRate = 0~1
+    const aConflictVuln = stimA.conflict?.vulnerability || 0;
+    const bConflictRecovery = stimB.conflict?.recoveryRate ?? 0.5;
+    if (aConflictVuln > 0.3 && bConflictRecovery < 0.33) {
       triggerLoops.push({ type: 'conflict_escalation', desc: 'A의 갈등 반응이 B의 회복 속도를 초과' });
     }
     // B의 conflict 반응이 높고 A의 conflict 회복이 느리면 → 역방향
-    const bConflictDelta = stimB.conflict?.delta || 0;
-    const aConflictRecovery = stimA.conflict?.recovery_steps || 3;
-    if (Math.abs(bConflictDelta) > 0.3 && aConflictRecovery > 3) {
+    const bConflictVuln = stimB.conflict?.vulnerability || 0;
+    const aConflictRecovery = stimA.conflict?.recoveryRate ?? 0.5;
+    if (bConflictVuln > 0.3 && aConflictRecovery < 0.33) {
       triggerLoops.push({ type: 'conflict_escalation_reverse', desc: 'B의 갈등 반응이 A의 회복 속도를 초과' });
     }
     // A가 intimacy에 큰 반응 + B가 intimacy에 작은 반응 → 친밀감 불균형
-    const aIntDelta = Math.abs(stimA.intimacy?.delta || 0);
-    const bIntDelta = Math.abs(stimB.intimacy?.delta || 0);
-    if (aIntDelta > 0.2 && bIntDelta < 0.1) {
+    const aIntVuln = stimA.intimacy?.vulnerability || 0;
+    const bIntVuln = stimB.intimacy?.vulnerability || 0;
+    if (aIntVuln > 0.2 && bIntVuln < 0.1) {
       triggerLoops.push({ type: 'intimacy_asymmetry', desc: 'A의 친밀감 민감도가 B보다 현저히 높음' });
-    } else if (bIntDelta > 0.2 && aIntDelta < 0.1) {
+    } else if (bIntVuln > 0.2 && aIntVuln < 0.1) {
       triggerLoops.push({ type: 'intimacy_asymmetry_reverse', desc: 'B의 친밀감 민감도가 A보다 현저히 높음' });
     }
     // stress 반응 비대칭
-    const aStressDelta = Math.abs(stimA.stress?.delta || 0);
-    const bStressDelta = Math.abs(stimB.stress?.delta || 0);
-    if (aStressDelta > 0.3 && bStressDelta < 0.1) {
+    const aStressVuln = stimA.stress?.vulnerability || 0;
+    const bStressVuln = stimB.stress?.vulnerability || 0;
+    if (aStressVuln > 0.3 && bStressVuln < 0.1) {
       triggerLoops.push({ type: 'stress_asymmetry', desc: 'A가 스트레스에 크게 흔들릴 때 B는 무반응' });
-    } else if (bStressDelta > 0.3 && aStressDelta < 0.1) {
+    } else if (bStressVuln > 0.3 && aStressVuln < 0.1) {
       triggerLoops.push({ type: 'stress_asymmetry_reverse', desc: 'B가 스트레스에 크게 흔들릴 때 A는 무반응' });
     }
   }
@@ -3755,8 +3755,8 @@ ${profileDesc}
         .map(([k, v]) => `${k}: ${v}`)
         .join(' | ')}\n`;
     }
-    if (prism.depth && Object.keys(prism.depth).length > 0) {
-      prompt += `사유 깊이: ${Object.entries(prism.depth)
+    if (prism.engagement && typeof prism.engagement === 'object' && prism.engagement.overall_depth) {
+      prompt += `사유 깊이: ${Object.entries({overall_depth: prism.engagement.overall_depth, depth_consistency: prism.engagement.depth_consistency})
         .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`)
         .join(' | ')}\n`;
       prompt += `⚠️ depth 점수는 LLM 대화의 짧은 메시지 특성상 실제보다 낮게 나올 수 있습니다. 전문 용어 사용, 집요한 반복 질문, 구조적 사고 흔적이 있다면 depth 점수를 그대로 반영하지 마세요.\n`;
@@ -4045,11 +4045,11 @@ B 고유 주제: ${(crossSim.topicOverlap.uniqueB || []).join(', ') || '없음'}
       if (anchorB.attachment.stress_shift) prompt += `B 스트레스 하 변화: ${anchorB.attachment.stress_shift}\n`;
     }
     if (anchorA?.conflict && anchorB?.conflict) {
-      prompt += `갈등 대처: A=${anchorA.conflict.default_mode || '미분류'}(유연성:${anchorA.conflict.flexibility || '미분류'}), B=${anchorB.conflict.default_mode || '미분류'}(유연성:${anchorB.conflict.flexibility || '미분류'})\n`;
+      prompt += `갈등 대처: A=${anchorA.conflict.default_mode || '미분류'}(유연성:${anchorA.conflict.pattern_flexibility || '미분류'}), B=${anchorB.conflict.default_mode || '미분류'}(유연성:${anchorB.conflict.pattern_flexibility || '미분류'})\n`;
       prompt += `회복 속도: A=${anchorA.conflict.recovery_speed || '미분류'}, B=${anchorB.conflict.recovery_speed || '미분류'}\n`;
     }
     if (anchorA?.emotional_availability && anchorB?.emotional_availability) {
-      prompt += `정서 반응: A=${anchorA.emotional_availability.response_mode || '미분류'}, B=${anchorB.emotional_availability.response_mode || '미분류'}\n`;
+      prompt += `정서 반응: A=${anchorA.emotional_availability.response_style || '미분류'}, B=${anchorB.emotional_availability.response_style || '미분류'}\n`;
     }
     if (anchorA?.growth && anchorB?.growth) {
       prompt += `성장 지향: A=${anchorA.growth.orientation || '미분류'}, B=${anchorB.growth.orientation || '미분류'}\n`;
