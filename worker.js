@@ -4361,19 +4361,35 @@ export default {
       // ──── GET /debug/latest ──── (임시 디버그용)
       if (request.method === 'GET' && url.pathname === '/debug/latest') {
         try {
-          const db = env.DB;
-          if (!db) return jsonResponse({ error: 'No DB' }, 500, corsHeaders);
-          const row = db.prepare('SELECT id, type_code, type_name, prism_json, anchor_json, axes_json FROM analyses ORDER BY created_at DESC LIMIT 1').first();
-          if (!row) return jsonResponse({ error: 'No analyses' }, 404, corsHeaders);
+          const db = env.KNOT_DB;
+          if (!db) return jsonResponse({ error: 'No DB binding (KNOT_DB)' }, 500, corsHeaders);
+          const row = await db.prepare('SELECT id, type_code, type_name, prism_json, anchor_json, axes_json FROM analyses ORDER BY created_at DESC LIMIT 1').first();
+          if (!row) return jsonResponse({ error: 'No analyses found' }, 404, corsHeaders);
+          const prism = row.prism_json ? JSON.parse(row.prism_json) : null;
+          const anchor = row.anchor_json ? JSON.parse(row.anchor_json) : null;
+          const axes = row.axes_json ? JSON.parse(row.axes_json) : null;
           return jsonResponse({
             id: row.id,
             type_code: row.type_code,
             type_name: row.type_name,
-            prism: row.prism_json ? JSON.parse(row.prism_json) : null,
-            anchor: row.anchor_json ? JSON.parse(row.anchor_json) : null,
-            axes: row.axes_json ? JSON.parse(row.axes_json) : null,
+            prism_depth: prism?.engagement?.overall_depth || 'NOT_FOUND',
+            prism_depth_consistency: prism?.engagement?.depth_consistency || 'NOT_FOUND',
+            prism_curiosity: prism?.curiosity || 'NOT_FOUND',
+            anchor_attachment: anchor?.attachment || 'NOT_FOUND',
+            anchor_conflict: anchor?.conflict || 'NOT_FOUND',
+            anchor_emotional: anchor?.emotional_availability || 'NOT_FOUND',
+            axes_summary: axes ? {
+              A10: axes.structural?.A10,
+              A3: axes.intensity?.A3,
+              A9: axes.structural?.A9,
+              A8: axes.structural?.A8,
+              A14: axes.intensity?.A14,
+            } : 'NOT_FOUND',
+            raw_prism: prism,
+            raw_anchor: anchor,
+            raw_axes: axes,
           }, 200, corsHeaders);
-        } catch(e) { return jsonResponse({ error: e.message }, 500, corsHeaders); }
+        } catch(e) { return jsonResponse({ error: e.message, stack: e.stack }, 500, corsHeaders); }
       }
 
       // ──── GET /share/:id ────
