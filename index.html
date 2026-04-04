@@ -4312,13 +4312,16 @@ function displayResult() {
         // matchFileInput handler removed - created dynamically
 
         // ============ GOOGLE SIGN-IN INITIALIZATION ============
-        try {
+        // GIS script is async defer — wait until it's ready
+        function initGoogleSignIn() {
+            if (typeof google === 'undefined' || !google.accounts) {
+                return false;
+            }
             google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
                 callback: onGoogleSignIn,
                 auto_select: true,
             });
-            // Render the sign-in button
             const btnContainer = document.getElementById('googleSignInBtn');
             if (btnContainer) {
                 google.accounts.id.renderButton(btnContainer, {
@@ -4329,13 +4332,24 @@ function displayResult() {
                     width: 280,
                 });
             }
-            // Try restore session
             restoreSession();
             if (!currentUser) {
-                google.accounts.id.prompt(); // Show One Tap
+                google.accounts.id.prompt();
             }
-        } catch(e) {
-            console.warn('[KNOT] Google Sign-In init failed:', e);
+            console.log('[KNOT] Google Sign-In initialized');
+            return true;
+        }
+
+        // Try immediately, then retry every 500ms up to 20 times (10s)
+        if (!initGoogleSignIn()) {
+            let gsiRetry = 0;
+            const gsiInterval = setInterval(() => {
+                gsiRetry++;
+                if (initGoogleSignIn() || gsiRetry >= 20) {
+                    clearInterval(gsiInterval);
+                    if (gsiRetry >= 20) console.warn('[KNOT] Google Sign-In load timeout');
+                }
+            }, 500);
         }
 
         // ============ INSTAGRAM SHARE CARD ============
