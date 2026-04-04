@@ -4368,26 +4368,45 @@ export default {
           const prism = row.prism_json ? JSON.parse(row.prism_json) : null;
           const anchor = row.anchor_json ? JSON.parse(row.anchor_json) : null;
           const axes = row.axes_json ? JSON.parse(row.axes_json) : null;
+
+          // Live ANCHOR test: run analyzeAnchor on 20 fake messages to verify the function works
+          let anchorLiveTest = 'NOT_RUN';
+          try {
+            const testMsgs = [
+              {sender:'user',text:'나 요즘 좀 힘들어 혼자 있고 싶어'},
+              {sender:'user',text:'왜 자꾸 연락해 좀 내버려둬'},
+              {sender:'user',text:'그냥 혼자 생각 정리 좀 하려고'},
+              {sender:'user',text:'사람 만나는 게 에너지 소모가 큼'},
+              {sender:'user',text:'나는 감정 표현 잘 안 하는 편이야'},
+              {sender:'user',text:'굳이 말 안 해도 되지 않아?'},
+              {sender:'user',text:'갈등이 생기면 그냥 거리를 둬'},
+              {sender:'user',text:'왜 그렇게 집착해 이해가 안 돼'},
+              {sender:'user',text:'혼자 있는 시간이 제일 편해'},
+              {sender:'user',text:'감정적으로 기대는 거 싫어'},
+              {sender:'user',text:'내가 알아서 할 테니까 걱정 마'},
+            ];
+            const testResult = analyzeAnchor(testMsgs);
+            const testSanitized = sanitizeAnchor(testResult);
+            anchorLiveTest = {
+              raw_success: testResult?.success,
+              raw_error: testResult?.error || null,
+              raw_attachment: testResult?.attachment?.primary_tendency,
+              sanitized_ok: !!testSanitized,
+              sanitized_keys: testSanitized ? Object.keys(testSanitized) : null,
+            };
+          } catch(e) { anchorLiveTest = { error: e.message }; }
+
           return jsonResponse({
             id: row.id,
             type_code: row.type_code,
             type_name: row.type_name,
+            ANCHOR_STORED_NULL: anchor === null,
+            anchor_live_test: anchorLiveTest,
             prism_depth: prism?.engagement?.overall_depth || 'NOT_FOUND',
-            prism_depth_consistency: prism?.engagement?.depth_consistency || 'NOT_FOUND',
-            prism_curiosity: prism?.curiosity || 'NOT_FOUND',
-            anchor_attachment: anchor?.attachment || 'NOT_FOUND',
-            anchor_conflict: anchor?.conflict || 'NOT_FOUND',
-            anchor_emotional: anchor?.emotional_availability || 'NOT_FOUND',
-            axes_summary: axes ? {
-              A10: axes.structural?.A10,
-              A3: axes.intensity?.A3,
-              A9: axes.structural?.A9,
-              A8: axes.structural?.A8,
-              A14: axes.intensity?.A14,
-            } : 'NOT_FOUND',
-            raw_prism: prism,
-            raw_anchor: anchor,
-            raw_axes: axes,
+            prism_curiosity_dominant: prism?.curiosity?.dominant_type || 'NOT_FOUND',
+            prism_curiosity_meta_pct: prism?.curiosity?.question_type_distribution?.meta || 'NOT_FOUND',
+            anchor_stored: anchor,
+            axes_A10: axes?.structural?.A10 || 'NOT_FOUND',
           }, 200, corsHeaders);
         } catch(e) { return jsonResponse({ error: e.message, stack: e.stack }, 500, corsHeaders); }
       }
@@ -4888,12 +4907,24 @@ function switchTab(id, el) {
 
         // Run ANCHOR deterministically server-side
         let anchor = null;
+        let _anchorDebug = { ran: false, error: null, resultKeys: null, sanitized: null };
         try {
+          _anchorDebug.ran = true;
           const anchorResult = analyzeAnchor(prismMessages);
+          _anchorDebug.resultKeys = anchorResult ? Object.keys(anchorResult) : 'null';
+          _anchorDebug.hasError = !!anchorResult?.error;
+          _anchorDebug.success = anchorResult?.success;
           if (anchorResult.success !== false && !anchorResult.error) {
             anchor = sanitizeAnchor(anchorResult);
+            _anchorDebug.sanitized = anchor ? 'OK' : 'NULL_AFTER_SANITIZE';
+          } else {
+            _anchorDebug.skipReason = anchorResult?.error || anchorResult?.message || 'unknown';
           }
-        } catch (e) { console.error('[ANCHOR Error]', e.message); }
+        } catch (e) {
+          _anchorDebug.error = e.message;
+          _anchorDebug.stack = e.stack?.split('\n').slice(0, 3).join(' | ');
+          console.error('[ANCHOR Error]', e.message, e.stack);
+        }
 
         // Diagnostic mode: return early without calling Claude API
         if (url.searchParams.get('diag') === '1') {
@@ -4907,7 +4938,10 @@ function switchTab(id, el) {
             },
             message_count: rawMessages.length,
             prism_ok: !!prism,
+            prism_depth: prism?.engagement?.overall_depth || 'MISSING',
             anchor_ok: !!anchor,
+            anchor_debug: _anchorDebug,
+            anchor_attachment: anchor?.attachment?.primary_tendency || 'MISSING',
             has_api_key: !!env.ANTHROPIC_API_KEY,
             scoring_prompt_length: scoringPrompt.length,
           }, 200, corsHeaders);
