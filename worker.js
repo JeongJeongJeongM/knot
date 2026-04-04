@@ -2686,9 +2686,10 @@ const SERVER_TYPE_AXES = [
     high: { letter: 'O', label: 'Open', desc: '경계를 열어두고 변화를 수용한다' },
     low:  { letter: 'W', label: 'Wall', desc: '경계를 세우고 안전한 영역을 지킨다' },
     calc: (d) => {
-      // Open: 높은 감정개방(A4) + 높은 관심도(A1) → 경계 개방
-      // Wall: 낮은 감정개방 + 낮은 관심도 → 경계 폐쇄
-      const openScore = ((d.A4 || 0.5) * 0.4 + (d.A1 || 0.5) * 0.3 + (d.A5 || 0.5) * 0.3);
+      // Open: 자기개방(A12) + 변화수용(A14) + 감정개방(A4) → 경계 개방
+      // Wall: 낮은 자기개방 + 낮은 변화수용 → 경계 폐쇄
+      // A1(정서 강도) 제거 — 감정 폭발 ≠ 경계 개방
+      const openScore = ((d.A12 || 0.5) * 0.35 + (d.A14 || 0.5) * 0.35 + (d.A4 || 0.5) * 0.3);
       const a10 = d._structural?.A10;
       const depthBonus = a10?.primary === 'fast_opener' ? 0.12 : a10?.primary === 'depth_seeker' ? 0.06 : a10?.primary === 'surface_locked' ? -0.1 : 0;
       return Math.max(0, Math.min(1, openScore + depthBonus));
@@ -2710,15 +2711,15 @@ const SERVER_TYPE_AXES = [
     high: { letter: 'E', label: 'Externalize', desc: '위협을 외부로 투사하고 환경을 통제하려 한다' },
     low:  { letter: 'I', label: 'Internalize', desc: '위협을 내면에 흡수하고 자기를 재조정하려 한다' },
     calc: (d) => {
-      // Externalize: 높은 감정표출(A1,A3) + 높은 주장성(A4) → 외부 투사
-      // Internalize: 높은 공감력(A2) + 높은 일관성(A6) → 내면 흡수
-      const emotionIntensity = (d.A1 || 0.5) * 0.6 + (d.A3 || 0.5) * 0.4;
+      // Externalize: 높은 주장성(A4) + 높은 사회적 주도(A5) + 갈등 직면(A8) → 외부 투사
+      // Internalize: 높은 안정성(A2) + 높은 권위수용(A6) → 내면 흡수
+      // A1 직접 사용 제거 — Emotion 축과의 중복 해소
       const assertiveness = (d.A4 || 0.5) * 0.5 + (d.A5 || 0.5) * 0.5;
       const internalTendency = (d.A2 || 0.5) * 0.5 + (d.A6 || 0.5) * 0.5;
-      // 외향 투사 vs 내면 흡수 = (공격적 에너지) vs (수용적 에너지)
+      const expressionDirect = (d.A3 || 0.5); // 감정 표현만 사용 (A1 제외)
       const a8 = d._structural?.A8;
-      const conflictBonus = a8?.primary === 'confrontational' ? 0.12 : a8?.primary === 'avoidant' ? -0.12 : 0;
-      return Math.max(0, Math.min(1, emotionIntensity * 0.3 + assertiveness * 0.3 + (1 - internalTendency) * 0.3 + 0.05 + conflictBonus));
+      const conflictBonus = a8?.primary === 'confrontational' ? 0.15 : a8?.primary === 'avoidant' ? -0.15 : a8?.primary === 'direct_engagement' ? 0.12 : 0;
+      return Math.max(0, Math.min(1, assertiveness * 0.35 + expressionDirect * 0.2 + (1 - internalTendency) * 0.3 + 0.05 + conflictBonus));
     }
   }
 ];
