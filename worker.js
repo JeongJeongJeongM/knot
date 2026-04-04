@@ -4801,7 +4801,18 @@ function switchTab(id, el) {
               console.log('[Stage 1] Using L1 fallback decision tree, confidence:', fallback._confidence);
             }
 
-            // Compute type code + identity server-side from LLM-produced axes
+            // ──── Structural axes deterministic override ────
+            // LLM temperature:0 can still flip categorical structural axes on
+            // borderline cases. Use precomputed (keyword/pattern) structural axes
+            // which are 100% deterministic, ensuring the type code never fluctuates.
+            {
+              const deterministicStructural = precomputeAxes(rawMessages, prism, anchor);
+              if (deterministicStructural && deterministicStructural.structural) {
+                axes.structural = deterministicStructural.structural;
+              }
+            }
+
+            // Compute type code + identity server-side
             const identity = computeServerIdentity(axes);
             const analysisId = crypto.randomUUID();
 
