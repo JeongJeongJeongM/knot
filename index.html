@@ -71,7 +71,7 @@
 
         .screen {
             display: none;
-            animation: fadeIn 0.3s ease-in;
+            animation: fadeIn 0.3s ease-in forwards;
         }
 
         .screen.active {
@@ -1677,8 +1677,8 @@
             </div>
         </div>
         </div><!-- /defaultLandingPanels -->
-
-</div>
+        </div><!-- /container -->
+    </div><!-- /screen landing -->
 
         
     
@@ -4285,7 +4285,12 @@ function displayResult() {
         // ============ UI CONTROLLERS ============
         function showScreen(name) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.querySelector('.screen.' + name).classList.add('active');
+            const target = document.querySelector('.screen.' + name);
+            // Force animation restart by removing/re-adding the element from flow
+            target.style.animation = 'none';
+            target.offsetHeight; // trigger reflow
+            target.style.animation = '';
+            target.classList.add('active');
         }
 
         function updateProgress(stage) {
