@@ -4727,6 +4727,23 @@ function displayResult() {
             const canvases = [];
             const llmSections = profile.llmResult && profile.llmResult.sections;
 
+            // Helper: find section from llmSections array by key or title
+            function findSection(sections, keyOrTitle) {
+                if (!sections || !Array.isArray(sections)) return null;
+                return sections.find(s => s.key === keyOrTitle || s.title === keyOrTitle) || null;
+            }
+            function getSectionSummary(sections, keyOrTitle) {
+                const s = findSection(sections, keyOrTitle);
+                if (!s) return '';
+                return String(s.summary || '').replace(/<[^>]*>/g, '').trim();
+            }
+            function getSubsectionText(sections, sectionKey, subTitle) {
+                const s = findSection(sections, sectionKey);
+                if (!s || !s.subsections) return '';
+                const sub = s.subsections.find(ss => ss.title === subTitle);
+                return sub ? String(sub.content || '').replace(/<[^>]*>/g, '').trim() : '';
+            }
+
             // ---- Card 1: Profile Overview ----
             const c1 = createCard(W, H);
             const ctx1 = c1.getContext('2d');
@@ -4753,12 +4770,12 @@ function displayResult() {
             ctx1.font = '400 28px -apple-system, BlinkMacSystemFont, sans-serif';
             wrapText(ctx1, type.desc, W/2, 660, W - 160, 40);
             drawDivider(ctx1, W, 780, AC);
-            let summaryText = '';
-            if (llmSections) {
-                summaryText = llmSections['세 문장 요약'] || llmSections['매력 포인트'] || '';
-                summaryText = summaryText.replace(/<[^>]*>/g, '').trim();
+            // Pull persona summary from llmSections array
+            let personaSummary = getSectionSummary(llmSections, 'persona') || getSectionSummary(llmSections, '페르소나');
+            if (!personaSummary && llmSections && Array.isArray(llmSections) && llmSections.length > 0) {
+                personaSummary = String(llmSections[0].summary || '').replace(/<[^>]*>/g, '').trim();
             }
-            if (summaryText) {
+            if (personaSummary) {
                 ctx1.fillStyle = 'rgba(245,166,35,0.3)';
                 ctx1.font = '700 72px Georgia, serif';
                 ctx1.textAlign = 'left';
@@ -4766,8 +4783,8 @@ function displayResult() {
                 ctx1.fillStyle = 'rgba(255,255,255,0.7)';
                 ctx1.font = '400 26px -apple-system, BlinkMacSystemFont, sans-serif';
                 ctx1.textAlign = 'center';
-                if (summaryText.length > 160) summaryText = summaryText.substring(0, 157) + '...';
-                wrapText(ctx1, summaryText, W/2, 860, W - 200, 38);
+                if (personaSummary.length > 200) personaSummary = personaSummary.substring(0, 197) + '...';
+                wrapText(ctx1, personaSummary, W/2, 860, W - 200, 38);
             }
             drawBranding(ctx1, W, H, AC);
             canvases.push(c1);
@@ -4849,68 +4866,131 @@ function displayResult() {
                 ctx3.fillText(t.value, W - 110, ty + 32);
                 ty += 90;
             });
-            if (llmSections) {
+            if (llmSections && Array.isArray(llmSections)) {
                 drawDivider(ctx3, W, ty + 20, AC); ty += 60;
-                const sectArr = Array.isArray(llmSections) ? llmSections : Object.entries(llmSections).map(([k,v]) => ({title:k, summary:typeof v==='string'?v:''}));
-                sectArr.slice(0, 3).forEach(section => {
+                // Show first 3 sections with fuller summaries
+                llmSections.slice(0, 3).forEach(section => {
                     const title = section.title || section.key || '';
-                    if (title === '세 문장 요약') return;
                     ctx3.fillStyle = AC;
                     ctx3.font = '700 24px -apple-system, BlinkMacSystemFont, sans-serif';
                     ctx3.textAlign = 'left';
                     ctx3.fillText('• ' + title, 100, ty);
                     let st = String(section.summary || '').replace(/<[^>]*>/g, '').trim();
-                    if (st.length > 80) st = st.substring(0, 77) + '...';
+                    if (st.length > 120) st = st.substring(0, 117) + '...';
                     ctx3.fillStyle = 'rgba(255,255,255,0.55)';
                     ctx3.font = '400 22px -apple-system, BlinkMacSystemFont, sans-serif';
-                    wrapText(ctx3, st, 120, ty + 35, W - 240, 30);
-                    ty += 100;
+                    const lines = wrapTextLines(st, ctx3, W - 240);
+                    lines.slice(0, 3).forEach((line, i) => {
+                        ctx3.fillText(line, 120, ty + 35 + i * 28);
+                    });
+                    ty += 45 + Math.min(lines.length, 3) * 28;
                 });
             }
             drawBranding(ctx3, W, H, AC);
             canvases.push(c3);
 
-            // ---- Card 4: LLM Deep Analysis ----
-            if (llmSections) {
-                const c4 = createCard(W, H);
-                const ctx4 = c4.getContext('2d');
-                drawCardBg(ctx4, W, H, BG);
-                drawCardHeader(ctx4, W, AC, DIM, type, 'AI 심층 분석');
-                let sy = 380;
-                const sectArr4 = Array.isArray(llmSections) ? llmSections : Object.entries(llmSections).map(([k,v]) => ({title:k, summary:typeof v==='string'?v:''}));
-                sectArr4.filter(s => (s.title||s.key) !== '세 문장 요약').forEach(section => {
-                    if (sy > H - 150) return;
-                    const title = section.title || section.key || '';
-                    ctx4.fillStyle = AC;
-                    ctx4.font = '700 26px -apple-system, BlinkMacSystemFont, sans-serif';
-                    ctx4.textAlign = 'left';
-                    ctx4.fillText(title, 100, sy);
-                    let txt = String(section.summary || '').replace(/<[^>]*>/g, '').trim();
-                    if (txt.length > 200) txt = txt.substring(0, 197) + '...';
-                    ctx4.fillStyle = 'rgba(255,255,255,0.6)';
-                    ctx4.font = '400 22px -apple-system, BlinkMacSystemFont, sans-serif';
-                    const lines = wrapTextLines(txt, ctx4, W - 200);
-                    lines.forEach((line, i) => {
-                        if (sy + 38 + i * 30 < H - 120) ctx4.fillText(line, 100, sy + 38 + i * 30);
+            // ---- Card 4 & 4b: LLM Deep Analysis (split into 2 cards) ----
+            if (llmSections && Array.isArray(llmSections)) {
+                const half = Math.ceil(llmSections.length / 2);
+                const cardSets = [llmSections.slice(0, half), llmSections.slice(half)];
+                const cardTitles = ['AI 심층 분석 (1)', 'AI 심층 분석 (2)'];
+                cardSets.forEach((sectGroup, ci) => {
+                    if (sectGroup.length === 0) return;
+                    const c4 = createCard(W, H);
+                    const ctx4 = c4.getContext('2d');
+                    drawCardBg(ctx4, W, H, BG);
+                    drawCardHeader(ctx4, W, AC, DIM, type, cardTitles[ci]);
+                    let sy = 380;
+                    sectGroup.forEach(section => {
+                        if (sy > H - 180) return;
+                        const title = section.title || section.key || '';
+                        // Section title
+                        ctx4.fillStyle = AC;
+                        ctx4.font = '700 28px -apple-system, BlinkMacSystemFont, sans-serif';
+                        ctx4.textAlign = 'left';
+                        ctx4.fillText(title, 100, sy);
+                        sy += 10;
+                        // Summary text
+                        let txt = String(section.summary || '').replace(/<[^>]*>/g, '').trim();
+                        if (txt.length > 150) txt = txt.substring(0, 147) + '...';
+                        ctx4.fillStyle = 'rgba(255,255,255,0.7)';
+                        ctx4.font = '400 22px -apple-system, BlinkMacSystemFont, sans-serif';
+                        const summLines = wrapTextLines(txt, ctx4, W - 200);
+                        summLines.slice(0, 4).forEach((line, i) => {
+                            if (sy + 30 + i * 28 < H - 130) ctx4.fillText(line, 100, sy + 30 + i * 28);
+                        });
+                        sy += 40 + Math.min(summLines.length, 4) * 28;
+                        // First subsection content as detail
+                        if (section.subsections && section.subsections.length > 0) {
+                            let subText = String(section.subsections[0].content || '').replace(/<[^>]*>/g, '').trim();
+                            if (subText.length > 100) subText = subText.substring(0, 97) + '...';
+                            if (subText && sy < H - 160) {
+                                ctx4.fillStyle = 'rgba(255,255,255,0.35)';
+                                ctx4.font = '400 20px -apple-system, BlinkMacSystemFont, sans-serif';
+                                const subLines = wrapTextLines(subText, ctx4, W - 240);
+                                subLines.slice(0, 2).forEach((line, i) => {
+                                    if (sy + i * 26 < H - 130) ctx4.fillText(line, 120, sy + i * 26);
+                                });
+                                sy += Math.min(subLines.length, 2) * 26 + 10;
+                            }
+                        }
+                        sy += 15;
                     });
-                    sy += 50 + lines.length * 30;
+                    drawBranding(ctx4, W, H, AC);
+                    canvases.push(c4);
                 });
-                drawBranding(ctx4, W, H, AC);
-                canvases.push(c4);
             }
 
-            // ---- Card 5: Identity Summary (v3) ----
+            // ---- Card 5: Identity Deep Summary ----
             {
                 const c5 = createCard(W, H);
                 const ctx5 = c5.getContext('2d');
                 drawCardBg(ctx5, W, H, BG);
                 drawCardHeader(ctx5, W, AC, DIM, type, '정체성 요약');
-                let py = 400;
-                ctx5.fillStyle = TEXT;
-                ctx5.font = '400 28px -apple-system, BlinkMacSystemFont, sans-serif';
-                ctx5.textAlign = 'center';
-                const tagline = type.tagline || '';
-                wrapText(ctx5, tagline, W/2, py, W - 160, 38);
+                let py = 380;
+                // Tagline
+                const tagline = type.tagline || type.desc || '';
+                if (tagline) {
+                    ctx5.fillStyle = 'rgba(245,166,35,0.3)';
+                    ctx5.font = '700 60px Georgia, serif';
+                    ctx5.textAlign = 'left';
+                    ctx5.fillText('\u201c', 80, py + 10);
+                    ctx5.fillStyle = TEXT;
+                    ctx5.font = '500 26px -apple-system, BlinkMacSystemFont, sans-serif';
+                    ctx5.textAlign = 'center';
+                    const tagLines = wrapTextLines(tagline, ctx5, W - 200);
+                    tagLines.slice(0, 3).forEach((line, i) => {
+                        ctx5.fillText(line, W/2, py + 10 + i * 36);
+                    });
+                    py += 20 + Math.min(tagLines.length, 3) * 36;
+                }
+                drawDivider(ctx5, W, py + 10, AC);
+                py += 50;
+                // Pull key insights from 무의식, 성장 지향점, 리스크 모델
+                const insightSections = [
+                    { key: 'unconscious', title: '무의식', label: '숨겨진 동기' },
+                    { key: 'growth_direction', title: '성장 지향점', label: '성장 방향' },
+                    { key: 'risk_model', title: '리스크 모델', label: '핵심 리스크' },
+                    { key: 'defense_system', title: '방어 체계', label: '방어 패턴' }
+                ];
+                insightSections.forEach(ins => {
+                    if (py > H - 200) return;
+                    const summary = getSectionSummary(llmSections, ins.key) || getSectionSummary(llmSections, ins.title);
+                    if (!summary) return;
+                    ctx5.fillStyle = AC;
+                    ctx5.font = '700 22px -apple-system, BlinkMacSystemFont, sans-serif';
+                    ctx5.textAlign = 'left';
+                    ctx5.fillText(ins.label, 100, py);
+                    let txt = summary;
+                    if (txt.length > 140) txt = txt.substring(0, 137) + '...';
+                    ctx5.fillStyle = 'rgba(255,255,255,0.6)';
+                    ctx5.font = '400 22px -apple-system, BlinkMacSystemFont, sans-serif';
+                    const lines = wrapTextLines(txt, ctx5, W - 200);
+                    lines.slice(0, 4).forEach((line, i) => {
+                        ctx5.fillText(line, 100, py + 32 + i * 28);
+                    });
+                    py += 45 + Math.min(lines.length, 4) * 28;
+                });
                 drawBranding(ctx5, W, H, AC);
                 canvases.push(c5);
             }
