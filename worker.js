@@ -4369,32 +4369,37 @@ export default {
           const anchor = row.anchor_json ? JSON.parse(row.anchor_json) : null;
           const axes = row.axes_json ? JSON.parse(row.axes_json) : null;
 
-          // Live ANCHOR test: run analyzeAnchor on 20 fake messages to verify the function works
-          let anchorLiveTest = 'NOT_RUN';
+          // Live ANCHOR component test: run each R1-R4 analyzer separately
+          let anchorLiveTest = {};
+          const testTexts = [
+            '나 요즘 좀 힘들어 혼자 있고 싶어',
+            '왜 자꾸 연락해 좀 내버려둬',
+            '그냥 혼자 생각 정리 좀 하려고',
+            '사람 만나는 게 에너지 소모가 큼',
+            '나는 감정 표현 잘 안 하는 편이야',
+            '굳이 말 안 해도 되지 않아?',
+            '갈등이 생기면 그냥 거리를 둬',
+            '왜 그렇게 집착해 이해가 안 돼',
+            '혼자 있는 시간이 제일 편해',
+            '감정적으로 기대는 거 싫어',
+            '내가 알아서 할 테니까 걱정 마',
+          ];
+          try { anchorLiveTest.R1 = R1AttachmentAnalyzer_analyze(testTexts); } catch(e) { anchorLiveTest.R1_error = e.message; }
+          try { anchorLiveTest.R2 = R2ConflictAnalyzer_analyze(testTexts); } catch(e) { anchorLiveTest.R2_error = e.message; }
+          try { anchorLiveTest.R3 = R3EmotionalAnalyzer_analyze(testTexts); } catch(e) { anchorLiveTest.R3_error = e.message; }
+          try { anchorLiveTest.R4 = R4GrowthAnalyzer_analyze(testTexts); } catch(e) { anchorLiveTest.R4_error = e.message; }
+          try { anchorLiveTest.markov = anchorMarkovTransition(testTexts); } catch(e) { anchorLiveTest.markov_error = e.message; }
+          // Full pipeline test
           try {
-            const testMsgs = [
-              {sender:'user',text:'나 요즘 좀 힘들어 혼자 있고 싶어'},
-              {sender:'user',text:'왜 자꾸 연락해 좀 내버려둬'},
-              {sender:'user',text:'그냥 혼자 생각 정리 좀 하려고'},
-              {sender:'user',text:'사람 만나는 게 에너지 소모가 큼'},
-              {sender:'user',text:'나는 감정 표현 잘 안 하는 편이야'},
-              {sender:'user',text:'굳이 말 안 해도 되지 않아?'},
-              {sender:'user',text:'갈등이 생기면 그냥 거리를 둬'},
-              {sender:'user',text:'왜 그렇게 집착해 이해가 안 돼'},
-              {sender:'user',text:'혼자 있는 시간이 제일 편해'},
-              {sender:'user',text:'감정적으로 기대는 거 싫어'},
-              {sender:'user',text:'내가 알아서 할 테니까 걱정 마'},
-            ];
-            const testResult = analyzeAnchor(testMsgs);
-            const testSanitized = sanitizeAnchor(testResult);
-            anchorLiveTest = {
-              raw_success: testResult?.success,
-              raw_error: testResult?.error || null,
-              raw_attachment: testResult?.attachment?.primary_tendency,
-              sanitized_ok: !!testSanitized,
-              sanitized_keys: testSanitized ? Object.keys(testSanitized) : null,
+            const testMsgs = testTexts.map(t => ({sender:'user',text:t}));
+            const fullResult = analyzeAnchor(testMsgs);
+            anchorLiveTest.full_pipeline = {
+              success: fullResult?.success,
+              error: fullResult?.error,
+              error_msg: fullResult?.message,
+              engine_version: fullResult?.engine_version,
             };
-          } catch(e) { anchorLiveTest = { error: e.message }; }
+          } catch(e) { anchorLiveTest.full_pipeline_error = e.message + ' | ' + e.stack?.split('\n').slice(0,3).join(' | '); }
 
           return jsonResponse({
             id: row.id,
