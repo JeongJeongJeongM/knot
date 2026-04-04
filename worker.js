@@ -4310,215 +4310,214 @@ export default {
 
         // ── Queries ──
         const [
-          totalAnalyses,
-          todayAnalyses,
-          weekAnalyses,
-          avgMsgCount,
-          typeDistribution,
-          axisAvgs,
-          feedbackStats,
-          feedbackRecent,
-          dailyCounts,
-          errorRate,
-          recentAnalyses,
+          totalAnalyses, todayAnalyses, weekAnalyses, monthAnalyses, avgMsgCount,
+          totalUsers, dauUsers, wauUsers, mauUsers, newUsersToday, newUsersWeek,
+          typeDistribution, axisAvgs,
+          feedbackStats, feedbackRecent,
+          dailyCounts, dailyUserCounts,
+          errorRate, recentAnalyses, recentUsers,
         ] = await Promise.all([
           db.prepare(`SELECT COUNT(*) as cnt FROM analyses`).first(),
           db.prepare(`SELECT COUNT(*) as cnt FROM analyses WHERE created_at >= date('now')`).first(),
           db.prepare(`SELECT COUNT(*) as cnt FROM analyses WHERE created_at >= date('now', '-7 days')`).first(),
+          db.prepare(`SELECT COUNT(*) as cnt FROM analyses WHERE created_at >= date('now', '-30 days')`).first(),
           db.prepare(`SELECT AVG(message_count) as avg_msg FROM analyses`).first(),
+          // User KPIs
+          db.prepare(`SELECT COUNT(*) as cnt FROM users`).first(),
+          db.prepare(`SELECT COUNT(DISTINCT user_id) as cnt FROM analyses WHERE created_at >= date('now')`).first(),
+          db.prepare(`SELECT COUNT(DISTINCT user_id) as cnt FROM analyses WHERE created_at >= date('now', '-7 days')`).first(),
+          db.prepare(`SELECT COUNT(DISTINCT user_id) as cnt FROM analyses WHERE created_at >= date('now', '-30 days')`).first(),
+          db.prepare(`SELECT COUNT(*) as cnt FROM users WHERE created_at >= date('now')`).first(),
+          db.prepare(`SELECT COUNT(*) as cnt FROM users WHERE created_at >= date('now', '-7 days')`).first(),
+          // Distributions
           db.prepare(`SELECT type_code, type_name, COUNT(*) as cnt FROM analyses WHERE type_code IS NOT NULL AND type_code != '' GROUP BY type_code ORDER BY cnt DESC LIMIT 20`).all(),
           db.prepare(`SELECT axes_json FROM analyses WHERE axes_json IS NOT NULL ORDER BY created_at DESC LIMIT 100`).all(),
+          // Feedback
           db.prepare(`SELECT COUNT(*) as cnt, AVG(rating) as avg_rating, SUM(CASE WHEN accuracy='매우 정확' OR accuracy='대체로 맞음' THEN 1 ELSE 0 END) as positive FROM feedback`).first(),
           db.prepare(`SELECT rating, accuracy, useful, issues_json, comment, created_at FROM feedback ORDER BY created_at DESC LIMIT 10`).all(),
+          // Daily charts
           db.prepare(`SELECT date(created_at) as day, COUNT(*) as cnt FROM analyses WHERE created_at >= date('now', '-30 days') GROUP BY date(created_at) ORDER BY day`).all(),
+          db.prepare(`SELECT date(created_at) as day, COUNT(DISTINCT user_id) as cnt FROM analyses WHERE created_at >= date('now', '-30 days') GROUP BY date(created_at) ORDER BY day`).all(),
+          // Status & recent
           db.prepare(`SELECT COUNT(*) as cnt FROM analyses WHERE status != 'complete'`).first(),
-          db.prepare(`SELECT id, user_id, type_code, type_name, axis_fs, axis_ah, axis_tr, axis_ow, axis_xv, axis_ei, message_count, status, created_at FROM analyses ORDER BY created_at DESC LIMIT 15`).all(),
+          db.prepare(`SELECT id, user_id, type_code, type_name, message_count, status, created_at FROM analyses ORDER BY created_at DESC LIMIT 15`).all(),
+          db.prepare(`SELECT id, email, name, total_analyses, created_at, last_seen FROM users ORDER BY created_at DESC LIMIT 10`).all(),
         ]);
 
-        // ── Compute axis averages from JSON ──
-        const axisKeys = ['A1','A2','A3','A4','A5','A6'];
-        const axisSums = {};
-        const axisCounts = {};
-        axisKeys.forEach(k => { axisSums[k] = 0; axisCounts[k] = 0; });
-        let validAxes = 0;
-        if (axisAvgs.results) {
-          axisAvgs.results.forEach(row => {
-            try {
-              const axes = JSON.parse(row.axes_json);
-              if (axes.intensity) {
-                axisKeys.forEach(k => {
-                  if (axes.intensity[k] !== undefined) {
-                    axisSums[k] += axes.intensity[k];
-                    axisCounts[k]++;
-                  }
-                });
-                validAxes++;
-              }
-            } catch {}
-          });
-        }
-        const axisAvgValues = {};
-        axisKeys.forEach(k => {
-          axisAvgValues[k] = axisCounts[k] > 0 ? (axisSums[k] / axisCounts[k]).toFixed(2) : '–';
-        });
-
-        // ── 6-letter code distribution ──
-        const codeLetterCounts = { F:0, S:0, A:0, H:0, T:0, R:0, O:0, W:0, X:0, V:0, E:0, I:0 };
-        let codeTotal = 0;
-        if (typeDistribution.results) {
-          typeDistribution.results.forEach(row => {
-            if (row.type_code && row.type_code.length === 6) {
-              for (const ch of row.type_code) {
-                if (codeLetterCounts[ch] !== undefined) codeLetterCounts[ch] += row.cnt;
-              }
-              codeTotal += row.cnt;
-            }
-          });
-        }
-
-        // ── Build HTML ──
+        // ── Compute derived data ──
         const e = escapeHTML;
         const total = totalAnalyses?.cnt || 0;
         const today = todayAnalyses?.cnt || 0;
         const week = weekAnalyses?.cnt || 0;
+        const month = monthAnalyses?.cnt || 0;
         const avgMsg = avgMsgCount?.avg_msg ? Math.round(avgMsgCount.avg_msg) : 0;
+        const users = totalUsers?.cnt || 0;
+        const dau = dauUsers?.cnt || 0;
+        const wau = wauUsers?.cnt || 0;
+        const mau = mauUsers?.cnt || 0;
+        const newToday = newUsersToday?.cnt || 0;
+        const newWeek = newUsersWeek?.cnt || 0;
         const fbCount = feedbackStats?.cnt || 0;
         const fbAvg = feedbackStats?.avg_rating ? feedbackStats.avg_rating.toFixed(1) : '–';
         const fbPositive = feedbackStats?.positive || 0;
         const errCount = errorRate?.cnt || 0;
         const successRate = total > 0 ? (((total - errCount) / total) * 100).toFixed(1) : '–';
+        const retentionRate = users > 0 ? ((mau / users) * 100).toFixed(1) : '–';
+        const avgAnalysesPerUser = users > 0 ? (total / users).toFixed(1) : '–';
 
-        // Daily chart data
-        const dailyData = (dailyCounts.results || []);
-        const maxDaily = Math.max(...dailyData.map(d => d.cnt), 1);
+        // Axis averages
+        const axisKeys = ['A1','A2','A3','A4','A5','A6'];
+        const axisSums = {}; const axisCnts = {};
+        axisKeys.forEach(k => { axisSums[k] = 0; axisCnts[k] = 0; });
+        let validAxes = 0;
+        (axisAvgs.results||[]).forEach(row => {
+          try { const ax = JSON.parse(row.axes_json); if(ax.intensity){ axisKeys.forEach(k=>{ if(ax.intensity[k]!==undefined){axisSums[k]+=ax.intensity[k];axisCnts[k]++;} }); validAxes++; } } catch{}
+        });
+        const axAvg = {}; axisKeys.forEach(k=>{ axAvg[k]=axisCnts[k]>0?(axisSums[k]/axisCnts[k]).toFixed(2):'–'; });
 
-        // Type distribution rows
-        const typeRows = (typeDistribution.results || []).map(r =>
-          `<tr><td style="color:var(--ac);font-weight:600;">${e(r.type_code)}</td><td>${e(r.type_name)}</td><td style="text-align:right;">${r.cnt}</td></tr>`
-        ).join('');
+        // Code letter distribution
+        const cLC = {F:0,S:0,A:0,H:0,T:0,R:0,O:0,W:0,X:0,V:0,E:0,I:0}; let cT=0;
+        (typeDistribution.results||[]).forEach(r=>{ if(r.type_code?.length===6){ for(const ch of r.type_code){if(cLC[ch]!==undefined)cLC[ch]+=r.cnt;} cT+=r.cnt; } });
 
+        // Daily chart data (dual: analyses + users)
+        const dailyData = dailyCounts.results||[];
+        const dailyUserData = dailyUserCounts.results||[];
+        const maxD = Math.max(...dailyData.map(d=>d.cnt), 1);
+
+        // Helper: bar chart
+        const bar = (data, max, color='var(--ac)') => data.map(d => {
+          const p = (d.cnt/max*100).toFixed(0);
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;"><div style="width:100%;height:80px;display:flex;align-items:flex-end;"><div style="width:100%;background:${color};border-radius:2px 2px 0 0;height:${p}%;min-height:1px;opacity:0.85;"></div></div><div style="font-size:7px;color:#555;transform:rotate(-45deg);white-space:nowrap;">${d.day.slice(5)}</div></div>`;
+        }).join('');
+
+        // Helper: panel wrapper
+        const panel = (title, body) => `<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">${title}</span></div><div class="panel-body">${body}</div></div>`;
+        const metric = (val, label, color='var(--ac)') => `<div class="metric"><div class="metric-val" style="color:${color};">${val}</div><div class="metric-label">${label}</div></div>`;
+
+        // Type rows
+        const typeRows = (typeDistribution.results||[]).map(r=>`<tr><td style="color:var(--ac);font-weight:600;">${e(r.type_code)}</td><td>${e(r.type_name)}</td><td style="text-align:right;">${r.cnt}</td></tr>`).join('');
         // Feedback rows
-        const fbRows = (feedbackRecent.results || []).map(r => {
-          const issues = r.issues_json ? JSON.parse(r.issues_json).join(', ') : '';
-          return `<tr><td>${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</td><td>${e(r.accuracy || '')}</td><td>${e(r.useful || '')}</td><td style="font-size:10px;">${e(issues)}</td><td style="font-size:10px;">${e(r.created_at || '').slice(0,10)}</td></tr>`;
-        }).join('');
-
+        const fbRows = (feedbackRecent.results||[]).map(r=>{ const iss=r.issues_json?JSON.parse(r.issues_json).join(', '):''; return `<tr><td>${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</td><td>${e(r.accuracy||'')}</td><td>${e(r.useful||'')}</td><td style="font-size:10px;">${e(iss)}</td><td style="font-size:10px;">${e(r.created_at||'').slice(0,10)}</td></tr>`; }).join('');
         // Recent analyses rows
-        const recentRows = (recentAnalyses.results || []).map(r =>
-          `<tr><td style="color:var(--ac);font-size:10px;">${e(r.type_code || '–')}</td><td>${e(r.type_name || '–')}</td><td style="text-align:right;">${r.message_count || 0}</td><td style="font-size:10px;">${e(r.created_at || '').slice(0,16)}</td></tr>`
-        ).join('');
+        const anlRows = (recentAnalyses.results||[]).map(r=>`<tr><td style="color:var(--ac);font-size:10px;">${e(r.type_code||'–')}</td><td>${e(r.type_name||'–')}</td><td style="text-align:right;">${r.message_count||0}</td><td><span style="color:${r.status==='complete'?'#28c840':'#f59e0b'};font-size:9px;">${r.status||'–'}</span></td><td style="font-size:10px;">${e(r.created_at||'').slice(0,16)}</td></tr>`).join('');
+        // Recent users rows
+        const usrRows = (recentUsers.results||[]).map(r=>`<tr><td>${e(r.name||'–')}</td><td style="font-size:10px;color:#666;">${e(r.email||'')}</td><td style="text-align:right;">${r.total_analyses||0}</td><td style="font-size:10px;">${e(r.created_at||'').slice(0,10)}</td><td style="font-size:10px;">${e(r.last_seen||'').slice(0,10)}</td></tr>`).join('');
 
-        // Daily chart bars
-        const dailyBars = dailyData.map(d => {
-          const pct = (d.cnt / maxDaily * 100).toFixed(0);
-          const day = d.day.slice(5);
-          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;"><div style="width:100%;height:80px;display:flex;align-items:flex-end;"><div style="width:100%;background:var(--ac);border-radius:2px 2px 0 0;height:${pct}%;min-height:1px;"></div></div><div style="font-size:8px;color:#666;transform:rotate(-45deg);white-space:nowrap;">${day}</div></div>`;
-        }).join('');
-
-        // 6-axis distribution bars
-        const axisLabels = { A1:'정서강도', A2:'안정성', A3:'감정표현', A4:'주장성', A5:'주도성', A6:'수용성' };
-        const axisBarHTML = axisKeys.map(k => {
-          const val = axisAvgValues[k];
-          const pct = val !== '–' ? (parseFloat(val) * 100).toFixed(0) : 0;
-          return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="width:50px;font-size:10px;color:#999;text-align:right;">${axisLabels[k]}</div><div style="flex:1;height:6px;background:#1a1a2e;border-radius:3px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:var(--ac);border-radius:3px;"></div></div><div style="width:30px;font-size:10px;color:var(--ac);text-align:right;">${val}</div></div>`;
-        }).join('');
-
-        // 6-letter axis ratios
-        const axisPairs = [['F','S','정서'],['A','H','동력'],['T','R','인지'],['O','W','경계'],['X','V','회복'],['E','I','방어']];
-        const axisPairHTML = axisPairs.map(([h,l,name]) => {
-          const hc = codeLetterCounts[h] || 0;
-          const lc = codeLetterCounts[l] || 0;
-          const t = hc + lc || 1;
-          const hp = ((hc/t)*100).toFixed(0);
-          return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div style="width:24px;font-size:10px;color:#999;">${name}</div><div style="width:16px;font-size:11px;color:var(--ac);font-weight:700;text-align:center;">${h}</div><div style="flex:1;height:6px;background:#1a1a2e;border-radius:3px;overflow:hidden;display:flex;"><div style="width:${hp}%;height:100%;background:var(--ac);"></div><div style="flex:1;height:100%;background:#60A5FA;"></div></div><div style="width:16px;font-size:11px;color:#60A5FA;font-weight:700;text-align:center;">${l}</div><div style="width:50px;font-size:9px;color:#666;text-align:right;">${hc}:${lc}</div></div>`;
-        }).join('');
+        // Axis bars
+        const axLabels={A1:'정서강도',A2:'안정성',A3:'감정표현',A4:'주장성',A5:'주도성',A6:'수용성'};
+        const axBars = axisKeys.map(k=>{ const v=axAvg[k]; const p=v!=='–'?(parseFloat(v)*100).toFixed(0):0; return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="width:55px;font-size:10px;color:#999;text-align:right;">${axLabels[k]}</div><div style="flex:1;height:6px;background:#1a1a2e;border-radius:3px;overflow:hidden;"><div style="width:${p}%;height:100%;background:var(--ac);border-radius:3px;"></div></div><div style="width:30px;font-size:10px;color:var(--ac);text-align:right;">${v}</div></div>`; }).join('');
+        // Axis pairs
+        const axPairs=[['F','S','정서'],['A','H','동력'],['T','R','인지'],['O','W','경계'],['X','V','회복'],['E','I','방어']];
+        const pairBars = axPairs.map(([h,l,nm])=>{ const hc=cLC[h]||0,lc=cLC[l]||0,t=hc+lc||1,hp=((hc/t)*100).toFixed(0); return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div style="width:24px;font-size:10px;color:#999;">${nm}</div><div style="width:16px;font-size:11px;color:var(--ac);font-weight:700;text-align:center;">${h}</div><div style="flex:1;height:6px;background:#1a1a2e;border-radius:3px;overflow:hidden;display:flex;"><div style="width:${hp}%;height:100%;background:var(--ac);"></div><div style="flex:1;height:100%;background:#60A5FA;"></div></div><div style="width:16px;font-size:11px;color:#60A5FA;font-weight:700;text-align:center;">${l}</div><div style="width:50px;font-size:9px;color:#666;text-align:right;">${hc}:${lc}</div></div>`; }).join('');
 
         const dashboardHTML = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>KNOT Admin</title><style>
-:root{--bg:#08080D;--ac:#F5A623;--text:#E8E8E8;--dim:#999;--panel:#0c0c14;--bar:#12121e;--border:#1a1a2e;}
+:root{--bg:#08080D;--ac:#F5A623;--text:#E8E8E8;--dim:#999;--panel:#0c0c14;--bar:#12121e;--border:#1a1a2e;--blue:#60A5FA;--green:#28c840;--red:#f87171;}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;padding:20px;min-height:100vh;}
-.wrap{max-width:720px;margin:0 auto;}
-.logo{font-size:28px;font-weight:900;color:var(--ac);letter-spacing:6px;text-align:center;margin-bottom:4px;}
-.sub{font-size:10px;color:var(--dim);text-align:center;letter-spacing:3px;text-transform:uppercase;margin-bottom:24px;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:20px;min-height:100vh;}
+.wrap{max-width:840px;margin:0 auto;}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.logo{font-size:24px;font-weight:900;color:var(--ac);letter-spacing:4px;font-family:'Courier New',monospace;}
+.sub{font-size:10px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;}
+.ts{font-size:10px;color:#444;font-family:'Courier New',monospace;}
 .tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border);}
-.tab{padding:8px 16px;font-size:11px;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;font-family:'Courier New',monospace;letter-spacing:0.5px;text-transform:uppercase;}
+.tab{padding:10px 20px;font-size:12px;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;font-weight:500;letter-spacing:0.3px;transition:all .2s;}
 .tab.active{color:var(--ac);border-bottom-color:var(--ac);}
 .tab:hover{color:var(--text);}
 .panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;}
-.panel-bar{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--bar);border-bottom:1px solid var(--border);}
-.dot{width:8px;height:8px;border-radius:50%;}
-.dot.r{background:#ff5f57;}.dot.y{background:#ffbd2e;}.dot.g{background:#28c840;}
-.panel-title{font-size:11px;color:var(--dim);margin-left:8px;}
-.panel-body{padding:14px 16px;}
-.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-@media(max-width:500px){.metric-grid{grid-template-columns:repeat(2,1fr);}}
-.metric{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
-.metric-val{font-size:20px;font-weight:800;color:var(--ac);margin-bottom:4px;}
+.panel-bar{display:flex;align-items:center;gap:6px;padding:8px 14px;background:var(--bar);border-bottom:1px solid var(--border);}
+.dot{width:7px;height:7px;border-radius:50%;}.dot.r{background:#ff5f57;}.dot.y{background:#ffbd2e;}.dot.g{background:#28c840;}
+.panel-title{font-size:11px;color:var(--dim);margin-left:8px;font-family:'Courier New',monospace;}
+.panel-body{padding:16px;}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+@media(max-width:600px){.kpi-row{grid-template-columns:repeat(2,1fr);}}
+.metric{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:14px 12px;text-align:center;}
+.metric-val{font-size:22px;font-weight:800;color:var(--ac);margin-bottom:2px;font-family:'Courier New',monospace;}
 .metric-label{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px;}
+.metric-sub{font-size:9px;color:#555;margin-top:2px;}
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
 table{width:100%;border-collapse:collapse;font-size:11px;}
-th{text-align:left;color:var(--ac);font-size:10px;padding:6px 8px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:0.5px;}
-td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--dim);}
+th{text-align:left;color:var(--ac);font-size:9px;padding:6px 8px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;}
+td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--dim);font-size:11px;}
 tr:hover td{color:var(--text);}
 .section{display:none;}.section.active{display:block;}
 .chart-wrap{display:flex;gap:2px;align-items:flex-end;padding:8px 0 20px;}
-.empty{text-align:center;padding:30px;color:#555;font-size:12px;}
+.empty{text-align:center;padding:30px;color:#555;font-size:12px;font-family:'Courier New',monospace;}
+.divider{height:1px;background:var(--border);margin:16px 0;}
+.label{font-size:10px;color:var(--ac);margin-bottom:10px;font-family:'Courier New',monospace;}
 </style></head><body>
 <div class="wrap">
-<div class="logo">KNOT_</div>
-<div class="sub">Admin Dashboard</div>
+<div class="header"><div><div class="logo">KNOT_</div><div class="sub">Admin Dashboard</div></div><div class="ts">${new Date().toISOString().slice(0,16).replace('T',' ')}</div></div>
+
 <div class="tabs">
-<div class="tab active" onclick="switchTab('ops',this)">운영</div>
-<div class="tab" onclick="switchTab('insight',this)">유저 인사이트</div>
+<div class="tab active" onclick="switchTab('kpi',this)">KPI</div>
+<div class="tab" onclick="switchTab('users',this)">유저</div>
+<div class="tab" onclick="switchTab('analyses',this)">분석</div>
+<div class="tab" onclick="switchTab('insight',this)">인사이트</div>
 <div class="tab" onclick="switchTab('feedback',this)">피드백</div>
 </div>
 
-<div id="ops" class="section active">
-<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">overview.metrics</span></div><div class="panel-body">
-<div class="metric-grid">
-<div class="metric"><div class="metric-val">${total}</div><div class="metric-label">전체 분석</div></div>
-<div class="metric"><div class="metric-val">${today}</div><div class="metric-label">오늘</div></div>
-<div class="metric"><div class="metric-val">${week}</div><div class="metric-label">이번 주</div></div>
-<div class="metric"><div class="metric-val">${avgMsg}</div><div class="metric-label">평균 메시지</div></div>
-<div class="metric"><div class="metric-val">${successRate}%</div><div class="metric-label">성공률</div></div>
-<div class="metric"><div class="metric-val">${fbCount}</div><div class="metric-label">피드백 수</div></div>
-</div></div></div>
+<!-- TAB: KPI -->
+<div id="kpi" class="section active">
+${panel('user.acquisition', `
+<div class="kpi-row">
+${metric(users, '총 가입자')}
+${metric(newToday, '오늘 신규', 'var(--green)')}
+${metric(newWeek, '이번 주 신규', 'var(--blue)')}
+${metric(retentionRate + '%', 'MAU 리텐션')}
+</div>`)}
 
-<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">daily.volume</span></div><div class="panel-body">
-${dailyData.length > 0 ? `<div class="chart-wrap">${dailyBars}</div>` : '<div class="empty">데이터 없음</div>'}
-</div></div>
+${panel('active.users', `
+<div class="kpi-row">
+${metric(dau, 'DAU', 'var(--green)')}
+${metric(wau, 'WAU', 'var(--blue)')}
+${metric(mau, 'MAU', 'var(--ac)')}
+${metric(avgAnalysesPerUser, '인당 분석 수')}
+</div>`)}
 
-<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">recent.analyses</span></div><div class="panel-body">
-${recentRows ? `<table><thead><tr><th>코드</th><th>이름</th><th style="text-align:right;">메시지</th><th>일시</th></tr></thead><tbody>${recentRows}</tbody></table>` : '<div class="empty">데이터 없음</div>'}
-</div></div>
+${panel('analysis.volume', `
+<div class="kpi-row">
+${metric(total, '총 분석')}
+${metric(today, '오늘')}
+${metric(week, '이번 주')}
+${metric(month, '이번 달')}
+</div>`)}
+
+${panel('system.health', `
+<div class="kpi-row">
+${metric(successRate + '%', '성공률', parseFloat(successRate) >= 95 ? 'var(--green)' : parseFloat(successRate) >= 80 ? 'var(--ac)' : 'var(--red)')}
+${metric(errCount, '에러', errCount > 0 ? 'var(--red)' : 'var(--green)')}
+${metric(avgMsg, '평균 메시지')}
+${metric(fbCount, '피드백 수')}
+</div>`)}
+
+${panel('daily.trend (30d)', dailyData.length > 0 ? `
+<div class="label">// 일별 분석 수</div>
+<div class="chart-wrap">${bar(dailyData, maxD)}</div>
+${dailyUserData.length > 0 ? `<div class="label" style="margin-top:8px;">// 일별 활성 유저</div><div class="chart-wrap">${bar(dailyUserData, Math.max(...dailyUserData.map(d=>d.cnt),1), 'var(--blue)')}</div>` : ''}
+` : '<div class="empty">데이터 없음</div>')}
 </div>
 
+<!-- TAB: Users -->
+<div id="users" class="section">
+${panel('recent.signups', usrRows ? `<table><thead><tr><th>이름</th><th>이메일</th><th style="text-align:right;">분석</th><th>가입일</th><th>최근</th></tr></thead><tbody>${usrRows}</tbody></table>` : '<div class="empty">가입자 없음</div>')}
+</div>
+
+<!-- TAB: Analyses -->
+<div id="analyses" class="section">
+${panel('recent.analyses', anlRows ? `<table><thead><tr><th>코드</th><th>이름</th><th style="text-align:right;">MSG</th><th>상태</th><th>일시</th></tr></thead><tbody>${anlRows}</tbody></table>` : '<div class="empty">데이터 없음</div>')}
+</div>
+
+<!-- TAB: Insight -->
 <div id="insight" class="section">
-<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">type.distribution</span></div><div class="panel-body">
-${typeRows ? `<table><thead><tr><th>코드</th><th>아키타입</th><th style="text-align:right;">횟수</th></tr></thead><tbody>${typeRows}</tbody></table>` : '<div class="empty">데이터 없음</div>'}
-</div></div>
-
-<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">axis.balance</span></div><div class="panel-body">
-<div style="font-size:10px;color:var(--ac);margin-bottom:10px;">// 6축 편향 분포</div>
-${codeTotal > 0 ? axisPairHTML : '<div class="empty">데이터 없음</div>'}
-</div></div>
-
-<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">intensity.averages</span></div><div class="panel-body">
-<div style="font-size:10px;color:var(--ac);margin-bottom:10px;">// 강도축 평균 (최근 100건)</div>
-${validAxes > 0 ? axisBarHTML : '<div class="empty">데이터 없음</div>'}
-</div></div>
+${panel('type.distribution', typeRows ? `<table><thead><tr><th>코드</th><th>아키타입</th><th style="text-align:right;">횟수</th></tr></thead><tbody>${typeRows}</tbody></table>` : '<div class="empty">데이터 없음</div>')}
+${panel('axis.balance', `<div class="label">// 6축 편향 분포</div>${cT > 0 ? pairBars : '<div class="empty">데이터 없음</div>'}`)}
+${panel('intensity.averages', `<div class="label">// 강도축 평균 (최근 100건)</div>${validAxes > 0 ? axBars : '<div class="empty">데이터 없음</div>'}`)}
 </div>
 
+<!-- TAB: Feedback -->
 <div id="feedback" class="section">
-<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">feedback.summary</span></div><div class="panel-body">
-<div class="metric-grid" style="grid-template-columns:repeat(3,1fr);">
-<div class="metric"><div class="metric-val">${fbAvg}</div><div class="metric-label">평균 평점</div></div>
-<div class="metric"><div class="metric-val">${fbCount}</div><div class="metric-label">응답 수</div></div>
-<div class="metric"><div class="metric-val">${fbCount > 0 ? ((fbPositive/fbCount)*100).toFixed(0) : '–'}%</div><div class="metric-label">긍정률</div></div>
-</div></div></div>
-
-<div class="panel"><div class="panel-bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span class="panel-title">feedback.recent</span></div><div class="panel-body">
-${fbRows ? `<table><thead><tr><th>평점</th><th>정확도</th><th>유용성</th><th>이슈</th><th>날짜</th></tr></thead><tbody>${fbRows}</tbody></table>` : '<div class="empty">피드백 없음</div>'}
-</div></div>
+${panel('feedback.summary', `<div class="metric-grid">${metric(fbAvg, '평균 평점')}${metric(fbCount, '응답 수')}${metric((fbCount>0?((fbPositive/fbCount)*100).toFixed(0):'–')+'%', '긍정률')}</div>`)}
+${panel('feedback.recent', fbRows ? `<table><thead><tr><th>평점</th><th>정확도</th><th>유용성</th><th>이슈</th><th>날짜</th></tr></thead><tbody>${fbRows}</tbody></table>` : '<div class="empty">피드백 없음</div>')}
 </div>
 
 </div>
