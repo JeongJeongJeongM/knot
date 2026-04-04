@@ -1987,7 +1987,8 @@ const MAX_SIZE_SHARE = 50 * 1024;
 
 const ALLOWED_ORIGINS = [
   'https://jeongjeongjeongm.github.io',
-  'https://knot-exodia.ashirmallo.workers.dev'
+  'https://knot-exodia.ashirmallo.workers.dev',
+  'https://knot-ai.pages.dev'
 ];
 
 function isOriginAllowed(origin) {
