@@ -2153,6 +2153,9 @@
 
         let currentProfile = null;
         let matchProfile = null;
+        // Debug setter for testing card rendering without API call
+        window.__setProfile = function(p) { currentProfile = p; };
+        window.__getProfile = function() { return currentProfile; };
 
         // ============ FILE PARSING ============
         function parseJSONData(data) {
