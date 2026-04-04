@@ -357,7 +357,7 @@
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
         }
 
         @media (max-width: 640px) {
@@ -365,10 +365,11 @@
                 width: 100%;
                 flex-direction: row;
                 flex-wrap: wrap;
-                gap: 10px;
+                gap: 8px;
             }
             .gauge-item {
-                flex: 1 1 45% !important;
+                flex: 1 1 30% !important;
+                min-width: 0;
             }
         }
 
@@ -432,12 +433,12 @@
             height: 100%;
             width: 0%;
             border-radius: 2px;
-            background: linear-gradient(90deg, var(--ac), #FF8C00);
+            background: var(--ac);
             transition: width 0.4s ease;
         }
 
         .gauge-item.done .gauge-fill {
-            background: linear-gradient(90deg, #4ADE80, #22D3EE);
+            /* 각 축 고유 색상 유지 (inline style) */
         }
 
         .gauge-desc {
@@ -1683,39 +1684,55 @@
                     </div>
                 </div>
 
-                <!-- Gauges Panel -->
+                <!-- Gauges Panel (6축) -->
                 <div class="gauges-panel">
-                    <div class="gauge-item" id="gaugeC">
+                    <div class="gauge-item" id="gaugeA1">
                         <div class="gauge-label">
-                            <span class="gauge-name">주도성 (C축)</span>
-                            <span class="gauge-value" id="gaugeCVal">--</span>
+                            <span class="gauge-name">관심도 (A1)</span>
+                            <span class="gauge-value" id="gaugeA1Val">+0.00</span>
                         </div>
-                        <div class="gauge-track"><div class="gauge-fill" id="gaugeCFill"></div></div>
-                        <div class="gauge-desc">대화를 이끄는 경향</div>
+                        <div class="gauge-track"><div class="gauge-fill" id="gaugeA1Fill" style="background:var(--a1)"></div></div>
+                        <div class="gauge-desc">대화 참여 열정</div>
                     </div>
-                    <div class="gauge-item" id="gaugeB">
+                    <div class="gauge-item" id="gaugeA2">
                         <div class="gauge-label">
-                            <span class="gauge-name">논리성 (B축)</span>
-                            <span class="gauge-value" id="gaugeBVal">--</span>
+                            <span class="gauge-name">공감력 (A2)</span>
+                            <span class="gauge-value" id="gaugeA2Val">+0.00</span>
                         </div>
-                        <div class="gauge-track"><div class="gauge-fill" id="gaugeBFill"></div></div>
-                        <div class="gauge-desc">논리 중심 성향</div>
+                        <div class="gauge-track"><div class="gauge-fill" id="gaugeA2Fill" style="background:var(--a2)"></div></div>
+                        <div class="gauge-desc">감정 이해와 반영</div>
                     </div>
-                    <div class="gauge-item" id="gaugeA">
+                    <div class="gauge-item" id="gaugeA3">
                         <div class="gauge-label">
-                            <span class="gauge-name">개방성 (A축)</span>
-                            <span class="gauge-value" id="gaugeAVal">--</span>
+                            <span class="gauge-name">주장성 (A3)</span>
+                            <span class="gauge-value" id="gaugeA3Val">+0.00</span>
                         </div>
-                        <div class="gauge-track"><div class="gauge-fill" id="gaugeAFill"></div></div>
-                        <div class="gauge-desc">자기 표현 성향</div>
+                        <div class="gauge-track"><div class="gauge-fill" id="gaugeA3Fill" style="background:var(--a3)"></div></div>
+                        <div class="gauge-desc">의견 표현 강도</div>
                     </div>
-                    <div class="gauge-item" id="gaugeR">
+                    <div class="gauge-item" id="gaugeA4">
                         <div class="gauge-label">
-                            <span class="gauge-name">공감성 (R축)</span>
-                            <span class="gauge-value" id="gaugeRVal">--</span>
+                            <span class="gauge-name">감정 개방 (A4)</span>
+                            <span class="gauge-value" id="gaugeA4Val">+0.00</span>
                         </div>
-                        <div class="gauge-track"><div class="gauge-fill" id="gaugeRFill"></div></div>
-                        <div class="gauge-desc">상대 반응 민감도</div>
+                        <div class="gauge-track"><div class="gauge-fill" id="gaugeA4Fill" style="background:var(--a4)"></div></div>
+                        <div class="gauge-desc">내면 감정 표출</div>
+                    </div>
+                    <div class="gauge-item" id="gaugeA5">
+                        <div class="gauge-label">
+                            <span class="gauge-name">서포트 (A5)</span>
+                            <span class="gauge-value" id="gaugeA5Val">+0.00</span>
+                        </div>
+                        <div class="gauge-track"><div class="gauge-fill" id="gaugeA5Fill" style="background:var(--a5)"></div></div>
+                        <div class="gauge-desc">지지와 격려 성향</div>
+                    </div>
+                    <div class="gauge-item" id="gaugeA6">
+                        <div class="gauge-label">
+                            <span class="gauge-name">일관성 (A6)</span>
+                            <span class="gauge-value" id="gaugeA6Val">+0.00</span>
+                        </div>
+                        <div class="gauge-track"><div class="gauge-fill" id="gaugeA6Fill" style="background:var(--a6)"></div></div>
+                        <div class="gauge-desc">패턴 안정성</div>
                     </div>
                 </div>
             </div>
@@ -3184,53 +3201,33 @@
                 T.setProgress(30, '축 좌표 계산 중...');
 
                 await wait(150);
-                T.addLine('<span class="prompt">$</span> compute-axes --model=4D', 400);
+                T.addLine('<span class="prompt">$</span> compute-axes --model=6D', 400);
 
-                // Activate gauges one by one as axes are computed (local — may be overridden by server)
-                updateProgress('4개 핵심 축의 좌표를 계산하고 있습니다');
+                // Activate gauges one by one — 6축 시스템
+                updateProgress('6개 행동축의 좌표를 계산하고 있습니다');
                 let axes = computeAxes(rates);
                 const ax = axes.intensity;
-                const cbar = {
-                    C: (ax.A3 - 0.5) * 2,
-                    B: (ax.A6 - 0.5) * 2,
-                    A: (ax.A1 - 0.5) * 2,
-                    R: (ax.A2 - 0.5) * 2
-                };
 
-                // Animate C axis
-                T.activateGauge('C');
-                T.addLine('<span class="dim">[axis]</span> 주도성(C) 패턴 분석 중...', 200);
-                await wait(300);
-                T.fillGauge('C', cbar.C);
-                T.completeGauge('C');
-                T.addLine('<span class="dim">[axis]</span> <span class="success">C축 성향 확정 → ' + (cbar.C >= 0 ? '+' : '') + cbar.C.toFixed(2) + '</span>', 150);
-                T.setProgress(40);
-
-                // Animate B axis
-                T.activateGauge('B');
-                T.addLine('<span class="dim">[axis]</span> 논리성(B) 패턴 분석 중...', 200);
-                await wait(300);
-                T.fillGauge('B', cbar.B);
-                T.completeGauge('B');
-                T.addLine('<span class="dim">[axis]</span> <span class="success">B축 성향 확정 → ' + (cbar.B >= 0 ? '+' : '') + cbar.B.toFixed(2) + '</span>', 150);
-                T.setProgress(50);
-
-                // Animate A axis
-                T.activateGauge('A');
-                T.addLine('<span class="dim">[axis]</span> 개방성(A) 패턴 분석 중...', 200);
-                await wait(300);
-                T.fillGauge('A', cbar.A);
-                T.completeGauge('A');
-                T.addLine('<span class="dim">[axis]</span> <span class="success">A축 성향 확정 → ' + (cbar.A >= 0 ? '+' : '') + cbar.A.toFixed(2) + '</span>', 150);
-                T.setProgress(60);
-
-                // Animate R axis
-                T.activateGauge('R');
-                T.addLine('<span class="dim">[axis]</span> 공감성(R) 패턴 분석 중...', 200);
-                await wait(300);
-                T.fillGauge('R', cbar.R);
-                T.completeGauge('R');
-                T.addLine('<span class="dim">[axis]</span> <span class="success">R축 성향 확정 → ' + (cbar.R >= 0 ? '+' : '') + cbar.R.toFixed(2) + '</span>', 150);
+                const axisAnim = [
+                    { id: 'A1', name: '관심도', val: ax.A1 },
+                    { id: 'A2', name: '공감력', val: ax.A2 },
+                    { id: 'A3', name: '주장성', val: ax.A3 },
+                    { id: 'A4', name: '감정 개방', val: ax.A4 },
+                    { id: 'A5', name: '서포트', val: ax.A5 },
+                    { id: 'A6', name: '일관성', val: ax.A6 }
+                ];
+                let progBase = 30;
+                for (const a of axisAnim) {
+                    T.activateGauge(a.id);
+                    T.addLine('<span class="dim">[axis]</span> ' + a.name + '(' + a.id + ') 패턴 분석 중...', 150);
+                    await wait(200);
+                    T.fillGauge(a.id, a.val);
+                    T.completeGauge(a.id);
+                    const display = (a.val >= 0 ? '+' : '') + a.val.toFixed(2);
+                    T.addLine('<span class="dim">[axis]</span> <span class="success">' + a.id + ' 확정 → ' + display + '</span>', 100);
+                    progBase += 5;
+                    T.setProgress(progBase);
+                }
                 T.setProgress(65);
 
                 await wait(200);
