@@ -2586,7 +2586,7 @@ function precomputeAxes(rawMessages, prism, anchor) {
   const domainDensity = domainCount / L1_DOMAIN_MARKERS.length;
   const depthLevel = prism?.depth?.overall_depth || 'surface';
   let a10primary = 'slow_burn';
-  if (depthLevel === 'deep' || depthLevel === 'expert') a10primary = 'depth_seeker';
+  if (depthLevel === 'creative' || depthLevel === 'exploratory') a10primary = 'depth_seeker';
   else if (anchor?.attachment?.primary_tendency === 'leans_anxious') a10primary = 'fast_opener';
   else if (anchor?.attachment?.primary_tendency === 'leans_avoidant') a10primary = 'surface_locked';
   structural.A10 = { primary: a10primary, styles: { surface_locked: a10primary === 'surface_locked' ? 0.5 : 0.1, slow_burn: a10primary === 'slow_burn' ? 0.5 : 0.2, depth_seeker: a10primary === 'depth_seeker' ? 0.5 : 0.1, fast_opener: a10primary === 'fast_opener' ? 0.5 : 0.1 } };
@@ -3739,6 +3739,12 @@ ${profileDesc}
         .map(([k, v]) => `${k}: ${v}`)
         .join(' | ')}\n`;
     }
+    if (prism.depth && Object.keys(prism.depth).length > 0) {
+      prompt += `사유 깊이: ${Object.entries(prism.depth)
+        .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`)
+        .join(' | ')}\n`;
+      prompt += `⚠️ depth 점수는 LLM 대화의 짧은 메시지 특성상 실제보다 낮게 나올 수 있습니다. 전문 용어 사용, 집요한 반복 질문, 구조적 사고 흔적이 있다면 depth 점수를 그대로 반영하지 마세요.\n`;
+    }
   }
 
   // ── ANCHOR data (distributed across sections) ──
@@ -3853,7 +3859,7 @@ ${profileDesc}
 
 ## 섹션별 데이터 매핑 가이드
 1. 페르소나: 상태 벡터 5축 좌표를 서사적으로 풀어낸 한 줄 정의. 이 사람이 어떤 "시스템"인지 압축.
-2. 사유의 지형: PRISM 데이터(주제 분포, 어휘, 호기심) 중심. 이 사람의 지적 세계를 매핑.
+2. 사유의 지형: PRISM 데이터(주제 분포, 어휘, 호기심) 중심. 이 사람의 지적 세계를 매핑. ⚠️ depth 점수가 낮더라도 "표면적 사고자"로 단정하지 마세요. 이 데이터는 LLM과의 대화에서 추출되므로 메시지가 짧고 캐주얼할 수 있습니다. 전문 도메인 용어 사용, 같은 주제에 대한 집요한 반복 질문, 구조적 사고의 흔적이 있다면 depth 점수와 무관하게 깊이 있는 사고자로 서술하세요. "호기심의 지속성 부족", "인내력 부족", "관심 이동이 빈번" 같은 표현은 실제 데이터가 그것을 명확히 뒷받침할 때만 사용하세요.
 3. 통제 체계: 통제(C)축 + ANCHOR 갈등 데이터. 환경을 어떻게 장악하거나 놓는지.
 4. 정서 에너지: 정서(E)축 + ANCHOR 정서적 가용성 + 애착 데이터. 감정의 물리학.
 5. 방어 체계: 시뮬레이션 방어 패턴 분류 결과를 서사로 전환. 이 사람이 위협에 어떻게 반응하는지.
