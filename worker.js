@@ -4151,6 +4151,10 @@ function buildSharePageHTML(profile) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KNOT — ${escapeHTML(name)}</title>
+<meta property="og:title" content="KNOT — ${escapeHTML(name)}">
+<meta property="og:description" content="${escapeHTML(tagline || 'AI 대화 행동 분석 결과')}">
+<meta property="og:type" content="profile">
+<meta name="description" content="${escapeHTML(tagline || 'AI 대화 행동 분석 결과')}">
 <style>
   :root { --bg: #08080D; --ac: #F5A623; --text: #E8E8E8; --dim: #999; --border: #333; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -4181,7 +4185,8 @@ function buildSharePageHTML(profile) {
   </div>
   ${sectionsHTML}
   <div class="footer">
-    <a href="https://jeongjeongjeongm.github.io/knot/">KNOT</a>에서 나도 분석하기
+    <a href="https://jeongjeongjeongm.github.io/knot/" style="display:inline-block;padding:14px 32px;background:var(--ac);color:#000;font-weight:700;border-radius:8px;text-decoration:none;font-size:16px;margin-bottom:10px;">나도 분석하기 →</a>
+    <div style="margin-top:8px;">KNOT — AI 대화 행동 분석</div>
   </div>
 </div>
 </body>
@@ -4216,6 +4221,14 @@ export default {
     }
 
     if (request.method !== 'POST') {
+      // ──── GET /s/:id ── 단축 URL → /share/:id 리다이렉트 ────
+      if (request.method === 'GET' && url.pathname.startsWith('/s/')) {
+        const shareId = url.pathname.split('/s/')[1];
+        if (shareId) {
+          return Response.redirect(`${url.origin}/share/${shareId}`, 301);
+        }
+      }
+
       // ──── GET /share/:id ────
       if (request.method === 'GET' && url.pathname.startsWith('/share/')) {
         const shareId = url.pathname.split('/share/')[1];

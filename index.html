@@ -7,6 +7,7 @@
     <title>KNOT - AI Behavioral Analysis Engine</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <style>
         :root {
              --bg: #08080D; 
@@ -4414,8 +4415,10 @@ function displayResult() {
             document.getElementById('shareOverlay').classList.remove('active');
         }
 
-        function generateShareCard() {
+        async function generateShareCard() {
             if (!currentProfile) return;
+            // 공유 링크 먼저 생성
+            const shareUrl = await getOrCreateShareUrl();
             const canvas = document.getElementById('shareCanvas');
             const ctx = canvas.getContext('2d');
             const W = 1080, H = 1350;
@@ -4578,20 +4581,8 @@ function displayResult() {
                 wrapText(ctx, summaryText, W/2, sY+35, W-200, 32);
             }
 
-            // Bottom branding
-            const bGrd = ctx.createLinearGradient(100, 0, W-100, 0);
-            bGrd.addColorStop(0, 'rgba(245,166,35,0)');
-            bGrd.addColorStop(0.5, 'rgba(245,166,35,0.3)');
-            bGrd.addColorStop(1, 'rgba(245,166,35,0)');
-            ctx.strokeStyle = bGrd; ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(100, H-80); ctx.lineTo(W-100, H-80); ctx.stroke();
-            ctx.fillStyle = 'rgba(245,166,35,0.5)';
-            ctx.font = '700 20px -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('KNOT \u2014 AI 대화 행동 분석', W/2, H-45);
-            ctx.fillStyle = 'rgba(255,255,255,0.25)';
-            ctx.font = '400 16px -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx.fillText('jeongjeongjeongm.github.io/knot', W/2, H-22);
+            // Bottom branding (with QR if available)
+            drawBranding(ctx, W, H, AC, shareUrl);
 
             document.getElementById('shareOverlay').classList.add('active');
         }
@@ -4683,15 +4674,63 @@ function displayResult() {
             ctx.strokeStyle = grd; ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(100, y); ctx.lineTo(W-100, y); ctx.stroke();
         }
-        function drawBranding(ctx, W, H, AC) {
-            drawDivider(ctx, W, H - 80, AC);
-            ctx.fillStyle = 'rgba(245,166,35,0.5)';
-            ctx.font = '700 20px -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('KNOT — AI 대화 행동 분석', W/2, H - 45);
-            ctx.fillStyle = 'rgba(255,255,255,0.25)';
-            ctx.font = '400 16px -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx.fillText('jeongjeongjeongm.github.io/knot', W/2, H - 22);
+        function drawBranding(ctx, W, H, AC, shareUrl) {
+            const hasQR = shareUrl && typeof qrcode === 'function';
+            if (hasQR) {
+                // ── QR 포함 브랜딩: 왼쪽 텍스트 + 오른쪽 QR ──
+                drawDivider(ctx, W, H - 130, AC);
+                // 왼쪽 텍스트
+                ctx.fillStyle = 'rgba(245,166,35,0.5)';
+                ctx.font = '700 22px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText('KNOT', 80, H - 95);
+                ctx.fillStyle = 'rgba(255,255,255,0.35)';
+                ctx.font = '400 18px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.fillText('AI 대화 행동 분석', 80, H - 68);
+                ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                ctx.font = '500 17px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.fillText('QR 스캔으로 전체 결과 보기 →', 80, H - 38);
+                // 오른쪽 QR 코드
+                try {
+                    const qr = qrcode(0, 'M');
+                    qr.addData(shareUrl);
+                    qr.make();
+                    const modules = qr.getModuleCount();
+                    const qrSize = 100;
+                    const cellSize = qrSize / modules;
+                    const qrX = W - 80 - qrSize;
+                    const qrY = H - 125;
+                    // 흰색 배경 (스캔 가독성)
+                    ctx.fillStyle = '#FFFFFF';
+                    roundRect(ctx, qrX - 6, qrY - 6, qrSize + 12, qrSize + 12, 8);
+                    ctx.fill();
+                    // QR 모듈 그리기
+                    ctx.fillStyle = '#08080D';
+                    for (let row = 0; row < modules; row++) {
+                        for (let col = 0; col < modules; col++) {
+                            if (qr.isDark(row, col)) {
+                                ctx.fillRect(qrX + col * cellSize, qrY + row * cellSize, Math.ceil(cellSize), Math.ceil(cellSize));
+                            }
+                        }
+                    }
+                } catch(e) {
+                    // QR 실패 시 URL 텍스트 폴백
+                    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+                    ctx.font = '400 14px -apple-system, BlinkMacSystemFont, sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(shareUrl.replace('https://', ''), W - 80, H - 38);
+                }
+            } else {
+                // ── 기존 브랜딩 (QR 없음) ──
+                drawDivider(ctx, W, H - 80, AC);
+                ctx.fillStyle = 'rgba(245,166,35,0.5)';
+                ctx.font = '700 20px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('KNOT — AI 대화 행동 분석', W/2, H - 45);
+                ctx.fillStyle = 'rgba(255,255,255,0.25)';
+                ctx.font = '400 16px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.fillText('jeongjeongjeongm.github.io/knot', W/2, H - 22);
+            }
         }
         function wrapTextLines(text, ctx, maxWidth) {
             const chars = text.split('');
@@ -4714,13 +4753,45 @@ function displayResult() {
             });
         }
 
+        // ===== 공유 링크 자동 생성 (QR용) =====
+        async function getOrCreateShareUrl() {
+            if (!currentProfile) return null;
+            // 이미 생성된 shareUrl이 있으면 재사용
+            if (currentProfile._shareUrl) return currentProfile._shareUrl;
+            try {
+                const shareData = {
+                    identity: currentProfile.identity,
+                    axes: currentProfile.axes,
+                    sections: currentProfile.llmResult?.sections || [],
+                    timestamp: currentProfile.timestamp
+                };
+                const resp = await fetch(WORKER_URL + '/share', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(getAuthToken() ? { 'Authorization': 'Bearer ' + getAuthToken() } : {})
+                    },
+                    body: JSON.stringify(shareData)
+                });
+                if (!resp.ok) return null;
+                const result = await resp.json();
+                // 단축 URL로 변환 (/share/ → /s/)
+                const shortUrl = result.shareUrl.replace('/share/', '/s/');
+                currentProfile._shareUrl = shortUrl;
+                return shortUrl;
+            } catch(e) { return null; }
+        }
+
         // ===== Multi-Card Instagram Carousel =====
-        function generateMultiShareCards() {
+        async function generateMultiShareCards() {
             if (!currentProfile) return;
             const container = document.getElementById('shareCardsContainer');
             const dotsContainer = document.getElementById('sharePageDots');
-            container.innerHTML = '';
+            container.innerHTML = '<div style="color:#999;text-align:center;padding:40px;">QR 링크 생성 중...</div>';
             dotsContainer.innerHTML = '';
+            // 공유 링크 먼저 생성
+            const shareUrl = await getOrCreateShareUrl();
+            container.innerHTML = '';
             const profile = currentProfile;
             const type = profile.identity || { emoji: '🔮', code: 'E-XX', name: '미지의 윤곽', tagline: '', desc: '' };
             const axes = profile.axes;
@@ -4789,7 +4860,7 @@ function displayResult() {
                 if (personaSummary.length > 200) personaSummary = personaSummary.substring(0, 197) + '...';
                 wrapText(ctx1, personaSummary, W/2, 860, W - 200, 38);
             }
-            drawBranding(ctx1, W, H, AC);
+            drawBranding(ctx1, W, H, AC, shareUrl);
             canvases.push(c1);
 
             // ---- Card 2: Intensity Bars ----
@@ -4829,7 +4900,7 @@ function displayResult() {
                 ctx2.fillText(descMap[item.label] || '', 100, barY + 35);
                 barY += 120;
             });
-            drawBranding(ctx2, W, H, AC);
+            drawBranding(ctx2, W, H, AC, shareUrl);
             canvases.push(c2);
 
 
@@ -4889,7 +4960,7 @@ function displayResult() {
                     ty += 45 + Math.min(lines.length, 3) * 28;
                 });
             }
-            drawBranding(ctx3, W, H, AC);
+            drawBranding(ctx3, W, H, AC, shareUrl);
             canvases.push(c3);
 
             // ---- Card 4 & 4b: LLM Deep Analysis (split into 2 cards) ----
@@ -4939,7 +5010,7 @@ function displayResult() {
                         }
                         sy += 15;
                     });
-                    drawBranding(ctx4, W, H, AC);
+                    drawBranding(ctx4, W, H, AC, shareUrl);
                     canvases.push(c4);
                 });
             }
@@ -4994,7 +5065,7 @@ function displayResult() {
                     });
                     py += 45 + Math.min(lines.length, 4) * 28;
                 });
-                drawBranding(ctx5, W, H, AC);
+                drawBranding(ctx5, W, H, AC, shareUrl);
                 canvases.push(c5);
             }
 
