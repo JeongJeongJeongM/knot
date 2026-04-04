@@ -4358,6 +4358,24 @@ export default {
         }
       }
 
+      // ──── GET /debug/latest ──── (임시 디버그용)
+      if (request.method === 'GET' && url.pathname === '/debug/latest') {
+        try {
+          const db = env.DB;
+          if (!db) return jsonResponse({ error: 'No DB' }, 500, corsHeaders);
+          const row = db.prepare('SELECT id, type_code, type_name, prism_json, anchor_json, axes_json FROM analyses ORDER BY created_at DESC LIMIT 1').first();
+          if (!row) return jsonResponse({ error: 'No analyses' }, 404, corsHeaders);
+          return jsonResponse({
+            id: row.id,
+            type_code: row.type_code,
+            type_name: row.type_name,
+            prism: row.prism_json ? JSON.parse(row.prism_json) : null,
+            anchor: row.anchor_json ? JSON.parse(row.anchor_json) : null,
+            axes: row.axes_json ? JSON.parse(row.axes_json) : null,
+          }, 200, corsHeaders);
+        } catch(e) { return jsonResponse({ error: e.message }, 500, corsHeaders); }
+      }
+
       // ──── GET /share/:id ────
       if (request.method === 'GET' && url.pathname.startsWith('/share/')) {
         const shareId = url.pathname.split('/share/')[1];
