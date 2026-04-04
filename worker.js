@@ -4280,20 +4280,32 @@ export default {
              ORDER BY a.created_at DESC
              LIMIT 10`
           ).bind(auth.user.sub).all();
-          const analyses = (rows.results || []).map(r => ({
+          const analyses = (rows.results || []).map(r => {
+            const axes = r.axes_json ? JSON.parse(r.axes_json) : null;
+            // Always recompute identity from current SERVER_TYPE_AXES calc
+            // (fixes legacy data where old buggy calc produced wrong scores)
+            let identity = r.identity_json ? JSON.parse(r.identity_json) : null;
+            if (axes) {
+              try {
+                identity = computeServerIdentity(axes);
+              } catch (e) {
+                // fallback to stored identity if recompute fails
+              }
+            }
+            return {
             id: r.id,
-            type_code: r.type_code,
-            type_name: r.type_name,
-            tagline: r.tagline,
+            type_code: identity?.code || r.type_code,
+            type_name: identity?.name || r.type_name,
+            tagline: identity?.tagline || r.tagline,
             axis_fs: r.axis_fs, axis_ah: r.axis_ah, axis_tr: r.axis_tr,
             axis_ow: r.axis_ow, axis_xv: r.axis_xv, axis_ei: r.axis_ei,
-            axes: r.axes_json ? JSON.parse(r.axes_json) : null,
-            identity: r.identity_json ? JSON.parse(r.identity_json) : null,
+            axes: axes,
+            identity: identity,
             simulation: r.simulation_json ? JSON.parse(r.simulation_json) : null,
             sections: r.sections_json ? (() => { try { const p = JSON.parse(r.sections_json); return Array.isArray(p) ? p : (p && Array.isArray(p.sections) ? p.sections : null); } catch { return null; } })() : null,
             message_count: r.message_count,
             created_at: r.created_at
-          }));
+          };});
           return jsonResponse({ analyses }, 200, corsHeaders);
         } catch (e) {
           return jsonResponse({ error: e.message }, 500, corsHeaders);
