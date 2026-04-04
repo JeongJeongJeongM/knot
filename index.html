@@ -3579,7 +3579,7 @@ function buildProfileOverview(axes, profile) {
                 <div style="font-size:12px;color:var(--ac);font-weight:600;letter-spacing:0.5px;margin-bottom:14px;">// 세부 축 수치</div>`;
             axisEntries.forEach(t => {
                 const pct = Math.round(t.value * 100);
-                const barColor = pct > 65 ? '#F59E0B' : pct < 35 ? '#60A5FA' : '#6B7280';
+                const barColor = pct >= 50 ? '#F59E0B' : '#60A5FA';
                 html += `<div style="margin-bottom:12px;">
                     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
                         <span style="font-size:12px;color:#ccc;">${sanitizeHTML(t.name)}</span>
