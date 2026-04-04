@@ -4261,6 +4261,45 @@ export default {
         return new Response('Not found', { status: 404 });
       }
 
+      // ──── GET /my-analyses ── 로그인 사용자의 과거 분석 결과 ────
+      if (request.method === 'GET' && url.pathname === '/my-analyses') {
+        const auth = await requireAuth(request, env);
+        if (auth.error) {
+          return jsonResponse({ error: auth.error }, auth.status, corsHeaders);
+        }
+        const db = env.KNOT_DB;
+        if (!db) {
+          return jsonResponse({ error: 'DB not configured' }, 500, corsHeaders);
+        }
+        try {
+          const rows = await db.prepare(
+            `SELECT a.id, a.type_code, a.type_name, a.tagline, a.axis_fs, a.axis_ah, a.axis_tr, a.axis_ow, a.axis_xv, a.axis_ei, a.axes_json, a.identity_json, a.simulation_json, a.message_count, a.created_at, e.sections_json
+             FROM analyses a
+             LEFT JOIN essays e ON e.analysis_id = a.id
+             WHERE a.user_id = ? AND a.status = 'complete'
+             ORDER BY a.created_at DESC
+             LIMIT 10`
+          ).bind(auth.user.sub).all();
+          const analyses = (rows.results || []).map(r => ({
+            id: r.id,
+            type_code: r.type_code,
+            type_name: r.type_name,
+            tagline: r.tagline,
+            axis_fs: r.axis_fs, axis_ah: r.axis_ah, axis_tr: r.axis_tr,
+            axis_ow: r.axis_ow, axis_xv: r.axis_xv, axis_ei: r.axis_ei,
+            axes: r.axes_json ? JSON.parse(r.axes_json) : null,
+            identity: r.identity_json ? JSON.parse(r.identity_json) : null,
+            simulation: r.simulation_json ? JSON.parse(r.simulation_json) : null,
+            sections: r.sections_json ? (() => { try { const p = JSON.parse(r.sections_json); return Array.isArray(p) ? p : (p && Array.isArray(p.sections) ? p.sections : null); } catch { return null; } })() : null,
+            message_count: r.message_count,
+            created_at: r.created_at
+          }));
+          return jsonResponse({ analyses }, 200, corsHeaders);
+        } catch (e) {
+          return jsonResponse({ error: e.message }, 500, corsHeaders);
+        }
+      }
+
       // ──── GET /migrate ── DB Schema Migration ────
       if (request.method === 'GET' && url.pathname === '/migrate') {
         const key = url.searchParams.get('key');

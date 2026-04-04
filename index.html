@@ -1578,7 +1578,7 @@
             <div class="subtitle">AI Behavioral Analysis & Matching Engine</div>
 
             <!-- About Panel -->
-            <div class="landing-panel">
+            <div class="landing-panel" id="systemInfoPanel">
                 <div class="landing-panel-bar">
                     <div class="terminal-dot r"></div>
                     <div class="terminal-dot y"></div>
@@ -1607,6 +1607,26 @@
                 <button onclick="signOut()" style="font-size:11px;color:#666;background:none;border:1px solid #333;border-radius:4px;padding:3px 8px;cursor:pointer;font-family:'Courier New',monospace;white-space:nowrap;">로그아웃</button>
             </div>
 
+            <!-- 분석 결과 다시 보기 (로그인 + 과거 결과 있는 경우) -->
+            <div id="previousResultsPanel" style="display:none;">
+                <div class="landing-panel" style="border-color:var(--ac);">
+                    <div class="landing-panel-bar">
+                        <div class="terminal-dot r"></div>
+                        <div class="terminal-dot y"></div>
+                        <div class="terminal-dot g"></div>
+                        <span class="landing-panel-title">analysis.history</span>
+                    </div>
+                    <div class="landing-panel-body" id="previousResultsBody" style="padding:12px 16px;">
+                        <div style="font-size:12px;color:var(--ac);font-weight:600;margin-bottom:12px;">// 분석 결과 다시 보기</div>
+                        <div id="previousResultsList" style="display:flex;flex-direction:column;gap:10px;"></div>
+                    </div>
+                </div>
+                <div style="text-align:center;margin:16px 0;">
+                    <button onclick="showNewAnalysisMode()" style="font-size:12px;color:var(--ac);background:none;border:1px solid var(--ac);border-radius:6px;padding:8px 20px;cursor:pointer;font-family:'Courier New',monospace;">+ 새 분석 시작</button>
+                </div>
+            </div>
+
+            <div id="defaultLandingPanels">
             <div class="upload-zone" id="uploadArea" data-zone="uploadZone">
                 <div class="upload-zone-bar">
                     <div class="terminal-dot r" style="width:8px;height:8px;border-radius:50%;"></div>
@@ -1656,7 +1676,7 @@
                 </div>
             </div>
         </div>
-        </div>
+        </div><!-- /defaultLandingPanels -->
 
 </div>
 
@@ -2732,11 +2752,141 @@
                 if (userSection) userSection.style.display = 'flex';
                 if (userName) userName.textContent = currentUser.name || currentUser.email;
                 if (userAvatar) userAvatar.src = currentUser.picture || '';
+                // 과거 분석 결과 확인
+                fetchPreviousAnalyses();
             } else {
                 // Show login screen
                 showScreen('login');
                 if (userSection) userSection.style.display = 'none';
+                // 패널 초기화
+                showNewAnalysisMode();
             }
+        }
+
+        async function fetchPreviousAnalyses() {
+            const token = getAuthToken();
+            if (!token) return;
+            try {
+                const resp = await fetch(WORKER_URL + '/my-analyses', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (data.analyses && data.analyses.length > 0) {
+                    renderPreviousResults(data.analyses);
+                }
+            } catch (e) {
+                console.log('[KNOT] 과거 분석 조회 실패:', e.message);
+            }
+        }
+
+        function renderPreviousResults(analyses) {
+            const panel = document.getElementById('previousResultsPanel');
+            const list = document.getElementById('previousResultsList');
+            const defaults = document.getElementById('defaultLandingPanels');
+            const sysInfo = document.getElementById('systemInfoPanel');
+            if (!panel || !list) return;
+
+            // system.info, upload, formats, theory 전부 숨기기
+            if (defaults) defaults.style.display = 'none';
+            if (sysInfo) sysInfo.style.display = 'none';
+            panel.style.display = 'block';
+
+            list.innerHTML = analyses.map((a, i) => {
+                const identity = a.identity || {};
+                const emoji = identity.emoji || '🔮';
+                const code = a.type_code || '—';
+                const name = a.type_name || '알 수 없음';
+                const tagline = a.tagline || '';
+                const date = (a.created_at || '').slice(0, 10);
+                const msgCount = a.message_count || 0;
+                // 6축 미니 바
+                const axes = [
+                    { label: 'F/S', val: a.axis_fs },
+                    { label: 'A/H', val: a.axis_ah },
+                    { label: 'T/R', val: a.axis_tr },
+                    { label: 'O/W', val: a.axis_ow },
+                    { label: 'X/V', val: a.axis_xv },
+                    { label: 'E/I', val: a.axis_ei }
+                ];
+                const miniAxes = axes.map(ax => {
+                    const v = ax.val != null ? ax.val : 50;
+                    return `<div style="flex:1;text-align:center;"><div style="font-size:8px;color:#666;margin-bottom:2px;">${ax.label}</div><div style="height:3px;background:#1a1a2e;border-radius:2px;overflow:hidden;"><div style="height:100%;width:${v}%;background:var(--ac);border-radius:2px;"></div></div></div>`;
+                }).join('');
+
+                return `<div onclick="loadPreviousAnalysis(${i})" style="cursor:pointer;background:#0a0a14;border:1px solid #1a1a2e;border-radius:8px;padding:12px 14px;transition:border-color 0.2s;" onmouseover="this.style.borderColor='var(--ac)'" onmouseout="this.style.borderColor='#1a1a2e'">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                        <span style="font-size:22px;">${emoji}</span>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:13px;font-weight:700;color:var(--text);font-family:'Courier New',monospace;">${sanitizeHTML(code)} <span style="color:var(--ac);font-weight:400;">${sanitizeHTML(name)}</span></div>
+                            <div style="font-size:11px;color:#666;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${sanitizeHTML(tagline)}</div>
+                        </div>
+                        <div style="text-align:right;font-size:10px;color:#555;white-space:nowrap;">
+                            <div>${date}</div>
+                            <div>${msgCount}건</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:4px;padding-top:6px;border-top:1px solid #111;">${miniAxes}</div>
+                </div>`;
+            }).join('');
+
+            // 데이터를 전역에 캐시
+            window._previousAnalyses = analyses;
+        }
+
+        function showNewAnalysisMode() {
+            const panel = document.getElementById('previousResultsPanel');
+            const defaults = document.getElementById('defaultLandingPanels');
+            const sysInfo = document.getElementById('systemInfoPanel');
+            if (panel) panel.style.display = 'none';
+            if (defaults) defaults.style.display = 'block';
+            if (sysInfo) sysInfo.style.display = 'block';
+        }
+
+        function loadPreviousAnalysis(index) {
+            const analyses = window._previousAnalyses;
+            if (!analyses || !analyses[index]) return;
+            const a = analyses[index];
+
+            // currentProfile 재구성
+            const axes = a.axes || {};
+            const identity = a.identity || {};
+            const simulation = a.simulation || null;
+
+            // llmResult 복원 (sections_json → essay sections)
+            let llmResult = null;
+            if (a.sections) {
+                try {
+                    const parsed = typeof a.sections === 'string' ? JSON.parse(a.sections) : a.sections;
+                    if (Array.isArray(parsed)) {
+                        llmResult = { sections: parsed };
+                    } else if (parsed && Array.isArray(parsed.sections)) {
+                        // {"sections": [...]} 형태
+                        llmResult = { sections: parsed.sections };
+                    } else {
+                        llmResult = null;
+                    }
+                } catch {
+                    // JSON 파싱 실패 — 에세이 원문
+                    llmResult = null;
+                }
+            }
+
+            currentProfile = {
+                rates: {},
+                axes,
+                identity,
+                llmResult,
+                simulation,
+                messages: null,
+                functionWordProfile: null,
+                prism: null,
+                anchor: null,
+                analysisId: a.id,
+                timestamp: a.created_at
+            };
+
+            displayResult();
         }
 
         function getAuthToken() {
@@ -4279,6 +4429,7 @@ function displayResult() {
             matchProfile = null;
             if (currentUser) {
                 showScreen('landing');
+                fetchPreviousAnalyses();
             } else {
                 showScreen('login');
             }
