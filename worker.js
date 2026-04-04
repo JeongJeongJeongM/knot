@@ -626,7 +626,48 @@ class PrismP2DepthAnalyzer {
       weightedSum += weight * count;
     }
     const avgWeight = total > 0 ? weightedSum / total : 0;
-    const overall = this._weightToLevel(avgWeight);
+
+    // ── 대화 패턴 기반 깊이 보정 (텍스트 길이 편향 제거) ──
+    // 1) 전문 도메인 용어 밀도 — 짧게 써도 전문용어 쓰면 깊은 사고
+    const allText = texts.join(' ');
+    let domainTermCount = 0;
+    for (const terms of Object.values(PRISM_DOMAIN_VOCABULARY)) {
+      for (const term of terms) {
+        if (allText.includes(term)) domainTermCount++;
+      }
+    }
+    const domainDensity = domainTermCount / (texts.length + PRISM_CONFIG.EPSILON);
+    const domainBoost = domainDensity > 0.5 ? 0.3 : domainDensity > 0.2 ? 0.15 : 0;
+
+    // 2) 주제 지속성 — 같은 주제를 오래 파면 deep, 자주 바꾸면 shallow
+    // 간단한 n-gram 기반 연속 유사도: 연속된 메시지 쌍의 단어 겹침
+    let topicPersistence = 0;
+    if (texts.length >= 3) {
+      let similarities = 0;
+      for (let i = 1; i < texts.length; i++) {
+        const prev = new Set(texts[i-1].split(/\s+/).filter(w => w.length > 1));
+        const curr = new Set(texts[i].split(/\s+/).filter(w => w.length > 1));
+        if (prev.size === 0 || curr.size === 0) continue;
+        let overlap = 0;
+        for (const w of curr) { if (prev.has(w)) overlap++; }
+        similarities += overlap / Math.max(prev.size, curr.size);
+      }
+      topicPersistence = similarities / (texts.length - 1);
+    }
+    const persistenceBoost = topicPersistence > 0.3 ? 0.2 : topicPersistence > 0.15 ? 0.1 : 0;
+
+    // 3) 추상 표현 밀도 — 짧아도 추상적 개념어 쓰면 깊은 사고
+    let abstractCount = 0;
+    for (const pattern of PRISM_ABSTRACT_PATTERNS) {
+      const matches = allText.match(new RegExp(pattern, 'g'));
+      if (matches) abstractCount += matches.length;
+    }
+    const abstractDensity = abstractCount / (texts.length + PRISM_CONFIG.EPSILON);
+    const abstractBoost = abstractDensity > 0.3 ? 0.15 : abstractDensity > 0.1 ? 0.08 : 0;
+
+    // 보정된 가중 평균
+    const adjustedWeight = Math.min(0.95, avgWeight + domainBoost + persistenceBoost + abstractBoost);
+    const overall = this._weightToLevel(adjustedWeight);
 
     const depthByTopic = {};
     if (topicDistribution && topicDistribution.topics) {
