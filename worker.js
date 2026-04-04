@@ -2672,19 +2672,26 @@ const SERVER_TYPE_AXES = [
     high: { letter: 'T', label: 'Think', desc: '논리와 분석을 기반으로 판단한다' },
     low:  { letter: 'R', label: 'Relate', desc: '공감과 관계를 고려하여 판단한다' },
     calc: (d) => {
-      const a10 = d._structural?.A10;
-      const a16 = d._structural?.A16;
-      let score = 0.5;
-      if (a10) score += (a10.styles?.logical || 0) * 0.3 - (a10.styles?.emotional || 0) * 0.3;
-      if (a16) score += (a16.primary === 'analytical' ? 0.15 : a16.primary === 'binary' ? -0.1 : 0);
-      return Math.max(0, Math.min(1, score));
+      // Think: 높은 일관성(A6) + 낮은 감정개방(1-A4) → 논리적
+      // Relate: 높은 공감력(A2) + 높은 감정개방(A4) → 관계적
+      const thinkScore = ((d.A6 || 0.5) * 0.5 + (1 - (d.A4 || 0.5)) * 0.3 + (1 - (d.A2 || 0.5)) * 0.2);
+      const a9 = d._structural?.A9;
+      const analyticBonus = a9?.primary === 'analytical' ? 0.1 : a9?.primary === 'expressive' ? -0.1 : 0;
+      return Math.max(0, Math.min(1, thinkScore + analyticBonus));
     }
   },
   {
     id: 'boundary', name: '경계 방식',
     high: { letter: 'O', label: 'Open', desc: '경계를 열어두고 변화를 수용한다' },
     low:  { letter: 'W', label: 'Wall', desc: '경계를 세우고 안전한 영역을 지킨다' },
-    calc: (d) => ((d.A12 || 0.5) * 0.5 + (d.A14 || 0.5) * 0.5)
+    calc: (d) => {
+      // Open: 높은 감정개방(A4) + 높은 관심도(A1) → 경계 개방
+      // Wall: 낮은 감정개방 + 낮은 관심도 → 경계 폐쇄
+      const openScore = ((d.A4 || 0.5) * 0.4 + (d.A1 || 0.5) * 0.3 + (d.A5 || 0.5) * 0.3);
+      const a10 = d._structural?.A10;
+      const depthBonus = a10?.primary === 'fast_opener' ? 0.12 : a10?.primary === 'depth_seeker' ? 0.06 : a10?.primary === 'surface_locked' ? -0.1 : 0;
+      return Math.max(0, Math.min(1, openScore + depthBonus));
+    }
   },
   {
     id: 'resilience', name: '회복 탄성',
