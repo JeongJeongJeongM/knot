@@ -2420,12 +2420,32 @@ function precomputeAxes(rawMessages, prism, anchor) {
   intensity.A1 = Math.min(1.0, Math.max(0, a1base + anxiousBoost));
   confidence.A1 = emotionalMarkers > 5 ? 'high' : emotionalMarkers > 2 ? 'medium' : 'low';
 
-  // A2 정서 안정성: 문장 길이 일관성 + ANCHOR stress_shift
-  const lengths = texts.map(t => t.length);
-  const lenMean = lengths.reduce((a, b) => a + b, 0) / lengths.length;
-  const lenStd = Math.sqrt(lengths.reduce((sum, l) => sum + (l - lenMean) ** 2, 0) / lengths.length);
-  const lenCV = lenStd / (lenMean + EPS);
-  let a2base = Math.min(1.0, Math.max(0, 1.0 - lenCV));
+  // A2 정서 안정성: 감정 신호 변동성 기반 (문장 길이 CV가 아닌 실제 감정 지표)
+  // 1) 각 메시지별 감정 밀도 측정
+  const emotionRegex = /[!！]{2,}|ㅠ+|ㅜ+|ㅋ{3,}|ㅎ{3,}|좋아|싫어|슬프|기뻐|화나|무서|불안|행복|사랑|미워|짜증|설레|우울|외로|진짜|대박|미쳤|씨발|시발|존나/g;
+  const perMsgEmotion = texts.map(t => {
+    const markers = (t.match(emotionRegex) || []).length;
+    return Math.min(1.0, markers / (Math.max(t.length / 50, 1)));
+  });
+  // 2) 감정 밀도의 변동 계수 = 불안정성
+  const emoMean = perMsgEmotion.reduce((a, b) => a + b, 0) / (perMsgEmotion.length + EPS);
+  const emoStd = Math.sqrt(perMsgEmotion.reduce((s, v) => s + (v - emoMean) ** 2, 0) / (perMsgEmotion.length + EPS));
+  const emoCV = emoStd / (emoMean + EPS);
+  // 3) 감정 극성 전환 횟수 (긍↔부정 왔다갔다 = 불안정)
+  const posWords = /좋아|기뻐|행복|사랑|설레|대박|ㅋ{3,}|ㅎ{3,}/g;
+  const negWords = /싫어|슬프|화나|무서|불안|미워|짜증|우울|외로|씨발|시발|존나/g;
+  let polarityFlips = 0;
+  let prevPolarity = 0;
+  for (const t of texts) {
+    const pos = (t.match(posWords) || []).length;
+    const neg = (t.match(negWords) || []).length;
+    const polarity = pos > neg ? 1 : neg > pos ? -1 : 0;
+    if (polarity !== 0 && prevPolarity !== 0 && polarity !== prevPolarity) polarityFlips++;
+    if (polarity !== 0) prevPolarity = polarity;
+  }
+  const flipRate = polarityFlips / (texts.length + EPS);
+  // 4) 종합: 낮은 변동 + 낮은 극성 전환 = 높은 안정성
+  let a2base = Math.min(1.0, Math.max(0, 1.0 - (emoCV * 0.5 + flipRate * 3.0)));
   if (anchor?.attachment?.stress_shift === 'becomes_more_anxious') a2base = Math.max(0, a2base - 0.15);
   if (anchor?.attachment?.stress_shift === 'stable_under_pressure') a2base = Math.min(1.0, a2base + 0.1);
   intensity.A2 = a2base;
@@ -2519,13 +2539,26 @@ function precomputeAxes(rawMessages, prism, anchor) {
   structural.A10 = { primary: a10primary, styles: { surface_locked: a10primary === 'surface_locked' ? 0.5 : 0.1, slow_burn: a10primary === 'slow_burn' ? 0.5 : 0.2, depth_seeker: a10primary === 'depth_seeker' ? 0.5 : 0.1, fast_opener: a10primary === 'fast_opener' ? 0.5 : 0.1 } };
   confidence.A10 = (prism?.depth && anchor?.attachment) ? 'high' : 'medium';
 
-  // A11 호혜성: 질문/응답 비율로 추정
+  // A11 호혜성: 질문비율 + 공감/지지 표현 + 상대 언급 복합 판단
   const questionRatio = prism?.curiosity?.question_ratio || 0;
+  // 공감/지지 표현 밀도
+  const supportMarkers = (allText.match(/맞아|그렇지|이해해|힘들었겠다|수고했|잘했|괜찮아|응원|파이팅|화이팅|대단하|고생|걱정된다|걱정돼|괜찮으|잘될|응 맞아|맞는 말|그럴 수 있|충분해/g) || []).length;
+  const supportDensity = supportMarkers / (texts.length + EPS);
+  // 상대방 지칭 밀도 (너/네/당신 등)
+  const otherRefMarkers = (allText.match(/너는|너의|네가|당신|상대|그쪽|니가|너도|너한테|너를|너랑/g) || []).length;
+  const otherRefDensity = otherRefMarkers / (texts.length + EPS);
+  // 자기 지칭 밀도 (나/내/저 등)
+  const selfRefMarkers = (allText.match(/나는|내가|저는|제가|나의|나한테|나를|나도|내 생각/g) || []).length;
+  const selfRefDensity = selfRefMarkers / (texts.length + EPS);
+  // 복합 점수: 양성 신호만 사용 (부재 신호 제거 — balanced를 taker로 오판 방지)
+  const giverScore = questionRatio * 0.3 + supportDensity * 0.4 + otherRefDensity * 0.3;
+  const takerSignal = selfRefDensity > otherRefDensity + supportDensity ? selfRefDensity : 0;
   let a11primary = 'balanced';
-  if (questionRatio > 0.4) a11primary = 'giver'; // 많이 물어봄 = 상대에게 관심
-  else if (questionRatio < 0.1 && intensity.A4 > 0.5) a11primary = 'taker';
+  if (giverScore > 0.3 && giverScore > takerSignal * 2) a11primary = 'giver';
+  else if (takerSignal > 0.3 && selfRefDensity > (otherRefDensity + supportDensity) * 2) a11primary = 'taker';
+  const confSignals = (questionRatio > 0 ? 1 : 0) + (supportMarkers > 2 ? 1 : 0) + (otherRefMarkers > 2 ? 1 : 0);
   structural.A11 = { primary: a11primary, styles: { giver: a11primary === 'giver' ? 0.5 : 0.2, taker: a11primary === 'taker' ? 0.5 : 0.1, balanced: a11primary === 'balanced' ? 0.5 : 0.3 } };
-  confidence.A11 = questionRatio > 0 ? 'medium' : 'low';
+  confidence.A11 = confSignals >= 2 ? 'high' : confSignals >= 1 ? 'medium' : 'low';
 
   // A13 인정 욕구: ANCHOR growth orientation
   const growthOrientation = anchor?.growth?.orientation || 'defensive';
