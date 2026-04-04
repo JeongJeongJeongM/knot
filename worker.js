@@ -3995,6 +3995,7 @@ function callClaudeStream(apiKey, systemPrompt, userPrompt, corsHeaders) {
           model: 'claude-sonnet-4-20250514',
           max_tokens: 16384,
           stream: true,
+          temperature: 0,
           system: systemPrompt,
           messages: [{ role: 'user', content: userPrompt }],
         }),
@@ -4086,6 +4087,7 @@ async function callClaude(apiKey, systemPrompt, userPrompt) {
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 8192,
+      temperature: 0,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
     }),
@@ -4582,6 +4584,7 @@ function switchTab(id, el) {
         const apiBody = {
           model: 'claude-sonnet-4-20250514',
           max_tokens: testMaxTokens,
+          temperature: 0,
           messages: [{ role: 'user', content: testMsg }],
         };
         if (testSystem) apiBody.system = testSystem;
@@ -4858,6 +4861,7 @@ function switchTab(id, el) {
                 model: 'claude-sonnet-4-20250514',
                 max_tokens: 16384,
                 stream: true,
+                temperature: 0,
                 system: SYSTEM_PROMPT_INDIVIDUAL,
                 messages: [{ role: 'user', content: essayPrompt }],
               }),
@@ -5091,6 +5095,7 @@ function switchTab(id, el) {
                 model: 'claude-sonnet-4-20250514',
                 max_tokens: 16384,
                 stream: true,
+                temperature: 0,
                 system: SYSTEM_PROMPT_MATCHING,
                 messages: [{ role: 'user', content: userPrompt }],
               }),
