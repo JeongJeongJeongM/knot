@@ -3471,9 +3471,12 @@ function buildProfileOverview(axes, profile) {
             body += '<div style="font-size:10px;color:var(--ac);font-weight:700;letter-spacing:0.3px;margin-bottom:6px;font-family:\'Courier New\',monospace;">// 방어</div>';
             if (sim.defense) {
                 const d = sim.defense;
-                if (d.primary) body += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;"><span style="color:var(--ac);font-weight:600;">${sanitizeHTML(d.primary)}</span></div>`;
-                if (d.secondary) body += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;">2차: <span style="color:var(--ac);font-weight:600;">${sanitizeHTML(d.secondary)}</span></div>`;
-                if (d.trigger) body += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;margin-top:4px;">${sanitizeHTML(d.trigger)}</div>`;
+                const dName = d.primary || d.name || '';
+                const dDesc = d.trigger || d.desc || '';
+                const dSec = d.secondary || d.code || '';
+                if (dName) body += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;"><span style="color:var(--ac);font-weight:600;">${sanitizeHTML(dName)}</span></div>`;
+                if (dSec && dSec !== dName) body += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;">코드: <span style="color:var(--ac);font-weight:600;">${sanitizeHTML(dSec)}</span></div>`;
+                if (dDesc) body += `<div style="font-size:10px;color:var(--text-dim);line-height:1.4;margin-top:4px;">${sanitizeHTML(dDesc.length > 60 ? dDesc.slice(0,57)+'...' : dDesc)}</div>`;
             } else {
                 body += '<div style="font-size:11px;color:var(--text-dim);">데이터 없음</div>';
             }
@@ -3488,15 +3491,16 @@ function buildProfileOverview(axes, profile) {
                     { key: 'conflict', label: '갈등' },
                     { key: 'intimacy', label: '친밀' },
                     { key: 'stress', label: '스트레스' },
-                    { key: 'novelty', label: '새로움' },
+                    { key: 'loss', label: '상실' },
                 ];
                 for (const st of stimTypes) {
                     const data = s[st.key];
-                    if (data && data.delta !== undefined) {
-                        const delta = data.delta;
-                        const arrow = delta > 0.1 ? '↑' : delta < -0.1 ? '↓' : '→';
-                        const color = Math.abs(delta) > 0.3 ? '#f87171' : Math.abs(delta) > 0.15 ? '#f59e0b' : 'var(--ac)';
-                        body += `<span style="display:inline-block;padding:4px 8px;background:rgba(255,255,255,0.03);border:1px solid #1a1a2e;border-radius:4px;font-size:10px;margin:2px 2px 2px 0;font-family:'Courier New',monospace;"><span style="color:var(--text-dim);">${st.label}</span> <span style="color:${color};font-weight:600;">${arrow}</span></span>`;
+                    if (data) {
+                        const vuln = data.vulnerability || 0;
+                        const arrow = vuln > 0.15 ? '↑' : vuln > 0.08 ? '→' : '↓';
+                        const color = vuln > 0.2 ? '#f87171' : vuln > 0.12 ? '#f59e0b' : 'var(--ac)';
+                        const patLabel = data.recoveryPattern === 'resilient' ? '회복' : data.recoveryPattern === 'partial' ? '부분' : '취약';
+                        body += `<span style="display:inline-block;padding:4px 8px;background:rgba(255,255,255,0.03);border:1px solid #1a1a2e;border-radius:4px;font-size:10px;margin:2px 2px 2px 0;font-family:'Courier New',monospace;"><span style="color:var(--text-dim);">${st.label}</span> <span style="color:${color};font-weight:600;">${arrow} ${patLabel}</span></span>`;
                     }
                 }
             } else {
@@ -3509,13 +3513,13 @@ function buildProfileOverview(axes, profile) {
             body += '<div style="font-size:10px;color:var(--ac);font-weight:700;letter-spacing:0.3px;margin-bottom:6px;font-family:\'Courier New\',monospace;">// 리스크</div>';
             if (sim.risk) {
                 const r = sim.risk;
-                if (r.level) {
-                    const levelColor = r.level === 'high' ? '#f87171' : r.level === 'medium' ? '#f59e0b' : '#28c840';
-                    const levelLabel = r.level === 'high' ? '높음' : r.level === 'medium' ? '보통' : '낮음';
-                    body += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;">수준: <span style="color:${levelColor};font-weight:600;">${levelLabel}</span></div>`;
-                }
-                if (r.factors && r.factors.length > 0) {
-                    body += `<div style="font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4;">${r.factors.slice(0,2).map(f => sanitizeHTML(f)).join(' · ')}</div>`;
+                const rLevel = r.level || r.overallRisk || 'stable';
+                const levelColor = (rLevel === 'high' || rLevel === 'critical' || rLevel === 'elevated') ? '#f87171' : (rLevel === 'medium' || rLevel === 'moderate') ? '#f59e0b' : '#28c840';
+                const levelLabel = (rLevel === 'critical') ? '위험' : (rLevel === 'elevated' || rLevel === 'high') ? '높음' : (rLevel === 'moderate' || rLevel === 'medium') ? '보통' : '안정';
+                body += `<div style="font-size:11px;color:var(--text-dim);line-height:1.6;">수준: <span style="color:${levelColor};font-weight:600;">${levelLabel}</span></div>`;
+                const factors = r.factors || (r.risks ? r.risks.map(ri => ri.trigger) : []);
+                if (factors.length > 0) {
+                    body += `<div style="font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4;">${factors.slice(0,2).map(f => sanitizeHTML(f)).join(' · ')}</div>`;
                 }
             } else {
                 body += '<div style="font-size:11px;color:var(--text-dim);">데이터 없음</div>';
@@ -3861,7 +3865,10 @@ function displayResult() {
             try {
                 const resp = await fetch(WORKER_URL + '/feedback', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(getAuthToken() ? { 'Authorization': 'Bearer ' + getAuthToken() } : {})
+                    },
                     body: JSON.stringify(payload)
                 });
                 if (!resp.ok) throw new Error('서버 오류');
@@ -4602,7 +4609,10 @@ function displayResult() {
                 };
                 const resp = await fetch(WORKER_URL + '/share', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(getAuthToken() ? { 'Authorization': 'Bearer ' + getAuthToken() } : {})
+                    },
                     body: JSON.stringify(shareData)
                 });
                 if (!resp.ok) throw new Error('\uc11c\ubc84 \uc624\ub958');
@@ -4841,13 +4851,15 @@ function displayResult() {
             });
             if (llmSections) {
                 drawDivider(ctx3, W, ty + 20, AC); ty += 60;
-                Object.keys(llmSections).slice(0, 3).forEach(key => {
-                    if (key === '세 문장 요약') return;
+                const sectArr = Array.isArray(llmSections) ? llmSections : Object.entries(llmSections).map(([k,v]) => ({title:k, summary:typeof v==='string'?v:''}));
+                sectArr.slice(0, 3).forEach(section => {
+                    const title = section.title || section.key || '';
+                    if (title === '세 문장 요약') return;
                     ctx3.fillStyle = AC;
                     ctx3.font = '700 24px -apple-system, BlinkMacSystemFont, sans-serif';
                     ctx3.textAlign = 'left';
-                    ctx3.fillText('• ' + key, 100, ty);
-                    let st = llmSections[key].replace(/<[^>]*>/g, '').trim();
+                    ctx3.fillText('• ' + title, 100, ty);
+                    let st = String(section.summary || '').replace(/<[^>]*>/g, '').trim();
                     if (st.length > 80) st = st.substring(0, 77) + '...';
                     ctx3.fillStyle = 'rgba(255,255,255,0.55)';
                     ctx3.font = '400 22px -apple-system, BlinkMacSystemFont, sans-serif';
@@ -4865,13 +4877,15 @@ function displayResult() {
                 drawCardBg(ctx4, W, H, BG);
                 drawCardHeader(ctx4, W, AC, DIM, type, 'AI 심층 분석');
                 let sy = 380;
-                Object.keys(llmSections).filter(k => k !== '세 문장 요약').forEach(key => {
+                const sectArr4 = Array.isArray(llmSections) ? llmSections : Object.entries(llmSections).map(([k,v]) => ({title:k, summary:typeof v==='string'?v:''}));
+                sectArr4.filter(s => (s.title||s.key) !== '세 문장 요약').forEach(section => {
                     if (sy > H - 150) return;
+                    const title = section.title || section.key || '';
                     ctx4.fillStyle = AC;
                     ctx4.font = '700 26px -apple-system, BlinkMacSystemFont, sans-serif';
                     ctx4.textAlign = 'left';
-                    ctx4.fillText(key, 100, sy);
-                    let txt = llmSections[key].replace(/<[^>]*>/g, '').trim();
+                    ctx4.fillText(title, 100, sy);
+                    let txt = String(section.summary || '').replace(/<[^>]*>/g, '').trim();
                     if (txt.length > 200) txt = txt.substring(0, 197) + '...';
                     ctx4.fillStyle = 'rgba(255,255,255,0.6)';
                     ctx4.font = '400 22px -apple-system, BlinkMacSystemFont, sans-serif';
