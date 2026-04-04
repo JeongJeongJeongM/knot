@@ -3203,32 +3203,13 @@
                 await wait(150);
                 T.addLine('<span class="prompt">$</span> compute-axes --model=6D', 400);
 
-                // Activate gauges one by one — 6축 시스템
+                // 6축 초기화 (서버 결과 올 때까지 대기 상태)
                 updateProgress('6개 행동축의 좌표를 계산하고 있습니다');
                 let axes = computeAxes(rates);
-                const ax = axes.intensity;
-
-                const axisAnim = [
-                    { id: 'A1', name: '관심도', val: ax.A1 },
-                    { id: 'A2', name: '공감력', val: ax.A2 },
-                    { id: 'A3', name: '주장성', val: ax.A3 },
-                    { id: 'A4', name: '감정 개방', val: ax.A4 },
-                    { id: 'A5', name: '서포트', val: ax.A5 },
-                    { id: 'A6', name: '일관성', val: ax.A6 }
-                ];
-                let progBase = 30;
-                for (const a of axisAnim) {
-                    T.activateGauge(a.id);
-                    T.addLine('<span class="dim">[axis]</span> ' + a.name + '(' + a.id + ') 패턴 분석 중...', 150);
-                    await wait(200);
-                    T.fillGauge(a.id, a.val);
-                    T.completeGauge(a.id);
-                    const display = (a.val >= 0 ? '+' : '') + a.val.toFixed(2);
-                    T.addLine('<span class="dim">[axis]</span> <span class="success">' + a.id + ' 확정 → ' + display + '</span>', 100);
-                    progBase += 5;
-                    T.setProgress(progBase);
-                }
-                T.setProgress(65);
+                T.addLine('<span class="prompt">$</span> compute-axes --model=6D --await-server', 400);
+                T.addLine('<span class="dim">[axis]</span> 서버에서 정밀 점수 계산 중...', 200);
+                // 게이지는 서버 결과 이후에 채움 (아래 serverResult 처리 블록에서)
+                T.setProgress(35);
 
                 await wait(200);
                 updateProgress('정체성을 분석하고 있습니다');
@@ -3287,6 +3268,24 @@
                         if (serverResult.axes) {
                             axes = serverResult.axes;
                             T.addLine('<span class="dim">[server]</span> <span class="success">Stage 1 완료: LLM 점수 확정</span>', 100);
+                            // 서버 실제 값으로 게이지 순차 애니메이션
+                            const realAx = axes.intensity;
+                            const axisAnim = [
+                                { id: 'A1', name: '관심도', val: realAx.A1 },
+                                { id: 'A2', name: '공감력', val: realAx.A2 },
+                                { id: 'A3', name: '주장성', val: realAx.A3 },
+                                { id: 'A4', name: '감정 개방', val: realAx.A4 },
+                                { id: 'A5', name: '서포트', val: realAx.A5 },
+                                { id: 'A6', name: '일관성', val: realAx.A6 }
+                            ];
+                            for (const a of axisAnim) {
+                                T.activateGauge(a.id);
+                                await wait(120);
+                                T.fillGauge(a.id, a.val);
+                                T.completeGauge(a.id);
+                                const display = (a.val >= 0 ? '+' : '') + a.val.toFixed(2);
+                                T.addLine('<span class="dim">[axis]</span> <span class="success">' + a.id + ' → ' + display + '</span>', 60);
+                            }
                         }
                         if (serverResult.identity) {
                             identity = serverResult.identity;
