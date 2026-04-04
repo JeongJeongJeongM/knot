@@ -4606,7 +4606,9 @@ function switchTab(id, el) {
         const body = await request.json();
 
         // ── Weekly limit check: 1 analysis per account per 7 days ──
-        if (env.KNOT_DB && authUser?.sub) {
+        const ADMIN_EMAILS = ['ashirmallo@gmail.com'];
+        const isAdmin = authUser?.email && ADMIN_EMAILS.includes(authUser.email);
+        if (env.KNOT_DB && authUser?.sub && !isAdmin) {
           try {
             const recentAnalysis = await env.KNOT_DB.prepare(
               `SELECT COUNT(*) as cnt FROM analyses WHERE user_id = ? AND created_at >= datetime('now', '-7 days')`
