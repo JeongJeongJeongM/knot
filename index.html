@@ -7,7 +7,6 @@
     <title>KNOT - AI Behavioral Analysis Engine</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <style>
         :root {
              --bg: #08080D; 
@@ -1848,10 +1847,11 @@
             <div class="share-multi-cards" id="shareCardsContainer"></div>
             <div class="share-page-dots" id="sharePageDots"></div>
             <div class="share-actions">
-                <button class="share-download" onclick="downloadAllShareCards()">전체 저장 📥</button>
+                <button class="share-download" onclick="shareWithLink()" id="webShareBtn" style="background:#F5A623;color:#000;font-weight:700;">공유하기</button>
+                <button class="share-download" onclick="downloadAllShareCards()">전체 저장</button>
                 <button class="share-close" onclick="closeShareOverlay()">닫기</button>
             </div>
-            <div class="share-hint">이미지를 길게 눌러 저장하거나 전체 저장 버튼을 사용하세요</div>
+            <div class="share-hint" id="shareHint">공유하기 = 이미지 + 링크 동시 전송</div>
         </div>
     </div>
 
@@ -4371,6 +4371,23 @@ function displayResult() {
             }, 500);
         }
 
+        // ============ 해시 기반 공유 프로필 로딩 ============
+        (async function checkShareHash() {
+            const hash = location.hash.slice(1); // '#abc12345' → 'abc12345'
+            if (!hash || hash.length < 4 || hash.length > 16) return;
+            // 공유 코드로 프로필 로드
+            try {
+                const resp = await fetch(WORKER_URL + '/share/' + encodeURIComponent(hash));
+                if (!resp.ok) return;
+                const contentType = resp.headers.get('Content-Type') || '';
+                if (contentType.includes('text/html')) {
+                    // Worker가 HTML을 반환 → 별도 창에서 열기 대신 직접 리다이렉트
+                    location.href = WORKER_URL + '/share/' + encodeURIComponent(hash);
+                    return;
+                }
+            } catch(e) { /* 실패 시 무시, 일반 랜딩으로 */ }
+        })();
+
         // ============ INSTAGRAM SHARE CARD ============
         function roundRect(ctx, x, y, w, h, r) {
             ctx.beginPath();
@@ -4418,7 +4435,7 @@ function displayResult() {
         async function generateShareCard() {
             if (!currentProfile) return;
             // 공유 링크 먼저 생성
-            const shareUrl = await getOrCreateShareUrl();
+            const shareCode = await getOrCreateShareCode();
             const canvas = document.getElementById('shareCanvas');
             const ctx = canvas.getContext('2d');
             const W = 1080, H = 1350;
@@ -4582,7 +4599,7 @@ function displayResult() {
             }
 
             // Bottom branding (with QR if available)
-            drawBranding(ctx, W, H, AC, shareUrl);
+            drawBranding(ctx, W, H, AC, shareCode);
 
             document.getElementById('shareOverlay').classList.add('active');
         }
@@ -4674,54 +4691,42 @@ function displayResult() {
             ctx.strokeStyle = grd; ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(100, y); ctx.lineTo(W-100, y); ctx.stroke();
         }
-        function drawBranding(ctx, W, H, AC, shareUrl) {
-            const hasQR = shareUrl && typeof qrcode === 'function';
-            if (hasQR) {
-                // ── QR 포함 브랜딩: 왼쪽 텍스트 + 오른쪽 QR ──
-                drawDivider(ctx, W, H - 130, AC);
-                // 왼쪽 텍스트
-                ctx.fillStyle = 'rgba(245,166,35,0.5)';
-                ctx.font = '700 22px -apple-system, BlinkMacSystemFont, sans-serif';
+        function drawBranding(ctx, W, H, AC, shareCode) {
+            if (shareCode) {
+                // ── 공유 코드 포함 브랜딩 ──
+                drawDivider(ctx, W, H - 100, AC);
+                // 좌측: KNOT 브랜딩
+                ctx.fillStyle = AC;
+                ctx.font = '800 28px -apple-system, BlinkMacSystemFont, sans-serif';
                 ctx.textAlign = 'left';
-                ctx.fillText('KNOT', 80, H - 95);
+                ctx.fillText('KNOT', 80, H - 65);
                 ctx.fillStyle = 'rgba(255,255,255,0.35)';
-                ctx.font = '400 18px -apple-system, BlinkMacSystemFont, sans-serif';
-                ctx.fillText('AI 대화 행동 분석', 80, H - 68);
-                ctx.fillStyle = 'rgba(255,255,255,0.5)';
-                ctx.font = '500 17px -apple-system, BlinkMacSystemFont, sans-serif';
-                ctx.fillText('QR 스캔으로 전체 결과 보기 →', 80, H - 38);
-                // 오른쪽 QR 코드
-                try {
-                    const qr = qrcode(0, 'M');
-                    qr.addData(shareUrl);
-                    qr.make();
-                    const modules = qr.getModuleCount();
-                    const qrSize = 100;
-                    const cellSize = qrSize / modules;
-                    const qrX = W - 80 - qrSize;
-                    const qrY = H - 125;
-                    // 흰색 배경 (스캔 가독성)
-                    ctx.fillStyle = '#FFFFFF';
-                    roundRect(ctx, qrX - 6, qrY - 6, qrSize + 12, qrSize + 12, 8);
-                    ctx.fill();
-                    // QR 모듈 그리기
-                    ctx.fillStyle = '#08080D';
-                    for (let row = 0; row < modules; row++) {
-                        for (let col = 0; col < modules; col++) {
-                            if (qr.isDark(row, col)) {
-                                ctx.fillRect(qrX + col * cellSize, qrY + row * cellSize, Math.ceil(cellSize), Math.ceil(cellSize));
-                            }
-                        }
-                    }
-                } catch(e) {
-                    // QR 실패 시 URL 텍스트 폴백
-                    ctx.fillStyle = 'rgba(255,255,255,0.25)';
-                    ctx.font = '400 14px -apple-system, BlinkMacSystemFont, sans-serif';
-                    ctx.textAlign = 'right';
-                    ctx.fillText(shareUrl.replace('https://', ''), W - 80, H - 38);
-                }
+                ctx.font = '400 16px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.fillText('jeongjeongjeongm.github.io/knot', 80, H - 40);
+                // 우측: 공유 코드 배지
+                const codeText = '#' + shareCode;
+                ctx.font = '700 26px -apple-system, BlinkMacSystemFont, monospace';
+                const codeW = ctx.measureText(codeText).width + 36;
+                const badgeX = W - 80 - codeW;
+                const badgeY = H - 88;
+                ctx.fillStyle = 'rgba(245,166,35,0.15)';
+                roundRect(ctx, badgeX, badgeY, codeW, 44, 22);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(245,166,35,0.4)';
+                ctx.lineWidth = 1;
+                roundRect(ctx, badgeX, badgeY, codeW, 44, 22);
+                ctx.stroke();
+                ctx.fillStyle = AC;
+                ctx.textAlign = 'center';
+                ctx.font = '700 24px -apple-system, BlinkMacSystemFont, monospace';
+                ctx.fillText(codeText, badgeX + codeW / 2, badgeY + 30);
+                // 하단 안내
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.font = '400 15px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('사이트 접속 → 코드 입력 → 전체 결과 보기', W/2, H - 12);
             } else {
-                // ── 기존 브랜딩 (QR 없음) ──
+                // ── 기본 브랜딩 ──
                 drawDivider(ctx, W, H - 80, AC);
                 ctx.fillStyle = 'rgba(245,166,35,0.5)';
                 ctx.font = '700 20px -apple-system, BlinkMacSystemFont, sans-serif';
@@ -4751,13 +4756,58 @@ function displayResult() {
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             });
+            // 공유 링크 자동 클립보드 복사
+            if (currentProfile?._shareCode) {
+                const fullUrl = getShareFullUrl(currentProfile._shareCode);
+                navigator.clipboard.writeText(fullUrl).then(() => {
+                    const hint = document.getElementById('shareHint');
+                    if (hint) { hint.textContent = '공유 링크가 클립보드에 복사됨!'; setTimeout(() => { hint.textContent = '공유하기 = 이미지 + 링크 동시 전송'; }, 3000); }
+                }).catch(() => {});
+            }
         }
 
-        // ===== 공유 링크 자동 생성 (QR용) =====
-        async function getOrCreateShareUrl() {
+        // Web Share API — 이미지 + 링크 동시 공유 (모바일 최적)
+        async function shareWithLink() {
+            if (!window._shareCanvases || !window._shareCanvases.length) return;
+            const code = currentProfile?._shareCode;
+            const shareUrl = code ? getShareFullUrl(code) : 'https://jeongjeongjeongm.github.io/knot';
+            const name = currentProfile?.identity?.name || 'KNOT 분석';
+            const shareText = name + ' — KNOT AI 대화 행동 분석 결과\n' + shareUrl;
+
+            // 캔버스를 Blob으로 변환
+            const files = [];
+            for (let i = 0; i < window._shareCanvases.length; i++) {
+                try {
+                    const blob = await new Promise(resolve => window._shareCanvases[i].toBlob(resolve, 'image/png'));
+                    if (blob) files.push(new File([blob], 'KNOT-' + (i+1) + '.png', { type: 'image/png' }));
+                } catch(e) {}
+            }
+
+            // Web Share API (모바일)
+            if (navigator.share) {
+                try {
+                    const shareData = { title: name + ' — KNOT', text: shareText };
+                    if (files.length > 0 && navigator.canShare && navigator.canShare({ files })) {
+                        shareData.files = files;
+                    }
+                    await navigator.share(shareData);
+                    return;
+                } catch(e) {
+                    if (e.name === 'AbortError') return; // 유저가 취소
+                }
+            }
+            // 폴백: 링크만 클립보드 복사
+            try {
+                await navigator.clipboard.writeText(shareText);
+                const hint = document.getElementById('shareHint');
+                if (hint) { hint.textContent = '공유 텍스트가 클립보드에 복사됨!'; setTimeout(() => { hint.textContent = '공유하기 = 이미지 + 링크 동시 전송'; }, 3000); }
+            } catch(e) { alert('공유 링크: ' + shareUrl); }
+        }
+
+        // ===== 공유 코드 자동 생성 =====
+        async function getOrCreateShareCode() {
             if (!currentProfile) return null;
-            // 이미 생성된 shareUrl이 있으면 재사용
-            if (currentProfile._shareUrl) return currentProfile._shareUrl;
+            if (currentProfile._shareCode) return currentProfile._shareCode;
             try {
                 const shareData = {
                     identity: currentProfile.identity,
@@ -4775,11 +4825,15 @@ function displayResult() {
                 });
                 if (!resp.ok) return null;
                 const result = await resp.json();
-                // 단축 URL로 변환 (/share/ → /s/)
-                const shortUrl = result.shareUrl.replace('/share/', '/s/');
-                currentProfile._shareUrl = shortUrl;
-                return shortUrl;
+                // shareUrl에서 코드만 추출 (마지막 / 뒤)
+                const code = result.shareUrl.split('/').pop();
+                currentProfile._shareCode = code;
+                currentProfile._shareUrl = result.shareUrl;
+                return code;
             } catch(e) { return null; }
+        }
+        function getShareFullUrl(code) {
+            return 'https://jeongjeongjeongm.github.io/knot#' + code;
         }
 
         // ===== Multi-Card Instagram Carousel =====
@@ -4787,10 +4841,10 @@ function displayResult() {
             if (!currentProfile) return;
             const container = document.getElementById('shareCardsContainer');
             const dotsContainer = document.getElementById('sharePageDots');
-            container.innerHTML = '<div style="color:#999;text-align:center;padding:40px;">QR 링크 생성 중...</div>';
+            container.innerHTML = '<div style="color:#999;text-align:center;padding:40px;">공유 코드 생성 중...</div>';
             dotsContainer.innerHTML = '';
-            // 공유 링크 먼저 생성
-            const shareUrl = await getOrCreateShareUrl();
+            // 공유 코드 먼저 생성
+            const shareCode = await getOrCreateShareCode();
             container.innerHTML = '';
             const profile = currentProfile;
             const type = profile.identity || { emoji: '🔮', code: 'E-XX', name: '미지의 윤곽', tagline: '', desc: '' };
@@ -4860,7 +4914,7 @@ function displayResult() {
                 if (personaSummary.length > 200) personaSummary = personaSummary.substring(0, 197) + '...';
                 wrapText(ctx1, personaSummary, W/2, 860, W - 200, 38);
             }
-            drawBranding(ctx1, W, H, AC, shareUrl);
+            drawBranding(ctx1, W, H, AC, shareCode);
             canvases.push(c1);
 
             // ---- Card 2: Intensity Bars ----
@@ -4900,7 +4954,7 @@ function displayResult() {
                 ctx2.fillText(descMap[item.label] || '', 100, barY + 35);
                 barY += 120;
             });
-            drawBranding(ctx2, W, H, AC, shareUrl);
+            drawBranding(ctx2, W, H, AC, shareCode);
             canvases.push(c2);
 
 
@@ -4960,7 +5014,7 @@ function displayResult() {
                     ty += 45 + Math.min(lines.length, 3) * 28;
                 });
             }
-            drawBranding(ctx3, W, H, AC, shareUrl);
+            drawBranding(ctx3, W, H, AC, shareCode);
             canvases.push(c3);
 
             // ---- Card 4 & 4b: LLM Deep Analysis (split into 2 cards) ----
@@ -5010,7 +5064,7 @@ function displayResult() {
                         }
                         sy += 15;
                     });
-                    drawBranding(ctx4, W, H, AC, shareUrl);
+                    drawBranding(ctx4, W, H, AC, shareCode);
                     canvases.push(c4);
                 });
             }
@@ -5065,7 +5119,7 @@ function displayResult() {
                     });
                     py += 45 + Math.min(lines.length, 4) * 28;
                 });
-                drawBranding(ctx5, W, H, AC, shareUrl);
+                drawBranding(ctx5, W, H, AC, shareCode);
                 canvases.push(c5);
             }
 
