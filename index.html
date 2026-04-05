@@ -3137,6 +3137,24 @@
             const uploadArea = document.getElementById('matchUploadArea');
             if (uploadArea) uploadArea.style.display = 'none';
 
+            // 공유용 캐시 세팅
+            window._lastMatchResult = {
+                type: 'match',
+                identityA: m.name_a || 'A',
+                identityB: m.name_b || 'B',
+                matchIdentity: mi,
+                relationHTML: relationEl ? relationEl.innerHTML : '',
+                essayHTML: document.getElementById('matchEssays') ? document.getElementById('matchEssays').innerHTML : '',
+                essayVisible: !!(m.sections && m.sections.length > 0),
+                fallbackHTML: '',
+                fallbackVisible: false,
+                timestamp: m.created_at || new Date().toISOString()
+            };
+
+            // 공유 버튼 리셋
+            const shareResult = document.getElementById('matchShareUrlResult');
+            if (shareResult) shareResult.style.display = 'none';
+
             showScreen('match');
         }
 
