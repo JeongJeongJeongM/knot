@@ -4833,7 +4833,18 @@ function displayResult() {
         }
 
         function goToResult() {
-            showScreen('result');
+            // 개인 분석 결과가 렌더링 되어있는지 확인
+            const profileOverview = document.getElementById('profileOverview');
+            const hasRenderedResult = profileOverview && profileOverview.innerHTML.trim().length > 0;
+            if (hasRenderedResult) {
+                showScreen('result');
+            } else if (currentUser) {
+                showScreen('landing');
+                fetchPreviousAnalyses();
+                fetchPreviousMatches();
+            } else {
+                showScreen('login');
+            }
             document.getElementById('matchResultsContainer').classList.add('hidden');
         }
 
