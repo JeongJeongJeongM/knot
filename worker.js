@@ -1908,17 +1908,23 @@ function l1FallbackDecisionTree(texts, prism, anchor) {
   const openMarkers = (allText.match(/새로운|다르게|바꿔|시도|도전|변화|혁신|왜 안 돼/g) || []).length;
   fallbackIntensity.A14 = Math.min(1.0, openMarkers / (texts.length * 0.2 + PRISM_CONFIG.EPSILON));
 
-  // 간이 structural axes (기본값)
+  // 간이 structural axes (기본값 — styles 포함, precomputeAxes와 동일 구조)
+  const a7p = avgLen > 100 && causalDensity > 0.5 ? 'initiator' : avgLen < 30 ? 'responder' : 'balanced';
+  const a9p = fallbackIntensity.A3 > 0.3 ? 'expressive' : fallbackIntensity.A3 < 0.1 ? 'suppressive' : 'analytical';
+  const a10p = domainDensity > 0.2 ? 'depth_seeker' : domainDensity < 0.02 ? 'surface_locked' : 'slow_burn';
+  const a13p = questionRatio > 0.3 ? 'growth' : 'defensive';
+  const a15p = promptIntent === 'philosopher' ? 'active_investor' : 'passive_maintainer';
+  const a16p = causalDensity > 0.3 ? 'analytical' : 'pragmatic';
   const fallbackStructural = {
-    A7:  { primary: avgLen > 100 && causalDensity > 0.5 ? 'initiator' : avgLen < 30 ? 'responder' : 'balanced' },
-    A8:  { primary: 'boundary' },
-    A9:  { primary: fallbackIntensity.A3 > 0.3 ? 'expressive' : fallbackIntensity.A3 < 0.1 ? 'suppressive' : 'analytical' },
-    A10: { primary: domainDensity > 0.2 ? 'depth_seeker' : domainDensity < 0.02 ? 'surface_locked' : 'slow_burn' },
-    A11: { primary: 'balanced' },
-    A13: { primary: questionRatio > 0.3 ? 'growth' : 'defensive' },
-    A15: { primary: promptIntent === 'philosopher' ? 'active_investor' : 'passive_maintainer' },
-    A16: { primary: causalDensity > 0.3 ? 'analytical' : 'pragmatic' },
-    A17: { primary: 'minimal' },
+    A7:  { primary: a7p, styles: { initiator: a7p === 'initiator' ? 0.6 : 0.2, responder: a7p === 'responder' ? 0.6 : 0.2, balanced: a7p === 'balanced' ? 0.6 : 0.2 } },
+    A8:  { primary: 'boundary', styles: { confrontational: 0.1, repair: 0.15, avoidant: 0.1, boundary: 0.5 } },
+    A9:  { primary: a9p, styles: { expressive: a9p === 'expressive' ? 0.5 : 0.15, analytical: a9p === 'analytical' ? 0.5 : 0.15, suppressive: a9p === 'suppressive' ? 0.5 : 0.1, externalized: 0.1 } },
+    A10: { primary: a10p, styles: { depth_seeker: a10p === 'depth_seeker' ? 0.5 : 0.15, slow_burn: a10p === 'slow_burn' ? 0.5 : 0.15, surface_locked: a10p === 'surface_locked' ? 0.5 : 0.1, explorer: 0.1 } },
+    A11: { primary: 'balanced', styles: { proactive: 0.2, balanced: 0.5, reactive: 0.2, volatile: 0.1 } },
+    A13: { primary: a13p, styles: { growth: a13p === 'growth' ? 0.5 : 0.15, defensive: a13p === 'defensive' ? 0.5 : 0.15, avoidant: 0.1, absorptive: 0.1 } },
+    A15: { primary: a15p, styles: { active_investor: a15p === 'active_investor' ? 0.5 : 0.15, passive_maintainer: a15p === 'passive_maintainer' ? 0.5 : 0.15, selective_engager: 0.15, withdrawn: 0.05 } },
+    A16: { primary: a16p, styles: { analytical: a16p === 'analytical' ? 0.5 : 0.15, pragmatic: a16p === 'pragmatic' ? 0.5 : 0.15, intuitive: 0.15, rigid: 0.05 } },
+    A17: { primary: 'minimal', styles: { expansive: 0.1, moderate: 0.2, minimal: 0.5, absent: 0.2 } },
   };
 
   return {
@@ -2689,6 +2695,17 @@ function precomputeAxes(rawMessages, prism, anchor) {
             axis.styles[sk] = Math.round((axis.styles[sk] / sum) * 1000) / 1000;
           }
         }
+      } else if (sum === 0) {
+        // All styles zero — distribute equally
+        const numStyles = Object.keys(axis.styles).filter(sk => typeof axis.styles[sk] === 'number').length;
+        if (numStyles > 0) {
+          const equalShare = Math.round((1.0 / numStyles) * 1000) / 1000;
+          for (const sk of Object.keys(axis.styles)) {
+            if (typeof axis.styles[sk] === 'number') {
+              axis.styles[sk] = equalShare;
+            }
+          }
+        }
       }
     }
   }
@@ -2847,8 +2864,8 @@ const SERVER_TYPE_AXES = [
       const internalTendency = (d.A2 || 0.5) * 0.5 + (d.A6 || 0.5) * 0.5;
       const expressionDirect = (d.A3 || 0.5); // 감정 표현만 사용 (A1 제외)
       const a8 = d._structural?.A8;
-      // A8 primary: 'direct_engagement', 'diplomatic_approach', 'strategic_withdrawal', 'avoidance', 'escalation'
-      const conflictBonus = a8?.primary === 'direct_engagement' ? 0.15 : a8?.primary === 'escalation' ? 0.12 : a8?.primary === 'avoidance' ? -0.15 : a8?.primary === 'strategic_withdrawal' ? -0.1 : 0;
+      // A8 primary (normalized): 'confrontational', 'repair', 'avoidant', 'boundary'
+      const conflictBonus = a8?.primary === 'confrontational' ? 0.15 : a8?.primary === 'repair' ? 0.05 : a8?.primary === 'avoidant' ? -0.15 : a8?.primary === 'boundary' ? -0.1 : 0;
       return Math.max(0, Math.min(1, assertiveness * 0.35 + expressionDirect * 0.2 + (1 - internalTendency) * 0.3 + 0.05 + conflictBonus));
     }
   }
@@ -3313,7 +3330,7 @@ function computeRiskModel(simAxes, trajectoryResult, stimulusResult) {
 
   // Rule 2: Control collapse under stress
   const stressResp = stimulusResult.stress;
-  if (stressResp && stressResp.shifted.C < 0.3 && stressResp.recoveryPattern === 'fragile') {
+  if (stressResp && stressResp.shifted?.C < 0.3 && stressResp.recoveryPattern === 'fragile') {
     risks.push({
       trigger: '통제 붕괴',
       desc: '스트레스 상황에서 통제 시스템이 임계점 이하로 하락하며 회복이 어렵다.',
@@ -3469,9 +3486,9 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
   const riskA = simA.risk;
   const riskB = simB.risk;
   const sharedRisks = [];
-  if (riskA?.flags && riskB?.flags) {
-    const flagsA = riskA.flags.map(f => f.code || f);
-    const flagsB = riskB.flags.map(f => f.code || f);
+  if (riskA?.risks && riskB?.risks) {
+    const flagsA = riskA.risks.map(f => f.trigger || f);
+    const flagsB = riskB.risks.map(f => f.trigger || f);
     const shared = flagsA.filter(f => flagsB.includes(f));
     shared.forEach(f => sharedRisks.push(f));
   }
@@ -4032,7 +4049,7 @@ B 고유 주제: ${(crossSim.topicOverlap.uniqueB || []).join(', ') || '없음'}
         prompt += `\n자극 반응: 스트레스(${stim.stress?.delta || 0}), 친밀감(${stim.intimacy?.delta || 0}), 갈등(${stim.conflict?.delta || 0}), 상실(${stim.loss?.delta || 0})`;
       }
       if (simA.defense) prompt += `\n방어 패턴: ${simA.defense.name}`;
-      if (simA.risk?.flags?.length > 0) prompt += `\n리스크 플래그: ${simA.risk.flags.map(f => f.label || f.code || f).join(', ')}`;
+      if (simA.risk?.risks?.length > 0) prompt += `\n리스크 플래그: ${simA.risk.risks.map(f => f.trigger || f).join(', ')}`;
       prompt += `\n`;
     }
     if (simB) {
@@ -4043,7 +4060,7 @@ B 고유 주제: ${(crossSim.topicOverlap.uniqueB || []).join(', ') || '없음'}
         prompt += `\n자극 반응: 스트레스(${stim.stress?.delta || 0}), 친밀감(${stim.intimacy?.delta || 0}), 갈등(${stim.conflict?.delta || 0}), 상실(${stim.loss?.delta || 0})`;
       }
       if (simB.defense) prompt += `\n방어 패턴: ${simB.defense.name}`;
-      if (simB.risk?.flags?.length > 0) prompt += `\n리스크 플래그: ${simB.risk.flags.map(f => f.label || f.code || f).join(', ')}`;
+      if (simB.risk?.risks?.length > 0) prompt += `\n리스크 플래그: ${simB.risk.risks.map(f => f.trigger || f).join(', ')}`;
       prompt += `\n`;
     }
   }
@@ -5252,11 +5269,11 @@ function switchTab(id, el) {
                   sectionsJson = JSON.stringify(sections);
                 } catch { sectionsJson = null; }
 
-                // Always update status — 'complete' if essay exists, 'error' if not
+                // Always update status + simulation_json (simulation computed after initial INSERT)
                 const newStatus = fullText.length > 50 ? 'complete' : 'error';
                 await env.KNOT_DB.prepare(
-                  `UPDATE analyses SET status = ? WHERE id = ?`
-                ).bind(newStatus, analysisId).run();
+                  `UPDATE analyses SET status = ?, simulation_json = ? WHERE id = ?`
+                ).bind(newStatus, simulation ? JSON.stringify(simulation) : null, analysisId).run();
 
                 // Insert essay only if we have content
                 if (fullText.length > 50) {
