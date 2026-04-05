@@ -5785,6 +5785,45 @@ function switchTab(id, el) {
       }
     }
 
+    // ──── POST /delete-account ── 회원 탈퇴 (모든 데이터 삭제) ────
+    if (path === '/delete-account') {
+      const auth = await requireAuth(request, env);
+      if (auth.error) {
+        return jsonResponse({ error: auth.error }, auth.status, corsHeaders);
+      }
+      const db = env.KNOT_DB;
+      if (!db) {
+        return jsonResponse({ error: 'DB not configured' }, 500, corsHeaders);
+      }
+      try {
+        const userId = auth.user.sub;
+
+        // 1) essays (analysis_id FK) — analyses 삭제 전에 먼저
+        await db.prepare(
+          `DELETE FROM essays WHERE analysis_id IN (SELECT id FROM analyses WHERE user_id = ?)`
+        ).bind(userId).run();
+
+        // 2) feedback
+        await db.prepare(`DELETE FROM feedback WHERE user_id = ?`).bind(userId).run();
+
+        // 3) matches
+        await db.prepare(`DELETE FROM matches WHERE user_id = ?`).bind(userId).run();
+
+        // 4) analyses
+        await db.prepare(`DELETE FROM analyses WHERE user_id = ?`).bind(userId).run();
+
+        // 5) sessions
+        await db.prepare(`DELETE FROM sessions WHERE user_id = ?`).bind(userId).run();
+
+        // 6) users
+        await db.prepare(`DELETE FROM users WHERE id = ?`).bind(userId).run();
+
+        return jsonResponse({ ok: true, message: '계정이 삭제되었습니다' }, 200, corsHeaders);
+      } catch (e) {
+        return jsonResponse({ error: e.message }, 500, corsHeaders);
+      }
+    }
+
     return jsonResponse({ error: 'Not found' }, 404, corsHeaders);
   },
 };
