@@ -2174,8 +2174,8 @@
                         const compat = _calcCompatibility(flatA, flatB);
                         return {
                             name: arch.name, tagline: arch.tagline,
-                            emoji_a: identityA.emoji, emoji_b: identityB.emoji,
-                            code: identityA.code + ' × ' + identityB.code,
+                            emoji_a: identityA?.emoji || '🔮', emoji_b: identityB?.emoji || '🔮',
+                            code: (identityA?.code || '?') + ' × ' + (identityB?.code || '?'),
                             compatibility: compat, tension: arch.tension, growth: arch.growth
                         };
                     }
@@ -2183,8 +2183,8 @@
             }
             return {
                 name: '교차하는 궤도', tagline: '복합적 역학의 관계',
-                emoji_a: identityA.emoji, emoji_b: identityB.emoji,
-                code: identityA.code + ' × ' + identityB.code,
+                emoji_a: identityA?.emoji || '🔮', emoji_b: identityB?.emoji || '🔮',
+                code: (identityA?.code || '?') + ' × ' + (identityB?.code || '?'),
                 compatibility: 50, tension: '보통', growth: '보통'
             };
         }
@@ -3819,13 +3819,14 @@ function buildProfileOverview(axes, profile) {
             if (cross.axisDelta) {
                 crossBody += `<div style="margin-top:12px;">`;
                 crossBody += `<div style="font-size:10px;color:var(--ac);font-family:'Courier New',monospace;margin-bottom:8px;">// 축 거리</div>`;
-                const axes = ['정서', '동력', '인지', '경계', '회복', '방어'];
-                for (let i = 0; i < Math.min(axes.length, cross.axisDelta.length); i++) {
-                    const dist = cross.axisDelta[i] || 0;
+                const axisKeys = [['emotion','정서'], ['drive','동력'], ['cognition','인지'], ['boundary','경계'], ['resilience','회복']];
+                for (let i = 0; i < axisKeys.length; i++) {
+                    const [key, label] = axisKeys[i];
+                    const dist = cross.axisDelta[key]?.delta || 0;
                     const barColor = dist < 0.2 ? '#28c840' : dist < 0.4 ? '#ffbd2e' : '#ff5f57';
                     const width = Math.max(Math.min(dist * 100, 100), 2);
                     crossBody += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">`;
-                    crossBody += `<div style="font-size:10px;color:var(--text-dim);width:36px;text-align:right;font-family:'Courier New',monospace;">${axes[i]}</div>`;
+                    crossBody += `<div style="font-size:10px;color:var(--text-dim);width:36px;text-align:right;font-family:'Courier New',monospace;">${label}</div>`;
                     crossBody += `<div style="flex:1;height:5px;background:rgba(255,255,255,0.04);border-radius:2px;overflow:hidden;"><div style="width:${width}%;height:100%;background:${barColor};border-radius:2px;"></div></div>`;
                     crossBody += `</div>`;
                 }
@@ -3834,12 +3835,13 @@ function buildProfileOverview(axes, profile) {
 
             // Inline Chips (inside cross panel)
             let chipsHTML = '';
-            if (cross.conflictCross && cross.conflictCross.compatibility !== undefined) {
-                chipsHTML += `<span style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.03);border:1px solid #1a1a2e;border-radius:4px;font-size:10px;font-family:'Courier New',monospace;">갈등 호환: <span style="color:var(--ac);font-weight:600;">${cross.conflictCross.compatibility}%</span></span>`;
+            if (cross.conflictCross && cross.conflictCross.score !== undefined) {
+                chipsHTML += `<span style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.03);border:1px solid #1a1a2e;border-radius:4px;font-size:10px;font-family:'Courier New',monospace;">갈등 호환: <span style="color:var(--ac);font-weight:600;">${Math.round(cross.conflictCross.score * 100)}%</span></span>`;
             }
             if (cross.recoveryMismatch) {
-                const level = typeof cross.recoveryMismatch === 'object' ? cross.recoveryMismatch.level || '알 수 없음' : cross.recoveryMismatch;
-                chipsHTML += `<span style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.03);border:1px solid #1a1a2e;border-radius:4px;font-size:10px;font-family:'Courier New',monospace;">회복 리듬: <span style="color:var(--ac);font-weight:600;">${sanitizeHTML(level)}</span></span>`;
+                const rmDelta = typeof cross.recoveryMismatch === 'object' ? cross.recoveryMismatch.delta : 0;
+                const rmLabel = rmDelta === 0 ? '동기화' : rmDelta === 1 ? '약간 차이' : '큰 차이';
+                chipsHTML += `<span style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.03);border:1px solid #1a1a2e;border-radius:4px;font-size:10px;font-family:'Courier New',monospace;">회복 리듬: <span style="color:var(--ac);font-weight:600;">${rmLabel}</span></span>`;
             }
             if (cross.topicOverlap && cross.topicOverlap.jaccard !== undefined) {
                 chipsHTML += `<span style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.03);border:1px solid #1a1a2e;border-radius:4px;font-size:10px;font-family:'Courier New',monospace;">토픽: <span style="color:var(--ac);font-weight:600;">${(cross.topicOverlap.jaccard * 100).toFixed(0)}%</span></span>`;
@@ -4290,6 +4292,7 @@ function displayResult() {
                     rates,
                     axes,
                     identity,
+                    messages,
                     timestamp: new Date().toISOString()
                 };
 

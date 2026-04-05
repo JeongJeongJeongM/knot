@@ -3972,8 +3972,8 @@ ${descB}
 
 ### 축 거리 분석
 평균 거리: ${crossSim.avgDistance} (0=동일, 1=정반대)
-가장 가까운 축: ${crossSim.closest.name} (차이 ${crossSim.closest.delta})
-가장 먼 축: ${crossSim.farthest.name} (차이 ${crossSim.farthest.delta})
+가장 가까운 축: ${crossSim.closest?.name || '미분류'} (차이 ${crossSim.closest?.delta ?? '?'})
+가장 먼 축: ${crossSim.farthest?.name || '미분류'} (차이 ${crossSim.farthest?.delta ?? '?'})
 
 ### 궤적 수렴/발산
 패턴: ${crossSim.convergence === 'convergent' ? '수렴 — 시간이 갈수록 유사한 방향으로 이동' : crossSim.convergence === 'divergent' ? '발산 — 시간이 갈수록 다른 방향으로 이동' : '평행 — 각자의 궤적을 유지'}
@@ -3996,17 +3996,18 @@ B의 방어: ${simB?.defense?.name || '미분류'} (${simB?.defense?.code || '-'
       prompt += `\n### 공유 리스크: ${crossSim.sharedRisks.join(', ')}\n`;
     }
 
-    if (crossSim.attachmentCross) {
+    if (crossSim.attachmentCross?.type) {
       prompt += `\n### 애착 패턴 교차
-유형: ${crossSim.attachmentCross.type}
-해석: ${crossSim.attachmentCross.desc}\n`;
+유형: ${crossSim.attachmentCross.type}`;
+      if (crossSim.attachmentCross.desc) prompt += `\n해석: ${crossSim.attachmentCross.desc}`;
+      prompt += `\n`;
     }
 
-    if (crossSim.conflictCross) {
+    if (crossSim.conflictCross?.type) {
       prompt += `\n### 갈등 스타일 호환성
-유형: ${crossSim.conflictCross.type}
-해석: ${crossSim.conflictCross.desc}
-호환 점수: ${Math.round((crossSim.conflictCross.score || 0.5) * 100)}%\n`;
+유형: ${crossSim.conflictCross.type}`;
+      if (crossSim.conflictCross.desc) prompt += `\n해석: ${crossSim.conflictCross.desc}`;
+      prompt += `\n호환 점수: ${Math.round((crossSim.conflictCross.score || 0.5) * 100)}%\n`;
     }
 
     if (crossSim.recoveryMismatch) {
