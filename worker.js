@@ -4504,7 +4504,7 @@ export default {
         }
         try {
           const rows = await db.prepare(
-            `SELECT a.id, a.type_code, a.type_name, a.tagline, a.axis_fs, a.axis_ah, a.axis_tr, a.axis_ow, a.axis_xv, a.axis_ei, a.axes_json, a.identity_json, a.simulation_json, a.message_count, a.created_at, e.sections_json
+            `SELECT a.id, a.type_code, a.type_name, a.tagline, a.axis_fs, a.axis_ah, a.axis_tr, a.axis_ow, a.axis_xv, a.axis_ei, a.axes_json, a.identity_json, a.simulation_json, a.message_count, a.created_at, e.sections_json, e.essay_text
              FROM analyses a
              LEFT JOIN essays e ON e.analysis_id = a.id
              WHERE a.user_id = ? AND a.status = 'complete'
@@ -4535,7 +4535,32 @@ export default {
             axes: axes,
             identity: identity,
             simulation: (() => { try { return r.simulation_json ? JSON.parse(r.simulation_json) : null; } catch { return null; } })(),
-            sections: r.sections_json ? (() => { try { const p = JSON.parse(r.sections_json); return Array.isArray(p) ? p : (p && Array.isArray(p.sections) ? p.sections : null); } catch { return null; } })() : null,
+            sections: (() => {
+              // Try sections_json first
+              if (r.sections_json) {
+                try {
+                  const p = JSON.parse(r.sections_json);
+                  const arr = Array.isArray(p) ? p : (p && Array.isArray(p.sections) ? p.sections : null);
+                  // Validate it has real content (not just {title,offset} from old buggy storage)
+                  if (arr && arr.length > 0 && (arr[0].summary || arr[0].subsections || arr[0].content)) {
+                    return arr;
+                  }
+                } catch {}
+              }
+              // Fallback: re-parse from essay_text
+              if (r.essay_text) {
+                try {
+                  let jsonStr = r.essay_text;
+                  const cbm = r.essay_text.match(/```(?:json)?\s*([\s\S]*?)```\s*$/);
+                  if (cbm) jsonStr = cbm[1].trim();
+                  else { const om = r.essay_text.match(/```(?:json)?\s*([\s\S]*)/); if (om) jsonStr = om[1].trim(); else { const s = r.essay_text.indexOf('{'); if (s >= 0) jsonStr = r.essay_text.slice(s); } }
+                  const parsed = JSON.parse(jsonStr);
+                  if (parsed && Array.isArray(parsed.sections)) return parsed.sections;
+                  if (Array.isArray(parsed)) return parsed;
+                } catch {}
+              }
+              return null;
+            })(),
             message_count: r.message_count,
             created_at: r.created_at
           };});
@@ -5256,19 +5281,32 @@ function switchTab(id, el) {
             // ──── Save Stage 2 essay to D1 (v2 schema) ────
             try {
               if (env.KNOT_DB) {
-                // Parse essay into sections for structured storage
+                // Parse essay JSON into sections for structured storage
                 let sectionsJson = null;
                 let sectionCount = 0;
                 try {
-                  const sectionRegex = /#{1,3}\s*\d*\.?\s*(.+)/g;
-                  const sections = [];
-                  let match;
-                  while ((match = sectionRegex.exec(fullText)) !== null) {
-                    sections.push({ title: match[1].trim(), offset: match.index });
+                  // Extract JSON from fullText (may be wrapped in ```json...```)
+                  let jsonStr = fullText;
+                  const codeBlockMatch = fullText.match(/```(?:json)?\s*([\s\S]*?)```\s*$/);
+                  if (codeBlockMatch) {
+                    jsonStr = codeBlockMatch[1].trim();
+                  } else {
+                    const openMatch = fullText.match(/```(?:json)?\s*([\s\S]*)/);
+                    if (openMatch) jsonStr = openMatch[1].trim();
+                    else { const s = fullText.indexOf('{'); if (s >= 0) jsonStr = fullText.slice(s); }
                   }
-                  sectionCount = sections.length;
-                  sectionsJson = JSON.stringify(sections);
-                } catch { sectionsJson = null; }
+                  const parsed = JSON.parse(jsonStr);
+                  if (parsed && Array.isArray(parsed.sections)) {
+                    sectionsJson = JSON.stringify(parsed.sections);
+                    sectionCount = parsed.sections.length;
+                  } else if (Array.isArray(parsed)) {
+                    sectionsJson = JSON.stringify(parsed);
+                    sectionCount = parsed.length;
+                  }
+                } catch {
+                  // JSON parse failed — fallback: store null, essay_text has the raw content
+                  sectionsJson = null;
+                }
 
                 // Always update status + simulation_json (simulation computed after initial INSERT)
                 const newStatus = fullText.length > 50 ? 'complete' : 'error';
