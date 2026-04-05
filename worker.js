@@ -4453,7 +4453,7 @@ function buildSharePageHTML(profile) {
   </div>
   ${sectionsHTML}
   <div class="footer">
-    <a href="https://jeongjeongjeongm.github.io/knot/" style="display:inline-block;padding:14px 32px;background:var(--ac);color:#000;font-weight:700;border-radius:8px;text-decoration:none;font-size:16px;margin-bottom:10px;">나도 분석하기 →</a>
+    <a href="https://knot-ai.pages.dev/" style="display:inline-block;padding:14px 32px;background:var(--ac);color:#000;font-weight:700;border-radius:8px;text-decoration:none;font-size:16px;margin-bottom:10px;">나도 분석하기 →</a>
     <div style="margin-top:8px;">KNOT — AI 대화 행동 분석</div>
   </div>
 </div>
@@ -4555,7 +4555,21 @@ export default {
         } catch(e) { return jsonResponse({ error: e.message, stack: e.stack }, 500, corsHeaders); }
       }
 
-      // ──── GET /share/:id ────
+      // ──── GET /share-data/:id ── JSON API (프론트엔드용) ────
+      if (request.method === 'GET' && url.pathname.startsWith('/share-data/')) {
+        const shareId = url.pathname.split('/share-data/')[1];
+        if (shareId && env.SHARE_STORE) {
+          try {
+            const data = await env.SHARE_STORE.get(shareId);
+            if (data) {
+              return jsonResponse(JSON.parse(data), 200, corsHeaders);
+            }
+          } catch {}
+        }
+        return jsonResponse({ error: 'Not found' }, 404, corsHeaders);
+      }
+
+      // ──── GET /share/:id ── HTML 페이지 (직접 접속용, 레거시 호환) ────
       if (request.method === 'GET' && url.pathname.startsWith('/share/')) {
         const shareId = url.pathname.split('/share/')[1];
         if (shareId && env.SHARE_STORE) {
@@ -5764,8 +5778,8 @@ function switchTab(id, el) {
         await env.SHARE_STORE.put(shareId, JSON.stringify(body), {
           expirationTtl: 60 * 60 * 24 * 30,
         });
-        const shareUrl = `${url.origin}/share/${shareId}`;
-        return jsonResponse({ shareUrl }, 200, corsHeaders);
+        const shareUrl = `https://knot-ai.pages.dev/share/${shareId}`;
+        return jsonResponse({ shareUrl, shareId }, 200, corsHeaders);
       } catch (e) {
         return jsonResponse({ error: e.message }, 500, corsHeaders);
       }

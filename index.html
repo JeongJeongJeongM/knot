@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -4567,21 +4567,43 @@ function displayResult() {
             }, 500);
         }
 
-        // ============ 해시 기반 공유 프로필 로딩 ============
-        (async function checkShareHash() {
-            const hash = location.hash.slice(1); // '#abc12345' → 'abc12345'
-            if (!hash || hash.length < 4 || hash.length > 16) return;
-            // 공유 코드로 프로필 로드
+        // ============ 공유 프로필 로딩 (pathname + hash 둘 다 지원) ============
+        (async function checkShareRoute() {
+            // 1) pathname 기반: /share/abc12345
+            const pathMatch = location.pathname.match(/^\/share\/([a-zA-Z0-9-]+)$/);
+            // 2) hash 기반 (레거시): #abc12345
+            const hash = location.hash.slice(1);
+            const shareCode = pathMatch ? pathMatch[1] : (hash && hash.length >= 4 && hash.length <= 16 ? hash : null);
+            if (!shareCode) return;
+
             try {
-                const resp = await fetch(WORKER_URL + '/share/' + encodeURIComponent(hash));
-                if (!resp.ok) return;
-                const contentType = resp.headers.get('Content-Type') || '';
-                if (contentType.includes('text/html')) {
-                    // Worker가 HTML을 반환 → 별도 창에서 열기 대신 직접 리다이렉트
-                    location.href = WORKER_URL + '/share/' + encodeURIComponent(hash);
+                // JSON API로 데이터 fetch
+                const resp = await fetch(WORKER_URL + '/share-data/' + encodeURIComponent(shareCode));
+                if (!resp.ok) {
+                    // fallback: 레거시 HTML 직접 이동
+                    location.href = WORKER_URL + '/share/' + encodeURIComponent(shareCode);
                     return;
                 }
-            } catch(e) { /* 실패 시 무시, 일반 랜딩으로 */ }
+                const profile = await resp.json();
+                // 공유 프로필을 메인 UI에 렌더링
+                const identity = profile.identity || {};
+                const sections = profile.sections || [];
+                currentProfile = {
+                    identity: identity,
+                    llmResult: { sections: sections },
+                    _isSharedView: true,
+                    _shareCode: shareCode
+                };
+                displayResult(currentProfile);
+                // 공유 뷰에서는 분석 입력 화면 숨기기
+                const uploadSection = document.getElementById('upload-section') || document.querySelector('.upload-area');
+                if (uploadSection) uploadSection.style.display = 'none';
+                const heroSection = document.querySelector('.hero-section');
+                if (heroSection) heroSection.style.display = 'none';
+            } catch(e) {
+                // 실패 시 Worker HTML로 폴백
+                location.href = WORKER_URL + '/share/' + encodeURIComponent(shareCode);
+            }
         })();
 
         // ============ INSTAGRAM SHARE CARD ============
@@ -5029,7 +5051,7 @@ function displayResult() {
             } catch(e) { return null; }
         }
         function getShareFullUrl(code) {
-            return 'https://jeongjeongjeongm.github.io/knot#' + code;
+            return 'https://knot-ai.pages.dev/share/' + code;
         }
 
         // ===== Multi-Card Instagram Carousel =====
