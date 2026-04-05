@@ -2154,9 +2154,9 @@ async function requireAuth(request, env) {
   if (env.KNOT_DB) {
     try {
       env.KNOT_DB.prepare(
-        `INSERT INTO users (id, email, name, picture, last_seen) VALUES (?, ?, ?, ?, datetime('now'))
-         ON CONFLICT(id) DO UPDATE SET last_seen = datetime('now'), name = excluded.name, picture = excluded.picture`
-      ).bind(user.sub, user.email, user.name, user.picture).run().catch(() => {});
+        `INSERT INTO users (id, email, last_seen) VALUES (?, ?, datetime('now'))
+         ON CONFLICT(id) DO UPDATE SET last_seen = datetime('now')`
+      ).bind(user.sub, user.email).run().catch(() => {});
     } catch(e) {}
   }
 
@@ -5230,8 +5230,8 @@ function switchTab(id, el) {
                 const userId = authUser?.sub || 'anonymous';
                 try {
                   await env.KNOT_DB.prepare(
-                    `INSERT INTO users (id, email, name, last_seen) VALUES (?, ?, ?, datetime('now')) ON CONFLICT(id) DO UPDATE SET last_seen = datetime('now')`
-                  ).bind(userId, authUser?.email || 'anonymous@knot', authUser?.name || 'Anonymous').run();
+                    `INSERT INTO users (id, email, last_seen) VALUES (?, ?, datetime('now')) ON CONFLICT(id) DO UPDATE SET last_seen = datetime('now')`
+                  ).bind(userId, authUser?.email || 'anonymous@knot').run();
                 } catch {}
 
                 // KV 쿨다운 기록 (분석 시작 시점)
@@ -5494,8 +5494,8 @@ function switchTab(id, el) {
         if (env.KNOT_DB) {
           try {
             await env.KNOT_DB.prepare(
-              `INSERT INTO users (id, email, name, last_seen) VALUES (?, ?, ?, datetime('now')) ON CONFLICT(id) DO UPDATE SET last_seen = datetime('now')`
-            ).bind(matchUserId, authUser?.email || 'anonymous@knot', authUser?.name || 'Anonymous').run();
+              `INSERT INTO users (id, email, last_seen) VALUES (?, ?, datetime('now')) ON CONFLICT(id) DO UPDATE SET last_seen = datetime('now')`
+            ).bind(matchUserId, authUser?.email || 'anonymous@knot').run();
           } catch {}
         }
 
