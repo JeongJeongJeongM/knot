@@ -1963,7 +1963,7 @@
                     <div style="font-size:12px;margin-bottom:8px;color:var(--text);">두 번째 프로필 업로드</div>
                     <div style="font-size:11px;color:var(--text-dim);margin-bottom:15px;">파일 또는 프로필 코드 붙여넣기</div>
 
-                    <button onclick="(function(){var i=document.createElement('input');i.type='file';i.accept='.json,.zip';i.style.display='none';i.onchange=function(){if(this.files[0]){analyzeMatchConversation(this.files[0]);}document.body.removeChild(this);};document.body.appendChild(i);i.click();})()">파일 선택</button>
+                    <button id="matchFileBtn" onclick="(function(){var i=document.createElement('input');i.type='file';i.accept='.json,.zip';i.style.display='none';i.onchange=async function(){if(this.files[0]){var btn=document.getElementById('matchFileBtn');if(btn){btn.textContent='분석 중...';btn.disabled=true;btn.style.opacity='0.5';}try{await loadMatchFile(this.files[0]);}catch(e){alert('파일 로드 오류: '+e.message);}finally{if(btn){btn.textContent='파일 선택';btn.disabled=false;btn.style.opacity='1';}}};document.body.removeChild(this);};document.body.appendChild(i);i.click();})()">파일 선택</button>
                     <div style="margin:15px 0;font-size:11px;color:var(--text-dim);">또는</div>
                     <textarea id="matchCodeInput" placeholder="프로필 코드 입력..." style="width:100%;height:80px;padding:10px;background-color:rgba(0,0,0,0.3);border:1px solid #1a1a2e;border-radius:6px;color:var(--text);font-size:11px;font-family:'Courier New',monospace;resize:none;"></textarea>
                     <button onclick="loadProfileFromCode()" style="margin-top:10px;">코드에서 로드</button>
@@ -4411,7 +4411,10 @@ function displayResult() {
                 return;
             }
 
+            const btn = document.querySelector('#matchCodeInput + button') || event?.target;
+            const originalText = btn ? btn.textContent : '';
             try {
+                if (btn) { btn.textContent = '로딩 중...'; btn.disabled = true; btn.style.opacity = '0.5'; }
                 const decoded = JSON.parse(decodeURIComponent(escape(atob(code))));
                 const loadedAxes = {
                     intensity: decoded.intensity,
@@ -4422,9 +4425,12 @@ function displayResult() {
                     identity: decoded.identity || computeIdentity(loadedAxes),
                     timestamp: decoded.timestamp
                 };
+                if (btn) { btn.textContent = '분석 중... (최대 30초)'; }
                 await displayMatch();
             } catch (error) {
                 alert('프로필 코드 오류: ' + error.message);
+            } finally {
+                if (btn) { btn.textContent = originalText; btn.disabled = false; btn.style.opacity = '1'; }
             }
         }
 
