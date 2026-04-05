@@ -5052,21 +5052,34 @@ function switchTab(id, el) {
         // NOTE: Not atomic — concurrent requests could bypass. Acceptable for current scale.
         const ADMIN_EMAILS = ['ashirmallo@gmail.com'];
         const isAdmin = authUser?.email && ADMIN_EMAILS.includes(authUser.email);
-        if (env.KNOT_DB && authUser?.sub && !isAdmin) {
+        if (authUser?.sub && !isAdmin) {
           try {
-            const recentAnalysis = await env.KNOT_DB.prepare(
-              `SELECT COUNT(*) as cnt FROM analyses WHERE user_id = ? AND created_at >= datetime('now', '-7 days')`
-            ).bind(authUser.sub).first();
-            if (recentAnalysis && recentAnalysis.cnt >= 1) {
-              return jsonResponse({
-                error: '일주일에 한 번만 분석할 수 있습니다. 다음 분석은 7일 후에 가능합니다.',
-                code: 'WEEKLY_LIMIT',
-                remaining_days: 7
-              }, 429, corsHeaders);
+            // 1) KV 쿨다운 체크 (탈퇴→재가입 어뷰징 방지)
+            if (env.SHARE_STORE) {
+              const cooldown = await env.SHARE_STORE.get(`ratelimit:${authUser.sub}`);
+              if (cooldown) {
+                return jsonResponse({
+                  error: '일주일에 한 번만 분석할 수 있습니다. 다음 분석은 7일 후에 가능합니다.',
+                  code: 'WEEKLY_LIMIT',
+                  remaining_days: 7
+                }, 429, corsHeaders);
+              }
+            }
+            // 2) DB 기반 체크
+            if (env.KNOT_DB) {
+              const recentAnalysis = await env.KNOT_DB.prepare(
+                `SELECT COUNT(*) as cnt FROM analyses WHERE user_id = ? AND created_at >= datetime('now', '-7 days')`
+              ).bind(authUser.sub).first();
+              if (recentAnalysis && recentAnalysis.cnt >= 1) {
+                return jsonResponse({
+                  error: '일주일에 한 번만 분석할 수 있습니다. 다음 분석은 7일 후에 가능합니다.',
+                  code: 'WEEKLY_LIMIT',
+                  remaining_days: 7
+                }, 429, corsHeaders);
+              }
             }
           } catch (limitErr) {
             console.error('[Weekly Limit Check Error]', limitErr.message);
-            // Don't block on limit check failure
           }
         }
 
@@ -5220,6 +5233,11 @@ function switchTab(id, el) {
                     `INSERT INTO users (id, email, name, last_seen) VALUES (?, ?, ?, datetime('now')) ON CONFLICT(id) DO UPDATE SET last_seen = datetime('now')`
                   ).bind(userId, authUser?.email || 'anonymous@knot', authUser?.name || 'Anonymous').run();
                 } catch {}
+
+                // KV 쿨다운 기록 (분석 시작 시점)
+                if (env.SHARE_STORE && authUser?.sub) {
+                  try { await env.SHARE_STORE.put(`ratelimit:${authUser.sub}`, Date.now().toString(), { expirationTtl: 60 * 60 * 24 * 7 }); } catch {}
+                }
 
                 await env.KNOT_DB.prepare(
                   `INSERT INTO analyses (id, user_id, type_code, type_name, tagline, axis_fs, axis_ah, axis_tr, axis_ow, axis_xv, axis_ei, axes_json, prism_json, anchor_json, identity_json, message_count, input_format, original_count, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scoring', datetime('now'))`
@@ -5797,6 +5815,14 @@ function switchTab(id, el) {
       }
       try {
         const userId = auth.user.sub;
+
+        // Rate limit 쿨다운 기록 (탈퇴→재가입 어뷰징 방지)
+        // KV에 탈퇴 시점 기록 → 재가입 시 7일간 분석 차단
+        if (env.SHARE_STORE) {
+          await env.SHARE_STORE.put(`ratelimit:${userId}`, Date.now().toString(), {
+            expirationTtl: 60 * 60 * 24 * 7, // 7일 후 자동 만료
+          });
+        }
 
         // 1) essays (analysis_id FK) — analyses 삭제 전에 먼저
         await db.prepare(
