@@ -2021,6 +2021,17 @@
                     </div>
                 </div>
 
+                <!-- 매칭 공유 -->
+                <div style="margin-top:24px;text-align:center;">
+                    <button class="share-url-btn" id="matchShareBtn" onclick="generateMatchShareURL()" style="margin-bottom:8px;">공유 링크 만들기</button>
+                    <div id="matchShareUrlResult" style="display:none;margin-top:8px;">
+                        <div style="display:flex;gap:6px;align-items:center;justify-content:center;">
+                            <input id="matchShareUrlInput" readonly style="flex:1;max-width:300px;padding:6px 10px;background:#0c0c14;border:1px solid #1a1a2e;border-radius:4px;color:var(--ac);font-size:11px;font-family:'Courier New',monospace;" />
+                            <button onclick="copyMatchShareURL()" style="font-size:11px;padding:4px 10px;background:var(--ac);color:#000;border:none;border-radius:4px;cursor:pointer;font-family:'Courier New',monospace;">복사</button>
+                        </div>
+                    </div>
+                </div>
+
                 <button class="secondary-btn" style="margin-top:24px;" onclick="goToLanding()">새 분석</button>
             </div>
         </div>
@@ -4374,6 +4385,26 @@ function displayResult() {
 
             document.getElementById('matchResultsContainer').classList.remove('hidden');
 
+            // 매칭 결과 캐시 (공유용)
+            window._lastMatchResult = {
+                type: 'match',
+                identityA: idA,
+                identityB: idB,
+                matchIdentity: matchId,
+                relationHTML: document.getElementById('matchRelationIdentity').innerHTML,
+                essayHTML: document.getElementById('matchEssays').innerHTML,
+                essayVisible: document.getElementById('matchEssaySection').style.display !== 'none',
+                fallbackHTML: document.getElementById('matchFallbackAnalysis').innerHTML,
+                fallbackVisible: document.getElementById('matchFallbackAnalysis').style.display !== 'none',
+                timestamp: new Date().toISOString()
+            };
+
+            // 공유 버튼 리셋
+            const shareResult = document.getElementById('matchShareUrlResult');
+            if (shareResult) shareResult.style.display = 'none';
+            const shareBtn = document.getElementById('matchShareBtn');
+            if (shareBtn) { shareBtn.textContent = '공유 링크 만들기'; shareBtn.disabled = false; }
+
             showScreen('match');
         }
 
@@ -4693,16 +4724,35 @@ function displayResult() {
                     return;
                 }
                 const profile = await resp.json();
-                // 공유 프로필을 메인 UI에 렌더링
-                const identity = profile.identity || {};
-                const sections = profile.sections || [];
-                currentProfile = {
-                    identity: identity,
-                    llmResult: { sections: sections },
-                    _isSharedView: true,
-                    _shareCode: shareCode
-                };
-                displayResult(currentProfile);
+
+                // 매칭 공유인지 개인 분석 공유인지 분기
+                if (profile.type === 'match') {
+                    // 매칭 결과 공유 뷰
+                    document.getElementById('matchRelationIdentity').innerHTML = profile.relationHTML || '';
+                    document.getElementById('matchEssays').innerHTML = profile.essayHTML || '';
+                    document.getElementById('matchEssaySection').style.display = profile.essayVisible ? '' : 'none';
+                    document.getElementById('matchFallbackAnalysis').innerHTML = profile.fallbackHTML || '';
+                    document.getElementById('matchFallbackAnalysis').style.display = profile.fallbackVisible ? '' : 'none';
+                    document.getElementById('matchResultsContainer').classList.remove('hidden');
+                    // 공유 뷰에서는 업로드 영역과 공유 버튼 숨기기
+                    const matchUpload = document.querySelector('.screen.match .landing-panel');
+                    if (matchUpload) matchUpload.style.display = 'none';
+                    const matchShareBtn = document.getElementById('matchShareBtn');
+                    if (matchShareBtn) matchShareBtn.parentElement.style.display = 'none';
+                    currentProfile = { _isSharedView: true, _shareCode: shareCode };
+                    showScreen('match');
+                } else {
+                    // 개인 분석 공유 뷰
+                    const identity = profile.identity || {};
+                    const sections = profile.sections || [];
+                    currentProfile = {
+                        identity: identity,
+                        llmResult: { sections: sections },
+                        _isSharedView: true,
+                        _shareCode: shareCode
+                    };
+                    displayResult(currentProfile);
+                }
                 // 공유 뷰에서는 분석 입력 화면 숨기기
                 const uploadSection = document.getElementById('upload-section') || document.querySelector('.upload-area');
                 if (uploadSection) uploadSection.style.display = 'none';
@@ -4972,6 +5022,57 @@ function displayResult() {
                 const btn = input.nextElementSibling;
                 btn.textContent = '\u2713 \ubcf5\uc0ac\ub428';
                 setTimeout(() => btn.textContent = '\ubcf5\uc0ac', 1500);
+            });
+        }
+
+        // ===== 매칭 결과 공유 =====
+        async function generateMatchShareURL() {
+            const cached = window._lastMatchResult;
+            if (!cached) { alert('매칭 결과가 없습니다'); return; }
+            const btn = document.getElementById('matchShareBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ 생성 중...';
+            try {
+                const shareData = {
+                    type: 'match',
+                    identityA: cached.identityA,
+                    identityB: cached.identityB,
+                    matchIdentity: cached.matchIdentity,
+                    relationHTML: cached.relationHTML,
+                    essayHTML: cached.essayHTML,
+                    essayVisible: cached.essayVisible,
+                    fallbackHTML: cached.fallbackHTML,
+                    fallbackVisible: cached.fallbackVisible,
+                    timestamp: cached.timestamp
+                };
+                const resp = await fetch(WORKER_URL + '/share', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(getAuthToken() ? { 'Authorization': 'Bearer ' + getAuthToken() } : {})
+                    },
+                    body: JSON.stringify(shareData)
+                });
+                if (!resp.ok) throw new Error('서버 오류');
+                const result = await resp.json();
+                document.getElementById('matchShareUrlInput').value = result.shareUrl;
+                document.getElementById('matchShareUrlResult').style.display = 'block';
+                btn.textContent = '✅ 링크 생성 완료';
+                setTimeout(() => { btn.textContent = '공유 링크 만들기'; btn.disabled = false; }, 3000);
+            } catch (e) {
+                alert('공유 링크 생성 실패: ' + e.message);
+                btn.textContent = '공유 링크 만들기';
+                btn.disabled = false;
+            }
+        }
+
+        function copyMatchShareURL() {
+            const input = document.getElementById('matchShareUrlInput');
+            input.select();
+            navigator.clipboard.writeText(input.value).then(() => {
+                const btn = input.nextElementSibling;
+                btn.textContent = '✓ 복사됨';
+                setTimeout(() => btn.textContent = '복사', 1500);
             });
         }
 
