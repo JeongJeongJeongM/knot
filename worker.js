@@ -5826,4 +5826,39 @@ function switchTab(id, el) {
 
     return jsonResponse({ error: 'Not found' }, 404, corsHeaders);
   },
+
+  // ──── Cron Trigger: 6개월 이상 된 데이터 자동 삭제 ────
+  async scheduled(event, env, ctx) {
+    const db = env.KNOT_DB;
+    if (!db) return;
+    try {
+      // 6개월(180일) 이상 된 에세이 삭제
+      await db.prepare(
+        `DELETE FROM essays WHERE analysis_id IN (SELECT id FROM analyses WHERE created_at < datetime('now', '-180 days'))`
+      ).run();
+      // 6개월 이상 된 분석 결과 삭제
+      await db.prepare(
+        `DELETE FROM analyses WHERE created_at < datetime('now', '-180 days')`
+      ).run();
+      // 6개월 이상 된 매칭 결과 삭제
+      await db.prepare(
+        `DELETE FROM matches WHERE created_at < datetime('now', '-180 days')`
+      ).run();
+      // 6개월 이상 된 피드백 삭제
+      await db.prepare(
+        `DELETE FROM feedback WHERE created_at < datetime('now', '-180 days')`
+      ).run();
+      // 6개월 이상 된 세션 로그 삭제
+      await db.prepare(
+        `DELETE FROM sessions WHERE created_at < datetime('now', '-180 days')`
+      ).run();
+      // 6개월 이상 접속 없는 유저 계정 삭제
+      await db.prepare(
+        `DELETE FROM users WHERE last_seen < datetime('now', '-180 days') AND id NOT IN (SELECT DISTINCT user_id FROM analyses WHERE created_at >= datetime('now', '-180 days'))`
+      ).run();
+      console.log('[KNOT] Scheduled cleanup complete');
+    } catch (e) {
+      console.error('[KNOT] Scheduled cleanup error:', e.message);
+    }
+  },
 };

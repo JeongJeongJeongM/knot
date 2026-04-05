@@ -14,3 +14,6 @@ id = "6d0b84ff72de473f9678f6fd36e0ed2a"
 binding = "KNOT_DB"
 database_name = "knot-analytics"
 database_id = "a456a4b6-4bad-47b8-8ca6-3450cb326350"
+
+[triggers]
+crons = ["0 3 * * *"]
