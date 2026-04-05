@@ -2298,15 +2298,19 @@ function isOriginAllowed(origin) {
 }
 
 async function checkRateLimit(ip, endpoint, limit, env) {
-  if (!env.RATE_LIMITER) return true;
+  if (!env.RATE_LIMITER) {
+    console.warn('[RateLimit] RATE_LIMITER binding missing — fail-closed');
+    return false;
+  }
   const key = `rl:${ip}:${endpoint}`;
   try {
     const current = parseInt(await env.RATE_LIMITER.get(key) || '0');
     if (current >= limit) return false;
     await env.RATE_LIMITER.put(key, String(current + 1), { expirationTtl: RATE_LIMIT_WINDOW });
     return true;
-  } catch {
-    return true;
+  } catch (e) {
+    console.error('[RateLimit] Error — fail-closed:', e.message);
+    return false;
   }
 }
 
@@ -2326,7 +2330,11 @@ async function verifyGoogleToken(token) {
     if (data.exp && parseInt(data.exp) * 1000 < Date.now()) return null;
 
     // Verify audience matches our client ID (if configured)
-    // TODO: Add GOOGLE_CLIENT_ID to env and verify: if (env.GOOGLE_CLIENT_ID && data.aud !== env.GOOGLE_CLIENT_ID) return null;
+    // Verify audience matches our client ID
+    if (env.GOOGLE_CLIENT_ID && data.aud !== env.GOOGLE_CLIENT_ID) {
+      console.error('[Auth] Token audience mismatch:', data.aud);
+      return null;
+    }
 
     return {
       email: data.email,
@@ -2370,7 +2378,11 @@ async function requireAuth(request, env) {
 function sanitizeString(str, maxLen = 100000) {
   if (Array.isArray(str)) str = str.join('\n');
   if (typeof str !== 'string') str = String(str || '');
-  return str.slice(0, maxLen).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  let s = str.slice(0, maxLen).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  // Prompt injection defense: neutralize system/instruction override attempts
+  s = s.replace(/\[\s*(SYSTEM|INST|INSTRUCTION|END|ADMIN|OVERRIDE|HUMAN|ASSISTANT|USER)\s*[:\]]/gi, '[FILTERED]');
+  s = s.replace(/(ignore|disregard|forget|override)\s+(all\s+)?(previous|above|prior|system)\s+(instructions?|prompts?|rules?)/gi, '[FILTERED]');
+  return s;
 }
 
 function sanitizeAxes(axes) {
@@ -5408,66 +5420,16 @@ export default {
         }
       }
 
-      // ──── GET /debug/latest ──── (임시 디버그용)
+      // ──── GET /debug/latest ──── DISABLED (security: unauthenticated data exposure)
       if (request.method === 'GET' && url.pathname === '/debug/latest') {
-        try {
-          const db = env.KNOT_DB;
-          if (!db) return jsonResponse({ error: 'No DB binding (KNOT_DB)' }, 500, corsHeaders);
-          const row = await db.prepare('SELECT id, type_code, type_name, prism_json, anchor_json, axes_json FROM analyses ORDER BY created_at DESC LIMIT 1').first();
-          if (!row) return jsonResponse({ error: 'No analyses found' }, 404, corsHeaders);
-          const prism = row.prism_json ? JSON.parse(row.prism_json) : null;
-          const anchor = row.anchor_json ? JSON.parse(row.anchor_json) : null;
-          const axes = row.axes_json ? JSON.parse(row.axes_json) : null;
-
-          // Live ANCHOR component test: run each R1-R4 analyzer separately
-          let anchorLiveTest = {};
-          const testTexts = [
-            '나 요즘 좀 힘들어 혼자 있고 싶어',
-            '왜 자꾸 연락해 좀 내버려둬',
-            '그냥 혼자 생각 정리 좀 하려고',
-            '사람 만나는 게 에너지 소모가 큼',
-            '나는 감정 표현 잘 안 하는 편이야',
-            '굳이 말 안 해도 되지 않아?',
-            '갈등이 생기면 그냥 거리를 둬',
-            '왜 그렇게 집착해 이해가 안 돼',
-            '혼자 있는 시간이 제일 편해',
-            '감정적으로 기대는 거 싫어',
-            '내가 알아서 할 테니까 걱정 마',
-          ];
-          try { anchorLiveTest.R1 = R1AttachmentAnalyzer_analyze(testTexts); } catch(e) { anchorLiveTest.R1_error = e.message; }
-          try { anchorLiveTest.R2 = R2ConflictAnalyzer_analyze(testTexts); } catch(e) { anchorLiveTest.R2_error = e.message; }
-          try { anchorLiveTest.R3 = R3EmotionalAnalyzer_analyze(testTexts); } catch(e) { anchorLiveTest.R3_error = e.message; }
-          try { anchorLiveTest.R4 = R4GrowthAnalyzer_analyze(testTexts); } catch(e) { anchorLiveTest.R4_error = e.message; }
-          try { anchorLiveTest.markov = anchorMarkovTransition(testTexts); } catch(e) { anchorLiveTest.markov_error = e.message; }
-          // Full pipeline test
-          try {
-            const testMsgs = testTexts.map(t => ({sender:'user',text:t}));
-            const fullResult = analyzeAnchor(testMsgs);
-            anchorLiveTest.full_pipeline = {
-              success: fullResult?.success,
-              error: fullResult?.error,
-              error_msg: fullResult?.message,
-              engine_version: fullResult?.engine_version,
-            };
-          } catch(e) { anchorLiveTest.full_pipeline_error = e.message + ' | ' + e.stack?.split('\n').slice(0,3).join(' | '); }
-
-          return jsonResponse({
-            id: row.id,
-            type_code: row.type_code,
-            type_name: row.type_name,
-            ANCHOR_STORED_NULL: anchor === null,
-            anchor_live_test: anchorLiveTest,
-            prism_depth: prism?.engagement?.overall_depth || 'NOT_FOUND',
-            prism_curiosity_dominant: prism?.curiosity?.dominant_type || 'NOT_FOUND',
-            prism_curiosity_meta_pct: prism?.curiosity?.question_type_distribution?.meta || 'NOT_FOUND',
-            anchor_stored: anchor,
-            axes_A10: axes?.structural?.A10 || 'NOT_FOUND',
-          }, 200, corsHeaders);
-        } catch(e) { return jsonResponse({ error: e.message, stack: e.stack }, 500, corsHeaders); }
+        return jsonResponse({ error: 'This endpoint has been disabled for security reasons.' }, 403, corsHeaders);
       }
 
       // ──── GET /share-data/:id ── JSON API (프론트엔드용) ────
       if (request.method === 'GET' && url.pathname.startsWith('/share-data/')) {
+        if (!(await checkRateLimit(ip, 'share-read', 30, env))) {
+          return jsonResponse({ error: '요청이 너무 많습니다.' }, 429, corsHeaders);
+        }
         const shareId = url.pathname.split('/share-data/')[1];
         if (shareId && env.SHARE_STORE) {
           try {
@@ -5632,7 +5594,7 @@ export default {
       // ──── GET /migrate ── DB Schema Migration ────
       if (request.method === 'GET' && url.pathname === '/migrate') {
         const key = url.searchParams.get('key');
-        if (!key || key !== (env.ADMIN_KEY || 'knot-admin-2025')) {
+        if (!env.ADMIN_KEY || !key || key !== env.ADMIN_KEY) {
           return new Response('Unauthorized', { status: 401 });
         }
         const db = env.KNOT_DB;
@@ -5706,7 +5668,7 @@ export default {
       // ──── GET /admin ── Dashboard ────
       if (request.method === 'GET' && url.pathname === '/admin') {
         const key = url.searchParams.get('key');
-        if (!key || key !== (env.ADMIN_KEY || 'knot-admin-2025')) {
+        if (!env.ADMIN_KEY || !key || key !== env.ADMIN_KEY) {
           return new Response('Unauthorized', { status: 401 });
         }
 
@@ -6085,7 +6047,7 @@ function switchTab(id, el) {
           }
         } catch (e) {
           _anchorDebug.error = e.message;
-          _anchorDebug.stack = e.stack?.split('\n').slice(0, 3).join(' | ');
+          // _anchorDebug.stack removed for security
           console.error('[ANCHOR Error]', e.message, e.stack);
         }
 
@@ -6105,7 +6067,7 @@ function switchTab(id, el) {
             anchor_ok: !!anchor,
             anchor_debug: _anchorDebug,
             anchor_attachment: anchor?.attachment?.primary_tendency || 'MISSING',
-            has_api_key: !!env.ANTHROPIC_API_KEY,
+            // has_api_key removed for security
             scoring_prompt_length: scoringPrompt.length,
           }, 200, corsHeaders);
         }
@@ -6773,7 +6735,9 @@ function switchTab(id, el) {
         if (!env.SHARE_STORE) {
           return jsonResponse({ error: 'Share storage not configured' }, 500, corsHeaders);
         }
-        const shareId = crypto.randomUUID().slice(0, 8);
+        const shareId = Array.from(crypto.getRandomValues(new Uint8Array(12)))
+          .map(b => 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'[b % 62])
+          .join('');
         await env.SHARE_STORE.put(shareId, JSON.stringify(body), {
           expirationTtl: 60 * 60 * 24 * 30,
         });
