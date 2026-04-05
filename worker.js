@@ -1689,14 +1689,13 @@ function R4GrowthAnalyzer_analyze(texts) {
   // 절대 횟수도 고려: 비율이 낮아도 여러 번 나오면 periodic 이상
   const improvement_ratio = (active + reflective) / (total + ANCHOR_CONFIG.EPSILON);
   const improvement_abs = active + reflective;
-  let frequency = "periodic"; // 기본값을 periodic으로 상향 (rare는 명시적 무관심일 때만)
-  if (improvement_ratio > 0.15 || improvement_abs >= 5) {
+  let frequency = "rare";
+  if (improvement_ratio > 0.2 || improvement_abs >= 6) {
     frequency = "frequent";
   } else if (improvement_ratio > 0.05 || improvement_abs >= 2) {
     frequency = "periodic";
-  } else if (improvement_abs === 0 && stability > active + reflective) {
-    frequency = "rare"; // 성장 시그널이 0이고 안정 시그널이 더 많을 때만 rare
   }
+  // rare 판정은 원래 임계값 유지하되, 절대 횟수 2회 이상이면 periodic으로 구제
 
   const narrative = R4GrowthAnalyzer_generateNarrative(orientation, change_tolerance);
 
