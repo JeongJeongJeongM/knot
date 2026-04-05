@@ -4283,7 +4283,7 @@ function displayResult() {
             const idB = matchProfile.identity || { emoji: '🔮', code: '-', name: '-' };
 
             // Compute match identity
-            const matchId = computeMatchIdentity(currentProfile.axes, matchProfile.axes, idA, idB);
+            let matchId = computeMatchIdentity(currentProfile.axes, matchProfile.axes, idA, idB);
 
             // Generate enhanced analysis (LLM 우선, fallback 로컬)
             let analysis;
