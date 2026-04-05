@@ -2757,6 +2757,17 @@
             const token = response.credential;
             // Decode JWT payload (base64url, UTF-8 safe)
             const payload = decodeJwtPayload(token);
+            // 계정 전환 감지: 이전 계정과 다르면 데이터 클리어
+            if (currentUser && currentUser.email !== payload.email) {
+                currentProfile = null;
+                window._previousAnalyses = null;
+                const resultContent = document.getElementById('resultContent');
+                if (resultContent) resultContent.innerHTML = '';
+                const prevList = document.getElementById('previousResultsList');
+                if (prevList) prevList.innerHTML = '';
+                showNewAnalysisMode();
+                console.log('[KNOT] Account switched, cleared previous data');
+            }
             currentUser = {
                 email: payload.email,
                 name: payload.name,
@@ -2777,8 +2788,17 @@
 
         function signOut() {
             currentUser = null;
+            currentProfile = null;
+            window._previousAnalyses = null;
             try { sessionStorage.removeItem('knot_token'); } catch(e) {}
             google.accounts.id.disableAutoSelect();
+            // 결과 화면 DOM 클리어
+            const resultContent = document.getElementById('resultContent');
+            if (resultContent) resultContent.innerHTML = '';
+            // 이전 분석 목록 패널 클리어
+            const prevList = document.getElementById('previousResultsList');
+            if (prevList) prevList.innerHTML = '';
+            showNewAnalysisMode();
             showScreen('login');
         }
 
