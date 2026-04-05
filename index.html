@@ -3237,7 +3237,13 @@
                         profileB: { axes: profileB.axes },
                         identityA,
                         identityB,
-                        matchIdentity
+                        matchIdentity,
+                        prismA: profileA.prism || null,
+                        prismB: profileB.prism || null,
+                        anchorA: profileA.anchor || null,
+                        anchorB: profileB.anchor || null,
+                        raw_messages_a: profileA.messages || null,
+                        raw_messages_b: profileB.messages || null
                     })
                 });
                 if (!response.ok) throw new Error(`Worker error: ${response.status}`);
@@ -3270,6 +3276,9 @@
                         if (meta.simulationA) parsed.simulationA = meta.simulationA;
                         if (meta.simulationB) parsed.simulationB = meta.simulationB;
                         if (meta.crossSimulation) parsed.crossSimulation = meta.crossSimulation;
+                        // 서버 계산 matchIdentity (crossSim 기반 호환성 포함)
+                        if (meta.matchIdentity) parsed.serverMatchIdentity = meta.matchIdentity;
+                        if (meta.compatibility) parsed.serverCompatibility = meta.compatibility;
                     }
                     return parsed;
                 } else {
@@ -4178,6 +4187,18 @@ function displayResult() {
                 const llmMatch = await callWorkerMatch(currentProfile, matchProfile, idA, idB, matchId);
                 if (llmMatch && llmMatch.sections && Array.isArray(llmMatch.sections)) {
                     // v3 matching response — render with new layout
+
+                    // 서버가 계산한 matchIdentity 사용 (crossSim 기반 호환성 포함)
+                    if (llmMatch.serverMatchIdentity) {
+                        matchId = {
+                            ...matchId,
+                            compatibility: llmMatch.serverMatchIdentity.compatibility ?? matchId.compatibility,
+                            tension: llmMatch.serverMatchIdentity.tension || matchId.tension,
+                            growth: llmMatch.serverMatchIdentity.growth || matchId.growth,
+                            name: llmMatch.serverMatchIdentity.name || matchId.name,
+                            tagline: llmMatch.serverMatchIdentity.tagline || matchId.tagline,
+                        };
+                    }
 
                     // 1. Render Relationship Identity + Dashboard + Type Comparison + Cross-Sim
                     const identityHTML = buildCrossSimInsight(llmMatch.crossSimulation, matchId);

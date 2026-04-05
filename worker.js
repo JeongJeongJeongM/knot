@@ -4263,6 +4263,9 @@ async function callClaude(apiKey, systemPrompt, userPrompt) {
   }
 
   const data = await response.json();
+  if (!data.content || !data.content[0] || !data.content[0].text) {
+    throw new Error('Claude API returned empty content');
+  }
   return data.content[0].text;
 }
 
@@ -4344,7 +4347,7 @@ function buildSharePageHTML(profile) {
 <body>
 <div class="container">
   <div class="header">
-    <div class="emoji">${emoji}</div>
+    <div class="emoji">${escapeHTML(emoji)}</div>
     <div class="name">${escapeHTML(name)}</div>
     <div class="tagline">${escapeHTML(tagline)}</div>
     <div class="code">${escapeHTML(code)}</div>
@@ -5317,6 +5320,16 @@ function switchTab(id, el) {
         const identityB = body.identityB || { name: 'Person B', tagline: '' };
         const matchIdentity = body.matchIdentity || { name: '교차하는 궤도', tagline: '복합적 역학의 관계', compatibility: 50, tension: '보통', growth: '보통' };
 
+        // ── Ensure user record exists (FK) ──
+        const matchUserId = authUser?.sub || 'anonymous';
+        if (env.KNOT_DB) {
+          try {
+            await env.KNOT_DB.prepare(
+              `INSERT INTO users (id, email, name, last_seen) VALUES (?, ?, ?, datetime('now')) ON CONFLICT(id) DO UPDATE SET last_seen = datetime('now')`
+            ).bind(matchUserId, authUser?.email || 'anonymous@knot', authUser?.name || 'Anonymous').run();
+          } catch {}
+        }
+
         // ── Preprocess raw messages A/B if provided ──
         let messagesA = null, messagesB = null;
         if (body.raw_messages_a) {
@@ -5415,7 +5428,10 @@ function switchTab(id, el) {
         const { readable, writable } = new TransformStream();
         const writer = writable.getWriter();
 
+        const matchDbId = crypto.randomUUID();
+
         (async () => {
+          let fullText = '';
           try {
             await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'meta', prismA: prismA || null, prismB: prismB || null, anchorA: anchorA || null, anchorB: anchorB || null, simulationA: simA, simulationB: simB, crossSimulation: crossSim, matchIdentity: effectiveMatchIdentity, compatibility: serverCompatibility })}\n\n`));
 
@@ -5459,6 +5475,7 @@ function switchTab(id, el) {
                 try {
                   const ev = JSON.parse(d);
                   if (ev.type === 'content_block_delta' && ev.delta && ev.delta.text) {
+                    fullText += ev.delta.text;
                     await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text: ev.delta.text })}\n\n`));
                   }
                 } catch {}
@@ -5479,13 +5496,57 @@ function switchTab(id, el) {
                 try {
                   const ev = JSON.parse(d);
                   if (ev.type === 'content_block_delta' && ev.delta && ev.delta.text) {
+                    fullText += ev.delta.text;
                     await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'delta', text: ev.delta.text })}\n\n`));
                   }
                 } catch {}
               }
             }
 
-            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+            // ── DB 저장: matches 테이블 ──
+            if (env.KNOT_DB && fullText.length > 50) {
+              try {
+                // sections 파싱
+                let sectionsJson = null;
+                try {
+                  let parsed = JSON.parse(fullText);
+                  if (parsed && parsed.sections) sectionsJson = JSON.stringify(parsed.sections);
+                } catch {
+                  // JSON 파싱 실패 시 brace 추출 시도
+                  const s = fullText.indexOf('{'), e = fullText.lastIndexOf('}');
+                  if (s >= 0 && e > s) {
+                    try {
+                      const parsed = JSON.parse(fullText.slice(s, e + 1));
+                      if (parsed && parsed.sections) sectionsJson = JSON.stringify(parsed.sections);
+                    } catch {}
+                  }
+                }
+
+                await env.KNOT_DB.prepare(
+                  `INSERT INTO matches (id, user_id, name_a, name_b, compatibility, tension, growth, compatibility_json, cross_sim_json, match_identity_json, essay_text, sections_json, profile_a_json, profile_b_json, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'complete', datetime('now'))`
+                ).bind(
+                  matchDbId,
+                  matchUserId,
+                  identityA.name || 'Person A',
+                  identityB.name || 'Person B',
+                  effectiveMatchIdentity.compatibility ?? 50,
+                  effectiveMatchIdentity.tension || '보통',
+                  effectiveMatchIdentity.growth || '보통',
+                  serverCompatibility ? JSON.stringify(serverCompatibility) : null,
+                  crossSim ? JSON.stringify(crossSim) : null,
+                  JSON.stringify(effectiveMatchIdentity),
+                  fullText,
+                  sectionsJson,
+                  JSON.stringify({ axes: profileA.axes || profileA }),
+                  JSON.stringify({ axes: profileB.axes || profileB }),
+                ).run();
+                console.log(`[D1 Match] Saved match ${matchDbId}`);
+              } catch (dbErr) {
+                console.error('[D1 Match Save Error]', dbErr.message);
+              }
+            }
+
+            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'done', match_id: matchDbId })}\n\n`));
           } catch (e) {
             try { await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: e.message })}\n\n`)); } catch {}
           } finally {
