@@ -4920,7 +4920,7 @@ function displayResult() {
                 ctx.fillText('KNOT', 80, H - 65);
                 ctx.fillStyle = 'rgba(255,255,255,0.35)';
                 ctx.font = '400 16px -apple-system, BlinkMacSystemFont, sans-serif';
-                ctx.fillText('jeongjeongjeongm.github.io/knot', 80, H - 40);
+                ctx.fillText('knot-ai.pages.dev', 80, H - 40);
                 // 우측: 공유 코드 배지
                 const codeText = '#' + shareCode;
                 ctx.font = '700 26px -apple-system, BlinkMacSystemFont, monospace';
@@ -4952,7 +4952,7 @@ function displayResult() {
                 ctx.fillText('KNOT — AI 대화 행동 분석', W/2, H - 45);
                 ctx.fillStyle = 'rgba(255,255,255,0.25)';
                 ctx.font = '400 16px -apple-system, BlinkMacSystemFont, sans-serif';
-                ctx.fillText('jeongjeongjeongm.github.io/knot', W/2, H - 22);
+                ctx.fillText('knot-ai.pages.dev', W/2, H - 22);
             }
         }
         function wrapTextLines(text, ctx, maxWidth) {
@@ -4988,7 +4988,7 @@ function displayResult() {
         async function shareWithLink() {
             if (!window._shareCanvases || !window._shareCanvases.length) return;
             const code = currentProfile?._shareCode;
-            const shareUrl = code ? getShareFullUrl(code) : 'https://jeongjeongjeongm.github.io/knot';
+            const shareUrl = code ? getShareFullUrl(code) : 'https://knot-ai.pages.dev';
             const name = currentProfile?.identity?.name || 'KNOT 분석';
             const shareText = name + ' — KNOT AI 대화 행동 분석 결과\n' + shareUrl;
 
