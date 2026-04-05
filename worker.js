@@ -4491,10 +4491,12 @@ export default {
              LIMIT 10`
           ).bind(auth.user.sub).all();
           const analyses = (rows.results || []).map(r => {
-            const axes = r.axes_json ? JSON.parse(r.axes_json) : null;
+            let axes = null;
+            try { axes = r.axes_json ? JSON.parse(r.axes_json) : null; } catch { axes = null; }
             // Always recompute identity from current SERVER_TYPE_AXES calc
             // (fixes legacy data where old buggy calc produced wrong scores)
-            let identity = r.identity_json ? JSON.parse(r.identity_json) : null;
+            let identity = null;
+            try { identity = r.identity_json ? JSON.parse(r.identity_json) : null; } catch { identity = null; }
             if (axes) {
               try {
                 identity = computeServerIdentity(axes);
@@ -4511,7 +4513,7 @@ export default {
             axis_ow: r.axis_ow, axis_xv: r.axis_xv, axis_ei: r.axis_ei,
             axes: axes,
             identity: identity,
-            simulation: r.simulation_json ? JSON.parse(r.simulation_json) : null,
+            simulation: (() => { try { return r.simulation_json ? JSON.parse(r.simulation_json) : null; } catch { return null; } })(),
             sections: r.sections_json ? (() => { try { const p = JSON.parse(r.sections_json); return Array.isArray(p) ? p : (p && Array.isArray(p.sections) ? p.sections : null); } catch { return null; } })() : null,
             message_count: r.message_count,
             created_at: r.created_at
@@ -4906,6 +4908,7 @@ function switchTab(id, el) {
         const body = await request.json();
 
         // ── Weekly limit check: 1 analysis per account per 7 days ──
+        // NOTE: Not atomic — concurrent requests could bypass. Acceptable for current scale.
         const ADMIN_EMAILS = ['ashirmallo@gmail.com'];
         const isAdmin = authUser?.email && ADMIN_EMAILS.includes(authUser.email);
         if (env.KNOT_DB && authUser?.sub && !isAdmin) {
@@ -5066,13 +5069,22 @@ function switchTab(id, el) {
               axisScores.ei = Math.round((typeof int.A6 === 'number' ? int.A6 : (int.A6?.value ?? 0.5)) * 100);
             }
 
+            let analysisInserted = false;
             try {
               if (env.KNOT_DB) {
+                // Ensure user record exists (upsert) before FK-constrained insert
+                const userId = authUser?.sub || 'anonymous';
+                try {
+                  await env.KNOT_DB.prepare(
+                    `INSERT INTO users (id, email, name, last_seen) VALUES (?, ?, ?, datetime('now')) ON CONFLICT(id) DO UPDATE SET last_seen = datetime('now')`
+                  ).bind(userId, authUser?.email || 'anonymous@knot', authUser?.name || 'Anonymous').run();
+                } catch {}
+
                 await env.KNOT_DB.prepare(
                   `INSERT INTO analyses (id, user_id, type_code, type_name, tagline, axis_fs, axis_ah, axis_tr, axis_ow, axis_xv, axis_ei, axes_json, prism_json, anchor_json, identity_json, message_count, input_format, original_count, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scoring', datetime('now'))`
                 ).bind(
                   analysisId,
-                  authUser?.sub || 'anonymous',
+                  userId,
                   identity.code || '',
                   identity.name || '',
                   identity.tagline || '',
@@ -5090,16 +5102,17 @@ function switchTab(id, el) {
                   preprocessed.format || null,
                   preprocessed.originalCount || null
                 ).run();
+                analysisInserted = true;
 
-                // Update user's total_analyses count
-                env.KNOT_DB.prepare(
+                // Update user's total_analyses count (await for reliability)
+                await env.KNOT_DB.prepare(
                   `UPDATE users SET total_analyses = total_analyses + 1 WHERE id = ?`
-                ).bind(authUser?.sub || 'anonymous').run().catch(() => {});
+                ).bind(userId).run().catch(e => console.error('[D1 user count]', e.message));
 
                 // Log session
-                env.KNOT_DB.prepare(
+                await env.KNOT_DB.prepare(
                   `INSERT INTO sessions (id, user_id, action, ip, created_at) VALUES (?, ?, 'analyze', ?, datetime('now'))`
-                ).bind(crypto.randomUUID(), authUser?.sub || 'anonymous', request.headers.get('CF-Connecting-IP') || '').run().catch(() => {});
+                ).bind(crypto.randomUUID(), userId, request.headers.get('CF-Connecting-IP') || '').run().catch(e => console.error('[D1 session log]', e.message));
               }
             } catch (dbErr) {
               console.error('[D1 Stage1 Save Error]', dbErr.message);
@@ -5221,19 +5234,42 @@ function switchTab(id, el) {
 
             // ──── Save Stage 2 essay to D1 (v2 schema) ────
             try {
-              if (env.KNOT_DB && fullText.length > 100) {
-                // Update analyses status to complete
-                await env.KNOT_DB.prepare(
-                  `UPDATE analyses SET status = 'complete' WHERE id = ?`
-                ).bind(analysisId).run();
+              if (env.KNOT_DB) {
+                // Parse essay into sections for structured storage
+                let sectionsJson = null;
+                let sectionCount = 0;
+                try {
+                  const sectionRegex = /#{1,3}\s*\d*\.?\s*(.+)/g;
+                  const sections = [];
+                  let match;
+                  while ((match = sectionRegex.exec(fullText)) !== null) {
+                    sections.push({ title: match[1].trim(), offset: match.index });
+                  }
+                  sectionCount = sections.length;
+                  sectionsJson = JSON.stringify(sections);
+                } catch { sectionsJson = null; }
 
-                // Insert into essays table with text + sections
+                // Always update status — 'complete' if essay exists, 'error' if not
+                const newStatus = fullText.length > 50 ? 'complete' : 'error';
                 await env.KNOT_DB.prepare(
-                  `INSERT INTO essays (id, analysis_id, essay_text, sections_json, char_count, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`
-                ).bind(crypto.randomUUID(), analysisId, fullText, fullText, fullText.length).run();
+                  `UPDATE analyses SET status = ? WHERE id = ?`
+                ).bind(newStatus, analysisId).run();
+
+                // Insert essay only if we have content
+                if (fullText.length > 50) {
+                  await env.KNOT_DB.prepare(
+                    `INSERT INTO essays (id, analysis_id, essay_text, sections_json, section_count, char_count, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
+                  ).bind(crypto.randomUUID(), analysisId, fullText, sectionsJson, sectionCount, fullText.length).run();
+                }
               }
             } catch (dbErr) {
               console.error('[D1 Stage2 Save Error]', dbErr.message);
+              // Try to mark analysis as error even if essay save failed
+              try {
+                if (env.KNOT_DB) {
+                  await env.KNOT_DB.prepare(`UPDATE analyses SET status = 'error' WHERE id = ? AND status = 'scoring'`).bind(analysisId).run();
+                }
+              } catch {}
             }
 
           } catch (e) {
