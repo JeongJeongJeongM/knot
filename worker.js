@@ -650,11 +650,19 @@ class PrismP2DepthAnalyzer {
     const domainBoost = domainDensity > 0.3 ? 0.3 : domainDensity > 0.1 ? 0.15 : domainDensity > 0.05 ? 0.08 : 0;
 
     // 2) 주제 지속성 — 같은 주제를 오래 파면 deep, 자주 바꾸면 shallow
-    // TODO: 위임형 대화 패턴 구분 필요. "이거 해" → "다음 이거" 는 산만함이 아니라
-    //   매니지먼트 패턴. 상대방이 실행자(AI/부하)인 경우 주제 전환 빈도가 높아도
-    //   인내력 부족이 아닌 멀티태스킹 위임으로 해석해야 함.
-    //   감지 방법: 명령형 종결어미 비율, 상대방 메시지 길이 >> 본인 메시지 길이,
-    //   "해", "해줘", "확인해", "넘어가자" 등 위임 마커 빈도
+    // 위임형 대화 패턴 감지: 명령형 종결어미 + 짧은 메시지 = 매니지먼트 패턴
+    // 이 경우 주제 전환이 산만함이 아니라 위임이므로 persistence 페널티 무력화
+    const delegationMarkers = /해$|해줘|해봐|하자$|하세요|합시다|확인해|넘어가|다음|ㄱㄱ|ㄱ$|고고|해라$|하셈|하삼|돌려|실행|배포|올려|보내|넣어|빼|바꿔|고쳐|수정해|삭제해|추가해|만들어/;
+    let delegationCount = 0;
+    let shortMessageCount = 0;
+    for (const text of texts) {
+      if (delegationMarkers.test(text)) delegationCount++;
+      if (text.length < 30) shortMessageCount++;
+    }
+    const delegationRatio = delegationCount / (texts.length + PRISM_CONFIG.EPSILON);
+    const shortRatio = shortMessageCount / (texts.length + PRISM_CONFIG.EPSILON);
+    const isDelegationPattern = delegationRatio > 0.25 && shortRatio > 0.4;
+
     // 간단한 n-gram 기반 연속 유사도: 연속된 메시지 쌍의 단어 겹침
     let topicPersistence = 0;
     if (texts.length >= 3) {
@@ -669,7 +677,13 @@ class PrismP2DepthAnalyzer {
       }
       topicPersistence = similarities / (texts.length - 1);
     }
-    const persistenceBoost = topicPersistence > 0.2 ? 0.2 : topicPersistence > 0.1 ? 0.12 : topicPersistence > 0.05 ? 0.06 : 0;
+    // 위임형 패턴이면 persistence 보정을 최소 0.12로 올림 (산만함 페널티 제거)
+    let persistenceBoost;
+    if (isDelegationPattern) {
+      persistenceBoost = Math.max(0.12, topicPersistence > 0.2 ? 0.2 : topicPersistence > 0.1 ? 0.12 : topicPersistence > 0.05 ? 0.06 : 0);
+    } else {
+      persistenceBoost = topicPersistence > 0.2 ? 0.2 : topicPersistence > 0.1 ? 0.12 : topicPersistence > 0.05 ? 0.06 : 0;
+    }
 
     // 3) 추상 표현 밀도 — 짧아도 추상적 개념어 쓰면 깊은 사고
     let abstractCount = 0;
@@ -1229,6 +1243,11 @@ const ANCHOR_SELF_DISCLOSURE_SIGNALS = [
 const ANCHOR_ACTIVE_GROWTH_SIGNALS = [
   "배우고 싶", "도전", "성장", "발전", "개선", "새로운 시도", "변화", "목표",
   "계획", "노력", "공부", "연습", "더 나아",
+  // 구조 점프형 성장 시그널 — 점진적 개선이 아닌 전면 재구축/구조 변경
+  "갈아엎", "아예 새로", "처음부터", "다시 만들", "다시 짜", "새로 짜",
+  "리팩토링", "리팩터링", "재설계", "재구성", "재구축", "아키텍처", "구조 변경",
+  "전면 수정", "엎어", "뜯어고", "밀어버리", "리셋", "리빌드", "제로부터",
+  "바닥부터", "뒤집어", "근본적으로", "판 갈", "판을 새로",
 ];
 
 const ANCHOR_REFLECTIVE_SIGNALS = [
@@ -1666,12 +1685,17 @@ function R4GrowthAnalyzer_analyze(texts) {
     change_tolerance = "low";
   }
 
+  // 구조 점프형 성장도 active count에 이미 포함됨 (시그널 확장)
+  // 절대 횟수도 고려: 비율이 낮아도 여러 번 나오면 periodic 이상
   const improvement_ratio = (active + reflective) / (total + ANCHOR_CONFIG.EPSILON);
-  let frequency = "rare";
-  if (improvement_ratio > 0.2) {
+  const improvement_abs = active + reflective;
+  let frequency = "periodic"; // 기본값을 periodic으로 상향 (rare는 명시적 무관심일 때만)
+  if (improvement_ratio > 0.15 || improvement_abs >= 5) {
     frequency = "frequent";
-  } else if (improvement_ratio > 0.08) {
+  } else if (improvement_ratio > 0.05 || improvement_abs >= 2) {
     frequency = "periodic";
+  } else if (improvement_abs === 0 && stability > active + reflective) {
+    frequency = "rare"; // 성장 시그널이 0이고 안정 시그널이 더 많을 때만 rare
   }
 
   const narrative = R4GrowthAnalyzer_generateNarrative(orientation, change_tolerance);
