@@ -1861,7 +1861,7 @@ function l1FallbackDecisionTree(texts, prism, anchor) {
   for (const marker of L1_DOMAIN_MARKERS) {
     if (allText.includes(marker)) domainCount++;
   }
-  const domainDensity = domainCount / L1_DOMAIN_MARKERS.length;
+  const domainDensity = domainCount / (L1_DOMAIN_MARKERS.length || 1);
 
   // 평균 문장 길이
   const avgLen = totalLen / (texts.length + PRISM_CONFIG.EPSILON);
@@ -1910,10 +1910,10 @@ function l1FallbackDecisionTree(texts, prism, anchor) {
 
   // 간이 structural axes (기본값)
   const fallbackStructural = {
-    A7:  { primary: avgLen > 100 && causalDensity > 0.5 ? 'initiator' : 'balanced' },
+    A7:  { primary: avgLen > 100 && causalDensity > 0.5 ? 'initiator' : avgLen < 30 ? 'responder' : 'balanced' },
     A8:  { primary: 'boundary' },
-    A9:  { primary: fallbackIntensity.A3 > 0.3 ? 'expressive' : 'analytical' },
-    A10: { primary: domainDensity > 0.2 ? 'depth_seeker' : 'slow_burn' },
+    A9:  { primary: fallbackIntensity.A3 > 0.3 ? 'expressive' : fallbackIntensity.A3 < 0.1 ? 'suppressive' : 'analytical' },
+    A10: { primary: domainDensity > 0.2 ? 'depth_seeker' : domainDensity < 0.02 ? 'surface_locked' : 'slow_burn' },
     A11: { primary: 'balanced' },
     A13: { primary: questionRatio > 0.3 ? 'growth' : 'defensive' },
     A15: { primary: promptIntent === 'philosopher' ? 'active_investor' : 'passive_maintainer' },
@@ -1954,8 +1954,9 @@ function l3ConsistencyVolatility(texts, depthWeights) {
   const earlyWeights = weights.slice(0, mid);
   const lateWeights = weights.slice(mid);
 
-  const mean = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+  const mean = arr => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
   const std = arr => {
+    if (arr.length === 0) return 0;
     const m = mean(arr);
     return Math.sqrt(arr.reduce((sum, v) => sum + (v - m) ** 2, 0) / arr.length);
   };
@@ -2366,7 +2367,7 @@ const MATCH_ARCHETYPES = [
     tension: '낮음', growth: '보통'
   },
   {
-    match: (a, b) => (_sdom(a, 'A8') === 'avoidance' || _sdom(a, 'A8') === 'strategic_withdrawal') && (_sdom(b, 'A8') === 'avoidance' || _sdom(b, 'A8') === 'strategic_withdrawal'),
+    match: (a, b) => (_sdom(a, 'A8') === 'avoidant' || _sdom(a, 'A8') === 'boundary') && (_sdom(b, 'A8') === 'avoidant' || _sdom(b, 'A8') === 'boundary'),
     name: '마주 보는 성벽', tagline: '서로의 벽을 인정하지만 넘지 못하는 — 안전하지만 외로운 거리',
     tension: '보통', growth: '낮음'
   },
@@ -2374,8 +2375,8 @@ const MATCH_ARCHETYPES = [
     match: (a, b) => {
       const aMode = _sdom(a, 'A8');
       const bMode = _sdom(b, 'A8');
-      const isConfront = m => m === 'direct_engagement' || m === 'escalation';
-      const isAvoid = m => m === 'avoidance' || m === 'strategic_withdrawal';
+      const isConfront = m => m === 'confrontational';
+      const isAvoid = m => m === 'avoidant' || m === 'boundary';
       return (isConfront(aMode) && isAvoid(bMode)) || (isAvoid(aMode) && isConfront(bMode));
     },
     name: '부딪히는 파장', tagline: '한쪽은 부딪히고 다른 쪽은 피하는 — 갈등 언어가 다른 관계',
@@ -2586,10 +2587,13 @@ function precomputeAxes(rawMessages, prism, anchor) {
   structural.A7 = { primary: a7primary, styles: { initiator: a7primary === 'initiator' ? 0.6 : 0.2, responder: a7primary === 'responder' ? 0.6 : 0.2, balanced: a7primary === 'balanced' ? 0.6 : 0.2 } };
   confidence.A7 = texts.length > 15 ? 'high' : 'medium';
 
-  // A8 갈등 조절: ANCHOR conflict 직접 매핑
-  const conflictMode = anchor?.conflict?.default_mode || 'diplomatic_approach';
+  // A8 갈등 조절: ANCHOR conflict → normalized enum 매핑
+  const rawConflictMode = anchor?.conflict?.default_mode || 'diplomatic_approach';
   const conflictFlexibility = anchor?.conflict?.pattern_flexibility || 'medium';
-  structural.A8 = { primary: conflictMode, flexibility: conflictFlexibility, styles: { confrontational: conflictMode === 'direct_engagement' ? 0.5 : 0.1, repair: conflictMode === 'diplomatic_approach' ? 0.5 : 0.15, avoidant: conflictMode === 'avoidance' ? 0.5 : 0.1, boundary: conflictMode === 'strategic_withdrawal' ? 0.5 : 0.15 } };
+  // ANCHOR enum → A8 normalized enum
+  const CONFLICT_NORM = { 'direct_engagement': 'confrontational', 'diplomatic_approach': 'repair', 'strategic_withdrawal': 'boundary', 'avoidance': 'avoidant', 'escalation': 'confrontational' };
+  const conflictMode = CONFLICT_NORM[rawConflictMode] || 'repair';
+  structural.A8 = { primary: conflictMode, flexibility: conflictFlexibility, styles: { confrontational: conflictMode === 'confrontational' ? 0.5 : 0.1, repair: conflictMode === 'repair' ? 0.5 : 0.15, avoidant: conflictMode === 'avoidant' ? 0.5 : 0.1, boundary: conflictMode === 'boundary' ? 0.5 : 0.15 } };
   confidence.A8 = anchor?.conflict ? 'high' : 'low';
 
   // A9 감정 처리: ANCHOR emotional_availability response_mode
@@ -2605,7 +2609,7 @@ function precomputeAxes(rawMessages, prism, anchor) {
   // A10 친밀감 기울기: PRISM depth + ANCHOR attachment
   let domainCount = 0;
   for (const marker of L1_DOMAIN_MARKERS) { if (allText.includes(marker)) domainCount++; }
-  const domainDensity = domainCount / L1_DOMAIN_MARKERS.length;
+  const domainDensity = domainCount / (L1_DOMAIN_MARKERS.length || 1);
   const depthLevel = prism?.engagement?.overall_depth || 'surface';
   let a10primary = 'slow_burn';
   if (depthLevel === 'creative' || depthLevel === 'exploratory') a10primary = 'depth_seeker';
@@ -2639,8 +2643,9 @@ function precomputeAxes(rawMessages, prism, anchor) {
   const growthOrientation = anchor?.growth?.orientation || 'defensive';
   let a13primary = 'defensive';
   if (growthOrientation === 'active_growth') a13primary = 'growth';
-  else if (growthOrientation === 'reflective') a13primary = 'absorptive';
-  else if (growthOrientation === 'stability_focused') a13primary = 'avoidant';
+  else if (growthOrientation === 'reflective_growth') a13primary = 'absorptive';
+  else if (growthOrientation === 'stability_oriented') a13primary = 'avoidant';
+  else if (growthOrientation === 'externally_driven') a13primary = 'defensive';
   structural.A13 = { primary: a13primary, styles: { growth: a13primary === 'growth' ? 0.5 : 0.15, defensive: a13primary === 'defensive' ? 0.5 : 0.15, avoidant: a13primary === 'avoidant' ? 0.5 : 0.1, absorptive: a13primary === 'absorptive' ? 0.5 : 0.1 } };
   confidence.A13 = anchor?.growth ? 'high' : 'low';
 
@@ -2671,6 +2676,21 @@ function precomputeAxes(rawMessages, prism, anchor) {
   // Round all intensity values
   for (const k of Object.keys(intensity)) {
     intensity[k] = Math.round(intensity[k] * 100) / 100;
+  }
+
+  // Normalize all structural styles to sum to 1.0
+  for (const axisKey of Object.keys(structural)) {
+    const axis = structural[axisKey];
+    if (axis && axis.styles && typeof axis.styles === 'object') {
+      const sum = Object.values(axis.styles).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
+      if (sum > 0 && sum !== 1) {
+        for (const sk of Object.keys(axis.styles)) {
+          if (typeof axis.styles[sk] === 'number') {
+            axis.styles[sk] = Math.round((axis.styles[sk] / sum) * 1000) / 1000;
+          }
+        }
+      }
+    }
   }
 
   return { intensity, structural, confidence };
@@ -3746,13 +3766,21 @@ ${profileDesc}
   // ── PRISM data (for 사유의 지형 section) ──
   if (prism) {
     prompt += `\n## 관심사·호기심 패턴 (PRISM) → "사유의 지형" 섹션에 통합\n`;
-    if (prism.topic_distribution && Object.keys(prism.topic_distribution).length > 0) {
-      prompt += `주제 분포: ${Object.entries(prism.topic_distribution)
-        .map(([k, v]) => `${k} (${Math.round(v * 100)}%)`)
-        .join(', ')}\n`;
-    }
-    if (typeof prism.engagement === 'number') {
-      prompt += `참여도: ${Math.round(prism.engagement * 100)}%\n`;
+    if (prism.topic_distribution) {
+      const topics = prism.topic_distribution.topics || prism.topic_distribution;
+      if (typeof topics === 'object') {
+        const entries = Object.entries(topics)
+          .filter(([k, v]) => v && typeof v === 'object' && v.ratio)
+          .map(([k, v]) => `${k} (${Math.round(v.ratio * 100)}%)`)
+          .join(', ');
+        if (entries) prompt += `주제 분포: ${entries}\n`;
+        if (prism.topic_distribution.dominant_topic) {
+          prompt += `주요 관심사: ${prism.topic_distribution.dominant_topic}\n`;
+        }
+        if (prism.topic_distribution.topic_diversity) {
+          prompt += `관심사 다양성: ${Math.round(prism.topic_distribution.topic_diversity * 100)}%\n`;
+        }
+      }
     }
     if (prism.vocabulary && Object.keys(prism.vocabulary).length > 0) {
       prompt += `언어 특징: ${Object.entries(prism.vocabulary)
@@ -4040,8 +4068,8 @@ B 고유 주제: ${(crossSim.topicOverlap.uniqueB || []).join(', ') || '없음'}
     if (prismA?.curiosity && prismB?.curiosity) {
       prompt += `호기심 스타일: A=${prismA.curiosity.prompt_intent || '미분류'}, B=${prismB.curiosity.prompt_intent || '미분류'}\n`;
     }
-    if (prismA?.depth && prismB?.depth) {
-      prompt += `사유 깊이: A=${prismA.depth.overall_depth || '미분류'}, B=${prismB.depth.overall_depth || '미분류'}\n`;
+    if (prismA?.engagement && prismB?.engagement) {
+      prompt += `사유 깊이: A=${prismA.engagement.overall_depth || '미분류'}, B=${prismB.engagement.overall_depth || '미분류'}\n`;
     }
   }
 
