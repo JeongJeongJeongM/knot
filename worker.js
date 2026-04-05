@@ -3874,70 +3874,87 @@ const RELATION_STATES = {
   RECOVER: { id: 'S5', label: '회복', desc: '갈등 후 재접근을 준비하는 상태' },
 };
 
+// softmax with temperature — 스코어를 진짜 확률로 변환
+const STATE_TEMPERATURE = 0.8; // T < 1 → 더 확신 있는 분포
+
+function softmax(scores, temperature = STATE_TEMPERATURE) {
+  const keys = Object.keys(scores);
+  const maxScore = Math.max(...Object.values(scores));
+  const exps = {};
+  let sumExp = 0;
+  for (const k of keys) {
+    const e = Math.exp((scores[k] - maxScore) / temperature); // numerical stability
+    exps[k] = e;
+    sumExp += e;
+  }
+  const result = {};
+  for (const k of keys) {
+    result[k] = Math.round((exps[k] / sumExp) * 100) / 100;
+  }
+  return result;
+}
+
 function classifyRelationState(simAxes, anchor) {
   const E = simAxes?.emotion ?? 0.5;
   const C = simAxes?.drive ?? 0.5;
   const O = simAxes?.boundary ?? 0.5;
   const X = simAxes?.resilience ?? 0.5;
 
-  // 애착 데이터 반영
   const attachTendency = anchor?.attachment?.primary_tendency || 'leans_secure';
   const conflictMode = anchor?.conflict?.default_mode || 'diplomatic_approach';
 
-  // 상태 스코어 계산
-  const scores = {
-    ENGAGE: 0,
-    NEUTRAL: 0,
-    AVOID: 0,
-    BLOCK: 0,
-    RECOVER: 0,
-  };
+  // ── 주 신호: 행동 축 (E/C/O/X) ──
+  const axisScores = { ENGAGE: 0, NEUTRAL: 0, AVOID: 0, BLOCK: 0, RECOVER: 0 };
 
-  // 감정 에너지 기반
-  if (E > 0.7) scores.ENGAGE += 0.3;
-  else if (E > 0.4) scores.NEUTRAL += 0.2;
-  else scores.AVOID += 0.2;
+  // 감정 에너지 (E) → 접근/회피 주 결정자
+  axisScores.ENGAGE += E * 0.4;
+  axisScores.AVOID += (1 - E) * 0.3;
+  axisScores.NEUTRAL += (1 - Math.abs(E - 0.5) * 2) * 0.2; // 중간일수록 neutral
 
-  // 개방성 기반
-  if (O > 0.7) scores.ENGAGE += 0.2;
-  else if (O < 0.3) scores.AVOID += 0.2;
-  else scores.NEUTRAL += 0.15;
+  // 개방성 (O) → 접근/회피 보조
+  axisScores.ENGAGE += O * 0.25;
+  axisScores.AVOID += (1 - O) * 0.2;
 
-  // 통제 기반
-  if (C > 0.7) { scores.ENGAGE += 0.15; scores.BLOCK += 0.1; }
-  else if (C < 0.3) { scores.AVOID += 0.15; scores.RECOVER += 0.1; }
+  // 통제 (C) → 접근/차단 양극
+  axisScores.ENGAGE += C * 0.15;
+  axisScores.BLOCK += C * 0.15;
 
-  // 탄성 기반
-  if (X > 0.6) scores.RECOVER += 0.2;
-  else if (X < 0.3) scores.BLOCK += 0.15;
+  // 탄성 (X) → 회복/차단 결정자
+  axisScores.RECOVER += X * 0.3;
+  axisScores.BLOCK += (1 - X) * 0.2;
 
-  // 애착 보정
-  if (attachTendency === 'leans_anxious') { scores.ENGAGE += 0.2; scores.AVOID -= 0.1; }
-  else if (attachTendency === 'leans_avoidant') { scores.AVOID += 0.2; scores.ENGAGE -= 0.1; }
-  else if (attachTendency === 'leans_disorganized') { scores.ENGAGE += 0.1; scores.AVOID += 0.1; }
-  else { scores.NEUTRAL += 0.15; scores.RECOVER += 0.1; }
+  // ── 보정 신호: ANCHOR (가중치 0.3 — 주 신호의 30% 수준으로 제한) ──
+  const ANCHOR_WEIGHT = 0.3;
+  const anchorScores = { ENGAGE: 0, NEUTRAL: 0, AVOID: 0, BLOCK: 0, RECOVER: 0 };
 
-  // 갈등 스타일 보정
-  if (conflictMode === 'direct_engagement') scores.ENGAGE += 0.1;
-  else if (conflictMode === 'avoidance') scores.AVOID += 0.15;
-  else if (conflictMode === 'strategic_withdrawal') { scores.AVOID += 0.1; scores.RECOVER += 0.1; }
+  if (attachTendency === 'leans_anxious') { anchorScores.ENGAGE += 0.4; anchorScores.AVOID += 0.1; }
+  else if (attachTendency === 'leans_avoidant') { anchorScores.AVOID += 0.4; anchorScores.BLOCK += 0.1; }
+  else if (attachTendency === 'leans_disorganized') { anchorScores.ENGAGE += 0.2; anchorScores.AVOID += 0.2; anchorScores.BLOCK += 0.1; }
+  else { anchorScores.NEUTRAL += 0.3; anchorScores.RECOVER += 0.2; } // secure
 
-  // 1위, 2위 상태 결정
-  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  if (conflictMode === 'direct_engagement') anchorScores.ENGAGE += 0.2;
+  else if (conflictMode === 'avoidance') anchorScores.AVOID += 0.25;
+  else if (conflictMode === 'strategic_withdrawal') { anchorScores.AVOID += 0.15; anchorScores.RECOVER += 0.15; }
+  else anchorScores.NEUTRAL += 0.15; // diplomatic
+
+  // ── 합산: 주 신호 + 보정 신호 ──
+  const combinedScores = {};
+  for (const k of Object.keys(axisScores)) {
+    combinedScores[k] = axisScores[k] + anchorScores[k] * ANCHOR_WEIGHT;
+  }
+
+  // ── softmax 정규화 (진짜 확률 분포) ──
+  const distribution = softmax(combinedScores);
+
+  const sorted = Object.entries(distribution).sort((a, b) => b[1] - a[1]);
   const primary = sorted[0][0];
   const secondary = sorted[1][0];
 
-  // 정규화
-  const total = Object.values(scores).reduce((a, b) => a + b, 0) || 1;
-  const normalized = {};
-  for (const [k, v] of Object.entries(scores)) {
-    normalized[k] = Math.round((v / total) * 100) / 100;
-  }
-
   return {
-    primary: { state: primary, ...RELATION_STATES[primary], probability: normalized[primary] },
-    secondary: { state: secondary, ...RELATION_STATES[secondary], probability: normalized[secondary] },
-    distribution: normalized,
+    primary: { state: primary, ...RELATION_STATES[primary], probability: distribution[primary] },
+    secondary: { state: secondary, ...RELATION_STATES[secondary], probability: distribution[secondary] },
+    distribution,
+    _debug: { axisScores, anchorScores, combinedScores, anchorWeight: ANCHOR_WEIGHT, temperature: STATE_TEMPERATURE },
   };
 }
 
@@ -4061,7 +4078,8 @@ function computeTransitionMatrix(stateA, stateB, crossSim, anchorA, anchorB) {
 }
 
 function computePathwayProbabilities(crossSim, stateA, stateB, anchorA, anchorB) {
-  // 3종 경로의 상대적 확률 계산
+  // 3종 경로의 raw 스코어 + 요인별 기여도 추적
+  const factors = { stabilize: [], oscillate: [], collapse: [] };
   let stabilize = 0.33;
   let oscillate = 0.34;
   let collapse = 0.33;
@@ -4075,41 +4093,82 @@ function computePathwayProbabilities(crossSim, stateA, stateB, anchorA, anchorB)
   const recoveryDelta = crossSim.recoveryMismatch?.delta ?? 0;
 
   // 호환성 반영
-  stabilize += (compat - 50) * 0.004;
-  collapse -= (compat - 50) * 0.003;
+  const compatDeltaS = +((compat - 50) * 0.004).toFixed(3);
+  const compatDeltaC = -((compat - 50) * 0.003).toFixed(3);
+  stabilize += compatDeltaS;
+  collapse += Number(compatDeltaC);
+  if (compatDeltaS !== 0) factors.stabilize.push({ factor: '호환성', delta: compatDeltaS });
+  if (Number(compatDeltaC) !== 0) factors.collapse.push({ factor: '호환성', delta: Number(compatDeltaC) });
 
   // 궤적 수렴/발산
-  if (convergence === 'convergent') { stabilize += 0.1; collapse -= 0.05; }
-  else if (convergence === 'divergent') { stabilize -= 0.08; collapse += 0.08; }
+  if (convergence === 'convergent') {
+    stabilize += 0.1; collapse -= 0.05;
+    factors.stabilize.push({ factor: '궤적 수렴', delta: 0.1 });
+    factors.collapse.push({ factor: '궤적 수렴', delta: -0.05 });
+  } else if (convergence === 'divergent') {
+    stabilize -= 0.08; collapse += 0.08;
+    factors.stabilize.push({ factor: '궤적 발산', delta: -0.08 });
+    factors.collapse.push({ factor: '궤적 발산', delta: 0.08 });
+  }
 
   // 트리거 루프
-  oscillate += triggerCount * 0.04;
-  stabilize -= triggerCount * 0.03;
+  if (triggerCount > 0) {
+    const oscDelta = triggerCount * 0.04;
+    const staDelta = -(triggerCount * 0.03);
+    oscillate += oscDelta; stabilize += staDelta;
+    factors.oscillate.push({ factor: `트리거 루프 (${triggerCount}개)`, delta: oscDelta });
+    factors.stabilize.push({ factor: `트리거 루프 (${triggerCount}개)`, delta: staDelta });
+  }
 
   // 방어 충돌
   if (defenseType.includes('toxic') || defenseType.includes('fire') || defenseType === 'double_fire') {
     collapse += 0.12; stabilize -= 0.08;
+    factors.collapse.push({ factor: `방어 충돌 (${defenseType})`, delta: 0.12 });
+    factors.stabilize.push({ factor: `방어 충돌 (${defenseType})`, delta: -0.08 });
   } else if (defenseType === 'one_flex' || defenseType === 'mirror_flex') {
     stabilize += 0.08; collapse -= 0.05;
+    factors.stabilize.push({ factor: `방어 유연 (${defenseType})`, delta: 0.08 });
+    factors.collapse.push({ factor: `방어 유연 (${defenseType})`, delta: -0.05 });
   }
 
   // 애착 교차
-  if (attachType === 'stable_pair') { stabilize += 0.12; collapse -= 0.08; }
-  else if (attachType === 'pursuit_withdrawal') { oscillate += 0.1; stabilize -= 0.05; }
-  else if (attachType === 'double_chaos' || attachType === 'chaos_amplifier') { collapse += 0.1; stabilize -= 0.08; }
+  if (attachType === 'stable_pair') {
+    stabilize += 0.12; collapse -= 0.08;
+    factors.stabilize.push({ factor: '안정 애착 조합', delta: 0.12 });
+    factors.collapse.push({ factor: '안정 애착 조합', delta: -0.08 });
+  } else if (attachType === 'pursuit_withdrawal') {
+    oscillate += 0.1; stabilize -= 0.05;
+    factors.oscillate.push({ factor: '추격-도주 애착', delta: 0.1 });
+    factors.stabilize.push({ factor: '추격-도주 애착', delta: -0.05 });
+  } else if (attachType === 'double_chaos' || attachType === 'chaos_amplifier') {
+    collapse += 0.1; stabilize -= 0.08;
+    factors.collapse.push({ factor: `혼란 애착 (${attachType})`, delta: 0.1 });
+    factors.stabilize.push({ factor: `혼란 애착 (${attachType})`, delta: -0.08 });
+  }
 
   // 갈등 스타일
-  if (conflictScore >= 0.6) { stabilize += 0.06; }
-  else if (conflictScore <= 0.2) { collapse += 0.08; oscillate += 0.04; }
+  if (conflictScore >= 0.6) {
+    stabilize += 0.06;
+    factors.stabilize.push({ factor: '갈등 호환 양호', delta: 0.06 });
+  } else if (conflictScore <= 0.2) {
+    collapse += 0.08; oscillate += 0.04;
+    factors.collapse.push({ factor: '갈등 호환 불량', delta: 0.08 });
+    factors.oscillate.push({ factor: '갈등 호환 불량', delta: 0.04 });
+  }
 
   // 회복 리듬 불일치
-  if (recoveryDelta >= 2) { oscillate += 0.06; stabilize -= 0.04; }
+  if (recoveryDelta >= 2) {
+    oscillate += 0.06; stabilize -= 0.04;
+    factors.oscillate.push({ factor: '회복 리듬 불일치', delta: 0.06 });
+    factors.stabilize.push({ factor: '회복 리듬 불일치', delta: -0.04 });
+  }
 
-  // 정규화 (합계 = 1)
-  const total = stabilize + oscillate + collapse;
-  stabilize = Math.round((stabilize / total) * 100) / 100;
-  oscillate = Math.round((oscillate / total) * 100) / 100;
-  collapse = Math.round((1 - stabilize - oscillate) * 100) / 100;
+  // softmax 정규화 (진짜 확률 분포)
+  const rawScores = { stabilize, oscillate, collapse };
+  const pathDist = softmax(rawScores, 0.9);
+  stabilize = pathDist.stabilize;
+  oscillate = pathDist.oscillate;
+  collapse = pathDist.collapse;
 
   // 임계값 계산
   const thresholds = {
@@ -4139,6 +4198,8 @@ function computePathwayProbabilities(crossSim, stateA, stateB, anchorA, anchorB)
     thresholds,
     dominantPathway: stabilize >= oscillate && stabilize >= collapse ? '안정화' :
                      oscillate >= collapse ? '진동 유지' : '붕괴',
+    factors, // 요인별 기여도 추적
+    _debug: { rawScores },
   };
 }
 
@@ -5017,6 +5078,22 @@ B 고유 주제: ${(crossSim.topicOverlap.uniqueB || []).join(', ') || '없음'}
     prompt += `진동 유지: ${Math.round(pw.pathways.oscillate.probability * 100)}% (조건: ${pw.pathways.oscillate.conditions})\n`;
     prompt += `붕괴: ${Math.round(pw.pathways.collapse.probability * 100)}% (조건: ${pw.pathways.collapse.conditions})\n`;
     prompt += `현재 데이터 기반 우세 경로: ${pw.dominantPathway}\n\n`;
+
+    // 경로 확률 분해 (요인별 기여도)
+    if (pw.factors) {
+      prompt += `### 경로 확률 분해 (어떤 요인이 어느 방향으로 작용했는가)\n`;
+      for (const [path, factorList] of Object.entries(pw.factors)) {
+        const pathLabel = path === 'stabilize' ? '안정화' : path === 'oscillate' ? '진동 유지' : '붕괴';
+        if (factorList.length > 0) {
+          prompt += `${pathLabel}:\n`;
+          for (const f of factorList) {
+            prompt += `  ${f.delta >= 0 ? '+' : ''}${(f.delta * 100).toFixed(0)}% ← ${f.factor}\n`;
+          }
+        }
+      }
+      prompt += `→ 이 분해를 "궤적 예보"와 "관계 리스크 맵" 섹션에서 서사적으로 반영하세요.\n`;
+      prompt += `→ 가장 큰 기여 요인을 중심으로 서술하고, 그 요인이 변하면 경로가 어떻게 바뀌는지 조건부로 서술하세요.\n\n`;
+    }
 
     // 임계값
     prompt += `### 임계값 (Thresholds)\n`;
