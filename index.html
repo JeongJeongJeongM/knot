@@ -3579,6 +3579,9 @@
 
         // 에세이에서 매칭용 핵심 요약 추출
         function extractEssaySummary(profile) {
+            // 프로필 코드에서 복원된 요약 우선
+            if (profile?.essaySummary) return profile.essaySummary;
+            // 분석 완료된 프로필에서 추출
             if (!profile?.llmResult?.sections) return null;
             const sections = profile.llmResult.sections;
             const MATCH_KEYS = ['페르소나', '사유의 지형', '방어 체계', '리스크 모델', '무의식'];
@@ -3593,6 +3596,9 @@
 
         // rates에서 매칭용 메타데이터 추출
         function extractRatesMeta(profile) {
+            // 프로필 코드에서 복원된 메타 우선
+            if (profile?.ratesMeta) return profile.ratesMeta;
+            // 분석 완료된 프로필에서 추출
             if (!profile?.rates) return null;
             const r = profile.rates;
             return {
