@@ -1663,11 +1663,20 @@
                         <div class="terminal-dot r"></div>
                         <div class="terminal-dot y"></div>
                         <div class="terminal-dot g"></div>
-                        <span class="landing-panel-title">analysis.history</span>
+                        <span class="landing-panel-title">history</span>
+                    </div>
+                    <div style="display:flex;border-bottom:1px solid #1a1a2e;">
+                        <button id="historyTabAnalysis" onclick="switchHistoryTab('analysis')" style="flex:1;padding:10px;font-size:12px;font-family:'Courier New',monospace;background:none;border:none;color:var(--ac);cursor:pointer;border-bottom:2px solid var(--ac);">개인 분석</button>
+                        <button id="historyTabMatch" onclick="switchHistoryTab('match')" style="flex:1;padding:10px;font-size:12px;font-family:'Courier New',monospace;background:none;border:none;color:#555;cursor:pointer;border-bottom:2px solid transparent;">매칭 이력</button>
                     </div>
                     <div class="landing-panel-body" id="previousResultsBody" style="padding:12px 16px;">
-                        <div style="font-size:12px;color:var(--ac);font-weight:600;margin-bottom:12px;">// 분석 결과 다시 보기</div>
-                        <div id="previousResultsList" style="display:flex;flex-direction:column;gap:10px;"></div>
+                        <div id="historyAnalysisContent">
+                            <div id="previousResultsList" style="display:flex;flex-direction:column;gap:10px;"></div>
+                        </div>
+                        <div id="historyMatchContent" style="display:none;">
+                            <div id="previousMatchesList" style="display:flex;flex-direction:column;gap:10px;"></div>
+                            <div id="matchHistoryEmpty" style="display:none;text-align:center;padding:20px;color:#555;font-size:12px;font-family:'Courier New',monospace;">매칭 이력이 없습니다</div>
+                        </div>
                     </div>
                 </div>
                 <div style="text-align:center;margin:16px 0;">
@@ -2772,10 +2781,13 @@
             if (currentUser && currentUser.email !== payload.email) {
                 currentProfile = null;
                 window._previousAnalyses = null;
+                window._previousMatches = null;
                 const resultContent = document.getElementById('resultContent');
                 if (resultContent) resultContent.innerHTML = '';
                 const prevList = document.getElementById('previousResultsList');
                 if (prevList) prevList.innerHTML = '';
+                const matchList = document.getElementById('previousMatchesList');
+                if (matchList) matchList.innerHTML = '';
                 showNewAnalysisMode();
                 console.log('[KNOT] Account switched, cleared previous data');
             }
@@ -2801,6 +2813,7 @@
             currentUser = null;
             currentProfile = null;
             window._previousAnalyses = null;
+            window._previousMatches = null;
             try { sessionStorage.removeItem('knot_token'); } catch(e) {}
             google.accounts.id.disableAutoSelect();
             // 결과 화면 DOM 클리어
@@ -2809,6 +2822,8 @@
             // 이전 분석 목록 패널 클리어
             const prevList = document.getElementById('previousResultsList');
             if (prevList) prevList.innerHTML = '';
+            const matchList = document.getElementById('previousMatchesList');
+            if (matchList) matchList.innerHTML = '';
             showNewAnalysisMode();
             showScreen('login');
         }
@@ -2869,6 +2884,8 @@
                 if (userAvatar) userAvatar.src = currentUser.picture || '';
                 // 과거 분석 결과 확인
                 fetchPreviousAnalyses();
+                // 매칭 이력 프리로드 (탭 전환 시 바로 보이도록)
+                fetchPreviousMatches();
             } else {
                 // Show login screen
                 showScreen('login');
@@ -2947,6 +2964,180 @@
 
             // 데이터를 전역에 캐시
             window._previousAnalyses = analyses;
+        }
+
+        // ──── 히스토리 탭 전환 ────
+        function switchHistoryTab(tab) {
+            const tabAnalysis = document.getElementById('historyTabAnalysis');
+            const tabMatch = document.getElementById('historyTabMatch');
+            const contentAnalysis = document.getElementById('historyAnalysisContent');
+            const contentMatch = document.getElementById('historyMatchContent');
+            if (!tabAnalysis || !tabMatch || !contentAnalysis || !contentMatch) return;
+
+            if (tab === 'match') {
+                tabAnalysis.style.color = '#555';
+                tabAnalysis.style.borderBottom = '2px solid transparent';
+                tabMatch.style.color = 'var(--ac)';
+                tabMatch.style.borderBottom = '2px solid var(--ac)';
+                contentAnalysis.style.display = 'none';
+                contentMatch.style.display = 'block';
+                // 처음 클릭 시 매칭 이력 로드
+                if (!window._previousMatches) {
+                    fetchPreviousMatches();
+                }
+            } else {
+                tabAnalysis.style.color = 'var(--ac)';
+                tabAnalysis.style.borderBottom = '2px solid var(--ac)';
+                tabMatch.style.color = '#555';
+                tabMatch.style.borderBottom = '2px solid transparent';
+                contentAnalysis.style.display = 'block';
+                contentMatch.style.display = 'none';
+            }
+        }
+
+        async function fetchPreviousMatches() {
+            const token = getAuthToken();
+            if (!token) return;
+            try {
+                const resp = await fetch(WORKER_URL + '/my-matches', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (data.matches && data.matches.length > 0) {
+                    renderPreviousMatches(data.matches);
+                } else {
+                    const emptyEl = document.getElementById('matchHistoryEmpty');
+                    if (emptyEl) emptyEl.style.display = 'block';
+                }
+            } catch (e) {
+                console.log('[KNOT] 매칭 이력 조회 실패:', e.message);
+            }
+        }
+
+        function renderPreviousMatches(matches) {
+            const list = document.getElementById('previousMatchesList');
+            const emptyEl = document.getElementById('matchHistoryEmpty');
+            if (!list) return;
+            if (emptyEl) emptyEl.style.display = 'none';
+
+            list.innerHTML = matches.map((m, i) => {
+                const mi = m.matchIdentity || {};
+                const emoji = mi.emoji || '🔗';
+                const matchName = mi.name || '호환성 분석';
+                const compat = m.compatibility != null ? m.compatibility : '?';
+                const date = (m.created_at || '').slice(0, 10);
+                const nameA = m.name_a || 'A';
+                const nameB = m.name_b || 'B';
+                const tension = m.tension || '-';
+                const growth = m.growth || '-';
+
+                // 호환도 바 색상
+                const compatColor = compat >= 70 ? '#4ade80' : compat >= 40 ? '#fbbf24' : '#f87171';
+
+                return `<div onclick="loadPreviousMatch(${i})" style="cursor:pointer;background:#0a0a14;border:1px solid #1a1a2e;border-radius:8px;padding:12px 14px;transition:border-color 0.2s;" onmouseover="this.style.borderColor='var(--ac)'" onmouseout="this.style.borderColor='#1a1a2e'">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                        <span style="font-size:22px;">${emoji}</span>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:13px;font-weight:700;color:var(--text);font-family:'Courier New',monospace;">${sanitizeHTML(nameA)} × ${sanitizeHTML(nameB)}</div>
+                            <div style="font-size:11px;color:#666;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${sanitizeHTML(matchName)}</div>
+                        </div>
+                        <div style="text-align:right;font-size:10px;color:#555;white-space:nowrap;">
+                            <div>${date}</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;padding-top:6px;border-top:1px solid #111;">
+                        <div style="flex:1;">
+                            <div style="font-size:9px;color:#555;margin-bottom:2px;">호환도 ${compat}%</div>
+                            <div style="height:3px;background:#1a1a2e;border-radius:2px;overflow:hidden;"><div style="height:100%;width:${compat}%;background:${compatColor};border-radius:2px;"></div></div>
+                        </div>
+                        <div style="font-size:9px;color:#555;">긴장: ${sanitizeHTML(tension)}</div>
+                        <div style="font-size:9px;color:#555;">성장: ${sanitizeHTML(growth)}</div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            window._previousMatches = matches;
+        }
+
+        function loadPreviousMatch(index) {
+            const matches = window._previousMatches;
+            if (!matches || !matches[index]) return;
+            const m = matches[index];
+
+            const mi = m.matchIdentity || {};
+            const profileA = m.profileA || {};
+            const profileB = m.profileB || {};
+
+            // 축 데이터에서 identity 복원
+            const axesA = profileA.axes || {};
+            const axesB = profileB.axes || {};
+            const idA = typeof computeMatchIdentity === 'function' ? null : null; // displayMatch가 처리
+
+            // match 화면에 직접 렌더링
+            // matchRelationIdentity에 관계 정보 표시
+            const relationEl = document.getElementById('matchRelationIdentity');
+            if (relationEl) {
+                const emoji = mi.emoji || '🔗';
+                const name = mi.name || '호환성 분석';
+                const tagline = mi.tagline || '';
+                const compat = m.compatibility != null ? m.compatibility : '?';
+                const compatColor = compat >= 70 ? '#4ade80' : compat >= 40 ? '#fbbf24' : '#f87171';
+                relationEl.innerHTML = `
+                    <div style="text-align:center;padding:20px 0;">
+                        <div style="font-size:48px;margin-bottom:12px;">${emoji}</div>
+                        <div style="font-size:20px;font-weight:700;color:var(--text);font-family:'Courier New',monospace;margin-bottom:4px;">${sanitizeHTML(name)}</div>
+                        <div style="font-size:13px;color:#888;margin-bottom:16px;">${sanitizeHTML(tagline)}</div>
+                        <div style="display:inline-block;background:#0a0a14;border:1px solid ${compatColor};border-radius:8px;padding:8px 20px;">
+                            <span style="font-size:14px;color:${compatColor};font-weight:700;">호환도 ${compat}%</span>
+                        </div>
+                        <div style="margin-top:12px;font-size:12px;color:#666;">
+                            <span>긴장: ${sanitizeHTML(mi.tension || m.tension || '-')}</span>
+                            <span style="margin:0 8px;">·</span>
+                            <span>성장: ${sanitizeHTML(mi.growth || m.growth || '-')}</span>
+                        </div>
+                        <div style="margin-top:8px;font-size:11px;color:#555;">${sanitizeHTML(m.name_a || 'A')} × ${sanitizeHTML(m.name_b || 'B')}</div>
+                    </div>`;
+            }
+
+            // 에세이 렌더링
+            const essayEl = document.getElementById('matchEssays');
+            const essaySection = document.getElementById('matchEssaySection');
+            if (essayEl && m.sections && m.sections.length > 0) {
+                essayEl.innerHTML = m.sections.map(sec => {
+                    let html = `<div style="margin-bottom:24px;">`;
+                    html += `<h3 style="font-size:15px;font-weight:700;color:var(--ac);margin-bottom:8px;font-family:'Courier New',monospace;">${sanitizeHTML(sec.title || '')}</h3>`;
+                    if (sec.summary) html += `<p style="font-size:13px;color:var(--text);line-height:1.7;margin-bottom:8px;">${sanitizeHTML(sec.summary)}</p>`;
+                    if (sec.subsections && sec.subsections.length > 0) {
+                        sec.subsections.forEach(sub => {
+                            html += `<div style="margin-bottom:12px;">`;
+                            if (sub.title) html += `<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">${sanitizeHTML(sub.title)}</div>`;
+                            if (sub.content) html += `<p style="font-size:12px;color:#999;line-height:1.6;">${sanitizeHTML(sub.content)}</p>`;
+                            html += `</div>`;
+                        });
+                    }
+                    html += `</div>`;
+                    return html;
+                }).join('');
+                if (essaySection) essaySection.style.display = 'block';
+            } else if (essayEl) {
+                essayEl.innerHTML = '';
+                if (essaySection) essaySection.style.display = 'none';
+            }
+
+            // fallback 숨기기
+            const fallback = document.getElementById('matchFallbackAnalysis');
+            if (fallback) fallback.style.display = 'none';
+
+            // 매칭 결과 컨테이너 표시
+            const container = document.getElementById('matchResultsContainer');
+            if (container) container.classList.remove('hidden');
+
+            // 업로드 영역 숨기기
+            const uploadArea = document.getElementById('matchUploadArea');
+            if (uploadArea) uploadArea.style.display = 'none';
+
+            showScreen('match');
         }
 
         function showNewAnalysisMode() {

@@ -4896,6 +4896,59 @@ export default {
         }
       }
 
+      // ──── GET /my-matches ── 로그인 사용자의 매칭 이력 ────
+      if (request.method === 'GET' && url.pathname === '/my-matches') {
+        const auth = await requireAuth(request, env);
+        if (auth.error) {
+          return jsonResponse({ error: auth.error }, auth.status, corsHeaders);
+        }
+        const db = env.KNOT_DB;
+        if (!db) {
+          return jsonResponse({ error: 'DB not configured' }, 500, corsHeaders);
+        }
+        try {
+          const rows = await db.prepare(
+            `SELECT id, name_a, name_b, compatibility, tension, growth, match_identity_json, sections_json, essay_text, profile_a_json, profile_b_json, status, created_at
+             FROM matches
+             WHERE user_id = ? AND status = 'complete'
+             ORDER BY created_at DESC
+             LIMIT 20`
+          ).bind(auth.user.sub).all();
+          const matches = (rows.results || []).map(r => {
+            let matchIdentity = null;
+            try { matchIdentity = r.match_identity_json ? JSON.parse(r.match_identity_json) : null; } catch {}
+            let profileA = null;
+            try { profileA = r.profile_a_json ? JSON.parse(r.profile_a_json) : null; } catch {}
+            let profileB = null;
+            try { profileB = r.profile_b_json ? JSON.parse(r.profile_b_json) : null; } catch {}
+            let sections = null;
+            if (r.sections_json) {
+              try {
+                const p = JSON.parse(r.sections_json);
+                sections = Array.isArray(p) ? p : (p && Array.isArray(p.sections) ? p.sections : null);
+              } catch {}
+            }
+            return {
+              id: r.id,
+              name_a: r.name_a,
+              name_b: r.name_b,
+              compatibility: r.compatibility,
+              tension: r.tension,
+              growth: r.growth,
+              matchIdentity,
+              profileA,
+              profileB,
+              sections,
+              essay_text: r.essay_text,
+              created_at: r.created_at
+            };
+          });
+          return jsonResponse({ matches }, 200, corsHeaders);
+        } catch (e) {
+          return jsonResponse({ error: e.message }, 500, corsHeaders);
+        }
+      }
+
       // ──── GET /migrate ── DB Schema Migration ────
       if (request.method === 'GET' && url.pathname === '/migrate') {
         const key = url.searchParams.get('key');
