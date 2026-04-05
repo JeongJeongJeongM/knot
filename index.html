@@ -3577,6 +3577,31 @@
             return null;
         }
 
+        // 에세이에서 매칭용 핵심 요약 추출
+        function extractEssaySummary(profile) {
+            if (!profile?.llmResult?.sections) return null;
+            const sections = profile.llmResult.sections;
+            const MATCH_KEYS = ['페르소나', '사유의 지형', '방어 체계', '리스크 모델', '무의식'];
+            const summaries = {};
+            for (const sec of sections) {
+                if (MATCH_KEYS.some(k => (sec.title || '').includes(k))) {
+                    summaries[sec.title] = sec.summary || '';
+                }
+            }
+            return Object.keys(summaries).length > 0 ? summaries : null;
+        }
+
+        // rates에서 매칭용 메타데이터 추출
+        function extractRatesMeta(profile) {
+            if (!profile?.rates) return null;
+            const r = profile.rates;
+            return {
+                messageCount: r._meta?.totalMessages || r._meta?.userMessages || 0,
+                avgLength: r._meta?.avgMessageLength || 0,
+                conversationDays: r._meta?.conversationDays || 0
+            };
+        }
+
         async function callWorkerMatch(profileA, profileB, identityA, identityB, matchIdentity) {
             try {
                 const response = await fetch(WORKER_URL + '/match', {
@@ -3597,6 +3622,10 @@
                         anchorB: profileB.anchor || null,
                         fwpA: profileA.functionWordProfile || null,
                         fwpB: profileB.functionWordProfile || null,
+                        essaySummaryA: extractEssaySummary(profileA),
+                        essaySummaryB: extractEssaySummary(profileB),
+                        ratesMetaA: extractRatesMeta(profileA),
+                        ratesMetaB: extractRatesMeta(profileB),
                         raw_messages_a: profileA.messages || null,
                         raw_messages_b: profileB.messages || null
                     })
@@ -4319,6 +4348,8 @@ function displayResult() {
                 prism: prismSummary,
                 anchor: anchorSummary,
                 fwp: currentProfile.functionWordProfile || null,
+                es: extractEssaySummary(currentProfile),
+                rm: extractRatesMeta(currentProfile),
                 timestamp: currentProfile.timestamp
             }))));
             document.getElementById('profileCode').textContent = profileCode;
@@ -4742,6 +4773,8 @@ function displayResult() {
                     prism: prismData,
                     anchor: anchorData,
                     functionWordProfile: decoded.fwp || null,
+                    essaySummary: decoded.es || null,
+                    ratesMeta: decoded.rm || null,
                     timestamp: decoded.timestamp
                 };
                 if (btn) { btn.textContent = '분석 중... (최대 30초)'; }
