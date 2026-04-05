@@ -2086,10 +2086,41 @@
         const CONFLICT_MATRIX = {}; // Server-side only
 
         // ============ LSM (Language Style Matching) ============
-    // LSM computation moved to server
-    const KOREAN_FUNC_WORDS = {};
-    function computeFunctionWordProfile(messages) { return null; }
-    function computeLSMSimilarity(fwpA, fwpB) { return 0.5; }
+    const KOREAN_FUNC_WORDS = {
+        particles: ['은','는','이','가','을','를','에','에서','의','로','으로','와','과','도','만','까지','부터','마다','조차','라도','이나','나','든지','이든지'],
+        pronouns: ['나','너','저','우리','너희','그','그녀','이것','저것','그것','여기','저기','거기','누구','뭐','무엇','어디','언제'],
+        conjunctions: ['그리고','그런데','그래서','하지만','그러나','또','또는','그래도','그러면','왜냐하면','즉','만약','비록','때문에'],
+        adverbs: ['좀','너무','매우','정말','진짜','아주','조금','많이','잘','못','안','다','또','이미','아직','바로','꼭','항상','자주','가끔'],
+        negations: ['안','못','없','아니','절대','전혀','별로','싫','말'],
+        quantifiers: ['모든','각','여러','몇','많은','적은','조금','약간','대부분','전부','다','좀','꽤','상당히'],
+        fillers: ['음','어','그','뭐','아','네','예','응','글쎄','뭐랄까','그냥','일단','아마','혹시']
+    };
+    function computeFunctionWordProfile(messages) {
+        if (!messages || messages.length === 0) return null;
+        const allText = messages.map(m => typeof m === 'string' ? m : (m.text || m.content || '')).join(' ');
+        const totalChars = allText.length || 1;
+        const profile = {};
+        for (const [cat, words] of Object.entries(KOREAN_FUNC_WORDS)) {
+            let count = 0;
+            for (const w of words) {
+                let idx = 0;
+                while ((idx = allText.indexOf(w, idx)) !== -1) { count++; idx += w.length; }
+            }
+            profile[cat] = +(count / (totalChars / 100)).toFixed(4);
+        }
+        return profile;
+    }
+    function computeLSMSimilarity(fwpA, fwpB) {
+        if (!fwpA || !fwpB) return 0.5;
+        const cats = Object.keys(KOREAN_FUNC_WORDS);
+        let totalLSM = 0;
+        for (const cat of cats) {
+            const a = fwpA[cat] || 0;
+            const b = fwpB[cat] || 0;
+            totalLSM += 1 - Math.abs(a - b) / (a + b + 0.0001);
+        }
+        return totalLSM / cats.length;
+    }
 
     // ============ V3 IDENTITY SYSTEM ============
         // ═══ 6축 타입 코드 시스템 ═══
@@ -3564,6 +3595,8 @@
                         prismB: profileB.prism || null,
                         anchorA: profileA.anchor || null,
                         anchorB: profileB.anchor || null,
+                        fwpA: profileA.functionWordProfile || null,
+                        fwpB: profileB.functionWordProfile || null,
                         raw_messages_a: profileA.messages || null,
                         raw_messages_b: profileB.messages || null
                     })
@@ -4285,6 +4318,7 @@ function displayResult() {
                 identity: identity,
                 prism: prismSummary,
                 anchor: anchorSummary,
+                fwp: currentProfile.functionWordProfile || null,
                 timestamp: currentProfile.timestamp
             }))));
             document.getElementById('profileCode').textContent = profileCode;
@@ -4656,6 +4690,7 @@ function displayResult() {
                     axes,
                     identity,
                     messages,
+                    functionWordProfile: computeFunctionWordProfile(messages),
                     timestamp: new Date().toISOString()
                 };
 
@@ -4706,6 +4741,7 @@ function displayResult() {
                     identity: decoded.identity || computeIdentity(loadedAxes),
                     prism: prismData,
                     anchor: anchorData,
+                    functionWordProfile: decoded.fwp || null,
                     timestamp: decoded.timestamp
                 };
                 if (btn) { btn.textContent = '분석 중... (최대 30초)'; }
