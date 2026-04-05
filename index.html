@@ -2828,8 +2828,10 @@
             const userAvatar = document.getElementById('authUserAvatar');
 
             if (currentUser) {
-                // Show landing (file upload) screen
-                showScreen('landing');
+                // 공유 뷰에서는 화면 전환하지 않음 (share route가 이미 result 화면을 띄운 상태)
+                if (!currentProfile || !currentProfile._isSharedView) {
+                    showScreen('landing');
+                }
                 if (userSection) userSection.style.display = 'flex';
                 if (userName) userName.textContent = currentUser.name || currentUser.email;
                 if (userAvatar) userAvatar.src = currentUser.picture || '';
