@@ -15,4 +15,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: 8c7306c35619ae9925ee1eefea2331c5
-                    command: pages deploy . --project-name=knot-ai --branch=main --commit-message="deploy from GitHub Actions"
+          command: pages deploy . --project-name=knot-ai --branch=main --commit-message="deploy from GitHub Actions"
