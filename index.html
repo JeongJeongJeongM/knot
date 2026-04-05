@@ -4260,10 +4260,31 @@ function displayResult() {
             }
             document.getElementById('lenses').innerHTML = lensesHTML;
 
+            // PRISM 요약 (매칭용)
+            let prismSummary = null;
+            if (currentProfile.prism) {
+                const p = currentProfile.prism;
+                prismSummary = {};
+                if (p.topic_distribution) prismSummary.td = p.topic_distribution;
+                if (p.curiosity) prismSummary.cu = { pi: p.curiosity.prompt_intent, ld: p.curiosity.length_distribution };
+                if (p.engagement) prismSummary.en = { od: p.engagement.overall_depth, dr: p.engagement.depth_ratio };
+            }
+            // ANCHOR 요약 (매칭용)
+            let anchorSummary = null;
+            if (currentProfile.anchor) {
+                const a = currentProfile.anchor;
+                anchorSummary = {};
+                if (a.attachment) anchorSummary.at = a.attachment;
+                if (a.conflict) anchorSummary.co = a.conflict;
+                if (a.emotional_availability) anchorSummary.ea = a.emotional_availability;
+                if (a.growth) anchorSummary.gr = a.growth;
+            }
             const profileCode = btoa(unescape(encodeURIComponent(JSON.stringify({
                 intensity: axes.intensity,
                 structural: axes.structural,
                 identity: identity,
+                prism: prismSummary,
+                anchor: anchorSummary,
                 timestamp: currentProfile.timestamp
             }))));
             document.getElementById('profileCode').textContent = profileCode;
@@ -4660,9 +4681,31 @@ function displayResult() {
                     intensity: decoded.intensity,
                     structural: decoded.structural
                 };
+                // PRISM/ANCHOR 복원
+                let prismData = null;
+                if (decoded.prism) {
+                    const ps = decoded.prism;
+                    prismData = {
+                        topic_distribution: ps.td || null,
+                        curiosity: ps.cu ? { prompt_intent: ps.cu.pi, length_distribution: ps.cu.ld } : null,
+                        engagement: ps.en ? { overall_depth: ps.en.od, depth_ratio: ps.en.dr } : null
+                    };
+                }
+                let anchorData = null;
+                if (decoded.anchor) {
+                    const as = decoded.anchor;
+                    anchorData = {
+                        attachment: as.at || null,
+                        conflict: as.co || null,
+                        emotional_availability: as.ea || null,
+                        growth: as.gr || null
+                    };
+                }
                 matchProfile = {
                     axes: loadedAxes,
                     identity: decoded.identity || computeIdentity(loadedAxes),
+                    prism: prismData,
+                    anchor: anchorData,
                     timestamp: decoded.timestamp
                 };
                 if (btn) { btn.textContent = '분석 중... (최대 30초)'; }
