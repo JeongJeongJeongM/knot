@@ -2967,26 +2967,20 @@ function buildScoringPrompt(rawMessages, prism, anchor) {
   let prompt = '';
 
   if (precomputed) {
-    prompt += `## 사전 추정 결과 (키워드/패턴 기반 자동 분석)\n`;
-    prompt += `아래는 엔진이 키워드 밀도와 패턴 매칭으로 사전 추정한 값입니다.\n`;
-    prompt += `대화 원문을 직접 읽고, 이 추정값이 맞으면 그대로 유지하고, 틀리면 보정하세요.\n`;
-    prompt += `보정이 필요 없는 축은 추정값 그대로 출력하면 됩니다.\n\n`;
+    // Structural 사전 추정만 프롬프트에 포함 (패턴 기반, 신뢰할 수 있음)
+    // Intensity 사전 추정은 키워드 카운팅 기반이라 LLM 앵커링을 유발하므로 제외
+    prompt += `## 사전 추정 결과 (구조적 축만 — 키워드/패턴 기반)\n`;
+    prompt += `아래는 엔진이 패턴 매칭으로 사전 추정한 구조적 축입니다. 참고만 하세요.\n`;
+    prompt += `Intensity 축(A1~A6, A12, A14)은 대화 원문을 직접 읽고 독립적으로 판단하세요.\n\n`;
 
-    // High/medium confidence axes — show precomputed values
-    prompt += `### Intensity 사전 추정\n`;
     const intConf = precomputed.confidence;
-    for (const [axis, val] of Object.entries(precomputed.intensity)) {
-      const conf = intConf[axis] || 'low';
-      prompt += `${axis}: ${val} [신뢰도: ${conf}]\n`;
-    }
-
-    prompt += `\n### Structural 사전 추정\n`;
+    prompt += `### Structural 사전 추정\n`;
     for (const [axis, data] of Object.entries(precomputed.structural)) {
       const conf = intConf[axis] || 'medium';
       prompt += `${axis}: ${data.primary} [신뢰도: ${conf}]\n`;
     }
 
-    prompt += `\n## 대화 원문 (${rawMessages.length}개 메시지) — 사전 추정 검증용\n`;
+    prompt += `\n## 대화 원문 (${rawMessages.length}개 메시지)\n`;
   } else {
     prompt += `다음 대화 메시지를 분석하여 행동 프로필 JSON을 출력하세요.\n\n`;
     prompt += `## 대화 원문 (${rawMessages.length}개 메시지)\n`;
@@ -6151,16 +6145,20 @@ function switchTab(id, el) {
     // Stage 2: LLM reads scores → essay (SSE streaming)
     // ══════════════════════════════════════════════════════
     if (path === '/analyze') {
-      if (!(await checkRateLimit(ip, 'analyze', RATE_LIMIT_ANALYZE, env))) {
-        return jsonResponse({ error: '분석 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' }, 429, corsHeaders);
-      }
-
-      // Auth check
+      // Auth check (moved before rate limit so we can identify admins)
       const auth = await requireAuth(request, env);
       if (auth.error) {
         return jsonResponse({ error: auth.error }, auth.status, corsHeaders);
       }
       const authUser = auth.user;
+
+      const ADMIN_EMAILS = ['ashirmallo@gmail.com', 'nakkdoor@gmail.com', 'eunbb1021@gmail.com'];
+      const isAdmin = authUser?.email && ADMIN_EMAILS.includes(authUser.email);
+
+      // Rate limit (admins bypass)
+      if (!isAdmin && !(await checkRateLimit(ip, 'analyze', RATE_LIMIT_ANALYZE, env))) {
+        return jsonResponse({ error: '분석 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' }, 429, corsHeaders);
+      }
 
       const contentLength = parseInt(request.headers.get('Content-Length') || '0');
       if (contentLength > MAX_SIZE_ANALYZE) {
@@ -6177,8 +6175,6 @@ function switchTab(id, el) {
 
         // ── Weekly limit check: 1 analysis per account per 7 days ──
         // NOTE: Not atomic — concurrent requests could bypass. Acceptable for current scale.
-        const ADMIN_EMAILS = ['ashirmallo@gmail.com', 'nakkdoor@gmail.com', 'eunbb1021@gmail.com'];
-        const isAdmin = authUser?.email && ADMIN_EMAILS.includes(authUser.email);
         if (authUser?.sub && !isAdmin) {
           try {
             // 1) KV 쿨다운 체크 (탈퇴→재가입 어뷰징 방지)
