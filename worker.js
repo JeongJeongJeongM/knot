@@ -6334,24 +6334,19 @@ function switchTab(id, el) {
             }
 
             // ──── Deterministic override ────
-            // LLM temperature:0 can still flip axes on borderline cases.
-            // Structural: 100% deterministic override (keyword/pattern based)
-            // Intensity: high-confidence axes forced to precomputed values
+            // Structural axes: 100% deterministic (keyword/pattern + PRISM/ANCHOR)
+            // Intensity axes: LLM remains primary scorer — precomputed values are
+            // already injected as guidance via buildScoringPrompt(), so no hard override.
+            // (Previous hard-override caused dramatic score flips because keyword-count
+            //  confidence thresholds were too low for intensity axes.)
             {
               const deterministic = precomputeAxes(rawMessages, prism, anchor);
               if (deterministic) {
-                // Structural: 전부 덮어쓰기
+                // Structural: 전부 덮어쓰기 (패턴 기반, 적절)
                 if (deterministic.structural) {
                   axes.structural = deterministic.structural;
                 }
-                // Intensity: high confidence 축만 사전 추정값으로 강제
-                if (deterministic.intensity && deterministic.confidence) {
-                  for (const [axis, conf] of Object.entries(deterministic.confidence)) {
-                    if (conf === 'high' && deterministic.intensity[axis] !== undefined) {
-                      axes.intensity[axis] = deterministic.intensity[axis];
-                    }
-                  }
-                }
+                // Intensity: LLM 점수 유지 (precomputed는 프롬프트 가이드로만 사용)
               }
             }
 
