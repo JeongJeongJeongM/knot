@@ -5532,6 +5532,7 @@ function buildSharePageHTML(profile) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KNOT — ${escapeHTML(name)}</title>
+<meta name="robots" content="noindex, nofollow">
 <meta property="og:title" content="KNOT — ${escapeHTML(name)}">
 <meta property="og:description" content="${escapeHTML(tagline || 'AI 대화 행동 분석 결과')}">
 <meta property="og:type" content="profile">
@@ -5867,6 +5868,18 @@ export default {
           return new Response('DB not configured', { status: 500 });
         }
 
+        // ── KST 변환 헬퍼 (UTC → +9h) ──
+        const toKST = (utcStr) => {
+          if (!utcStr) return '–';
+          try {
+            const d = new Date(utcStr.endsWith('Z') ? utcStr : utcStr + 'Z');
+            d.setHours(d.getHours() + 9);
+            return d.toISOString().slice(0, 19).replace('T', ' ');
+          } catch { return utcStr; }
+        };
+        const toKSTShort = (utcStr) => toKST(utcStr).slice(0, 16);
+        const toKSTDate = (utcStr) => toKST(utcStr).slice(0, 10);
+
         // ── Queries ──
         const [
           totalAnalyses, todayAnalyses, weekAnalyses, monthAnalyses, avgMsgCount,
@@ -5875,6 +5888,7 @@ export default {
           feedbackStats, feedbackRecent,
           dailyCounts, dailyUserCounts,
           errorRate, recentAnalyses, recentUsers,
+          totalMatches, recentMatches,
         ] = await Promise.all([
           db.prepare(`SELECT COUNT(*) as cnt FROM analyses`).first(),
           db.prepare(`SELECT COUNT(*) as cnt FROM analyses WHERE created_at >= date('now')`).first(),
@@ -5899,8 +5913,11 @@ export default {
           db.prepare(`SELECT date(created_at) as day, COUNT(DISTINCT user_id) as cnt FROM analyses WHERE created_at >= date('now', '-30 days') GROUP BY date(created_at) ORDER BY day`).all(),
           // Status & recent
           db.prepare(`SELECT COUNT(*) as cnt FROM analyses WHERE status != 'complete'`).first(),
-          db.prepare(`SELECT id, user_id, type_code, type_name, message_count, status, created_at FROM analyses ORDER BY created_at DESC LIMIT 15`).all(),
-          db.prepare(`SELECT id, email, name, total_analyses, created_at, last_seen FROM users ORDER BY created_at DESC LIMIT 10`).all(),
+          db.prepare(`SELECT a.id, a.user_id, u.email, u.name as user_name, a.type_code, a.type_name, a.message_count, a.status, a.created_at FROM analyses a LEFT JOIN users u ON a.user_id = u.id ORDER BY a.created_at DESC LIMIT 20`).all(),
+          db.prepare(`SELECT id, email, name, total_analyses, created_at, last_seen FROM users ORDER BY created_at DESC LIMIT 15`).all(),
+          // Matches
+          db.prepare(`SELECT COUNT(*) as cnt FROM matches`).first(),
+          db.prepare(`SELECT m.id, u.email, u.name as user_name, m.name_a, m.name_b, m.compatibility, m.created_at FROM matches m LEFT JOIN users u ON m.user_id = u.id ORDER BY m.created_at DESC LIMIT 20`).all(),
         ]);
 
         // ── Compute derived data ──
@@ -5956,11 +5973,14 @@ export default {
         // Type rows
         const typeRows = (typeDistribution.results||[]).map(r=>`<tr><td style="color:var(--ac);font-weight:600;">${e(r.type_code)}</td><td>${e(r.type_name)}</td><td style="text-align:right;">${r.cnt}</td></tr>`).join('');
         // Feedback rows
-        const fbRows = (feedbackRecent.results||[]).map(r=>{ const iss=r.issues_json?JSON.parse(r.issues_json).join(', '):''; return `<tr><td>${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</td><td>${e(r.accuracy||'')}</td><td>${e(r.useful||'')}</td><td style="font-size:10px;">${e(iss)}</td><td style="font-size:10px;">${e(r.created_at||'').slice(0,10)}</td></tr>`; }).join('');
-        // Recent analyses rows
-        const anlRows = (recentAnalyses.results||[]).map(r=>`<tr><td style="color:var(--ac);font-size:10px;">${e(r.type_code||'–')}</td><td>${e(r.type_name||'–')}</td><td style="text-align:right;">${r.message_count||0}</td><td><span style="color:${r.status==='complete'?'#28c840':'#f59e0b'};font-size:9px;">${r.status||'–'}</span></td><td style="font-size:10px;">${e(r.created_at||'').slice(0,16)}</td></tr>`).join('');
-        // Recent users rows
-        const usrRows = (recentUsers.results||[]).map(r=>`<tr><td>${e(r.name||'–')}</td><td style="font-size:10px;color:#666;">${e(r.email||'')}</td><td style="text-align:right;">${r.total_analyses||0}</td><td style="font-size:10px;">${e(r.created_at||'').slice(0,10)}</td><td style="font-size:10px;">${e(r.last_seen||'').slice(0,10)}</td></tr>`).join('');
+        const fbRows = (feedbackRecent.results||[]).map(r=>{ const iss=r.issues_json?JSON.parse(r.issues_json).join(', '):''; return `<tr><td>${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</td><td>${e(r.accuracy||'')}</td><td>${e(r.useful||'')}</td><td style="font-size:10px;">${e(iss)}</td><td style="font-size:10px;">${toKSTDate(r.created_at)}</td></tr>`; }).join('');
+        // Recent analyses rows (with user info)
+        const anlRows = (recentAnalyses.results||[]).map(r=>`<tr><td style="font-size:10px;color:#888;">${e(r.user_name||r.email||'–')}</td><td style="color:var(--ac);font-size:10px;">${e(r.type_code||'–')}</td><td>${e(r.type_name||'–')}</td><td style="text-align:right;">${r.message_count||0}</td><td><span style="color:${r.status==='complete'?'#28c840':'#f59e0b'};font-size:9px;">${r.status||'–'}</span></td><td style="font-size:10px;">${toKSTShort(r.created_at)}</td></tr>`).join('');
+        // Recent users rows (with KST timestamps)
+        const usrRows = (recentUsers.results||[]).map(r=>`<tr><td>${e(r.name||'–')}</td><td style="font-size:10px;color:#666;">${e(r.email||'')}</td><td style="text-align:right;">${r.total_analyses||0}</td><td style="font-size:10px;">${toKSTShort(r.created_at)}</td><td style="font-size:10px;">${toKSTShort(r.last_seen)}</td></tr>`).join('');
+        // Recent matches rows
+        const matchTotal = totalMatches?.cnt || 0;
+        const matchRows = (recentMatches.results||[]).map(r=>`<tr><td style="font-size:10px;color:#888;">${e(r.user_name||r.email||'–')}</td><td style="color:var(--ac);">${e(r.name_a||'–')}</td><td style="color:var(--blue);">${e(r.name_b||'–')}</td><td style="text-align:right;">${r.compatibility != null ? r.compatibility + '%' : '–'}</td><td style="font-size:10px;">${toKSTShort(r.created_at)}</td></tr>`).join('');
 
         // Axis bars
         const axLabels={A1:'정서강도',A2:'안정성',A3:'감정표현',A4:'주장성',A5:'주도성',A6:'수용성'};
@@ -6005,12 +6025,13 @@ tr:hover td{color:var(--text);}
 .label{font-size:10px;color:var(--ac);margin-bottom:10px;font-family:'Courier New',monospace;}
 </style></head><body>
 <div class="wrap">
-<div class="header"><div><div class="logo">KNOT_</div><div class="sub">Admin Dashboard</div></div><div class="ts">${new Date().toISOString().slice(0,16).replace('T',' ')}</div></div>
+<div class="header"><div><div class="logo">KNOT_</div><div class="sub">Admin Dashboard</div></div><div class="ts">${toKSTShort(new Date().toISOString())} KST</div></div>
 
 <div class="tabs">
 <div class="tab active" onclick="switchTab('kpi',this)">KPI</div>
 <div class="tab" onclick="switchTab('users',this)">유저</div>
 <div class="tab" onclick="switchTab('analyses',this)">분석</div>
+<div class="tab" onclick="switchTab('matches',this)">매칭</div>
 <div class="tab" onclick="switchTab('insight',this)">인사이트</div>
 <div class="tab" onclick="switchTab('feedback',this)">피드백</div>
 </div>
@@ -6046,6 +6067,7 @@ ${panel('system.health', `
 ${metric(successRate + '%', '성공률', parseFloat(successRate) >= 95 ? 'var(--green)' : parseFloat(successRate) >= 80 ? 'var(--ac)' : 'var(--red)')}
 ${metric(errCount, '에러', errCount > 0 ? 'var(--red)' : 'var(--green)')}
 ${metric(avgMsg, '평균 메시지')}
+${metric(matchTotal, '총 매칭')}
 ${metric(fbCount, '피드백 수')}
 </div>`)}
 
@@ -6058,12 +6080,18 @@ ${dailyUserData.length > 0 ? `<div class="label" style="margin-top:8px;">// 일�
 
 <!-- TAB: Users -->
 <div id="users" class="section">
-${panel('recent.signups', usrRows ? `<table><thead><tr><th>이름</th><th>이메일</th><th style="text-align:right;">분석</th><th>가입일</th><th>최근</th></tr></thead><tbody>${usrRows}</tbody></table>` : '<div class="empty">가입자 없음</div>')}
+${panel('recent.signups', usrRows ? `<table><thead><tr><th>이름</th><th>이메일</th><th style="text-align:right;">분석</th><th>가입시간</th><th>최근방문</th></tr></thead><tbody>${usrRows}</tbody></table>` : '<div class="empty">가입자 없음</div>')}
 </div>
 
 <!-- TAB: Analyses -->
 <div id="analyses" class="section">
-${panel('recent.analyses', anlRows ? `<table><thead><tr><th>코드</th><th>이름</th><th style="text-align:right;">MSG</th><th>상태</th><th>일시</th></tr></thead><tbody>${anlRows}</tbody></table>` : '<div class="empty">데이터 없음</div>')}
+${panel('recent.analyses', anlRows ? `<table><thead><tr><th>유저</th><th>코드</th><th>아키타입</th><th style="text-align:right;">MSG</th><th>상태</th><th>일시</th></tr></thead><tbody>${anlRows}</tbody></table>` : '<div class="empty">데이터 없음</div>')}
+</div>
+
+<!-- TAB: Matches -->
+<div id="matches" class="section">
+${panel('match.overview', `<div class="kpi-row">${metric(matchTotal, '총 매칭')}</div>`)}
+${panel('recent.matches', matchRows ? `<table><thead><tr><th>유저</th><th>A</th><th>B</th><th style="text-align:right;">호환도</th><th>일시</th></tr></thead><tbody>${matchRows}</tbody></table>` : '<div class="empty">매칭 데이터 없음</div>')}
 </div>
 
 <!-- TAB: Insight -->
