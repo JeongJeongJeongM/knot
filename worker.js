@@ -2318,7 +2318,7 @@ async function checkRateLimit(ip, endpoint, limit, env) {
 // GOOGLE AUTH TOKEN VERIFICATION
 // ═══════════════════════════════════════════════════════════
 
-async function verifyGoogleToken(token) {
+async function verifyGoogleToken(token, env) {
   if (!token) return null;
   try {
     // Use Google's tokeninfo endpoint to verify
@@ -2335,6 +2335,9 @@ async function verifyGoogleToken(token) {
       console.error('[Auth] Token audience mismatch:', data.aud);
       return null;
     }
+
+    // 필수 필드 검증
+    if (!data.email || !data.sub) return null;
 
     return {
       email: data.email,
@@ -2357,7 +2360,7 @@ async function requireAuth(request, env) {
     return { error: 'Authentication required', status: 401 };
   }
 
-  const user = await verifyGoogleToken(token);
+  const user = await verifyGoogleToken(token, env);
   if (!user) {
     return { error: 'Invalid or expired token', status: 401 };
   }
@@ -3955,7 +3958,7 @@ function classifyRelationState(simAxes, anchor) {
     combinedScores[k] = axisScores[k] + anchorScores[k] * ANCHOR_WEIGHT;
   }
 
-  // ── softmax 정규화 (진짜 확률 분포) ──
+  // ── softmax 정규화 (상대적 우세도 분포 — 통계적 확률 아님) ──
   const distribution = softmax(combinedScores);
 
   const sorted = Object.entries(distribution).sort((a, b) => b[1] - a[1]);
@@ -4175,7 +4178,7 @@ function computePathwayProbabilities(crossSim, stateA, stateB, anchorA, anchorB)
     factors.stabilize.push({ factor: '회복 리듬 불일치', delta: -0.04 });
   }
 
-  // softmax 정규화 (진짜 확률 분포)
+  // softmax 정규화 (상대적 우세도 — 통계적 확률 아님)
   const rawScores = { stabilize, oscillate, collapse };
   const pathDist = softmax(rawScores, 0.9);
   stabilize = pathDist.stabilize;
@@ -5069,14 +5072,14 @@ B 고유 주제: ${(crossSim.topicOverlap.uniqueB || []).join(', ') || '없음'}
     const sA = stateTransition.stateA;
     const sB = stateTransition.stateB;
     prompt += `### 현재 관계 상태\n`;
-    prompt += `A 기본 상태: ${sA.primary.label} (확률 ${Math.round(sA.primary.probability * 100)}%) | 2차 상태: ${sA.secondary.label} (${Math.round(sA.secondary.probability * 100)}%)\n`;
+    prompt += `A 기본 상태: ${sA.primary.label} (우세도 ${Math.round(sA.primary.probability * 100)}%) | 2차 상태: ${sA.secondary.label} (${Math.round(sA.secondary.probability * 100)}%)\n`;
     prompt += `A 상태 분포: ${Object.entries(sA.distribution).map(([k, v]) => `${RELATION_STATES[k]?.label || k}=${Math.round(v * 100)}%`).join(', ')}\n`;
-    prompt += `B 기본 상태: ${sB.primary.label} (확률 ${Math.round(sB.primary.probability * 100)}%) | 2차 상태: ${sB.secondary.label} (${Math.round(sB.secondary.probability * 100)}%)\n`;
+    prompt += `B 기본 상태: ${sB.primary.label} (우세도 ${Math.round(sB.primary.probability * 100)}%) | 2차 상태: ${sB.secondary.label} (${Math.round(sB.secondary.probability * 100)}%)\n`;
     prompt += `B 상태 분포: ${Object.entries(sB.distribution).map(([k, v]) => `${RELATION_STATES[k]?.label || k}=${Math.round(v * 100)}%`).join(', ')}\n\n`;
 
     // 전이 확률
     if (stateTransition.transitions.length > 0) {
-      prompt += `### 상태 전이 확률 (조건부)\n`;
+      prompt += `### 상태 전이 우세도 (조건부)\n`;
       for (const t of stateTransition.transitions) {
         prompt += `${t.from} → ${t.to}: ${Math.round(t.probability * 100)}% | 트리거: ${t.trigger}\n`;
       }
@@ -5085,7 +5088,7 @@ B 고유 주제: ${(crossSim.topicOverlap.uniqueB || []).join(', ') || '없음'}
 
     // 3종 경로
     const pw = stateTransition.pathways;
-    prompt += `### 3종 경로 확률\n`;
+    prompt += `### 3종 경로 상대적 가능성 (통계적 확률 아님 — 모델 스코어 기반 우세도)\n`;
     prompt += `안정화: ${Math.round(pw.pathways.stabilize.probability * 100)}% (조건: ${pw.pathways.stabilize.conditions})\n`;
     prompt += `진동 유지: ${Math.round(pw.pathways.oscillate.probability * 100)}% (조건: ${pw.pathways.oscillate.conditions})\n`;
     prompt += `붕괴: ${Math.round(pw.pathways.collapse.probability * 100)}% (조건: ${pw.pathways.collapse.conditions})\n`;
@@ -5093,7 +5096,7 @@ B 고유 주제: ${(crossSim.topicOverlap.uniqueB || []).join(', ') || '없음'}
 
     // 경로 확률 분해 (요인별 기여도)
     if (pw.factors) {
-      prompt += `### 경로 확률 분해 (어떤 요인이 어느 방향으로 작용했는가)\n`;
+      prompt += `### 경로 우세도 분해 (어떤 요인이 어느 방향으로 작용했는가)\n`;
       for (const [path, factorList] of Object.entries(pw.factors)) {
         const pathLabel = path === 'stabilize' ? '안정화' : path === 'oscillate' ? '진동 유지' : '붕괴';
         if (factorList.length > 0) {
@@ -5178,7 +5181,7 @@ function callClaudeStream(apiKey, systemPrompt, userPrompt, corsHeaders) {
           'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: 16384,
           stream: true,
           temperature: 0,
@@ -5924,7 +5927,7 @@ function switchTab(id, el) {
         const controller = new AbortController();
         const tid = setTimeout(() => controller.abort(), 60000);
         const apiBody = {
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: testMaxTokens,
           temperature: 0,
           messages: [{ role: 'user', content: testMsg }],
@@ -5972,11 +5975,16 @@ function switchTab(id, el) {
       }
 
       try {
+        // API 키 사전 검증
+        if (!env.ANTHROPIC_API_KEY) {
+          return jsonResponse({ error: 'LLM API key not configured' }, 500, corsHeaders);
+        }
+
         const body = await request.json();
 
         // ── Weekly limit check: 1 analysis per account per 7 days ──
         // NOTE: Not atomic — concurrent requests could bypass. Acceptable for current scale.
-        const ADMIN_EMAILS = ['ashirmallo@gmail.com', 'nakkdoor@gmail.com'];
+        const ADMIN_EMAILS = ['ashirmallo@gmail.com', 'nakkdoor@gmail.com', 'eunbb1021@gmail.com'];
         const isAdmin = authUser?.email && ADMIN_EMAILS.includes(authUser.email);
         if (authUser?.sub && !isAdmin) {
           try {
@@ -6112,23 +6120,45 @@ function switchTab(id, el) {
 
             // #9: L1 Decision Tree Fallback — LLM 실패 시 하드코딩 분석
             if (!axes) {
-              const userTexts = rawMessages
-                .filter(m => !m.sender || m.sender === 'user' || m.sender === 'me')
-                .map(m => typeof m === 'string' ? m : (m.text || ''));
-              const fallback = l1FallbackDecisionTree(userTexts, prism, anchor);
-              axes = { intensity: fallback.intensity, structural: fallback.structural };
-              usedFallback = true;
-              console.log('[Stage 1] Using L1 fallback decision tree, confidence:', fallback._confidence);
+              try {
+                const userTexts = rawMessages
+                  .filter(m => !m.sender || m.sender === 'user' || m.sender === 'me')
+                  .map(m => typeof m === 'string' ? m : (m.text || ''));
+                const fallback = l1FallbackDecisionTree(userTexts, prism, anchor);
+                axes = { intensity: fallback.intensity, structural: fallback.structural };
+                usedFallback = true;
+                console.log('[Stage 1] Using L1 fallback decision tree, confidence:', fallback._confidence);
+              } catch (fbErr) {
+                console.error('[Stage 1 Fallback Error]', fbErr.message);
+              }
             }
 
-            // ──── Structural axes deterministic override ────
-            // LLM temperature:0 can still flip categorical structural axes on
-            // borderline cases. Use precomputed (keyword/pattern) structural axes
-            // which are 100% deterministic, ensuring the type code never fluctuates.
+            // 최종 안전장치: axes가 여전히 undefined면 기본값
+            if (!axes) {
+              axes = { intensity: { A1: 0.5, A2: 0.5, A3: 0.5, A4: 0.5, A5: 0.5, A6: 0.5, A12: 0.5, A14: 0.5 }, structural: {} };
+              usedFallback = true;
+              console.warn('[Stage 1] All scoring methods failed — using neutral defaults');
+            }
+
+            // ──── Deterministic override ────
+            // LLM temperature:0 can still flip axes on borderline cases.
+            // Structural: 100% deterministic override (keyword/pattern based)
+            // Intensity: high-confidence axes forced to precomputed values
             {
-              const deterministicStructural = precomputeAxes(rawMessages, prism, anchor);
-              if (deterministicStructural && deterministicStructural.structural) {
-                axes.structural = deterministicStructural.structural;
+              const deterministic = precomputeAxes(rawMessages, prism, anchor);
+              if (deterministic) {
+                // Structural: 전부 덮어쓰기
+                if (deterministic.structural) {
+                  axes.structural = deterministic.structural;
+                }
+                // Intensity: high confidence 축만 사전 추정값으로 강제
+                if (deterministic.intensity && deterministic.confidence) {
+                  for (const [axis, conf] of Object.entries(deterministic.confidence)) {
+                    if (conf === 'high' && deterministic.intensity[axis] !== undefined) {
+                      axes.intensity[axis] = deterministic.intensity[axis];
+                    }
+                  }
+                }
               }
             }
 
@@ -6201,6 +6231,10 @@ function switchTab(id, el) {
               }
             } catch (dbErr) {
               console.error('[D1 Stage1 Save Error]', dbErr.message);
+              // D1 저장 실패 시 KV 쿨다운 제거 → 재시도 허용
+              if (env.SHARE_STORE && authUser?.sub) {
+                try { await env.SHARE_STORE.delete(`ratelimit:${authUser.sub}`); } catch {}
+              }
             }
 
             // #12: L4 Asymmetric Delta 계산 (중립 0.5 기준)
@@ -6255,7 +6289,7 @@ function switchTab(id, el) {
                 'anthropic-version': '2023-06-01',
               },
               body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
+                model: 'claude-sonnet-4-6',
                 max_tokens: 16384,
                 stream: true,
                 temperature: 0,
@@ -6371,6 +6405,10 @@ function switchTab(id, el) {
             }
 
           } catch (e) {
+            // 분석 실패 시 KV 쿨다운 제거 → 재시도 허용
+            if (env.SHARE_STORE && authUser?.sub) {
+              try { await env.SHARE_STORE.delete(`ratelimit:${authUser.sub}`); } catch {}
+            }
             try { await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: e.message })}\n\n`)); } catch {}
           } finally {
             try { await writer.close(); } catch {}
@@ -6385,6 +6423,10 @@ function switchTab(id, el) {
           },
         });
       } catch (e) {
+        // 분석 실패 시 KV 쿨다운 제거 → 재시도 허용
+        if (env.SHARE_STORE && authUser?.sub) {
+          try { await env.SHARE_STORE.delete(`ratelimit:${authUser.sub}`); } catch {}
+        }
         return jsonResponse({ error: e.message }, 500, corsHeaders);
       }
     }
@@ -6408,9 +6450,19 @@ function switchTab(id, el) {
       }
 
       try {
+        // API 키 사전 검증
+        if (!env.ANTHROPIC_API_KEY) {
+          return jsonResponse({ error: 'LLM API key not configured' }, 500, corsHeaders);
+        }
+
         const body = await request.json();
         const profileA = body.profileA;
         const profileB = body.profileB;
+
+        if (!profileA || !profileB) {
+          return jsonResponse({ error: '프로필 데이터가 누락되었습니다.' }, 400, corsHeaders);
+        }
+
         const identityA = body.identityA || { name: 'Person A', tagline: '' };
         const identityB = body.identityB || { name: 'Person B', tagline: '' };
         const matchIdentity = body.matchIdentity || { name: '교차하는 궤도', tagline: '복합적 역학의 관계', compatibility: 50, tension: '보통', growth: '보통' };
@@ -6555,7 +6607,7 @@ function switchTab(id, el) {
                 'anthropic-version': '2023-06-01',
               },
               body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
+                model: 'claude-sonnet-4-6',
                 max_tokens: 16384,
                 stream: true,
                 temperature: 0,

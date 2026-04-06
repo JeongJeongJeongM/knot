@@ -2836,8 +2836,19 @@
 
         function toggleGoogleBtn() {
             const checked = document.getElementById('termsCheckbox').checked;
-            document.getElementById('googleSignInBtn').style.display = checked ? 'inline-block' : 'none';
+            const btnContainer = document.getElementById('googleSignInBtn');
+            btnContainer.style.display = checked ? 'inline-block' : 'none';
             document.getElementById('googleBtnPlaceholder').style.display = checked ? 'none' : 'inline-block';
+            // 체크 시 Google 버튼 재렌더링 (display:none 상태에서 최초 렌더링 실패 대응)
+            if (checked && btnContainer && typeof google !== 'undefined' && google.accounts) {
+                google.accounts.id.renderButton(btnContainer, {
+                    theme: 'filled_black',
+                    size: 'large',
+                    shape: 'rectangular',
+                    text: 'signin_with',
+                    width: 280,
+                });
+            }
         }
 
         function signOut() {
