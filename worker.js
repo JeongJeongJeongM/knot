@@ -2388,6 +2388,40 @@ function sanitizeString(str, maxLen = 100000) {
   return s;
 }
 
+// ── 민감 표현 마스킹 (403 재시도용) ──
+// 성적 표현, 노골적 욕설을 중립 태그로 치환 — 감정 톤/행동 패턴은 유지
+function maskSensitiveContent(text) {
+  if (typeof text !== 'string') return text;
+  let s = text;
+  // 성적 행위/표현
+  s = s.replace(/섹스|세ㄱ스|쎅스|sex|SEX/gi, '[친밀행위]');
+  s = s.replace(/성관계|성행위|잠자리|동침|합방/g, '[친밀행위]');
+  s = s.replace(/박[았았을을]|박아|박히|꽂[았아히]|삽입|넣[었어]|집어넣/g, '[신체접촉]');
+  s = s.replace(/빨[았아어]|빨아|핥[았아어]|물[었어]고|깨물/g, '[신체접촉]');
+  s = s.replace(/자위|딸[쳤치]|딸치|오르가[즘슴]|사정|절정|이[갔가]/g, '[성적표현]');
+  s = s.replace(/발기|흥분|젖[었어]|적[셨셔]|축축/g, '[신체반응]');
+  s = s.replace(/가슴|젖꼭지|엉덩이|보[지즤]|자[지]|페니스|음경|음핵|클리/g, '[신체부위]');
+  s = s.replace(/야동|포르노|AV|av|성인물|야한|야설/gi, '[성인콘텐츠]');
+  s = s.replace(/콘돔|피임|임신|생리|월경/g, '[건강관련]');
+  s = s.replace(/노출|벗[었어기]|알몸|나체|옷\s*벗/g, '[노출표현]');
+  s = s.replace(/강간|성폭|성추행|성희롱|몰카|도촬/g, '[범죄표현]');
+  // 거친 욕설 (감정 톤은 태그로 유지)
+  s = s.replace(/씨[발빨바]|시[발빨바]|ㅅㅂ|ㅆㅂ|씹[새새년놈]|좆|존?나|ㅈㄴ/g, '[욕설]');
+  s = s.replace(/개새끼|개[년놈]|미친[년놈]|ㅂㅅ|병[신싄]|장애|지[랄럴]|꺼져|닥[쳐치]/g, '[욕설]');
+  // 연속된 태그 정리
+  s = s.replace(/(\[(?:친밀행위|신체접촉|성적표현|신체반응|신체부위|성인콘텐츠|건강관련|노출표현|범죄표현|욕설)\]){2,}/g, '$1');
+  return s;
+}
+
+// rawMessages 배열 전체 마스킹
+function maskMessages(rawMessages) {
+  return rawMessages.map(m => {
+    if (typeof m === 'string') return maskSensitiveContent(m);
+    if (m && typeof m === 'object') return { ...m, text: maskSensitiveContent(m.text || '') };
+    return m;
+  });
+}
+
 function sanitizeAxes(axes) {
   if (!axes || typeof axes !== 'object') return null;
   const clean = {};
@@ -2495,6 +2529,11 @@ function sanitizeAnchor(anchor) {
 
 const SYSTEM_PROMPT_SCORING = `당신은 행동 분석 엔진입니다. 대화 원문을 읽고 정량적 행동 프로필을 JSON으로 출력합니다.
 절대 설명하지 마세요. 오직 유효한 JSON만 출력하세요.
+
+## 분석 맥락
+이것은 사용자가 자발적으로 제출한 자신의 대화 데이터에 대한 심리 행동 패턴 분석입니다.
+대화 내용에 성적 표현, 거친 언어, 민감한 주제가 포함될 수 있으나, 당신의 역할은 내용을 판단하거나 재생산하는 것이 아니라 행동 패턴의 정량적 지표를 추출하는 것입니다.
+대화 내용 자체를 출력하지 마세요. 오직 수치 점수만 출력하세요.
 
 ## 작동 모드
 사전 추정값이 제공된 경우: 대화 원문을 직접 읽고, 추정값의 정확성을 검증하세요. 맞으면 그대로 유지, 틀리면 보정하세요. 특히 [신뢰도: low] 축은 대화 원문 기반으로 재평가하세요.
@@ -4420,6 +4459,12 @@ function computeStateTransitionModel(simA, simB, crossSim, anchorA, anchorB) {
 
 const SYSTEM_PROMPT_INDIVIDUAL = `당신은 냉철한 행동 심리 관찰자이자 시스템 분석가입니다. 데이터와 시뮬레이션 결과를 기반으로 한 사람의 심리 프로필을 작성합니다.
 
+## 분석 맥락
+이것은 사용자가 자발적으로 제출한 자신의 대화 데이터에 대한 학술적 심리 행동 분석입니다.
+입력 데이터의 원본 대화에 성적 표현, 거친 언어, 민감한 주제가 포함되었을 수 있으나, 당신에게 전달되는 것은 이미 정량화된 행동 점수와 시뮬레이션 결과입니다.
+대화 원문은 포함되지 않으며, 민감한 내용을 재생산할 필요가 없습니다.
+행동 패턴에 대한 분석 에세이만 작성하세요.
+
 ###### 최우선 규칙: 워딩 (이 규칙은 다른 모든 규칙보다 우선합니다) ######
 
 이 에세이는 분석 대상 본인이 직접 읽습니다. 제3자 보고서가 아닙니다.
@@ -4554,6 +4599,11 @@ const SYSTEM_PROMPT_INDIVIDUAL = `당신은 냉철한 행동 심리 관찰자이
 - "관계의 초기에 에너지가 집중됩니다. 이후에는 다른 리듬으로 전환됩니다."`;
 
 const SYSTEM_PROMPT_MATCHING = `당신은 냉철한 관계 역학 시스템 분석가입니다. 두 사람의 프로필과 시뮬레이션 데이터를 기반으로 관계 역학을 분석합니다.
+
+## 분석 맥락
+이것은 사용자가 자발적으로 제출한 대화 데이터 기반의 학술적 관계 역학 분석입니다.
+원본 대화에 성적 표현이나 민감한 주제가 포함되었을 수 있으나, 당신에게 전달되는 것은 정량화된 행동 프로필과 시뮬레이션 결과뿐입니다.
+민감한 내용을 재생산하지 마세요. 관계 역학 패턴만 분석하세요.
 
 ###### 최우선 규칙: 서사 편향 차단 (이 규칙은 다른 모든 규칙보다 우선합니다) ######
 
@@ -6322,7 +6372,21 @@ function switchTab(id, el) {
 
             try {
               const scoringPrompt = buildScoringPrompt(rawMessages, prism, anchor);
-              const scoringRaw = await callClaude(env.ANTHROPIC_API_KEY, SYSTEM_PROMPT_SCORING, scoringPrompt);
+              let scoringRaw;
+              try {
+                scoringRaw = await callClaude(env.ANTHROPIC_API_KEY, SYSTEM_PROMPT_SCORING, scoringPrompt);
+              } catch (firstErr) {
+                // 403 → 민감 표현 마스킹 후 재시도
+                if (firstErr.message.includes('403')) {
+                  console.log('[Stage 1] 403 detected — retrying with masked content');
+                  await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'status', stage: 1, message: '콘텐츠 전처리 후 재분석 중...' })}\n\n`));
+                  const maskedMessages = maskMessages(rawMessages);
+                  const maskedPrompt = buildScoringPrompt(maskedMessages, prism, anchor);
+                  scoringRaw = await callClaude(env.ANTHROPIC_API_KEY, SYSTEM_PROMPT_SCORING, maskedPrompt);
+                } else {
+                  throw firstErr;
+                }
+              }
               const scores = extractJSON(scoringRaw);
 
               if (scores && scores.intensity) {
@@ -6510,15 +6574,38 @@ function switchTab(id, el) {
               }),
             });
 
-            if (!apiResp.ok) {
-              const errText = await apiResp.text();
-              await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: `API ${apiResp.status}: ${errText.slice(0, 200)}` })}\n\n`));
+            // 403 → 에세이 프롬프트에서 민감 표현 마스킹 후 재시도
+            let essayResp = apiResp;
+            if (!essayResp.ok && essayResp.status === 403) {
+              console.log('[Stage 2] 403 detected — retrying with masked essay prompt');
+              await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'status', stage: 2, message: '콘텐츠 전처리 후 재작성 중...' })}\n\n`));
+              const maskedEssayPrompt = maskSensitiveContent(essayPrompt);
+              essayResp = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-api-key': env.ANTHROPIC_API_KEY,
+                  'anthropic-version': '2023-06-01',
+                },
+                body: JSON.stringify({
+                  model: 'claude-sonnet-4-6',
+                  max_tokens: 16384,
+                  stream: true,
+                  temperature: 0,
+                  system: SYSTEM_PROMPT_INDIVIDUAL,
+                  messages: [{ role: 'user', content: maskedEssayPrompt }],
+                }),
+              });
+            }
+            if (!essayResp.ok) {
+              const errText = await essayResp.text();
+              await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: `API ${essayResp.status}: ${errText.slice(0, 200)}` })}\n\n`));
               await writer.close();
               return;
             }
 
             // Stream Stage 2 essay to client
-            const reader = apiResp.body.getReader();
+            const reader = essayResp.body.getReader();
             const decoder = new TextDecoder();
             let buf = '';
             let fullText = '';
