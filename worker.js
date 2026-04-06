@@ -3914,11 +3914,12 @@ function classifyRelationState(simAxes, anchor) {
   const C = simAxes?.drive ?? 0.5;
   const O = simAxes?.boundary ?? 0.5;
   const X = simAxes?.resilience ?? 0.5;
+  const D = simAxes?.defense ?? 0.5;
 
   const attachTendency = anchor?.attachment?.primary_tendency || 'leans_secure';
   const conflictMode = anchor?.conflict?.default_mode || 'diplomatic_approach';
 
-  // ── 주 신호: 행동 축 (E/C/O/X) ──
+  // ── 주 신호: 행동 축 (E/C/O/X/D) ──
   const axisScores = { ENGAGE: 0, NEUTRAL: 0, AVOID: 0, BLOCK: 0, RECOVER: 0 };
 
   // 감정 에너지 (E) → 접근/회피 주 결정자
@@ -3937,6 +3938,12 @@ function classifyRelationState(simAxes, anchor) {
   // 탄성 (X) → 회복/차단 결정자
   axisScores.RECOVER += X * 0.3;
   axisScores.BLOCK += (1 - X) * 0.2;
+
+  // 방어 방향 (D) → Externalize(높음): 차단/접근 강화 / Internalize(낮음): 회피/회복 강화
+  axisScores.BLOCK += D * 0.1;          // 외부 투사 → 벽 세우기
+  axisScores.ENGAGE += D * 0.05;        // 외부 투사 → 외부 지향적 에너지
+  axisScores.AVOID += (1 - D) * 0.08;   // 내면 흡수 → 자기 안으로 후퇴
+  axisScores.RECOVER += (1 - D) * 0.07; // 내면 흡수 → 내면 재조정
 
   // ── 보정 신호: ANCHOR (가중치 0.3 — 주 신호의 30% 수준으로 제한) ──
   const ANCHOR_WEIGHT = 0.3;
@@ -4062,6 +4069,110 @@ function computeTransitionMatrix(stateA, stateB, crossSim, anchorA, anchorB) {
     });
   }
 
+  // A: BLOCK 상태 전이
+  if (primaryA === 'BLOCK') {
+    transitions.push({
+      from: 'A:차단', to: '회피로 완화',
+      probability: tp('BLOCK', 'AVOID', 0.2, {
+        '상대 회복 시도': primaryB === 'RECOVER' ? 0.15 : 0,
+        '방어 유연': defenseType === 'one_flex' || defenseType === 'mirror_flex' ? 0.1 : 0,
+        '갈등 호환 양호': conflictScore > 0.5 ? 0.1 : 0,
+      }),
+      trigger: '상대의 지속적 비침습적 시그널이 차단 강도를 약화시킬 때',
+    });
+    transitions.push({
+      from: 'A:차단', to: '차단 고착',
+      probability: tp('BLOCK', 'BLOCK', 0.4, {
+        '상대 접근 압박': primaryB === 'ENGAGE' ? 0.15 : 0,
+        '방어 충돌 심각': defenseType.includes('toxic') || defenseType.includes('fire') ? 0.1 : 0,
+        '상대도 차단': primaryB === 'BLOCK' ? 0.2 : 0,
+      }),
+      trigger: '외부 자극 없이 시간 경과 또는 상대의 접근이 트리거로 작용',
+    });
+  }
+
+  // A: RECOVER 상태 전이
+  if (primaryA === 'RECOVER') {
+    transitions.push({
+      from: 'A:회복', to: '재접근',
+      probability: tp('RECOVER', 'ENGAGE', 0.35, {
+        '상대도 회복': primaryB === 'RECOVER' ? 0.2 : 0,
+        '상대 수용적': primaryB === 'ENGAGE' || primaryB === 'NEUTRAL' ? 0.1 : 0,
+        '안정 애착': attachType === 'stable_pair' || attachType === 'anchor_seeker' ? 0.1 : 0,
+        '상대 차단적': primaryB === 'BLOCK' ? -0.2 : 0,
+      }),
+      trigger: '에너지 회복 후 상대의 수용 시그널 감지 시',
+    });
+    transitions.push({
+      from: 'A:회복', to: '회복 실패 → 회피',
+      probability: tp('RECOVER', 'AVOID', 0.2, {
+        '회복 속도 불일치': recoveryDelta >= 2 ? 0.15 : 0,
+        '트리거 재발': triggerCount >= 2 ? 0.1 : 0,
+        '상대 무반응': primaryB === 'NEUTRAL' && conflictScore < 0.3 ? 0.1 : 0,
+      }),
+      trigger: '회복 중 트리거 재발 또는 상대의 무반응이 지속될 때',
+    });
+  }
+
+  // A: NEUTRAL 상태 전이
+  if (primaryA === 'NEUTRAL') {
+    transitions.push({
+      from: 'A:관망', to: '접근 전환',
+      probability: tp('NEUTRAL', 'ENGAGE', 0.25, {
+        '상대 접근': primaryB === 'ENGAGE' ? 0.2 : 0,
+        '안정 애착': attachType === 'stable_pair' ? 0.1 : 0,
+        '갈등 호환 양호': conflictScore > 0.5 ? 0.05 : 0,
+      }),
+      trigger: '상대의 접근 시그널이 관망 임계를 초과할 때',
+    });
+    transitions.push({
+      from: 'A:관망', to: '회피 전환',
+      probability: tp('NEUTRAL', 'AVOID', 0.2, {
+        '상대 차단적': primaryB === 'BLOCK' ? 0.15 : 0,
+        '트리거 발생': triggerCount >= 1 ? 0.1 : 0,
+        '방어 충돌': defenseType.includes('toxic') ? 0.1 : 0,
+      }),
+      trigger: '부정 시그널 축적이 관망 유지 비용을 초과할 때',
+    });
+  }
+
+  // B: BLOCK 상태 전이
+  if (primaryB === 'BLOCK') {
+    transitions.push({
+      from: 'B:차단', to: '회피로 완화',
+      probability: tp('BLOCK', 'AVOID', 0.2, {
+        '상대 회복 시도': primaryA === 'RECOVER' ? 0.15 : 0,
+        '방어 유연': defenseType === 'one_flex' || defenseType === 'mirror_flex' ? 0.1 : 0,
+      }),
+      trigger: '상대의 비침습적 시그널이 차단 강도를 약화시킬 때',
+    });
+  }
+
+  // B: RECOVER 상태 전이
+  if (primaryB === 'RECOVER') {
+    transitions.push({
+      from: 'B:회복', to: '재접근',
+      probability: tp('RECOVER', 'ENGAGE', 0.35, {
+        '상대도 회복': primaryA === 'RECOVER' ? 0.2 : 0,
+        '상대 수용적': primaryA === 'ENGAGE' || primaryA === 'NEUTRAL' ? 0.1 : 0,
+        '상대 차단적': primaryA === 'BLOCK' ? -0.2 : 0,
+      }),
+      trigger: '에너지 회복 후 상대의 수용 시그널 감지 시',
+    });
+  }
+
+  // B: NEUTRAL 상태 전이
+  if (primaryB === 'NEUTRAL') {
+    transitions.push({
+      from: 'B:관망', to: '접근 전환',
+      probability: tp('NEUTRAL', 'ENGAGE', 0.25, {
+        '상대 접근': primaryA === 'ENGAGE' ? 0.2 : 0,
+        '갈등 호환 양호': conflictScore > 0.5 ? 0.05 : 0,
+      }),
+      trigger: '상대의 접근 시그널이 관망 임계를 초과할 때',
+    });
+  }
+
   // ── 상호작용 전이 (교차) ──
   // 접근×회피 루프
   if ((primaryA === 'ENGAGE' && primaryB === 'AVOID') || (primaryB === 'ENGAGE' && primaryA === 'AVOID')) {
@@ -4081,12 +4192,62 @@ function computeTransitionMatrix(stateA, stateB, crossSim, anchorA, anchorB) {
       from: `${pursuer}:접근 × ${withdrawer}:회피`,
       to: '루프 이탈 → 안정화',
       probability: tp('cross', 'exit', 0.2, {
-        '메타 인지 높음': true ? 0.15 : 0, // 인지 레벨은 프롬프트에서 별도 판정
+        '메타 인지 높음': (stateA.distribution.RECOVER || 0) + (stateB.distribution.RECOVER || 0) > 0.3 ? 0.15 : 0,
         '갈등 스타일 협력적': conflictScore > 0.5 ? 0.15 : 0,
         '방어 유연': defenseType === 'one_flex' ? 0.1 : 0,
       }),
       trigger: '한쪽이 패턴 자체를 언어화하여 상대에게 전달할 때',
     });
+  }
+
+  // 차단×회복 교차
+  if ((primaryA === 'BLOCK' && primaryB === 'RECOVER') || (primaryB === 'BLOCK' && primaryA === 'RECOVER')) {
+    const blocker = primaryA === 'BLOCK' ? 'A' : 'B';
+    const recoverer = primaryA === 'RECOVER' ? 'A' : 'B';
+    transitions.push({
+      from: `${blocker}:차단 × ${recoverer}:회복`,
+      to: '차단 해제 가능',
+      probability: tp('cross', 'unblock', 0.15, {
+        '방어 유연': defenseType === 'one_flex' ? 0.15 : 0,
+        '갈등 호환': conflictScore > 0.5 ? 0.1 : 0,
+        '방어 충돌 심각': defenseType.includes('toxic') ? -0.1 : 0,
+      }),
+      trigger: `${recoverer}의 비침습적 접근이 ${blocker}의 차단 임계를 점진적으로 낮출 때`,
+    });
+  }
+
+  // 상호 관망 교착
+  if (primaryA === 'NEUTRAL' && primaryB === 'NEUTRAL') {
+    transitions.push({
+      from: '상호 관망',
+      to: '교착 → 자연 소멸',
+      probability: tp('cross', 'fade', 0.3, {
+        '트리거 없음': triggerCount === 0 ? 0.1 : 0,
+        '주제 겹침 부족': (crossSim.topicOverlap?.jaccard ?? 0.5) < 0.2 ? 0.1 : 0,
+      }),
+      trigger: '외부 이벤트나 자극 없이 접점 빈도가 자연 감소',
+    });
+  }
+
+  // ── 상태 확신도 기반 스케일링 ──
+  // primary state의 probability가 낮으면 (분류 불확실) 전이 확률을 중앙(0.5)으로 수축
+  // confidence = primary probability (0.2~0.8 범위)
+  // scaling: p → 0.5 + (p - 0.5) * confidence_factor
+  const confA = stateA.primary.probability || 0.33;
+  const confB = stateB.primary.probability || 0.33;
+  // 0.33(균등분포) → factor 0.6 / 0.5(약간 우세) → 0.85 / 0.7+(확신) → 1.0
+  const confFactor = (conf) => Math.min(1.0, 0.4 + conf * 1.2);
+
+  for (const t of transitions) {
+    // 어떤 사람의 전이인지에 따라 해당 confidence 적용
+    const isA = t.from.startsWith('A:');
+    const isB = t.from.startsWith('B:');
+    const isCross = !isA && !isB;
+    const factor = isCross ? (confFactor(confA) + confFactor(confB)) / 2
+                 : isA ? confFactor(confA) : confFactor(confB);
+    t.probability = Math.max(0.05, Math.min(0.95,
+      Math.round((0.5 + (t.probability - 0.5) * factor) * 100) / 100
+    ));
   }
 
   return transitions;
@@ -4176,6 +4337,38 @@ function computePathwayProbabilities(crossSim, stateA, stateB, anchorA, anchorB)
     oscillate += 0.06; stabilize -= 0.04;
     factors.oscillate.push({ factor: '회복 리듬 불일치', delta: 0.06 });
     factors.stabilize.push({ factor: '회복 리듬 불일치', delta: -0.04 });
+  }
+
+  // ── 현재 관계 상태 반영 (state-based prior) ──
+  // stateA/stateB의 primary state 조합이 경로 확률에 영향
+  {
+    const sA = stateA?.primary?.state || 'NEUTRAL';
+    const sB = stateB?.primary?.state || 'NEUTRAL';
+    const pair = [sA, sB].sort().join('×'); // 순서 무관 정규화
+
+    // 상태 조합 → 경로 prior 매핑
+    const STATE_PAIR_PRIOR = {
+      'ENGAGE×ENGAGE':   { s: 0.10, o: -0.04, c: -0.06, label: '상호 접근' },
+      'ENGAGE×NEUTRAL':  { s: 0.05, o:  0.00, c: -0.03, label: '일방 접근 + 관망' },
+      'ENGAGE×RECOVER':  { s: 0.08, o: -0.02, c: -0.04, label: '접근 + 회복 의지' },
+      'ENGAGE×AVOID':    { s: -0.05, o: 0.10, c: -0.02, label: '접근-회피 비대칭' },
+      'ENGAGE×BLOCK':    { s: -0.06, o: 0.04, c:  0.08, label: '접근 vs 차단' },
+      'AVOID×AVOID':     { s: -0.08, o: 0.02, c:  0.08, label: '상호 회피' },
+      'AVOID×BLOCK':     { s: -0.06, o: 0.00, c:  0.10, label: '회피 + 차단' },
+      'AVOID×NEUTRAL':   { s: -0.03, o: 0.04, c:  0.02, label: '회피 + 관망' },
+      'AVOID×RECOVER':   { s:  0.02, o: 0.04, c: -0.02, label: '회피 + 회복' },
+      'BLOCK×BLOCK':     { s: -0.08, o: -0.02, c: 0.14, label: '상호 차단' },
+      'BLOCK×NEUTRAL':   { s: -0.04, o: 0.02, c:  0.06, label: '차단 + 관망' },
+      'BLOCK×RECOVER':   { s: -0.02, o: 0.02, c:  0.04, label: '차단 vs 회복' },
+      'NEUTRAL×NEUTRAL': { s:  0.00, o: 0.00, c:  0.00, label: '상호 관망' },
+      'NEUTRAL×RECOVER': { s:  0.04, o: 0.00, c: -0.02, label: '관망 + 회복' },
+      'RECOVER×RECOVER': { s:  0.08, o: -0.02, c: -0.04, label: '상호 회복' },
+    };
+
+    const prior = STATE_PAIR_PRIOR[pair] || { s: 0, o: 0, c: 0, label: '미분류 상태 조합' };
+    if (prior.s !== 0) { stabilize += prior.s; factors.stabilize.push({ factor: `상태 조합: ${prior.label}`, delta: prior.s }); }
+    if (prior.o !== 0) { oscillate += prior.o; factors.oscillate.push({ factor: `상태 조합: ${prior.label}`, delta: prior.o }); }
+    if (prior.c !== 0) { collapse += prior.c; factors.collapse.push({ factor: `상태 조합: ${prior.label}`, delta: prior.c }); }
   }
 
   // softmax 정규화 (상대적 우세도 — 통계적 확률 아님)

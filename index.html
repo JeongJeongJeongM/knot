@@ -1604,6 +1604,10 @@
                         </label>
                     </div>
                     <div id="googleSignInBtn" style="display:none;margin-bottom:20px;"></div>
+                    <div id="webviewNotice" style="display:none;margin-bottom:20px;text-align:center;">
+                        <div style="color:#f0a500;font-size:11px;font-family:'Courier New',monospace;margin-bottom:10px;">⚠ 인앱 브라우저에서는 Google 로그인이 제한됩니다</div>
+                        <a id="openExternalBtn" href="#" onclick="openInExternalBrowser();return false;" style="display:inline-block;padding:12px 28px;background:#f0a500;color:#000;font-size:13px;font-weight:bold;font-family:'Courier New',monospace;border-radius:4px;text-decoration:none;cursor:pointer;">외부 브라우저로 열기 →</a>
+                    </div>
                     <div id="googleBtnPlaceholder" style="display:inline-block;margin-bottom:20px;padding:10px 24px;background:#1a1a2e;border-radius:4px;color:#555;font-size:12px;font-family:'Courier New',monospace;">약관에 동의하면 로그인할 수 있습니다</div>
                     <div style="font-size:10px;color:#444;font-family:'Courier New',monospace;line-height:1.8;margin-top:8px;">
                         <span style="color:#333;">├</span> 로그인 정보는 세션 내에서만 유지됩니다<br>
@@ -2834,20 +2838,55 @@
             try { sessionStorage.setItem('knot_token', token); } catch(e) {}
         }
 
+        function isInAppBrowser() {
+            const ua = navigator.userAgent || '';
+            return /KAKAOTALK|NAVER|LINE|FBAN|FBAV|Instagram|Snapchat|Twitter|MicroMessenger|ZumApp/i.test(ua);
+        }
+
+        function openInExternalBrowser() {
+            const url = window.location.href;
+            // Android intent scheme — Chrome으로 강제 이동
+            if (/android/i.test(navigator.userAgent)) {
+                window.location.href = 'intent://' + url.replace(/https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+                return;
+            }
+            // iOS — Safari로 열기 시도
+            window.open(url, '_system') || (window.location.href = url);
+        }
+
         function toggleGoogleBtn() {
             const checked = document.getElementById('termsCheckbox').checked;
             const btnContainer = document.getElementById('googleSignInBtn');
-            btnContainer.style.display = checked ? 'inline-block' : 'none';
-            document.getElementById('googleBtnPlaceholder').style.display = checked ? 'none' : 'inline-block';
-            // 체크 시 Google 버튼 재렌더링 (display:none 상태에서 최초 렌더링 실패 대응)
-            if (checked && btnContainer && typeof google !== 'undefined' && google.accounts) {
-                google.accounts.id.renderButton(btnContainer, {
-                    theme: 'filled_black',
-                    size: 'large',
-                    shape: 'rectangular',
-                    text: 'signin_with',
-                    width: 280,
-                });
+            const webviewNotice = document.getElementById('webviewNotice');
+            const placeholder = document.getElementById('googleBtnPlaceholder');
+            const inApp = isInAppBrowser();
+
+            if (!checked) {
+                btnContainer.style.display = 'none';
+                webviewNotice.style.display = 'none';
+                placeholder.style.display = 'inline-block';
+                return;
+            }
+
+            placeholder.style.display = 'none';
+
+            if (inApp) {
+                // 인앱 브라우저 → Google 로그인 불가, 외부 브라우저 유도
+                btnContainer.style.display = 'none';
+                webviewNotice.style.display = 'block';
+            } else {
+                // 일반 브라우저 → Google 버튼 렌더링
+                webviewNotice.style.display = 'none';
+                btnContainer.style.display = 'inline-block';
+                if (btnContainer && typeof google !== 'undefined' && google.accounts) {
+                    google.accounts.id.renderButton(btnContainer, {
+                        theme: 'filled_black',
+                        size: 'large',
+                        shape: 'rectangular',
+                        text: 'signin_with',
+                        width: 280,
+                    });
+                }
             }
         }
 
