@@ -3778,6 +3778,23 @@
                 goToLanding();
                 return;
             }
+
+            // ── 분석 시작 전 주간 제한 사전 체크 ──
+            try {
+                const limitResp = await fetch(WORKER_URL + '/check-limit', {
+                    headers: getAuthToken() ? { 'Authorization': 'Bearer ' + getAuthToken() } : {}
+                });
+                if (limitResp.ok) {
+                    const limitData = await limitResp.json();
+                    if (!limitData.allowed) {
+                        alert('주간 분석 횟수(' + limitData.limit + '회)를 모두 사용했습니다. 다음 주에 다시 시도해주세요.');
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.log('[KNOT] check-limit failed, proceeding anyway:', e.message);
+            }
+            }
             showScreen('analyzing');
             terminalEngine.reset();
             const T = terminalEngine;

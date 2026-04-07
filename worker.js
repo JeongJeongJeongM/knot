@@ -2408,8 +2408,22 @@ function maskSensitiveContent(text) {
   // 거친 욕설 (감정 톤은 태그로 유지)
   s = s.replace(/씨[발빨바]|시[발빨바]|ㅅㅂ|ㅆㅂ|씹[새새년놈]|좆|존?나|ㅈㄴ/g, '[욕설]');
   s = s.replace(/개새끼|개[년놈]|미친[년놈]|ㅂㅅ|병[신싄]|장애|지[랄럴]|꺼져|닥[쳐치]/g, '[욕설]');
+  // === 실제 403 트리거: 감정/고통 표현 (영어 AI 필터가 self-harm으로 오탐) ===
+  s = s.replace(/죽겠[다어]|죽을것같|죽을\s*것\s*같|죽고\s*싶|죽을래|죽어버리|죽어야|살기\s*싫/g, '[감정표현]');
+  s = s.replace(/미치겠[다어]|미칠것같|미칠\s*것\s*같|미쳐버리|돌아버리|돌겠[다어]|정신나가/g, '[감정표현]');
+  s = s.replace(/힘들[다어었]|괴롭[다어워]|슬프[다어]|우울[하해]|고통스[럽러]|외롭[다어워]/g, '[감정표현]');
+  s = s.replace(/눈물[이나]|울[었고]|울[었어]|울고\s*싶|펑펑\s*울|엉엉/g, '[감정표현]');
+  s = s.replace(/자살|자해|손목|목숨|극단적/g, '[감정표현]');
+  // === 실제 403 트리거: 공격적 일상표현 (kill/die 등으로 오탐) ===
+  s = s.replace(/죽여[버줄]|죽여|때려[죽치]|맞아\s*죽|개죽|뒤[져지질]|뒤져[라야버]|골로\s*가/g, '[일상표현]');
+  s = s.replace(/패[버줄]|패죽|찢어[버]|박살[나내]|부셔[버]|없애[버]|사라져/g, '[일상표현]');
+  s = s.replace(/칼[로들]|찌[르를]|찔[러려]|총|쏴|맞[아았]|피[가를나]흘/g, '[일상표현]');
+  // === 실제 403 트리거: 기술/보안 키워드 (hacking/security로 오탐) ===
+  s = s.replace(/해킹|핵|치트|크랙|탈옥|루팅|exploit/gi, '[기술용어]');
+  s = s.replace(/권한|접근|root|admin|취약점|비밀번호\s*[빼뺏훔알]|개인정보\s*[빼탈유]/gi, '[기술용어]');
+  s = s.replace(/랜섬|디도스|DDoS|ddos|바이러스|악성코드|피싱|스니핑/gi, '[기술용어]');
   // 연속된 태그 정리
-  s = s.replace(/(\[(?:친밀행위|신체접촉|성적표현|신체반응|신체부위|성인콘텐츠|건강관련|노출표현|범죄표현|욕설)\]){2,}/g, '$1');
+  s = s.replace(/(\[(?:친밀행위|신체접촉|성적표현|신체반응|신체부위|성인콘텐츠|건강관련|노출표현|범죄표현|욕설|감정표현|일상표현|기술용어)\]){2,}/g, '$1');
   return s;
 }
 
@@ -6218,6 +6232,32 @@ function switchTab(id, el) {
     }
 
     // ══════════════════════════════════════════════════════
+    // GET /check-limit — 분석 시작 전 남은 횟수 확인
+    // ══════════════════════════════════════════════════════
+    if (path === '/check-limit' && method === 'GET') {
+      const auth = await requireAuth(request, env);
+      if (auth.error) return jsonResponse({ error: auth.error }, auth.status, corsHeaders);
+      const authUser = auth.user;
+      const ADMIN_EMAILS = ['ashirmallo@gmail.com', 'nakkdoor@gmail.com', 'zion062214@gmail.com'];
+      const isAdmin = authUser?.email && ADMIN_EMAILS.includes(authUser.email);
+      const WEEKLY_ANALYSIS_LIMIT = 1;
+      if (isAdmin) {
+        return jsonResponse({ allowed: true, remaining: 999, limit: WEEKLY_ANALYSIS_LIMIT, is_admin: true }, 200, corsHeaders);
+      }
+      let used = 0;
+      try {
+        if (env.KNOT_DB) {
+          const row = await env.KNOT_DB.prepare(
+            `SELECT COUNT(*) as cnt FROM analyses WHERE user_id = ? AND created_at >= datetime('now', '-7 days')`
+          ).bind(authUser.sub).first();
+          used = row?.cnt || 0;
+        }
+      } catch (e) { console.error('[check-limit]', e.message); }
+      const remaining = Math.max(0, WEEKLY_ANALYSIS_LIMIT - used);
+      return jsonResponse({ allowed: remaining > 0, remaining, limit: WEEKLY_ANALYSIS_LIMIT, used }, 200, corsHeaders);
+    }
+
+    // ══════════════════════════════════════════════════════
     // POST /analyze — 2-STAGE LLM ARCHITECTURE
     // Stage 1: LLM reads raw messages → structured scores (non-streaming)
     // Stage 2: LLM reads scores → essay (SSE streaming)
@@ -6230,7 +6270,7 @@ function switchTab(id, el) {
       }
       const authUser = auth.user;
 
-      const ADMIN_EMAILS = ['ashirmallo@gmail.com', 'nakkdoor@gmail.com'];
+      const ADMIN_EMAILS = ['ashirmallo@gmail.com', 'nakkdoor@gmail.com', 'zion062214@gmail.com'];
       const isAdmin = authUser?.email && ADMIN_EMAILS.includes(authUser.email);
 
       // Rate limit (admins bypass)
@@ -6251,18 +6291,15 @@ function switchTab(id, el) {
 
         const body = await request.json();
 
-        // ── Weekly limit check: 3 analyses per account per 7 days ──
-        // NOTE: Not atomic — concurrent requests could bypass. Acceptable for current scale.
-        const WEEKLY_ANALYSIS_LIMIT = 3;
+        // ── Weekly limit check: 1 analysis per account per 7 days ──
+        const WEEKLY_ANALYSIS_LIMIT = 1;
         if (authUser?.sub && !isAdmin) {
           try {
-            // DB 기반 체크 (주 3회 제한)
             if (env.KNOT_DB) {
               const recentAnalysis = await env.KNOT_DB.prepare(
                 `SELECT COUNT(*) as cnt FROM analyses WHERE user_id = ? AND created_at >= datetime('now', '-7 days')`
               ).bind(authUser.sub).first();
               if (recentAnalysis && recentAnalysis.cnt >= WEEKLY_ANALYSIS_LIMIT) {
-                const remaining = WEEKLY_ANALYSIS_LIMIT - (recentAnalysis.cnt || 0);
                 return jsonResponse({
                   error: `주간 분석 횟수(${WEEKLY_ANALYSIS_LIMIT}회)를 모두 사용했습니다. 다음 주에 다시 시도해주세요.`,
                   code: 'WEEKLY_LIMIT',
@@ -6458,7 +6495,10 @@ function switchTab(id, el) {
                   ).bind(userId, authUser?.email || 'anonymous@knot').run();
                 } catch {}
 
-                // KV 쿨다운 제거 — DB 카운팅으로 대체 (주 3회 제한)
+                // KV 쿨다운 기록 (분석 시작 시점)
+                if (env.SHARE_STORE && authUser?.sub) {
+                  try { await env.SHARE_STORE.put(`ratelimit:${authUser.sub}`, Date.now().toString(), { expirationTtl: 60 * 60 * 24 * 7 }); } catch {}
+                }
 
                 await env.KNOT_DB.prepare(
                   `INSERT INTO analyses (id, user_id, type_code, type_name, tagline, axis_fs, axis_ah, axis_tr, axis_ow, axis_xv, axis_ei, axes_json, prism_json, anchor_json, identity_json, message_count, input_format, original_count, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scoring', datetime('now'))`
