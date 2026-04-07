@@ -2468,6 +2468,33 @@ function maskMessages(rawMessages) {
   });
 }
 
+// 3차 방어: 마스킹 후에도 403 → 트리거 패턴 포함 메시지를 통째로 제거 (Stage 1용)
+const TRIGGER_PATTERN = /너무 벅차|한계에 달|너무 지쳤|포기하고 싶|무너져버리|끝내야|모든게 버겁|정말 답답|감당이 안|한계에 다다|멘탈이 흔들|극심한 고통|자기파괴적|혼내주다|혼내다|크게 당하|크게 망하|큰일 나다|끝장나다|크게 혼내|부수다|무단침입|부정행위|불법복제|기기변조|취약점이용|데이터인질|서버공격|유해프로그램|사기수법/;
+
+function filterTriggerMessages(messages) {
+  const filtered = messages.filter(m => {
+    const text = typeof m === 'string' ? m : (m?.text || '');
+    return !TRIGGER_PATTERN.test(text);
+  });
+  // 최소 5개 메시지는 남겨야 분석 가능
+  if (filtered.length < 5) return messages;
+  console.log(`[filterTriggerMessages] ${messages.length} → ${filtered.length} (${messages.length - filtered.length}개 제거)`);
+  return filtered;
+}
+
+// 3차 방어: 에세이 프롬프트에서 트리거 문장만 제거 (Stage 2용)
+function filterTriggerSentences(text) {
+  if (typeof text !== 'string') return text;
+  const lines = text.split('\n');
+  const cleaned = lines.map(line => {
+    if (TRIGGER_PATTERN.test(line)) {
+      return line.replace(TRIGGER_PATTERN, '(생략)');
+    }
+    return line;
+  });
+  return cleaned.join('\n');
+}
+
 function sanitizeAxes(axes) {
   if (!axes || typeof axes !== 'object') return null;
   const clean = {};
@@ -6435,15 +6462,28 @@ function switchTab(id, el) {
               const scoringPrompt = buildScoringPrompt(rawMessages, prism, anchor);
               let scoringRaw;
               try {
+                // 1차: 원본 그대로
                 scoringRaw = await callClaude(env.ANTHROPIC_API_KEY, SYSTEM_PROMPT_SCORING, scoringPrompt);
               } catch (firstErr) {
-                // 403 → 민감 표현 마스킹 후 재시도
                 if (firstErr.message.includes('403')) {
-                  console.log('[Stage 1] 403 detected — retrying with masked content');
+                  console.log('[Stage 1] 403 — 2차: 동의어 치환 마스킹 재시도');
                   await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'status', stage: 1, message: '콘텐츠 전처리 후 재분석 중...' })}\n\n`));
                   const maskedMessages = maskMessages(rawMessages);
                   const maskedPrompt = buildScoringPrompt(maskedMessages, prism, anchor);
-                  scoringRaw = await callClaude(env.ANTHROPIC_API_KEY, SYSTEM_PROMPT_SCORING, maskedPrompt);
+                  try {
+                    scoringRaw = await callClaude(env.ANTHROPIC_API_KEY, SYSTEM_PROMPT_SCORING, maskedPrompt);
+                  } catch (secondErr) {
+                    if (secondErr.message.includes('403')) {
+                      // 3차: 필터 트리거 메시지 제거 후 재시도
+                      console.log('[Stage 1] 403 — 3차: 필터 트리거 메시지 제거 후 재시도');
+                      await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'status', stage: 1, message: '민감 메시지 제외 후 재분석 중...' })}\n\n`));
+                      const filteredMessages = filterTriggerMessages(maskedMessages);
+                      const filteredPrompt = buildScoringPrompt(filteredMessages, prism, anchor);
+                      scoringRaw = await callClaude(env.ANTHROPIC_API_KEY, SYSTEM_PROMPT_SCORING, filteredPrompt);
+                    } else {
+                      throw secondErr;
+                    }
+                  }
                 } else {
                   throw firstErr;
                 }
@@ -6635,10 +6675,11 @@ function switchTab(id, el) {
               }),
             });
 
-            // 403 → 에세이 프롬프트에서 민감 표현 마스킹 후 재시도
+            // 403 → 단계적 재시도: 마스킹 → 마스킹+메시지제거
             let essayResp = apiResp;
             if (!essayResp.ok && essayResp.status === 403) {
-              console.log('[Stage 2] 403 detected — retrying with masked essay prompt');
+              // 2차: 동의어 치환 마스킹 + sonnet
+              console.log('[Stage 2] 403 — 2차: 동의어 치환 마스킹 재시도');
               await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'status', stage: 2, message: '콘텐츠 전처리 후 재작성 중...' })}\n\n`));
               const maskedEssayPrompt = maskSensitiveContent(essayPrompt);
               essayResp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -6657,6 +6698,28 @@ function switchTab(id, el) {
                   messages: [{ role: 'user', content: maskedEssayPrompt }],
                 }),
               });
+              if (!essayResp.ok && essayResp.status === 403) {
+                // 3차: 필터 트리거 문장 제거 + sonnet
+                console.log('[Stage 2] 403 — 3차: 필터 트리거 문장 제거 후 재시도');
+                await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'status', stage: 2, message: '민감 문장 제외 후 재작성 중...' })}\n\n`));
+                const cleanedEssayPrompt = filterTriggerSentences(maskedEssayPrompt);
+                essayResp = await fetch('https://api.anthropic.com/v1/messages', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': env.ANTHROPIC_API_KEY,
+                    'anthropic-version': '2023-06-01',
+                  },
+                  body: JSON.stringify({
+                    model: 'claude-sonnet-4-6',
+                    max_tokens: 16384,
+                    stream: true,
+                    temperature: 0,
+                    system: SYSTEM_PROMPT_INDIVIDUAL,
+                    messages: [{ role: 'user', content: cleanedEssayPrompt }],
+                  }),
+                });
+              }
             }
             if (!essayResp.ok) {
               const errText = await essayResp.text();
