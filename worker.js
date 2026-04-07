@@ -6230,7 +6230,7 @@ function switchTab(id, el) {
       }
       const authUser = auth.user;
 
-      const ADMIN_EMAILS = ['ashirmallo@gmail.com', 'nakkdoor@gmail.com', 'eunbb1021@gmail.com'];
+      const ADMIN_EMAILS = ['ashirmallo@gmail.com', 'nakkdoor@gmail.com'];
       const isAdmin = authUser?.email && ADMIN_EMAILS.includes(authUser.email);
 
       // Rate limit (admins bypass)
@@ -6251,31 +6251,23 @@ function switchTab(id, el) {
 
         const body = await request.json();
 
-        // ── Weekly limit check: 1 analysis per account per 7 days ──
+        // ── Weekly limit check: 3 analyses per account per 7 days ──
         // NOTE: Not atomic — concurrent requests could bypass. Acceptable for current scale.
+        const WEEKLY_ANALYSIS_LIMIT = 3;
         if (authUser?.sub && !isAdmin) {
           try {
-            // 1) KV 쿨다운 체크 (탈퇴→재가입 어뷰징 방지)
-            if (env.SHARE_STORE) {
-              const cooldown = await env.SHARE_STORE.get(`ratelimit:${authUser.sub}`);
-              if (cooldown) {
-                return jsonResponse({
-                  error: '일주일에 한 번만 분석할 수 있습니다. 다음 분석은 7일 후에 가능합니다.',
-                  code: 'WEEKLY_LIMIT',
-                  remaining_days: 7
-                }, 429, corsHeaders);
-              }
-            }
-            // 2) DB 기반 체크
+            // DB 기반 체크 (주 3회 제한)
             if (env.KNOT_DB) {
               const recentAnalysis = await env.KNOT_DB.prepare(
                 `SELECT COUNT(*) as cnt FROM analyses WHERE user_id = ? AND created_at >= datetime('now', '-7 days')`
               ).bind(authUser.sub).first();
-              if (recentAnalysis && recentAnalysis.cnt >= 1) {
+              if (recentAnalysis && recentAnalysis.cnt >= WEEKLY_ANALYSIS_LIMIT) {
+                const remaining = WEEKLY_ANALYSIS_LIMIT - (recentAnalysis.cnt || 0);
                 return jsonResponse({
-                  error: '일주일에 한 번만 분석할 수 있습니다. 다음 분석은 7일 후에 가능합니다.',
+                  error: `주간 분석 횟수(${WEEKLY_ANALYSIS_LIMIT}회)를 모두 사용했습니다. 다음 주에 다시 시도해주세요.`,
                   code: 'WEEKLY_LIMIT',
-                  remaining_days: 7
+                  used: recentAnalysis.cnt,
+                  limit: WEEKLY_ANALYSIS_LIMIT
                 }, 429, corsHeaders);
               }
             }
@@ -6466,10 +6458,7 @@ function switchTab(id, el) {
                   ).bind(userId, authUser?.email || 'anonymous@knot').run();
                 } catch {}
 
-                // KV 쿨다운 기록 (분석 시작 시점)
-                if (env.SHARE_STORE && authUser?.sub) {
-                  try { await env.SHARE_STORE.put(`ratelimit:${authUser.sub}`, Date.now().toString(), { expirationTtl: 60 * 60 * 24 * 7 }); } catch {}
-                }
+                // KV 쿨다운 제거 — DB 카운팅으로 대체 (주 3회 제한)
 
                 await env.KNOT_DB.prepare(
                   `INSERT INTO analyses (id, user_id, type_code, type_name, tagline, axis_fs, axis_ah, axis_tr, axis_ow, axis_xv, axis_ei, axes_json, prism_json, anchor_json, identity_json, message_count, input_format, original_count, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scoring', datetime('now'))`
