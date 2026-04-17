@@ -3069,7 +3069,10 @@ const FEATURE_REGEX = {
   assertive:   /확실히|분명히|당연히|반드시|절대|무조건|틀림없이|나는|내가|해야|돼야/g,
   initiative:  /해보자|하자|어때|제안|생각에는|방법은|해볼까|이렇게|저렇게|시작하자/g,
   acceptance:  /맞아|그렇지|동의|알겠|이해|감사|고마워|배우|참고|인정/g,
-  intimacy:    /내 경험|솔직히|사실은|비밀인데|나만|개인적으로|우리|같이|너한테만/g,
+  // v3.6.13: 분석적 자기 개시 패턴 포함. 태스크 유저도 관계 맥락에서
+  //   "내 생각에는 / 내 관점에서 / 내 입장에서 / 돌아보면 / 경험상" 식으로
+  //   자기를 드러냄. 기존 구어체(솔직히/비밀인데) 만으론 이들을 놓침.
+  intimacy:    /내 경험|솔직히|사실은|비밀인데|나만|개인적으로|우리|같이|너한테만|내 생각에|내 관점에|내 입장에서|내가 보기엔|내가 느끼기엔|돌아보면|경험상|궁금한 건|솔직히 따져|내가 느끼는|나도 모르는|나한테는|나는 이런|내 안에|나의 경우|개인적 의견|내가 생각하는|내가 믿는|내가 원하는|나에게는|나 자신을|내 일부/g,
   open:        /새로운|다르게|바꿔|시도|도전|변화|혁신|왜 안 돼|실험|탐구/g,
   humor:       /ㅋ{2,}|ㅎ{2,}|하하|ㅉㅉ|큭|푸하|ㄱㅂㅈㄱ|개웃|꿀잼|웃프|ㅠㅋ|ㅋㅠ/g,
   sarcastic:   /어이없|헛웃음|웃기네|하 참|기가 막|아 놔/g,
@@ -3587,12 +3590,15 @@ function computeSessionTrajectory(session, features, prism, anchor) {
     const A14 = Math.min(1, open / (segUnits * 0.4 + 1e-4));
     // O (boundary): identity 공식은 A12*0.35 + A14*0.35 + A4*0.3 (감정개방 A4).
     //   단 segment-level 의 A4 는 assertive regex 라 '감정개방' 의미와 안 맞음.
-    //   대신 A3(감정 표현) + topic_relationships(관계 맥락) 을 A4 대리값으로:
-    //     O = A12*0.30 + A14*0.25 + A3*0.25 + topicRelsR*0.20
-    //   → 친밀감 세션(topic_relationships 높음)에서 O 가 자연스럽게 상승.
+    // v3.6.13: 분석형 유저의 자기 개시를 잡기 위해 selfRef × topicRels 조합 추가.
+    //   "나는 그 친구랑 ..." 같이 self-reference + 관계 맥락 이 겹치면 개방 신호로 간주.
+    //   직접적 감정 self-disclosure 가 아니라도 관계 주제에서 자기를 드러내면 O ↑.
     const topicRelsR = segment.filter(p => p.counts.topic_relationships > 0).length / segment.length;
+    const selfRefDensity = _sumFeatureCounts(segment, 'selfRef') / (segUnits + 1e-4);
+    // selfRel 컨텍스트: 자기 언급 × 관계 토픽 동시 발생 (단독 "나는" 은 분석 문체에도 흔해 OK 안 함)
+    const selfRelContext = Math.min(1, selfRefDensity * 2 * Math.min(1, topicRelsR * 3));
     const O = Math.max(0, Math.min(1,
-      A12 * 0.30 + A14 * 0.25 + A3 * 0.25 + Math.min(1, topicRelsR) * 0.20
+      A12 * 0.28 + A14 * 0.22 + A3 * 0.20 + Math.min(1, topicRelsR) * 0.15 + selfRelContext * 0.15
     ));
 
     // X (resilience): identity A2 공식과 정합. CV 기반 (std / mean) → 1 - CV*0.5.
@@ -5005,9 +5011,12 @@ function computeMeasuredTimeSeries(rawMessages, prism, anchor, _features = null)
     // v3.6.6: 공식을 computeSessionTrajectory 및 identity SERVER_TYPE_AXES 와 정합.
     //   T: causal-based 근사 (identity cognition 구조 반영)
     //   O: A3 + topic_relationships 포함 (identity boundary 의 A4 대리값)
+    // v3.6.13: O 에 selfRel 컨텍스트 추가 (분석형 자기개시 캡쳐)
     const segCausal = _sumFeatureCounts(segSlice, 'causal');
     const causalDensity = segCausal / (segUnits + EPS);
     const topicRelsR = segSlice.filter(p => p.counts.topic_relationships > 0).length / segSlice.length;
+    const selfRefDensity = _sumFeatureCounts(segSlice, 'selfRef') / (segUnits + EPS);
+    const selfRelContext = Math.min(1, selfRefDensity * 2 * Math.min(1, topicRelsR * 3));
 
     const E = A1 * 0.6 + A3 * 0.4;
     const C = A4 * 0.5 + A5 * 0.5;
@@ -5015,7 +5024,7 @@ function computeMeasuredTimeSeries(rawMessages, prism, anchor, _features = null)
       Math.min(1, causalDensity * 0.8) * 0.55 + 0.15 + (1 - A3) * 0.25
     ));
     const O = Math.max(0, Math.min(1,
-      A12 * 0.30 + A14 * 0.25 + A3 * 0.25 + Math.min(1, topicRelsR) * 0.20
+      A12 * 0.28 + A14 * 0.22 + A3 * 0.20 + Math.min(1, topicRelsR) * 0.15 + selfRelContext * 0.15
     ));
     const X = A2;
 
