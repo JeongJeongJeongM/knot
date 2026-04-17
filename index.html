@@ -3937,37 +3937,33 @@
             .match-analyzing-vs { gap: 12px; }
         }
 
-        /* ═══ TRAJECTORY CHART ═══ */
-        .traj-tabs{display:flex;justify-content:center;gap:6px;margin-bottom:20px;flex-wrap:wrap}
-        .traj-tab{padding:7px 14px;font-size:10px;font-weight:600;letter-spacing:.4px;color:rgba(255,255,255,0.4);background:transparent;border:1px solid #1a1a2e;border-radius:5px;cursor:pointer;transition:.2s;font-family:'JetBrains Mono','Courier New',monospace}
+        /* ═══ TRAJECTORY v2 ═══ */
+        .traj-tabs{display:flex;justify-content:center;gap:6px;margin-bottom:24px;flex-wrap:wrap}
+        .traj-tab{padding:8px 16px;font-size:12px;font-weight:500;color:rgba(255,255,255,0.4);background:transparent;border:1px solid rgba(26,26,46,1);border-radius:20px;cursor:pointer;transition:all .2s ease;font-family:'Noto Sans KR',sans-serif;user-select:none}
         .traj-tab:hover{border-color:#F5A623;color:rgba(255,255,255,0.65)}
-        .traj-tab.on{background:rgba(245,166,35,0.1);border-color:#F5A623;color:#F5A623}
-        .traj-main{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
-        .traj-radar-wrap{width:260px;height:260px;flex-shrink:0}
-        .traj-radar-wrap canvas{display:block}
-        .traj-bars{flex:1;min-width:240px}
-        .traj-bar-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
-        .traj-bar-row:last-child{border-bottom:none}
-        .traj-bar-label{width:52px;font-size:9px;font-weight:700;letter-spacing:.7px;font-family:'JetBrains Mono','Courier New',monospace}
-        .traj-bar-track{flex:1;height:7px;background:rgba(255,255,255,0.04);border-radius:3px;position:relative;overflow:visible}
-        .traj-bar-base{position:absolute;height:100%;border-radius:3px;opacity:.2;transition:width .5s}
-        .traj-bar-shift{position:absolute;height:100%;border-radius:3px;opacity:.8;transition:width .5s}
-        .traj-bar-marker{position:absolute;top:-2px;width:2px;height:11px;border-radius:1px;transition:left .5s}
-        .traj-bar-vals{width:78px;text-align:right;font-size:10px;font-family:'JetBrains Mono','Courier New',monospace;color:rgba(255,255,255,0.4)}
-        .traj-bar-vals .traj-d{font-weight:700;margin-left:2px}
-        .traj-d.up{color:#FF6B6B}.traj-d.dn{color:#4ECDC4}.traj-d.eq{color:rgba(255,255,255,0.3)}
-        .traj-foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;justify-content:center}
-        .traj-badge{padding:5px 12px;border-radius:14px;font-size:10px;font-weight:600;letter-spacing:.3px}
-        .traj-desc{background:rgba(255,255,255,0.02);border:1px solid #1a1a2e;border-radius:10px;padding:18px;margin-top:20px}
-        .traj-desc-title{font-size:10px;color:#F5A623;font-weight:700;letter-spacing:.5px;font-family:'JetBrains Mono','Courier New',monospace;margin-bottom:8px}
-        .traj-desc-text{font-size:12px;color:rgba(255,255,255,0.55);line-height:1.8}
-        .traj-desc-text strong{color:rgba(255,255,255,0.85);font-weight:600}
-        .traj-desc-axes{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-        .traj-desc-ax{padding:4px 10px;border-radius:6px;font-size:10px;font-weight:600;font-family:'JetBrains Mono','Courier New',monospace;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06)}
-        @media (max-width: 640px) {
-            .traj-radar-wrap{width:220px;height:220px}
-            .traj-main{gap:16px}
-        }
+        .traj-tab.on{background:#F5A623;border-color:#F5A623;color:#000;font-weight:600;box-shadow:0 0 14px rgba(245,166,35,0.25)}
+        .traj-chart-card{background:rgba(12,12,20,0.7);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px;margin-bottom:24px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);position:relative;overflow:hidden}
+        .traj-chart-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--scenario-color,rgba(245,166,35,0.3)),transparent);opacity:.3;transition:background .3s}
+        .traj-chart-canvas-wrap{width:100%;position:relative;background:rgba(6,6,11,0.5);border-radius:10px;padding:16px 12px 12px;border:1px solid rgba(255,255,255,0.03)}
+        .traj-chart-canvas-wrap canvas{display:block;width:100%;height:300px}
+        .traj-chart-label{font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.3);font-family:'JetBrains Mono',monospace;margin-bottom:16px}
+        .traj-mode-badge{display:inline-flex;align-items:center;gap:6px;font-size:10px;padding:4px 10px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-weight:600}
+        .traj-mode-badge.measured{background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.35);color:#34D399}
+        .traj-mode-badge.simulated{background:rgba(245,166,35,0.12);border:1px solid rgba(245,166,35,0.35);color:#F5A623}
+        .traj-drift-section{margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.04)}
+        .traj-drift-title{font-size:10px;color:var(--ac);font-weight:700;letter-spacing:2px;margin-bottom:14px;font-family:'JetBrains Mono',monospace}
+        .traj-drift-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+        .traj-drift-row:last-child{border-bottom:none}
+        .traj-drift-label{font-size:11px;font-family:'JetBrains Mono','Courier New',monospace;min-width:56px;font-weight:700;white-space:nowrap}
+        .traj-drift-track{flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;position:relative;overflow:visible}
+        .traj-drift-center{position:absolute;left:50%;top:-4px;width:1px;height:14px;background:rgba(255,255,255,0.12)}
+        .traj-drift-fill{position:absolute;height:100%;border-radius:3px;top:0;transition:width .6s ease}
+        .traj-drift-val{font-size:11px;font-family:'JetBrains Mono',monospace;min-width:54px;text-align:right;font-weight:600}
+        .traj-response-card{background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;padding:28px 32px;margin-bottom:24px;backdrop-filter:blur(16px);position:relative;overflow:hidden}
+        .traj-response-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,166,35,0.15),transparent)}
+        #trajSplit{height:460px}
+        #trajSplit .lens-panel{height:100%}
+        #trajSplit::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);z-index:1}
     </style>
 </head>
 <body>
@@ -4340,7 +4336,7 @@
         </div>
     </div>
 
-    <!-- Section T: TRAJECTORY — 행동 궤적 -->
+    <!-- Section T: TRAJECTORY — 행동 궤적 (v2 redesign) -->
     <div class="result-section" id="resultSectionTraj">
         <div class="result-section-inner">
             <div class="step-indicator">STEP 04 — TRAJECTORY</div>
@@ -4348,15 +4344,29 @@
                 <h2>행동 궤적</h2>
                 <p>외부 자극이 당신을 어떻게 변형시키는가</p>
             </div>
-            <!-- Trajectory chart: radar + bars + scenario tabs -->
-            <div id="trajChartWrap"></div>
-            <!-- Sonnet essay for trajectory — OUTLOOK-style lens-split -->
-            <div class="lens-split" id="trajSplit" style="margin-top:28px;">
+            <!-- Scenario tabs -->
+            <div class="traj-tabs" id="trajTabs"></div>
+            <!-- Chart card: canvas + drift -->
+            <div class="traj-chart-card" id="trajChartCard">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+                    <div class="traj-chart-label" id="trajChartTitle"></div>
+                    <div class="traj-mode-badge measured" id="trajChartBadge"></div>
+                </div>
+                <div class="traj-chart-canvas-wrap">
+                    <canvas id="trajCanvas" width="1000" height="300"></canvas>
+                </div>
+                <div class="traj-drift-section">
+                    <div class="traj-drift-title">// DRIFT</div>
+                    <div id="trajDriftBars"></div>
+                </div>
+            </div>
+            <!-- Response pattern card -->
+            <div class="traj-response-card" id="trajResponseCard" style="display:none;"></div>
+            <!-- Interpretation lens-split -->
+            <div class="lens-split" id="trajSplit" style="margin-top:28px;overflow:hidden;position:relative;">
                 <div class="lens-nav" id="trajNav"></div>
                 <div class="lens-panel">
-                    <div class="lens-panel-scroll">
-                        <div id="trajPanelContent" class="lens-panel-content"></div>
-                    </div>
+                    <div id="trajPanelContent" class="lens-panel-content"></div>
                 </div>
             </div>
         </div>
@@ -7460,354 +7470,202 @@ function buildProfileOverview(axes, profile) {
             return terminalPanel('simulation.engine', body);
         }
 
-        // ─── Step 03 TRAJECTORY 차트 렌더러 ───
-        // v3.6.6: 5축 색상/이름을 전 프로젝트에서 단일 소스로 통일.
-        //   이전: TRAJ_AXES(파스텔) vs TRAJ_AXIS_COLORS(비비드) 혼용 → O 가 녹색/보라 두 가지로 나옴.
-        //   또 AXIS_NAMES(line 10720) 에선 O='경계' 로 달랐음 → '개방' 으로 통일.
+        // ─── Step 04 TRAJECTORY v2 렌더러 ───
         const TRAJ_AXIS_MAP = {E:'emotion',C:'drive',T:'cognition',O:'boundary',X:'resilience'};
+        const TRAJ_AXES = [
+            {k:'E',l:'E 정서',c:'#FF6B6B'},{k:'C',l:'C 추진',c:'#4ECDC4'},
+            {k:'T',l:'T 인지',c:'#45B7D1'},{k:'O',l:'O 개방',c:'#96CEB4'},
+            {k:'X',l:'X 회복',c:'#FFEAA7'}
+        ];
         const TRAJ_AXIS_NAMES = { E: '정서', C: '추진', T: '인지', O: '개방', X: '회복' };
         const TRAJ_AXIS_COLORS = { E: '#EF4444', C: '#22D3EE', T: '#60A5FA', O: '#A78BFA', X: '#34D399' };
-        const TRAJ_AXES = [
-            {k:'E',l:'E 정서',c:TRAJ_AXIS_COLORS.E},{k:'C',l:'C 추진',c:TRAJ_AXIS_COLORS.C},
-            {k:'T',l:'T 인지',c:TRAJ_AXIS_COLORS.T},{k:'O',l:'O 개방',c:TRAJ_AXIS_COLORS.O},
-            {k:'X',l:'X 회복',c:TRAJ_AXIS_COLORS.X}
-        ];
         const TRAJ_STIM = {
             default:{label:'기본 상태',icon:'◆',delta:{E:0,C:0,T:0,O:0,X:0},color:'#F5A623',
                 desc:'외부 자극이 없는 평상시 상태. 이 형태가 당신의 <strong>기저선(baseline)</strong>이다.',axes:[]},
-            stress:{label:'스트레스',icon:'⚡',delta:{E:.25,C:-.15,T:-.05,O:-.10,X:-.15},color:'#EF4444',
+            stress:{label:'스트레스',icon:'⚡',delta:{E:.25,C:-.15,T:-.05,O:-.10,X:-.15},color:'#FF6B6B',
                 desc:'업무 과부하, 마감 압박, 예상치 못한 위기. 정서가 <strong>급등</strong>하면서 통제력과 회복 탄성이 동시에 <strong>무너진다</strong>. 경계가 수축하며 타인을 밀어내는 방향으로 이동.',
-                axes:[{k:'E',c:TRAJ_AXIS_COLORS.E,t:'정서 폭등 +0.25'},{k:'C',c:TRAJ_AXIS_COLORS.C,t:'통제력 상실 −0.15'},{k:'X',c:TRAJ_AXIS_COLORS.X,t:'회복력 침식 −0.15'}]},
-            intimacy:{label:'친밀감',icon:'♥',delta:{E:.10,C:-.08,T:0,O:.20,X:.05},color:'#A78BFA',
+                axes:[{k:'E',c:'#FF6B6B',t:'정서 폭등 +0.25'},{k:'C',c:'#4ECDC4',t:'통제력 상실 −0.15'},{k:'X',c:'#FFEAA7',t:'회복력 침식 −0.15'}]},
+            intimacy:{label:'친밀감',icon:'♥',delta:{E:.10,C:-.08,T:0,O:.20,X:.05},color:'#96CEB4',
                 desc:'깊은 신뢰 관계, 정서적 안전감이 확보된 환경. 경계가 크게 <strong>개방</strong>되며 정서 표현이 활성화된다. 회복 탄성은 소폭 상승.',
-                axes:[{k:'O',c:TRAJ_AXIS_COLORS.O,t:'개방 대폭 상승 +0.20'},{k:'E',c:TRAJ_AXIS_COLORS.E,t:'정서 활성화 +0.10'},{k:'C',c:TRAJ_AXIS_COLORS.C,t:'통제 이완 −0.08'}]},
-            conflict:{label:'갈등',icon:'🔥',delta:{E:.20,C:.12,T:.05,O:-.18,X:-.10},color:'#F97316',
+                axes:[{k:'O',c:'#96CEB4',t:'경계 대폭 개방 +0.20'},{k:'E',c:'#FF6B6B',t:'정서 활성화 +0.10'},{k:'C',c:'#4ECDC4',t:'통제 이완 −0.08'}]},
+            conflict:{label:'갈등',icon:'🔥',delta:{E:.20,C:.12,T:.05,O:-.18,X:-.10},color:'#F5A623',
                 desc:'가까운 사람과의 충돌, 비난, 거부 경험. 정서와 통제가 동시에 <strong>상승</strong>하면서 경계가 급격히 닫힌다. <strong>전투 모드</strong> 진입.',
-                axes:[{k:'E',c:TRAJ_AXIS_COLORS.E,t:'정서 격화 +0.20'},{k:'O',c:TRAJ_AXIS_COLORS.O,t:'개방 폐쇄 −0.18'},{k:'C',c:TRAJ_AXIS_COLORS.C,t:'통제 강화 +0.12'}]},
-            loss:{label:'상실',icon:'◇',delta:{E:.30,C:-.12,T:-.08,O:-.15,X:-.22},color:'#6B7280',
+                axes:[{k:'E',c:'#FF6B6B',t:'정서 격화 +0.20'},{k:'O',c:'#96CEB4',t:'경계 폐쇄 −0.18'},{k:'C',c:'#4ECDC4',t:'통제 강화 +0.12'}]},
+            loss:{label:'상실',icon:'◇',delta:{E:.30,C:-.12,T:-.08,O:-.15,X:-.22},color:'#45B7D1',
                 desc:'관계 단절, 실패, 기대의 붕괴. 정서가 <strong>최대치</strong>로 폭등하면서 다른 모든 축이 하락한다. <strong>가장 취약한 시나리오</strong>.',
-                axes:[{k:'E',c:TRAJ_AXIS_COLORS.E,t:'정서 최대 폭등 +0.30'},{k:'X',c:TRAJ_AXIS_COLORS.X,t:'회복력 붕괴 −0.22'},{k:'O',c:TRAJ_AXIS_COLORS.O,t:'개방 수축 −0.15'}]}
+                axes:[{k:'E',c:'#FF6B6B',t:'정서 최대 폭등 +0.30'},{k:'X',c:'#FFEAA7',t:'회복력 붕괴 −0.22'},{k:'O',c:'#96CEB4',t:'경계 수축 −0.15'}]}
         };
         let trajCurStim = 'default';
+        let _trajSimData = null;
+        let _trajCurrentTab = 'normal';
+
+        const TRAJ_SIT_TABS = [
+            { key: 'normal',   label: '일반',    icon: '◆', color: '#F5A623' },
+            { key: 'stress',   label: '스트레스', icon: '⚡', color: '#EF4444' },
+            { key: 'intimacy', label: '친밀감',   icon: '♥',  color: '#A78BFA' },
+            { key: 'conflict', label: '갈등',    icon: '🔥', color: '#F97316' },
+            { key: 'loss',     label: '상실',    icon: '◇',  color: '#6B7280' },
+        ];
 
         function renderTrajectoryChart(simData) {
-            const wrap = document.getElementById('trajChartWrap');
-            if (!wrap) return;
-            if (!simData) { wrap.innerHTML = ''; return; }
+            _trajSimData = simData;
+            if (!simData) return;
 
-            // ──────────────────────────────────────────────────
-            // TRAJECTORY — 5개 탭 모두 세션별 상황 분류 → 상황별 평균 궤적 (실측)
-            //   일반 / 스트레스 / 친밀감 / 갈등 / 상실
-            // 각 탭은 simData.situational[key] 소비. 세션 <2 이면 fallback (simulation).
-            // ──────────────────────────────────────────────────
-            const SIT_TABS = [
-                { key: 'normal',   label: '일반',    icon: '◆', color: '#F5A623' },
-                { key: 'stress',   label: '스트레스', icon: '⚡', color: '#EF4444' },
-                { key: 'intimacy', label: '친밀감',   icon: '♥',  color: '#A78BFA' },
-                { key: 'conflict', label: '갈등',    icon: '🔥', color: '#F97316' },
-                { key: 'loss',     label: '상실',    icon: '◇',  color: '#6B7280' },
-            ];
-
-            let html = '<div style="width:100%;">';
-
-            // 디폴트 정체성 앵커 — "당신의 평상시 정체" (설계 원칙 1-B)
-            // 이 섹션 전체의 해석 기준점. 각 상황 탭에서 "디폴트 → 이동" 으로 읽는다.
-            const defaultId = (typeof currentProfile !== 'undefined' && currentProfile?.identity) || null;
-            if (defaultId?.code) {
-                html += '<div style="background:linear-gradient(135deg,rgba(245,166,35,0.08),rgba(245,166,35,0.02));border:1px solid rgba(245,166,35,0.3);border-radius:12px;padding:20px 24px;margin-bottom:16px;">';
-                html += '<div style="font-size:10px;letter-spacing:2px;color:#F5A623;font-family:\'JetBrains Mono\',monospace;margin-bottom:8px;">// 평상시 (DEFAULT IDENTITY)</div>';
-                html += '<div style="display:flex;align-items:center;gap:14px;">';
-                html += '<div style="font-size:32px;">' + (defaultId.emoji || '◆') + '</div>';
-                html += '<div>';
-                html += '<div style="font-size:18px;font-weight:700;color:#fff;">' + (defaultId.name || defaultId.code) + '</div>';
-                html += '<div style="font-size:12px;color:#888;font-family:\'JetBrains Mono\',monospace;margin-top:2px;">' + defaultId.code + '</div>';
-                if (defaultId.tagline) html += '<div style="font-size:12px;color:#aaa;margin-top:6px;line-height:1.5;">' + defaultId.tagline + '</div>';
-                html += '</div></div></div>';
+            // Build tabs
+            const tabsWrap = document.getElementById('trajTabs');
+            if (tabsWrap) {
+                let th = '';
+                TRAJ_SIT_TABS.forEach((t, i) => {
+                    th += '<div class="traj-tab' + (i === 0 ? ' on' : '') + '" data-key="' + t.key + '" onclick="switchTrajTab2(this,\'' + t.key + '\')">' + t.icon + ' ' + t.label + '</div>';
+                });
+                tabsWrap.innerHTML = th;
             }
 
-            // 설계 원칙 안내 — 모순은 여기서 표현됨
-            html += '<div style="background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.18);border-radius:10px;padding:14px 18px;margin-bottom:16px;font-size:12px;color:#bbb;line-height:1.7;">';
-            html += '<strong style="color:#34D399;">상황에 따라 당신은 달라집니다</strong><br/>';
-            html += '사람은 맥락 의존적 다면체입니다. 위의 "평상시 정체" 는 당신의 디폴트일 뿐, ';
-            html += '스트레스·친밀감·갈등·상실 같은 상황에선 <strong>다른 정체로 이동</strong>하는 경향을 가집니다. ';
-            html += '아래 5개 탭은 각 상황에서 실제로 어떤 정체가 드러났는지를 보여줍니다 (세션이 충분할 때 실측).';
-            html += '</div>';
-
-            // 축 안내 (5축 ↔ 6축 관계)
-            html += '<div style="background:rgba(245,166,35,0.03);border:1px solid rgba(245,166,35,0.15);border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:11px;color:#999;line-height:1.6;">';
-            html += '<strong style="color:#F5A623;">축 안내</strong> · 5축 = Identity 6축 중 대처 방향(P/I)을 뺀 5개. ';
-            html += '<span style="font-family:\'JetBrains Mono\',monospace;color:#888;">E=정서 · C=주도 · T=판단 · O=경계 · X=탄성</span>';
-            html += '</div>';
-
-            // 세션 분포 요약 배지
-            const sit = simData.situational;
-            if (sit) {
-                const totalSessions = SIT_TABS.reduce((s, t) => s + (sit[t.key]?.sessionCount || 0), 0);
-                html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;font-size:11px;font-family:\'JetBrains Mono\',monospace;">';
-                html += '<span style="padding:4px 10px;border-radius:6px;background:rgba(255,255,255,0.04);color:#888;">TOTAL: ' + totalSessions + ' sessions</span>';
-                SIT_TABS.forEach(t => {
-                    const c = sit[t.key]?.sessionCount || 0;
-                    const tr = sit[t.key]?.trajectoryCount || 0;
-                    if (c > 0) {
-                        html += '<span style="padding:4px 10px;border-radius:6px;background:rgba(255,255,255,0.04);color:' + t.color + ';">' + t.icon + ' ' + t.label + ': ' + c + (tr !== c ? ' (궤적 ' + tr + ')' : '') + '</span>';
-                    }
+            // Build lens-nav
+            const nav = document.getElementById('trajNav');
+            if (nav) {
+                let nh = '';
+                TRAJ_SIT_TABS.forEach((t, i) => {
+                    const sit = simData.situational ? simData.situational[t.key] : null;
+                    // v3.6.7: 1세션으로도 MEASURED 허용 (conflict/loss 가 simulated 로 빠지는 문제 수정)
+                    const hasMeasured = !!(sit && sit.trajectoryCount >= 1);
+                    const sub = hasMeasured ? (sit.sessionCount + ' sessions' + (sit.trajectoryCount < 3 ? ' · low conf' : '')) : (sit?.sessionCount ? sit.sessionCount + ' (simulated)' : 'simulated');
+                    nh += '<div class="lens-nav-item' + (i === 0 ? ' active' : '') + '" data-key="' + t.key + '" onclick="switchTrajTab2(null,\'' + t.key + '\',this)">';
+                    nh += '<span class="lens-nav-icon">' + t.icon + '</span>';
+                    nh += '<div><div class="lens-nav-title">' + t.label + '</div>';
+                    nh += '<div class="lens-nav-sub">' + sub + '</div></div></div>';
                 });
-                html += '</div>';
+                nav.innerHTML = nh;
             }
 
-            // 탭 버튼
-            html += '<div style="display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap;">';
-            SIT_TABS.forEach((t, i) => {
-                const isFirst = i === 0;
-                const active = isFirst ? 'active' : '';
-                const bg = isFirst ? t.color : 'transparent';
-                const col = isFirst ? '#000' : '#888';
-                const bc = isFirst ? t.color : '#1a1a24';
-                const fw = isFirst ? '600' : '400';
-                html += '<div class="traj-tab ' + active + '" data-tab="' + t.key + '" onclick="switchTrajTab(this, \'' + t.key + '\')" style="padding:8px 16px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid ' + bc + ';background:' + bg + ';color:' + col + ';font-weight:' + fw + ';transition:all 0.2s;font-family:\'Noto Sans KR\',sans-serif;">' + t.icon + ' ' + t.label + '</div>';
-            });
-            html += '</div>';
+            // Build response pattern card
+            buildTrajResponseCard(simData);
 
-            // 각 탭 패널 (빈 컨테이너만 — renderSituationTab 에서 채움)
-            SIT_TABS.forEach((t, i) => {
-                const display = i === 0 ? 'block' : 'none';
-                html += '<div id="traj-panel-' + t.key + '" class="traj-panel ' + (i === 0 ? 'active' : '') + '" style="display:' + display + ';"></div>';
-            });
-
-            html += '</div>';
-            wrap.innerHTML = html;
-
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    SIT_TABS.forEach(t => renderSituationTab(t, simData));
-                });
-            });
+            // Render first tab
+            switchTrajTab2(document.querySelector('.traj-tab[data-key="normal"]'), 'normal');
         }
 
         // ──────────────────────────────────────────────────────────
-        // renderSituationTab — 한 상황(normal/stress/intimacy/conflict/loss) 탭 렌더
-        //   1순위: simData.situational[key] 의 평균 궤적 (실측)
-        //   폴백: simData.stimulus[key] (가상) — 세션 <2 일 때
+        // TRAJECTORY V2 — 3-layer: tabs+chart → response pattern → lens-split
         // ──────────────────────────────────────────────────────────
-        function renderSituationTab(tabCfg, simData) {
-            const key = tabCfg.key;
-            const panel = document.getElementById('traj-panel-' + key);
-            if (!panel) return;
 
-            const AK = ['E', 'C', 'T', 'O', 'X'];
-            const colors = { E: '#EF4444', C: '#22D3EE', T: '#60A5FA', O: '#A78BFA', X: '#34D399' };
-
+        // ── Helper: resolve scenario data from production simData ──
+        function _trajResolveScenario(key, simData) {
+            const AK = ['E','C','T','O','X'];
+            const tabCfg = TRAJ_SIT_TABS.find(t => t.key === key) || TRAJ_SIT_TABS[0];
             const situation = simData.situational ? simData.situational[key] : null;
-            // v3.6.7: 모든 상황에 minSessions=1 로 통일. 1세션 MEASURED 가 SIMULATED 보다 정보량 있음.
-            //   이전 2세션 기준 때문에 conflict/loss 가 거의 항상 SIMULATED 로 빠지던 문제.
-            //   1세션일 땐 std=0 이 나오므로 밴드 안 그려지지만 drift·mean 자체는 실측.
-            const minSessions = 1;
-            const canMeasure = !!(situation && situation.trajectoryCount >= minSessions && situation.mean && situation.mean.length > 0);
+            // v3.6.7: 모든 상황에 minSessions=1. 1세션 MEASURED > 0세션 SIMULATED.
+            const hasMeasured = !!(situation && situation.trajectoryCount >= 1 && situation.mean && situation.mean.length > 0);
 
-            let modeBadge, dataModeTxt, descText, chartTitle, trajPoints, drift = {}, std = null;
-            let sourceCount = 0;
+            let mode, sessions, trajectories, points, drift = {}, desc, axisPatterns = [];
 
-            if (canMeasure) {
-                // ── 실측 평균 궤적 ──
-                sourceCount = situation.trajectoryCount;
-                trajPoints = situation.mean;
-                std = situation.std;
-                // v3.6.7: N=1 일 때는 LOW CONFIDENCE 배지로 구분 (std 없음, 단일 세션)
-                if (sourceCount >= 3) {
-                    modeBadge = '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.35);color:#34D399;font-family:\'JetBrains Mono\',monospace;">🟢 MEASURED</span>';
-                } else {
-                    modeBadge = '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(245,166,35,0.12);border:1px solid rgba(245,166,35,0.35);color:#F5A623;font-family:\'JetBrains Mono\',monospace;">🟡 MEASURED · LOW CONFIDENCE</span>';
-                }
-                dataModeTxt = 'DATA.MODE = OBSERVED · N=' + sourceCount + ' session' + (sourceCount > 1 ? 's' : '');
-                const nNote = sourceCount === 1 ? ' (1세션 기반 — 표준편차 밴드 없음, 신뢰도 낮음)' : sourceCount === 2 ? ' (2세션 기반 — 신뢰도 제한적)' : '';
-                descText = `<strong style="color:${tabCfg.color};">${tabCfg.icon} ${tabCfg.label}</strong> — 이 상황으로 분류된 <strong>${sourceCount}개 세션</strong>의 턴별 5축 추이를 평균한 실측 궤적입니다${nNote}. 각 세션을 10-step 으로 정규화해 평균(선)과 표준편차(밴드)를 함께 표시합니다.`;
-                chartTitle = `// MEASURED TRAJECTORY · MEAN OF ${sourceCount} SESSION${sourceCount > 1 ? 'S' : ''} · 10 STEPS`;
-                // v3.6.6: drift = mean(last 3) - mean(first 3).
-                //   이전 last-first 는 중간 피크가 있어도 시작/끝 값만 보면 0 이 나와 세션 내
-                //   변화를 놓쳤음. robust 지표로 앞/뒤 3-step 평균 차이 사용.
-                if (trajPoints.length >= 6) {
-                    const windowN = 3;
-                    const head = trajPoints.slice(0, windowN);
-                    const tail = trajPoints.slice(-windowN);
-                    AK.forEach(k => {
-                        const hMean = head.reduce((s, p) => s + (p[k] || 0), 0) / windowN;
-                        const tMean = tail.reduce((s, p) => s + (p[k] || 0), 0) / windowN;
-                        drift[k] = Math.round((tMean - hMean) * 1000) / 1000;
-                    });
-                } else if (trajPoints.length >= 2) {
-                    // 세그먼트 수 < 6 일 땐 앞/뒤 1-step 차이 (폴백)
-                    const first = trajPoints[0], last = trajPoints[trajPoints.length - 1];
+            if (hasMeasured) {
+                mode = 'measured';
+                sessions = situation.sessionCount || situation.trajectoryCount;
+                trajectories = situation.trajectoryCount;
+                points = situation.mean;
+                if (points.length >= 2) {
+                    const first = points[0], last = points[points.length - 1];
                     AK.forEach(k => { drift[k] = Math.round((last[k] - first[k]) * 1000) / 1000; });
                 }
             } else if (simData.stimulus && simData.stimulus[key] && key !== 'normal') {
-                // ── 폴백: 가상 stimulus 시뮬레이션 ──
                 const stim = simData.stimulus[key];
-                modeBadge = '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(245,166,35,0.12);border:1px solid rgba(245,166,35,0.35);color:#F5A623;font-family:\'JetBrains Mono\',monospace;">🟡 FALLBACK · SIMULATED</span>';
-                dataModeTxt = 'DATA.MODE = MODELED · ' + (situation?.sessionCount || 0) + ' sessions < 2 (실측 부족)';
-                descText = `<strong style="color:${tabCfg.color};">${tabCfg.icon} ${tabCfg.label}</strong> — 이 상황으로 분류된 세션이 ${situation?.sessionCount || 0}개(평균 계산 최소 2개 필요)뿐이어서 가상 시뮬레이션으로 대체합니다. baseline(전체 대화 평균) → 자극 주입 → 회복 5-step.`;
-                chartTitle = `// SIMULATED · BASELINE → SHIFT → 5-STEP RECOVERY`;
-                trajPoints = [{ step: 0, E: simData.axes.emotion, C: simData.axes.drive, T: simData.axes.cognition, O: simData.axes.boundary, X: simData.axes.resilience }];
-                if (stim.shifted) trajPoints.push({ step: '⚡', E: stim.shifted.E, C: stim.shifted.C, T: stim.shifted.T, O: stim.shifted.O, X: stim.shifted.X });
+                mode = 'simulated';
+                sessions = situation?.sessionCount || 0;
+                trajectories = situation?.trajectoryCount || 0;
+                points = [{ E: simData.axes.emotion, C: simData.axes.drive, T: simData.axes.cognition, O: simData.axes.boundary, X: simData.axes.resilience }];
+                if (stim.shifted) points.push({ E: stim.shifted.E, C: stim.shifted.C, T: stim.shifted.T, O: stim.shifted.O, X: stim.shifted.X });
                 if (stim.recovery && stim.recovery.trajectory) {
-                    stim.recovery.trajectory.forEach((pt, i) => trajPoints.push({ step: i + 1, E: pt.E, C: pt.C, T: pt.T, O: pt.O, X: pt.X }));
+                    stim.recovery.trajectory.forEach(pt => points.push({ E: pt.E, C: pt.C, T: pt.T, O: pt.O, X: pt.X }));
                 }
                 drift = stim.deltas || {};
-            } else if (key === 'normal') {
-                // normal 데이터 부족 시 안내만
-                panel.innerHTML = '<div style="padding:40px;text-align:center;color:#888;background:#111118;border:1px solid #1a1a24;border-radius:12px;">세션 단위 분리가 어려운 데이터입니다. 타임스탬프가 있는 여러 대화로 재분석해주세요.</div>';
-                return;
             } else {
-                // 아무 데이터도 없음
-                panel.innerHTML = '<div style="padding:40px;text-align:center;color:#888;background:#111118;border:1px solid #1a1a24;border-radius:12px;">이 상황의 데이터가 없습니다.</div>';
-                return;
+                mode = key === 'normal' ? 'no_data' : 'no_data';
+                sessions = 0; trajectories = 0; points = []; drift = {};
             }
 
-            // 패널 HTML 구성
-            const canvasId = 'trajChart_' + key;
-            let panelHTML = '';
-            panelHTML += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">${modeBadge}<span style="font-size:11px;color:#666;font-family:'JetBrains Mono',monospace;">${dataModeTxt}</span></div>`;
-            panelHTML += `<div style="background:rgba(255,255,255,0.02);border:1px solid #1a1a24;border-radius:10px;padding:16px 20px;margin-bottom:20px;font-size:13px;color:#999;line-height:1.8;">${descText}</div>`;
+            // Build desc from TRAJ_STIM (existing production data) or situational
+            const stimInfo = TRAJ_STIM[key === 'normal' ? 'default' : key];
+            if (stimInfo) {
+                desc = stimInfo.desc;
+                if (stimInfo.axes && stimInfo.axes.length) {
+                    axisPatterns = stimInfo.axes.map(a => ({
+                        axis: a.k, delta: a.t, desc: ''
+                    }));
+                }
+            }
+            // Override desc with richer text if stimulus data has it
+            if (simData.stimulus && simData.stimulus[key] && simData.stimulus[key].desc) {
+                desc = simData.stimulus[key].desc;
+            }
 
-            // ⭐ 디폴트 → 상황별 archetype shift 카드 (측정된 경우만)
-            //   설계 원칙 1-B 의 핵심 UI. 이 상황에서 이 사람이 어떤 정체로 이동했는지.
-            const defaultId2 = (typeof currentProfile !== 'undefined' && currentProfile?.identity) || null;
-            const sitIdentity = situation?.identity;
-            if (sitIdentity && defaultId2?.code) {
-                const shift = situation.shift;
-                const isSame = shift?.same || sitIdentity.code === defaultId2.code;
-                const axisKo = { emotion: '정서', drive: '주도', cognition: '판단', boundary: '경계', resilience: '탄성', defense: '대처' };
-
-                panelHTML += `<div style="background:linear-gradient(135deg,${tabCfg.color}15,${tabCfg.color}05);border:1px solid ${tabCfg.color}40;border-radius:12px;padding:20px 24px;margin-bottom:20px;">`;
-                panelHTML += `<div style="font-size:10px;letter-spacing:2px;color:${tabCfg.color};font-family:'JetBrains Mono',monospace;margin-bottom:12px;">// 이 상황에서의 정체${isSame ? ' (디폴트 유지)' : ' (이동)'}</div>`;
-
-                // 평상시 ─> 상황별 카드 2개 나란히
-                panelHTML += `<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">`;
-                // 평상시
-                panelHTML += `<div style="flex:1;min-width:180px;opacity:${isSame ? '1' : '0.55'};">`;
-                panelHTML += `<div style="font-size:10px;color:#888;font-family:'JetBrains Mono',monospace;margin-bottom:6px;">평상시</div>`;
-                panelHTML += `<div style="display:flex;align-items:center;gap:10px;">`;
-                panelHTML += `<div style="font-size:28px;">${defaultId2.emoji || '◆'}</div>`;
-                panelHTML += `<div><div style="font-size:15px;font-weight:700;color:#ddd;">${defaultId2.name || defaultId2.code}</div><div style="font-size:10px;color:#888;font-family:'JetBrains Mono',monospace;">${defaultId2.code}</div></div>`;
-                panelHTML += `</div></div>`;
-                // 화살표
-                panelHTML += `<div style="font-size:20px;color:${tabCfg.color};">${isSame ? '=' : '→'}</div>`;
-                // 상황별
-                panelHTML += `<div style="flex:1;min-width:180px;">`;
-                panelHTML += `<div style="font-size:10px;color:${tabCfg.color};font-family:'JetBrains Mono',monospace;margin-bottom:6px;">${tabCfg.icon} ${tabCfg.label} 상황</div>`;
-                panelHTML += `<div style="display:flex;align-items:center;gap:10px;">`;
-                panelHTML += `<div style="font-size:28px;">${sitIdentity.emoji || tabCfg.icon}</div>`;
-                panelHTML += `<div><div style="font-size:15px;font-weight:700;color:#fff;">${sitIdentity.name || sitIdentity.code}</div><div style="font-size:10px;color:#aaa;font-family:'JetBrains Mono',monospace;">${sitIdentity.code}</div></div>`;
-                panelHTML += `</div></div>`;
-                panelHTML += `</div>`;
-
-                // 이동 상세 — 어느 축이 어디로
-                if (!isSame && shift?.diff_axes?.length) {
-                    panelHTML += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.05);">`;
-                    panelHTML += `<div style="font-size:11px;color:#888;margin-bottom:8px;">이동한 축 (${shift.diff_count}개):</div>`;
-                    panelHTML += `<div style="display:flex;gap:8px;flex-wrap:wrap;">`;
-                    shift.diff_axes.forEach(d => {
-                        panelHTML += `<span style="font-size:11px;padding:4px 10px;border-radius:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);font-family:'JetBrains Mono',monospace;"><span style="color:#888;">${axisKo[d.axis] || d.axis}:</span> <span style="color:#888;">${d.from}</span> → <span style="color:${tabCfg.color};font-weight:700;">${d.to}</span></span>`;
+            // Generate axis pattern descriptions from drift
+            if (mode === 'measured' && points.length >= 2) {
+                const sorted = AK.map(k => ({ k, d: drift[k] || 0 })).filter(x => Math.abs(x.d) > 0.02).sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
+                if (sorted.length > 0) {
+                    axisPatterns = sorted.slice(0, 4).map(s => {
+                        const sign = s.d > 0 ? '+' : '';
+                        return { axis: s.k, delta: sign + s.d.toFixed(2), desc: '' };
                     });
-                    panelHTML += `</div></div>`;
                 }
-
-                // 상황별 방어 패턴 (ADAPTIVE 아닐 때만 표시 — 특이 방어가 있을 때 의미 있음)
-                if (situation.defense?.code && situation.defense.code !== 'ADAPTIVE') {
-                    panelHTML += `<div style="margin-top:10px;font-size:11px;color:#aaa;">`;
-                    panelHTML += `<span style="color:#888;">이 상황의 방어 패턴:</span> <strong style="color:${tabCfg.color};">${situation.defense.name}</strong> <span style="color:#666;">(${situation.defense.code})</span>`;
-                    panelHTML += `</div>`;
-                }
-
-                // 태그라인 (상황별 아키타입 설명)
-                if (sitIdentity.tagline) {
-                    panelHTML += `<div style="margin-top:10px;font-size:11px;color:#999;line-height:1.6;font-style:italic;">"${sitIdentity.tagline}"</div>`;
-                }
-
-                panelHTML += `</div>`;
             }
 
-            panelHTML += `<div style="background:#111118;border:1px solid #1a1a24;border-radius:12px;padding:24px;margin-bottom:20px;"><div style="font-size:11px;letter-spacing:2px;color:#666;font-family:'JetBrains Mono',monospace;margin-bottom:16px;">${chartTitle}</div><canvas id="${canvasId}" width="752" height="300" style="width:100%;height:300px;display:block;"></canvas></div>`;
+            return { key, tabCfg, mode, sessions, trajectories, points, drift, desc: desc || '', axisPatterns };
+        }
 
-            // Drift
-            let driftHTML = '<div style="font-size:10px;color:#F5A623;font-weight:700;letter-spacing:2px;margin-bottom:12px;font-family:\'JetBrains Mono\',monospace;">// STEP 0 → STEP N 드리프트</div>';
-            AK.forEach(k => {
-                const d = drift[k] || 0;
-                const isPos = d > 0;
-                const width = Math.min(200, Math.abs(d) * 200);
-                const barColor = isPos ? '#34D399' : '#EF4444';
-                driftHTML += `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-                    <span style="font-size:12px;font-family:'JetBrains Mono',monospace;min-width:60px;font-weight:600;color:${colors[k]}">${k}</span>
-                    <div style="flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;position:relative;overflow:visible;">
-                        <div style="position:absolute;left:50%;top:-4px;width:1px;height:14px;background:rgba(255,255,255,0.15)"></div>
-                        <div style="position:absolute;height:100%;width:${width}px;${isPos ? 'left:50%;' : 'right:50%;'}background:${barColor};border-radius:3px;top:0;"></div>
-                    </div>
-                    <span style="font-size:11px;font-family:'JetBrains Mono',monospace;min-width:50px;text-align:right;color:${isPos ? '#34D399' : '#EF4444'}">${isPos ? '+' : ''}${d.toFixed(3)}</span>
-                </div>`;
+        // ── switchTrajTab2 — syncs tabs + lens-nav, redraws chart/drift/panel ──
+        function switchTrajTab2(tabEl, key, navEl) {
+            if (!_trajSimData) return;
+            _trajCurrentTab = key;
+            const sc = _trajResolveScenario(key, _trajSimData);
+            const tabCfg = sc.tabCfg;
+
+            // Update tabs
+            document.querySelectorAll('#trajTabs .traj-tab').forEach(t => {
+                t.classList.remove('on');
+                t.style.background = '';
+                t.style.color = '';
+                t.style.borderColor = '';
+                t.style.boxShadow = '';
             });
-            panelHTML += '<div style="background:#111118;border:1px solid #1a1a24;border-radius:12px;padding:24px;margin-bottom:20px;">' + driftHTML + '</div>';
-
-            // 세션 개수 / 신뢰도 메트릭
-            if (situation) {
-                panelHTML += `<div style="display:flex;gap:12px;flex-wrap:wrap;">`;
-                panelHTML += `<div style="flex:1;min-width:140px;background:#111118;border:1px solid #1a1a24;border-radius:10px;padding:16px;text-align:center;"><div style="font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${tabCfg.color};">${situation.sessionCount || 0}</div><div style="font-size:10px;color:#666;margin-top:8px;font-family:'JetBrains Mono',monospace;">SESSIONS</div></div>`;
-                panelHTML += `<div style="flex:1;min-width:140px;background:#111118;border:1px solid #1a1a24;border-radius:10px;padding:16px;text-align:center;"><div style="font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#A78BFA;">${situation.trajectoryCount || 0}</div><div style="font-size:10px;color:#666;margin-top:8px;font-family:'JetBrains Mono',monospace;">TRAJECTORIES</div></div>`;
-                if (std && std.length > 0) {
-                    const avgStd = AK.reduce((s, k) => s + std.reduce((ss, p) => ss + (p[k] || 0), 0) / std.length, 0) / AK.length;
-                    panelHTML += `<div style="flex:1;min-width:140px;background:#111118;border:1px solid #1a1a24;border-radius:10px;padding:16px;text-align:center;"><div style="font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#60A5FA;">${avgStd.toFixed(3)}</div><div style="font-size:10px;color:#666;margin-top:8px;font-family:'JetBrains Mono',monospace;">AVG STD</div></div>`;
-                }
-                panelHTML += `</div>`;
+            const activeTab = tabEl || document.querySelector('#trajTabs .traj-tab[data-key="' + key + '"]');
+            if (activeTab) {
+                activeTab.classList.add('on');
+                activeTab.style.background = tabCfg.color;
+                activeTab.style.borderColor = tabCfg.color;
+                activeTab.style.color = key === 'loss' ? '#fff' : '#000';
+                activeTab.style.boxShadow = '0 0 14px ' + tabCfg.color + '40';
             }
 
-            panel.innerHTML = panelHTML;
+            // Update lens-nav
+            document.querySelectorAll('#trajNav .lens-nav-item').forEach(n => n.classList.remove('active'));
+            const activeNav = navEl || document.querySelector('#trajNav .lens-nav-item[data-key="' + key + '"]');
+            if (activeNav) activeNav.classList.add('active');
 
-            if (!window._trajChartData) window._trajChartData = {};
-            window._trajChartData[key] = { points: trajPoints, inject: null, std };
-            // v3.6.6: std 배열 전달 → drawTrajLineChart 가 ±1σ 밴드 렌더링.
-            //   measured 모드에서만 std 있음 (simulated fallback 은 null 전달)
-            drawTrajLineChart(canvasId, trajPoints, null, std);
+            // Update scenario accent color (CSS custom property for ::before)
+            document.documentElement.style.setProperty('--scenario-color', tabCfg.color);
+
+            // Draw chart
+            _trajDrawChart(sc);
+            // Render drift
+            _trajRenderDrift(sc);
+            // Update chart meta
+            _trajUpdateChartMeta(sc);
+            // Render lens panel
+            renderTrajLensPanel(key, _trajSimData);
         }
 
+        // ── Draw Line Chart (Canvas 2D — production exact, JetBrains Mono) ──
+        function _trajDrawChart(sc) {
+            const pts = sc.points;
+            const cv = document.getElementById('trajCanvas');
+            if (!cv || !pts || pts.length < 2) return;
 
-        function switchTrajTab(el, tabName) {
-            // 탭 상태 갱신
-            document.querySelectorAll('.traj-tab').forEach(t => {
-                t.classList.remove('active');
-                t.style.background = 'transparent';
-                t.style.color = '#888';
-                t.style.fontWeight = '400';
-            });
-            el.classList.add('active');
-            const tabColors = { normal: '#F5A623', stress: '#EF4444', intimacy: '#A78BFA', conflict: '#F97316', loss: '#6B7280' };
-            const textColor = tabName === 'loss' ? '#fff' : '#000';
-            el.style.background = tabColors[tabName] || '#F5A623';
-            el.style.borderColor = tabColors[tabName] || '#F5A623';
-            el.style.color = textColor;
-            el.style.fontWeight = '600';
+            const AK = ['E','C','T','O','X'];
+            const colors = TRAJ_AXIS_COLORS;
 
-            // 패널 교체
-            document.querySelectorAll('.traj-panel').forEach(p => p.style.display = 'none');
-            const panel = document.getElementById('traj-panel-' + tabName);
-            if (panel) panel.style.display = 'block';
-
-            // 차트 재그리기 (canvas id 는 'trajChart_' + key 구조)
-            setTimeout(() => {
-                const canvasId = 'trajChart_' + tabName;
-                const stored = window._trajChartData && window._trajChartData[tabName];
-                if (stored) {
-                    try { drawTrajLineChart(canvasId, stored.points, stored.inject); } catch(e) { console.error('[TrajRedraw]', e); }
-                }
-            }, 100);
-        }
-
-        // v3.6.6: drawTrajLineChart —
-        //   (a) 4번째 인자로 std 배열 받아 밴드(±1σ) 렌더링
-        //   (b) 범례(legend) 상단에 색-라벨 표시
-        //   (c) 클램핑 발생 시 console.warn (silent clamp 방지)
-        function drawTrajLineChart(canvasId, dataPoints, injectStep, stdPoints) {
-            const cv = document.getElementById(canvasId);
-            if (!cv || !dataPoints || dataPoints.length < 2) return;
             const dpr = devicePixelRatio || 1;
-            cv.width = 752 * dpr;
+            cv.width = 1000 * dpr;
             cv.height = 300 * dpr;
             cv.style.width = '100%';
             cv.style.height = '300px';
@@ -7815,39 +7673,11 @@ function buildProfileOverview(axes, profile) {
             const ctx = cv.getContext('2d');
             ctx.scale(dpr, dpr);
 
-            const W = 752, H = 300;
-            // v3.6.6: 상단 legend 공간 확보 위해 pad.t 20 → 34
-            const pad = { t: 34, r: 20, b: 40, l: 50 };
+            const W = 1000, H = 300;
+            const pad = { t: 20, r: 20, b: 40, l: 50 };
             const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
 
-            const AK = ['E', 'C', 'T', 'O', 'X'];
-            const colors = TRAJ_AXIS_COLORS; // 전역 단일 소스
-            const names = TRAJ_AXIS_NAMES;
-
-            // clamp 감지 — 한번이라도 범위 밖 값 있으면 warn
-            let clampCount = 0;
-            const clampVal = (v) => {
-                if (v === undefined || v === null) return 0.5;
-                if (v < 0 || v > 1) clampCount++;
-                return Math.max(0, Math.min(1, v));
-            };
-
             ctx.clearRect(0, 0, W, H);
-
-            // Legend (top) — 색 블록 + 축명
-            const legendY = 8;
-            let lx = pad.l;
-            ctx.font = '600 10px "JetBrains Mono","Courier New",monospace';
-            ctx.textBaseline = 'middle';
-            ctx.textAlign = 'left';
-            AK.forEach(k => {
-                ctx.fillStyle = colors[k];
-                ctx.fillRect(lx, legendY + 3, 10, 3);
-                ctx.fillStyle = 'rgba(255,255,255,0.75)';
-                const label = k + ' ' + names[k];
-                ctx.fillText(label, lx + 14, legendY + 5);
-                lx += 14 + ctx.measureText(label).width + 18;
-            });
 
             // Grid
             ctx.strokeStyle = 'rgba(255,255,255,0.05)';
@@ -7866,250 +7696,201 @@ function buildProfileOverview(axes, profile) {
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
             for (let v = 0; v <= 1; v += 0.2) {
-                const y = pad.t + (1 - v) * ch;
-                ctx.fillText(v.toFixed(1), pad.l - 8, y);
+                ctx.fillText(v.toFixed(1), pad.l - 8, pad.t + (1 - v) * ch);
             }
 
             // X-axis labels
-            ctx.fillStyle = 'rgba(255,255,255,0.3)';
-            ctx.font = '600 9px "JetBrains Mono","Courier New",monospace';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
-            dataPoints.forEach((pt, i) => {
-                const x = pad.l + (i / (dataPoints.length - 1)) * cw;
-                const stepVal = pt.step !== undefined ? pt.step : (pt.segment !== undefined ? pt.segment : i);
-                const isSpecial = typeof stepVal === 'string';
-                const label = isSpecial ? stepVal : (pt.segment !== undefined ? '구간' + (stepVal + 1) : 't' + stepVal);
-                ctx.fillStyle = isSpecial ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)';
-                ctx.fillText(label, x, H - pad.b + 8);
+            ctx.font = '600 9px "JetBrains Mono","Courier New",monospace';
+            pts.forEach((pt, i) => {
+                const x = pad.l + (i / (pts.length - 1)) * cw;
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.fillText('t' + i, x, H - pad.b + 10);
             });
 
-            // Inject marker
-            if (injectStep !== null && injectStep !== undefined && injectStep < dataPoints.length) {
-                const x = pad.l + (injectStep / (dataPoints.length - 1)) * cw;
-                ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-                ctx.setLineDash([4, 4]);
-                ctx.beginPath();
-                ctx.moveTo(x, pad.t);
-                ctx.lineTo(x, H - pad.b);
-                ctx.stroke();
-                ctx.setLineDash([]);
-                ctx.fillStyle = 'rgba(255,255,255,0.3)';
-                ctx.font = '9px JetBrains Mono, monospace';
-                ctx.fillText('INJECT', x, pad.t - 5);
-            }
-
-            // v3.6.6: std 밴드 (±1σ) — 존재 시 플롯 라인 아래에 반투명 영역으로 표시
-            const hasStd = Array.isArray(stdPoints) && stdPoints.length === dataPoints.length;
-            if (hasStd) {
-                AK.forEach(k => {
-                    ctx.fillStyle = colors[k] + '22'; // ~13% alpha
-                    ctx.beginPath();
-                    // 상단 경계 (mean + std)
-                    dataPoints.forEach((pt, i) => {
-                        const mean = clampVal(pt[k]);
-                        const sd = stdPoints[i] ? clampVal(stdPoints[i][k]) : 0;
-                        const upper = Math.max(0, Math.min(1, mean + sd));
-                        const x = pad.l + (i / (dataPoints.length - 1)) * cw;
-                        const y = pad.t + (1 - upper) * ch;
-                        if (i === 0) ctx.moveTo(x, y);
-                        else ctx.lineTo(x, y);
-                    });
-                    // 하단 경계 (mean - std) 역순
-                    for (let i = dataPoints.length - 1; i >= 0; i--) {
-                        const mean = clampVal(dataPoints[i][k]);
-                        const sd = stdPoints[i] ? clampVal(stdPoints[i][k]) : 0;
-                        const lower = Math.max(0, Math.min(1, mean - sd));
-                        const x = pad.l + (i / (dataPoints.length - 1)) * cw;
-                        const y = pad.t + (1 - lower) * ch;
-                        ctx.lineTo(x, y);
-                    }
-                    ctx.closePath();
-                    ctx.fill();
-                });
-            }
-
-            // Plot lines (mean)
+            // Lines
             AK.forEach(k => {
                 ctx.strokeStyle = colors[k];
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                dataPoints.forEach((pt, i) => {
-                    const val = clampVal(pt[k]);
-                    const x = pad.l + (i / (dataPoints.length - 1)) * cw;
+                pts.forEach((pt, i) => {
+                    const val = Math.max(0, Math.min(1, pt[k] !== undefined ? pt[k] : 0.5));
+                    const x = pad.l + (i / (pts.length - 1)) * cw;
                     const y = pad.t + (1 - val) * ch;
-                    if (i === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
                 });
                 ctx.stroke();
 
                 // Dots
                 ctx.fillStyle = colors[k];
-                dataPoints.forEach((pt, i) => {
-                    const val = clampVal(pt[k]);
-                    const x = pad.l + (i / (dataPoints.length - 1)) * cw;
+                pts.forEach((pt, i) => {
+                    const val = Math.max(0, Math.min(1, pt[k] !== undefined ? pt[k] : 0.5));
+                    const x = pad.l + (i / (pts.length - 1)) * cw;
                     const y = pad.t + (1 - val) * ch;
                     ctx.beginPath();
-                    ctx.arc(x, y, 3, 0, Math.PI * 2);
+                    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
                     ctx.fill();
                 });
             });
 
-            // v3.6.6: clamp 발생 시 개발자 알림 (silent clamping 방지)
-            if (clampCount > 0 && typeof console !== 'undefined') {
-                console.warn('[TrajChart:' + canvasId + '] ' + clampCount + '개 값이 [0,1] 범위 밖이라 clamp됨. 백엔드 공식 점검 필요.');
+            // Legend (bottom)
+            const legendY = H - 12;
+            let legendX = pad.l;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            AK.forEach(k => {
+                ctx.fillStyle = colors[k];
+                ctx.fillRect(legendX, legendY - 4, 12, 3);
+                ctx.font = '700 10px "JetBrains Mono","Courier New",monospace';
+                ctx.fillText(k, legendX + 16, legendY);
+                const kW = ctx.measureText(k).width;
+                ctx.font = '400 10px "JetBrains Mono","Courier New",monospace';
+                ctx.fillStyle = colors[k] + 'AA';
+                ctx.fillText(TRAJ_AXIS_NAMES[k], legendX + 18 + kW, legendY);
+                const nW = ctx.measureText(TRAJ_AXIS_NAMES[k]).width;
+                legendX += 16 + kW + 2 + nW + 24;
+            });
+        }
+
+        // ── Drift Bars ──
+        function _trajRenderDrift(sc) {
+            const AK = ['E','C','T','O','X'];
+            const colors = TRAJ_AXIS_COLORS;
+            const container = document.getElementById('trajDriftBars');
+            if (!container) return;
+
+            let html = '';
+            AK.forEach(k => {
+                const d = sc.drift[k] || 0;
+                const isPos = d > 0;
+                const width = Math.min(45, Math.abs(d) * 200);
+                const barColor = isPos ? '#34D399' : '#EF4444';
+                const sign = isPos ? '+' : '';
+                html += '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">';
+                html += '<span class="traj-drift-label" style="color:' + colors[k] + '">' + k + ' <span style="font-weight:400;opacity:0.6;">' + TRAJ_AXIS_NAMES[k] + '</span></span>';
+                html += '<div style="flex:1;height:5px;background:rgba(255,255,255,0.06);border-radius:3px;position:relative;overflow:visible;">';
+                html += '<div style="position:absolute;left:50%;top:-4px;width:1px;height:13px;background:rgba(255,255,255,0.12);"></div>';
+                html += '<div style="position:absolute;height:100%;width:' + width + '%;' + (isPos ? 'left:50%;' : 'right:50%;') + 'background:' + barColor + ';border-radius:3px;top:0;"></div>';
+                html += '</div>';
+                html += '<span style="font-size:11px;font-family:\'JetBrains Mono\',\'Courier New\',monospace;min-width:50px;text-align:right;color:' + barColor + ';font-weight:600;">' + sign + d.toFixed(3) + '</span>';
+                html += '</div>';
+            });
+            container.innerHTML = html;
+        }
+
+        // ── Chart Meta (title + badge) ──
+        function _trajUpdateChartMeta(sc) {
+            const title = document.getElementById('trajChartTitle');
+            const badge = document.getElementById('trajChartBadge');
+            if (!title || !badge) return;
+
+            if (sc.mode === 'measured') {
+                title.textContent = '// MEASURED TRAJECTORY · MEAN OF ' + sc.sessions + ' SESSIONS · ' + sc.points.length + ' STEPS';
+                badge.className = 'traj-mode-badge';
+                badge.style.background = 'rgba(52,211,153,0.12)';
+                badge.style.borderColor = 'rgba(52,211,153,0.35)';
+                badge.style.color = '#34D399';
+                badge.textContent = '🟢 MEASURED';
+            } else {
+                title.textContent = '// SIMULATED · BASELINE → SHIFT → ' + (sc.points.length > 1 ? (sc.points.length - 1) + '-STEP' : 'N/A');
+                badge.className = 'traj-mode-badge';
+                badge.style.background = 'rgba(245,166,35,0.12)';
+                badge.style.borderColor = 'rgba(245,166,35,0.35)';
+                badge.style.color = '#F5A623';
+                badge.textContent = '🟡 SIMULATED';
             }
         }
 
-        function renderSimulationTrajectory(simData, wrap) {
-            const baseAxes = simData.axes; // {emotion, drive, cognition, boundary, resilience}
+        // ── Build Response Pattern Card ──
+        function buildTrajResponseCard(simData) {
+            const card = document.getElementById('trajResponseCard');
+            if (!card) return;
+
+            // Analyze cross-scenario response pattern from stimulus data
             const AK = ['E','C','T','O','X'];
+            let patternName = '선택적 개방';
+            let patternDesc = '';
 
-            function getShifted(stimKey) {
-                const d = TRAJ_STIM[stimKey].delta;
-                const r = {};
-                AK.forEach(k => { r[k] = Math.max(0, Math.min(1, (baseAxes[TRAJ_AXIS_MAP[k]] || 0.5) + d[k])); });
-                return r;
-            }
+            // Derive pattern from stimulus deltas
+            if (simData.stimulus) {
+                const stressO = simData.stimulus.stress?.deltas?.O || 0;
+                const intimacyO = simData.stimulus.intimacy?.deltas?.O || 0;
+                const conflictO = simData.stimulus.conflict?.deltas?.O || 0;
+                const lossE = simData.stimulus.loss?.deltas?.E || 0;
 
-            function render() {
-                const sv = getShifted(trajCurStim);
-                let h = '<div class="traj-tabs">';
-                for (const [sk, sv2] of Object.entries(TRAJ_STIM)) {
-                    h += `<div class="traj-tab${sk===trajCurStim?' on':''}" data-stim="${sk}">${sv2.icon} ${sv2.label}</div>`;
-                }
-                h += '</div><div class="traj-main">';
-                h += '<div class="traj-radar-wrap"><canvas id="trajRadarCanvas" width="260" height="260"></canvas></div>';
-                h += '<div class="traj-bars">';
-
-                TRAJ_AXES.forEach(ax => {
-                    const base = baseAxes[TRAJ_AXIS_MAP[ax.k]] || 0.5;
-                    const s = sv[ax.k];
-                    const d = Math.round((s - base) * 1000) / 1000;
-                    const ds = d >= 0 ? '+' + d.toFixed(2) : d.toFixed(2);
-                    const dc = d > 0.02 ? 'up' : d < -0.02 ? 'dn' : 'eq';
-                    h += `<div class="traj-bar-row">
-                        <div class="traj-bar-label" style="color:${ax.c}">${ax.l}</div>
-                        <div class="traj-bar-track">
-                            <div class="traj-bar-base" style="width:${base*100}%;background:${ax.c}"></div>
-                            <div class="traj-bar-shift" style="width:${s*100}%;background:${ax.c}"></div>
-                            <div class="traj-bar-marker" style="left:${base*100}%;background:rgba(255,255,255,.35)"></div>
-                            ${trajCurStim!=='default'?`<div class="traj-bar-marker" style="left:${s*100}%;background:${ax.c}"></div>`:''}
-                        </div>
-                        <div class="traj-bar-vals">${base.toFixed(2)}→${s.toFixed(2)} <span class="traj-d ${dc}">${ds}</span></div>
-                    </div>`;
-                });
-                h += '</div></div>';
-
-                // Footer badges
-                h += '<div class="traj-foot">';
-                if (trajCurStim === 'default') {
-                    h += '<div class="traj-badge" style="color:#F5A623;background:rgba(245,166,35,.08)">자극 시나리오를 선택하세요</div>';
+                if (intimacyO > 0.1 && stressO < -0.05) {
+                    patternName = '선택적 개방';
+                    patternDesc = '위협적 맥락(스트레스·갈등)에서는 경계를 닫고 차단하지만, 안전한 맥락(친밀감)에서는 경계가 크게 열립니다. 아무에게나 열리지 않지만, 한 번 열리면 깊이 들어갑니다.';
+                    if (lossE > 0.2) patternDesc += ' 상실이 가장 큰 취약점이며, 이때 유일하게 전면적 붕괴가 나타납니다.';
+                } else if (stressO < -0.1 && conflictO < -0.1) {
+                    patternName = '전면 차단';
+                    patternDesc = '외부 자극이 부정적일 때 경계를 빠르게 닫고 내면으로 후퇴합니다. 자극의 종류에 관계없이 방어가 먼저 작동하는 패턴입니다.';
+                } else if (intimacyO > 0.15 && conflictO > 0) {
+                    patternName = '개방 유지';
+                    patternDesc = '갈등 상황에서도 경계를 유지하며, 친밀감에서는 더욱 크게 열립니다. 관계 지향적이며 충돌을 회피하지 않는 패턴입니다.';
                 } else {
-                    const vuln = Math.round((Math.abs(sv.E-(baseAxes.emotion||.5))*.3+Math.abs(sv.C-(baseAxes.drive||.5))*.25+Math.abs(sv.X-(baseAxes.resilience||.5))*.25+Math.abs(sv.O-(baseAxes.boundary||.5))*.2)*100)/100;
-                    const vc = vuln>.15?'#FF6B6B':vuln>.10?'#f59e0b':'#4ECDC4';
-                    const vb = vuln>.15?'rgba(255,107,107,.1)':vuln>.10?'rgba(245,158,11,.1)':'rgba(78,205,196,.1)';
-                    const rec = ['C','T','X'].filter(k=>sv[k]>=(baseAxes[TRAJ_AXIS_MAP[k]]||.5)-.02).length;
-                    const rr = rec/3;
-                    const rl = rr>=.66?'회복':rr>=.33?'부분 회복':'취약';
-                    const rc = rr>=.66?'#4ECDC4':rr>=.33?'#f59e0b':'#FF6B6B';
-                    const rb = rr>=.66?'rgba(78,205,196,.1)':rr>=.33?'rgba(245,158,11,.1)':'rgba(255,107,107,.1)';
-                    h += `<div class="traj-badge" style="color:${vc};background:${vb}">충격도 ${vuln.toFixed(2)}</div>`;
-                    h += `<div class="traj-badge" style="color:${rc};background:${rb}">회복 ${rl}</div>`;
+                    patternName = '균형 대응';
+                    patternDesc = '상황에 따라 경계를 유연하게 조절합니다. 극단적 개방이나 차단 없이 적응적으로 반응하는 패턴입니다.';
                 }
-                h += '</div>';
-
-                // Description
-                const stim = TRAJ_STIM[trajCurStim];
-                h += `<div class="traj-desc"><div class="traj-desc-title">// ${trajCurStim==='default'?'baseline':'stimulus'}.${trajCurStim}</div>`;
-                h += `<div class="traj-desc-text">${stim.desc}</div>`;
-                if (stim.axes && stim.axes.length) {
-                    h += '<div class="traj-desc-axes">';
-                    stim.axes.forEach(a => { h += `<div class="traj-desc-ax" style="color:${a.c};border-color:${a.c}30">${a.t}</div>`; });
-                    h += '</div>';
-                }
-                h += '</div>';
-
-                wrap.innerHTML = h;
-
-                // Tab click handlers
-                wrap.querySelectorAll('.traj-tab').forEach(tab => {
-                    tab.addEventListener('click', () => { trajCurStim = tab.dataset.stim; render(); });
-                });
-
-                // Draw radar
-                drawTrajRadar(baseAxes, trajCurStim === 'default' ? null : sv, trajCurStim === 'default' ? '#F5A623' : TRAJ_STIM[trajCurStim].color);
             }
 
-            render();
+            // Use simData.responsePattern if the engine provides one
+            if (simData.responsePattern) {
+                if (simData.responsePattern.name) patternName = simData.responsePattern.name;
+                if (simData.responsePattern.desc) patternDesc = simData.responsePattern.desc;
+            }
+
+            let h = '';
+            h += '<div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,166,35,0.15),transparent);"></div>';
+            h += '<div style="display:flex;align-items:flex-start;gap:24px;">';
+            h += '<div style="flex:1;">';
+            h += '<div style="font-size:11px;letter-spacing:2px;color:var(--ac);font-family:\'JetBrains Mono\',monospace;margin-bottom:14px;">// RESPONSE PATTERN</div>';
+            h += '<div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:12px;">' + patternName + '</div>';
+            h += '<div style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.85;">' + patternDesc + '</div>';
+            h += '</div></div>';
+
+            card.innerHTML = h;
+            card.style.display = 'block';
         }
 
-        function drawTrajRadar(baseAxes, shiftedVals, overlayColor) {
-            const cv = document.getElementById('trajRadarCanvas');
-            if (!cv) return;
-            const dpr = devicePixelRatio || 1;
-            const size = 260;
-            cv.width = size * dpr; cv.height = size * dpr;
-            cv.style.width = size + 'px'; cv.style.height = size + 'px';
-            const c = cv.getContext('2d');
-            c.scale(dpr, dpr);
-            const cx = size/2, cy = size/2, r = size*0.38, n = 5;
+        // ── Render Lens Panel ──
+        function renderTrajLensPanel(key, simData) {
+            const panel = document.getElementById('trajPanelContent');
+            if (!panel) return;
+
+            const sc = _trajResolveScenario(key, simData);
             const AK = ['E','C','T','O','X'];
-            c.clearRect(0, 0, size, size);
+            const colors = TRAJ_AXIS_COLORS;
 
-            // Grid
-            for (let g = 1; g <= 4; g++) {
-                c.beginPath();
-                const rr = (g/4)*r;
-                for (let i = 0; i <= n; i++) { const a=(i/n)*Math.PI*2-Math.PI/2; const x=cx+Math.cos(a)*rr; const y=cy+Math.sin(a)*rr; i===0?c.moveTo(x,y):c.lineTo(x,y); }
-                c.strokeStyle='rgba(255,255,255,0.05)'; c.lineWidth=1; c.stroke();
-            }
-            for (let i = 0; i < n; i++) { const a=(i/n)*Math.PI*2-Math.PI/2; c.beginPath(); c.moveTo(cx,cy); c.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r); c.strokeStyle='rgba(255,255,255,0.05)'; c.stroke(); }
+            let html = '';
 
-            function poly(vals, fill, stroke, lw) {
-                c.beginPath();
-                for (let i = 0; i <= n; i++) { const idx=i%n; const a=(idx/n)*Math.PI*2-Math.PI/2; const v=vals[AK[idx]]||0; const x=cx+Math.cos(a)*r*v; const y=cy+Math.sin(a)*r*v; i===0?c.moveTo(x,y):c.lineTo(x,y); }
-                c.fillStyle=fill; c.fill(); c.strokeStyle=stroke; c.lineWidth=lw; c.stroke();
+            // 시나리오 제목
+            html += '<div class="lens-panel-title">' + sc.tabCfg.icon + ' ' + sc.tabCfg.label + '</div>';
+
+            // 설명
+            if (sc.desc) {
+                html += '<div style="font-size:14px;color:rgba(255,255,255,0.7);line-height:1.9;margin-bottom:28px;">' + sc.desc + '</div>';
             }
 
-            // Base polygon
-            const bv = {}; AK.forEach(k => bv[k] = baseAxes[TRAJ_AXIS_MAP[k]] || 0.5);
-            poly(bv, 'rgba(245,166,35,0.06)', 'rgba(245,166,35,0.3)', 1.5);
-
-            // Shifted overlay
-            if (shiftedVals) {
-                poly(shiftedVals, overlayColor+'18', overlayColor, 2);
-                // Dashed arrows
-                AK.forEach((k, i) => {
-                    const a = (i/n)*Math.PI*2-Math.PI/2;
-                    const bx=cx+Math.cos(a)*r*bv[k], by=cy+Math.sin(a)*r*bv[k];
-                    const sx=cx+Math.cos(a)*r*shiftedVals[k], sy=cy+Math.sin(a)*r*shiftedVals[k];
-                    c.beginPath(); c.moveTo(bx,by); c.lineTo(sx,sy);
-                    c.strokeStyle=TRAJ_AXES[i].c+'60'; c.lineWidth=1.5; c.setLineDash([4,3]); c.stroke(); c.setLineDash([]);
+            // 축 변동 패턴
+            html += '<div class="lens-panel-sub-title">축 변동 패턴</div>';
+            if (sc.axisPatterns && sc.axisPatterns.length > 0) {
+                sc.axisPatterns.forEach(function(ap) {
+                    html += '<div style="display:flex;gap:14px;align-items:stretch;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04);">';
+                    html += '<div style="width:3px;border-radius:2px;background:' + (colors[ap.axis] || '#888') + ';opacity:0.5;flex-shrink:0;"></div>';
+                    html += '<div style="flex:1;">';
+                    html += '<div style="font-size:12px;font-family:\'JetBrains Mono\',monospace;font-weight:700;color:' + (colors[ap.axis] || '#888') + ';margin-bottom:4px;">' + ap.axis + ' <span style="font-weight:400;color:rgba(255,255,255,0.3);font-size:11px;margin-left:4px;">' + ap.delta + '</span></div>';
+                    if (ap.desc) {
+                        html += '<div style="font-size:13px;color:rgba(255,255,255,0.7);line-height:1.75;">' + ap.desc + '</div>';
+                    }
+                    html += '</div></div>';
                 });
-                // Shifted dots
-                AK.forEach((k, i) => {
-                    const a=(i/n)*Math.PI*2-Math.PI/2;
-                    const x=cx+Math.cos(a)*r*shiftedVals[k], y=cy+Math.sin(a)*r*shiftedVals[k];
-                    c.beginPath(); c.arc(x,y,4,0,Math.PI*2); c.fillStyle=TRAJ_AXES[i].c; c.fill();
-                });
+            } else {
+                html += '<div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.7;padding:8px 0;">전 축이 기저선 근처에서 안정적으로 유지됩니다. 유의미한 변동이 관측되지 않았습니다.</div>';
             }
 
-            // Base dots
-            AK.forEach((k, i) => {
-                const a=(i/n)*Math.PI*2-Math.PI/2;
-                const x=cx+Math.cos(a)*r*bv[k], y=cy+Math.sin(a)*r*bv[k];
-                c.beginPath(); c.arc(x,y,3.5,0,Math.PI*2);
-                c.fillStyle = shiftedVals ? 'rgba(255,255,255,0.3)' : TRAJ_AXES[i].c; c.fill();
-            });
-
-            // Axis labels
-            AK.forEach((k, i) => {
-                const a=(i/n)*Math.PI*2-Math.PI/2;
-                const lx=cx+Math.cos(a)*(r+16), ly=cy+Math.sin(a)*(r+16);
-                c.fillStyle='rgba(255,255,255,0.35)'; c.font='600 9px "JetBrains Mono","Courier New",monospace'; c.textAlign='center'; c.textBaseline='middle';
-                c.fillText(k, lx, ly);
-            });
+            panel.innerHTML = html;
         }
 
         // ─── 교차 시뮬레이션 인사이트 렌더링 (매칭용) ───
@@ -10801,9 +10582,8 @@ function displayResult() {
             // 궤적 드리프트
             if (sim && sim.trajectory && sim.trajectory.drift) {
                 const drift = sim.trajectory.drift;
-                // v3.6.6: TRAJ_AXIS_NAMES / TRAJ_AXIS_COLORS (line 7471) 와 통일. 로컬 중복 제거.
-                const AXIS_NAMES = TRAJ_AXIS_NAMES;
-                const AXIS_COLORS = TRAJ_AXIS_COLORS;
+                const AXIS_NAMES = { E:'정서', C:'추진력', T:'인지', O:'경계', X:'회복' };
+                const AXIS_COLORS = { E:'#F5A623', C:'#60A5FA', T:'#A78BFA', O:'#4ADE80', X:'#EC4899' };
                 ctx3.fillStyle = 'rgba(245,166,35,0.4)';
                 ctx3.font = '600 16px -apple-system, BlinkMacSystemFont, monospace';
                 ctx3.textAlign = 'left';
