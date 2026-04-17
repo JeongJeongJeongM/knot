@@ -4013,6 +4013,56 @@
         .rpc-tag-if{display:inline-block;padding:1px 7px;font-size:9px;font-weight:700;letter-spacing:1.5px;border-radius:3px;margin-right:6px;font-family:'JetBrains Mono',monospace;background:rgba(167,139,250,0.1);color:var(--a4)}
         .rpc-tag-then{display:inline-block;padding:1px 7px;font-size:9px;font-weight:700;letter-spacing:1.5px;border-radius:3px;margin:0 6px;font-family:'JetBrains Mono',monospace;background:rgba(245,166,35,0.08);color:var(--ac)}
         @media (max-width:720px){.rpc-matrix{grid-template-columns:90px repeat(5,1fr) 52px}.rpc-ssg{grid-template-columns:1fr}}
+        /* v3.6.16: Per-situation card + new role-split styles */
+        .rpc-ps-head{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+        .rpc-ps-head .icon{font-size:18px}
+        .rpc-ps-head .label{font-size:16px;font-weight:700;color:#fff;letter-spacing:-0.2px}
+        .rpc-ps-head .meta{font-size:10px;color:rgba(255,255,255,0.3);font-family:'JetBrains Mono',monospace;margin-left:auto}
+        .rpc-ps-sub{font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:22px;font-family:'JetBrains Mono',monospace;letter-spacing:0.5px}
+        .rpc-ps-block{padding-top:20px;margin-top:20px;border-top:1px solid rgba(255,255,255,0.04)}
+        .rpc-ps-label{font-size:9px;letter-spacing:2.5px;color:rgba(245,166,35,0.55);font-family:'JetBrains Mono',monospace;font-weight:700;margin-bottom:12px}
+        /* lead shift — 사실 위주 */
+        .rpc-lead{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
+        .rpc-axis-pill{min-width:100px;padding:14px;text-align:center;background:rgba(6,6,11,0.5);border:1px solid rgba(255,255,255,0.04);border-radius:8px}
+        .rpc-axis-pill .k{font-size:9px;color:rgba(255,255,255,0.35);font-family:'JetBrains Mono',monospace;margin-bottom:6px;white-space:nowrap}
+        .rpc-axis-pill .v{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;letter-spacing:-0.5px}
+        .rpc-axis-pill .d{font-size:10px;margin-top:4px;font-family:'JetBrains Mono',monospace;font-weight:600}
+        .rpc-lead-facts{font-size:13px;color:rgba(255,255,255,0.72);line-height:1.85}
+        .rpc-lead-facts .ax{font-weight:700;padding:0 2px;font-family:'JetBrains Mono',monospace}
+        .rpc-lead-facts ul{list-style:none;padding:0;margin:0}
+        .rpc-lead-facts li{padding:3px 0}
+        .rpc-lead-facts li::before{content:'· ';color:rgba(255,255,255,0.3)}
+        /* baseline values grid (일반 탭) */
+        .rpc-base-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;background:rgba(6,6,11,0.5);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:14px 16px}
+        .rpc-base-grid > div{text-align:left}
+        .rpc-base-grid .k{font-size:9px;color:rgba(255,255,255,0.35);font-family:'JetBrains Mono',monospace;margin-bottom:4px}
+        .rpc-base-grid .v{font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace}
+        /* activated mode — FUNCTION/COST K-V */
+        .rpc-mode{background:rgba(6,6,11,0.5);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:16px 18px}
+        .rpc-mode-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+        .rpc-mode-head .mi{font-size:15px}
+        .rpc-mode-head .mn{font-size:13px;font-weight:700;color:#fff}
+        .rpc-mode-kv{display:grid;grid-template-columns:72px 1fr;gap:8px 14px;font-size:12px;line-height:1.75}
+        .rpc-mode-kv .k{font-size:9px;font-family:'JetBrains Mono',monospace;color:rgba(245,166,35,0.55);letter-spacing:1.5px;font-weight:700;padding-top:2px}
+        .rpc-mode-kv .v{color:rgba(255,255,255,0.68)}
+        .rpc-mode-chips{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+        .rpc-mode-chip{padding:3px 8px;font-size:10px;border-radius:4px;font-family:'JetBrains Mono',monospace}
+        .rpc-mode-chip.strength{background:rgba(52,211,153,0.06);color:#34D399;border:1px solid rgba(52,211,153,0.18)}
+        .rpc-mode-chip.shadow{background:rgba(239,68,68,0.06);color:#EF4444;border:1px solid rgba(239,68,68,0.18)}
+        /* recovery signature */
+        .rpc-rec-row{display:flex;align-items:center;gap:10px;padding:7px 0}
+        .rpc-rec-row .k{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;min-width:20px}
+        .rpc-rec-row .bar{flex:1;height:18px;position:relative;background:rgba(255,255,255,0.02);border-radius:4px;overflow:hidden;min-width:100px}
+        .rpc-rec-row .bar .peak{position:absolute;top:2px;bottom:2px;left:2%;right:2%;border-radius:3px}
+        .rpc-rec-row .label{font-size:10.5px;color:rgba(255,255,255,0.5);min-width:240px;line-height:1.6;flex:2}
+        /* SSG axis badge (v3.6.16: 축 표시 추가) */
+        .rpc-ssg-axis{display:inline-block;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);margin-bottom:8px}
+        /* predictions — IF/DO */
+        .rpc-tag-do{display:inline-block;padding:1px 7px;font-size:9px;font-weight:700;letter-spacing:1.5px;border-radius:3px;margin:0 6px;font-family:'JetBrains Mono',monospace;background:rgba(245,166,35,0.08);color:var(--ac)}
+        /* pattern short narrative */
+        .rpc-narrative-short{font-size:14px;color:rgba(255,255,255,0.78);line-height:1.85}
+        .rpc-narrative-short strong{color:#fff;font-weight:600}
+        @media (max-width:720px){.rpc-lead{grid-template-columns:1fr}.rpc-rec-row .label{min-width:auto}.rpc-base-grid{grid-template-columns:repeat(3,1fr)}}
         #trajSplit{height:460px}
         #trajSplit .lens-panel{height:100%}
         #trajSplit::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);z-index:1}
@@ -4396,13 +4446,13 @@
                 <h2>행동 궤적</h2>
                 <p>외부 자극이 당신을 어떻게 변형시키는가</p>
             </div>
-            <!-- v3.6.10: 다축 종합 해석 카드 — baseline + 상황별 편차 → 감정 패턴 유형화 -->
-            <div id="trajSynthesis" style="margin-bottom:24px;"></div>
+            <!-- v3.6.10 구 synthesis 슬롯 (비워둠 — v3.6.16 에서 MATRIX/PATTERN 로 분리) -->
+            <div id="trajSynthesis" style="display:none;"></div>
             <!-- Scenario tabs -->
             <div class="traj-tabs" id="trajTabs"></div>
-            <!-- v3.6.14: 숨긴 상황 안내 (측정 실패 투명성) -->
+            <!-- 숨긴 상황 안내 -->
             <div id="trajHiddenNote"></div>
-            <!-- Chart card: canvas + drift -->
+            <!-- Chart card (v3.6.16: DRIFT 바 섹션 제거됨 — ASYMMETRY MATRIX 로 대체) -->
             <div class="traj-chart-card" id="trajChartCard">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
                     <div class="traj-chart-label" id="trajChartTitle"></div>
@@ -4411,15 +4461,20 @@
                 <div class="traj-chart-canvas-wrap">
                     <canvas id="trajCanvas" width="1000" height="300"></canvas>
                 </div>
-                <div class="traj-drift-section">
-                    <div class="traj-drift-title">// DRIFT</div>
-                    <div id="trajDriftBars"></div>
-                </div>
             </div>
-            <!-- Response pattern card -->
-            <div class="traj-response-card" id="trajResponseCard" style="display:none;"></div>
-            <!-- Interpretation lens-split -->
-            <div class="lens-split" id="trajSplit" style="margin-top:28px;overflow:hidden;position:relative;">
+            <!-- v3.6.16: RESPONSE PATTERN 5-card 분리 -->
+            <!-- 1. ASYMMETRY MATRIX -->
+            <div class="traj-response-card" id="trajMatrixCard" style="display:none;"></div>
+            <!-- 2. PATTERN DECLARATION -->
+            <div class="traj-response-card" id="trajPatternCard" style="display:none;"></div>
+            <!-- 3. PER-SITUATION (탭 선택 시 동적 재렌더) -->
+            <div class="traj-response-card" id="trajPerSituationCard" style="display:none;"></div>
+            <!-- 4. STRENGTHS / SHADOWS / GROWTH -->
+            <div class="traj-response-card" id="trajSSGCard" style="display:none;"></div>
+            <!-- 5. CONDITIONAL PREDICTIONS -->
+            <div class="traj-response-card" id="trajPredictionsCard" style="display:none;"></div>
+            <!-- LLM essay lens-split (renderTrajLens 에서 채워질 때만 표시) -->
+            <div class="lens-split" id="trajSplit" style="margin-top:28px;overflow:hidden;position:relative;display:none;">
                 <div class="lens-nav" id="trajNav"></div>
                 <div class="lens-panel">
                     <div id="trajPanelContent" class="lens-panel-content"></div>
@@ -7944,12 +7999,13 @@ function buildProfileOverview(axes, profile) {
 
             // Draw chart
             _trajDrawChart(sc);
-            // Render drift
-            _trajRenderDrift(sc);
+            // v3.6.16: DRIFT 바 섹션 제거됨 → _trajRenderDrift 호출 skip
             // Update chart meta
             _trajUpdateChartMeta(sc);
-            // v3.6.15 fix2: renderTrajLensPanel 호출 제거. 구 per-situation 보일러플레이트
-            //   + 중복 축 변동 패턴 출력 금지. #trajSplit 은 LLM essay 전용.
+            // v3.6.16: PER-SITUATION 카드 탭별 재렌더
+            if (typeof renderTrajPerSituationCard === 'function' && _trajSimData) {
+                renderTrajPerSituationCard(key, _trajSimData);
+            }
         }
 
         // ── Draw Line Chart (Canvas 2D — production exact, JetBrains Mono) ──
@@ -8168,40 +8224,25 @@ function buildProfileOverview(axes, profile) {
             }
         }
 
-        // ── Build Response Pattern Card ──
-        // v3.6.15: RESPONSE PATTERN 전면 재설계.
-        //   [A] 패턴 선언 + [B] 비대칭 매트릭스 + [D] Strengths/Shadows/Growth + [E] 조건부 예측.
-        //   본인 데이터 내 normal baseline 대비 상황별 편차 기반. 외부 기준·프로파일 불사용.
-        function buildTrajResponseCard(simData) {
-            const card = document.getElementById('trajResponseCard');
-            if (!card) return;
+        // ═══════════════════════════════════════════════════════════
+        // v3.6.16: RESPONSE PATTERN 5-card 분리 아키텍처
+        // ═══════════════════════════════════════════════════════════
+        // [B] ASYMMETRY MATRIX · [A] PATTERN · [C] PER-SITUATION (동적) ·
+        // [D] SSG · [E] PREDICTIONS 각각 독립 카드로 렌더.
+        // 본인 normal baseline 대비 상황별 편차 기반. 외부 기준 불사용.
+        // ═══════════════════════════════════════════════════════════
 
+        // 공통: baseline + sitEntries prep (카드 렌더러들이 공유)
+        function _rpcPrepare(simData) {
             const AK = ['E','C','T','O','X'];
-            const AXIS_MAP = { E:'emotion', C:'drive', T:'cognition', O:'boundary', X:'resilience' };
-            const AXIS_NAMES = TRAJ_AXIS_NAMES;
-            const AXIS_COLORS = TRAJ_AXIS_COLORS;
-            const SIT_META = {
-                normal:   { label: '일반',    icon: '◆', color: '#F5A623' },
-                stress:   { label: '스트레스', icon: '⚡', color: '#EF4444' },
-                intimacy: { label: '친밀감',   icon: '♥',  color: '#A78BFA' },
-                conflict: { label: '갈등',    icon: '🔥', color: '#F97316' },
-                loss:     { label: '상실',    icon: '◇',  color: '#6B7280' },
-            };
-
-            // baseline = 일반 세션 평균 (v3.6.12)
-            const sits = simData.situational || {};
+            const sits = simData?.situational || {};
             const normalData = sits.normal;
-            let baseline = null;
-            if (normalData?.mean?.length >= 1 && normalData.trajectoryCount >= 1) {
-                baseline = {};
-                AK.forEach(k => {
-                    const sum = normalData.mean.reduce((s, p) => s + (p[k] || 0), 0);
-                    baseline[k] = sum / normalData.mean.length;
-                });
-            }
-            if (!baseline) { card.style.display = 'none'; return; }
-
-            // 상황별 평균 + 편차
+            if (!normalData?.mean?.length || normalData.trajectoryCount < 1) return null;
+            const baseline = {};
+            AK.forEach(k => {
+                const sum = normalData.mean.reduce((s, p) => s + (p[k] || 0), 0);
+                baseline[k] = sum / normalData.mean.length;
+            });
             const sitEntries = [];
             for (const sitKey of ['normal','stress','intimacy','conflict','loss']) {
                 const sd = sits[sitKey];
@@ -8217,10 +8258,75 @@ function buildProfileOverview(axes, profile) {
                     shifts[k] = sitMean[k] - baseline[k];
                     if (sitKey !== 'normal') totalAbs += Math.abs(shifts[k]);
                 });
-                sitEntries.push({ key: sitKey, detected: true, sessions: sd.trajectoryCount, mean: sitMean, shifts, totalAbs });
+                sitEntries.push({ key: sitKey, detected: true, sessions: sd.trajectoryCount, mean: sitMean, trajectory: sd.mean, shifts, totalAbs });
             }
+            return { AK, baseline, sits, sitEntries };
+        }
 
-            // ─── [A] 패턴 선언 ───
+        const RPC_SIT_META = {
+            normal:   { label: '일반',    icon: '◆', color: '#F5A623', psTitle: '평소의 당신',               psSub: '외부 자극이 없는 일반 대화의 평균 · 다른 상황 해석의 기준점' },
+            stress:   { label: '스트레스', icon: '⚡', color: '#EF4444', psTitle: '스트레스를 받을 때의 당신',   psSub: '업무 과부하·마감·위기 맥락 세션들의 평균' },
+            intimacy: { label: '친밀감',   icon: '♥',  color: '#A78BFA', psTitle: '친밀감을 느낄 때의 당신',     psSub: '신뢰가 형성된 맥락 · 관계 토픽 비율이 높은 세션들의 평균' },
+            conflict: { label: '갈등',    icon: '🔥', color: '#F97316', psTitle: '갈등을 겪을 때의 당신',       psSub: '마찰·대립·반박이 일어난 세션들의 평균' },
+            loss:     { label: '상실',    icon: '◇',  color: '#6B7280', psTitle: '상실을 마주할 때의 당신',     psSub: '이별·실패·상실 맥락이 관찰된 세션들의 평균' },
+        };
+
+        // ─── [B] ASYMMETRY MATRIX ───
+        function buildTrajMatrixCard(simData) {
+            const card = document.getElementById('trajMatrixCard');
+            if (!card) return;
+            const prep = _rpcPrepare(simData);
+            if (!prep) { card.style.display = 'none'; return; }
+            const { AK, sitEntries } = prep;
+            const AXIS_NAMES = TRAJ_AXIS_NAMES;
+            const AXIS_COLORS = TRAJ_AXIS_COLORS;
+
+            let mx = '<div class="rpc-matrix-wrap"><div class="rpc-matrix">';
+            mx += '<div></div>';
+            AK.forEach(k => {
+                mx += `<div class="rpc-hdr-col"><span class="rpc-k" style="color:${AXIS_COLORS[k]}">${k}</span><span>${AXIS_NAMES[k]}</span></div>`;
+            });
+            mx += '<div class="rpc-hdr-col" style="font-size:9px">Σ|Δ|</div>';
+
+            for (const sitKey of ['stress','intimacy','conflict','loss']) {
+                const e = sitEntries.find(s => s.key === sitKey);
+                const meta = RPC_SIT_META[sitKey];
+                if (!e || !e.detected) {
+                    mx += `<div class="rpc-hdr-row" style="color:${meta.color};opacity:0.45">${meta.icon} ${meta.label}</div>`;
+                    mx += `<div class="rpc-cell missing" style="grid-column:span 5">이 분석에서는 감지되지 않았습니다</div>`;
+                    mx += `<div class="rpc-cell rpc-row-total">—</div>`;
+                    continue;
+                }
+                mx += `<div class="rpc-hdr-row" style="color:${meta.color}">${meta.icon} ${meta.label} <span class="rpc-count">(${e.sessions})</span></div>`;
+                AK.forEach(k => {
+                    const d = e.shifts[k];
+                    let cls = 'flat';
+                    if (d > 0.08) cls = 'big-up';
+                    else if (d > 0.03) cls = 'up';
+                    else if (d < -0.08) cls = 'big-down';
+                    else if (d < -0.03) cls = 'down';
+                    const sign = d >= 0 ? '+' : '';
+                    mx += `<div class="rpc-cell ${cls}">${sign}${d.toFixed(2)}</div>`;
+                });
+                mx += `<div class="rpc-cell rpc-row-total">${e.totalAbs.toFixed(2)}</div>`;
+            }
+            mx += '</div><div class="rpc-matrix-legend">· 색: <span style="color:#34D399">상승</span> / <span style="color:#EF4444">하락</span> / <span style="color:rgba(255,255,255,0.3)">변화 미미</span>&nbsp;&nbsp;· Σ|Δ| = 총 편차 (상황 활성도)</div></div>';
+
+            let h = '<div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,166,35,0.15),transparent);"></div>';
+            h += '<div class="rpc-card-label">// ASYMMETRY MATRIX · 상황 × 축 (평상시 대비)</div>';
+            h += mx;
+            card.innerHTML = h;
+            card.style.display = 'block';
+        }
+
+        // ─── [A] PATTERN DECLARATION (짧은 시놉시스, 데이터 칩 없음) ───
+        function buildTrajPatternCard(simData) {
+            const card = document.getElementById('trajPatternCard');
+            if (!card) return;
+            const prep = _rpcPrepare(simData);
+            if (!prep) { card.style.display = 'none'; return; }
+            const { baseline, sitEntries } = prep;
+
             const patternTypes = [];
             const intimacyShift = sitEntries.find(s => s.key === 'intimacy' && s.detected)?.shifts;
             const stressShift   = sitEntries.find(s => s.key === 'stress' && s.detected)?.shifts;
@@ -8232,163 +8338,341 @@ function buildProfileOverview(axes, profile) {
             if (stressShift && Math.abs(stressShift.X) < 0.05 && conflictShift && Math.abs(conflictShift.X) < 0.05) patternTypes.push('압력 내성형');
             if (lossShift && lossShift.X < -0.15) patternTypes.push('상실 취약형');
             if (conflictShift && conflictShift.E > 0.08 && conflictShift.C > 0.05) patternTypes.push('갈등 직면형');
-            if (baseline.cognition >= 0.5 && baseline.drive >= 0.5 && patternTypes.length === 0) patternTypes.push('분석 주도형');
+            if (baseline.T >= 0.5 && baseline.C >= 0.5 && patternTypes.length === 0) patternTypes.push('분석 주도형');
             if (patternTypes.length === 0) patternTypes.push('중립형');
 
-            // 패턴 서술 (템플릿 기반)
-            const narrativeParts = [];
-            if (intimacyShift && intimacyShift.O > 0.05) {
-                const baseO = baseline.O || 0.05;
-                const newVal = baseO + intimacyShift.O;
-                const ratio = newVal / Math.max(baseO, 0.03);
-                const pctText = ratio >= 1.5
-                    ? `평상시의 약 ${ratio.toFixed(1)}배 수준`
-                    : `평상시 대비 +${(intimacyShift.O * 100).toFixed(0)}% 지점`;
-                narrativeParts.push(`친밀감 맥락에서는 개방이 ${pctText}으로 상승합니다 <span class="rpc-chip pos">O +${intimacyShift.O.toFixed(2)}</span>.`);
+            // 짧은 시놉시스 (데이터 칩·수치 인용 없음 — Matrix/Per-Situation 이 담당)
+            let synopsis;
+            const hasIntimacyOpen = intimacyShift && intimacyShift.O > 0.05;
+            const hasStressResp   = stressShift && stressShift.E > 0.05;
+            const hasLossDrop     = lossShift && lossShift.X < -0.1;
+            if (hasIntimacyOpen && !(stressShift && Math.abs(stressShift.O) > 0.05)) {
+                synopsis = '친밀감 맥락에서만 <strong>경계가 열리는 유형</strong>입니다. 다른 상황에서는 방어가 일정하게 유지되며, 축의 중심을 잡는 구조가 독립적으로 작동합니다.';
+            } else if (hasStressResp && hasLossDrop) {
+                synopsis = '위협 맥락에서 반응이 <strong>증폭되는 유형</strong>입니다. 스트레스와 상실 상황에서 정서의 진폭이 커지고 회복 대역이 좁아지는 패턴이 관찰됩니다.';
+            } else if (baseline.T >= 0.5 && baseline.C >= 0.5) {
+                synopsis = '상황 간 변동이 제한적인 <strong>안정형 프로필</strong>입니다. 분석과 주도가 기본 축을 형성하며, 외부 자극에 대한 반응이 절제됩니다.';
+            } else {
+                synopsis = '상황 간 유의미한 편차가 크지 않습니다. <strong>상황 독립적 반응 구조</strong>를 가지고 있습니다.';
             }
-            if (stressShift && stressShift.E > 0.05) {
-                narrativeParts.push(`스트레스 상황에서는 정서가 상승하고 <span class="rpc-chip neg">E +${stressShift.E.toFixed(2)}</span>, 회복력이 저하됩니다 <span class="rpc-chip neg">X ${stressShift.X.toFixed(2)}</span>.`);
-            }
-            if (lossShift && lossShift.X < -0.1) {
-                narrativeParts.push(`상실 상황에서는 회복력이 급락하여 <span class="rpc-chip neg">X ${lossShift.X.toFixed(2)}</span> 이 분석에서 가장 취약한 영역입니다.`);
-            }
-            const narrativeText = narrativeParts.length ? narrativeParts.join(' ') : '상황 간 유의미한 편차가 관찰되지 않습니다. 상황 독립적으로 일관된 반응 구조를 유지합니다.';
 
-            // ─── [B] 비대칭 매트릭스 HTML ───
-            let matrixHtml = '<div class="rpc-matrix-wrap"><div class="rpc-matrix">';
-            matrixHtml += '<div></div>';
-            AK.forEach(k => {
-                matrixHtml += `<div class="rpc-hdr-col"><span class="rpc-k" style="color:${AXIS_COLORS[k]}">${k}</span><span>${AXIS_NAMES[k]}</span></div>`;
-            });
-            matrixHtml += '<div class="rpc-hdr-col" style="font-size:9px">Σ|Δ|</div>';
-
-            for (const sitKey of ['stress','intimacy','conflict','loss']) {
-                const e = sitEntries.find(s => s.key === sitKey);
-                const meta = SIT_META[sitKey];
-                if (!e || !e.detected) {
-                    matrixHtml += `<div class="rpc-hdr-row" style="color:${meta.color};opacity:0.45">${meta.icon} ${meta.label}</div>`;
-                    matrixHtml += `<div class="rpc-cell missing" style="grid-column:span 5">이 분석에서는 감지되지 않았습니다</div>`;
-                    matrixHtml += `<div class="rpc-cell rpc-row-total">—</div>`;
-                    continue;
-                }
-                matrixHtml += `<div class="rpc-hdr-row" style="color:${meta.color}">${meta.icon} ${meta.label} <span class="rpc-count">(${e.sessions})</span></div>`;
-                AK.forEach(k => {
-                    const d = e.shifts[k];
-                    const abs = Math.abs(d);
-                    let cls = 'flat';
-                    if (d > 0.08) cls = 'big-up';
-                    else if (d > 0.03) cls = 'up';
-                    else if (d < -0.08) cls = 'big-down';
-                    else if (d < -0.03) cls = 'down';
-                    const sign = d >= 0 ? '+' : '';
-                    matrixHtml += `<div class="rpc-cell ${cls}">${sign}${d.toFixed(2)}</div>`;
-                });
-                matrixHtml += `<div class="rpc-cell rpc-row-total">${e.totalAbs.toFixed(2)}</div>`;
-            }
-            matrixHtml += '</div><div class="rpc-matrix-legend">· 색: <span style="color:#34D399">상승</span> / <span style="color:#EF4444">하락</span> / <span style="color:rgba(255,255,255,0.3)">변화 미미</span>&nbsp;&nbsp;· Σ|Δ| = 총 편차 (상황 활성도)</div></div>';
-
-            // ─── [D] Strengths / Shadows / Growth ───
-            // Strength: 상황 간 변동 가장 작은 축
-            // Shadow: baseline 값 자체가 낮지만 변동 대역도 좁은 축
-            // Growth: 가장 크게 움직이지만 한 상황에서만 활성화되는 축
-            const axisVariance = {};
-            AK.forEach(k => {
-                const diffs = sitEntries.filter(e => e.detected && e.key !== 'normal').map(e => Math.abs(e.shifts[k] || 0));
-                axisVariance[k] = diffs.length ? Math.max(...diffs) : 0;
-            });
-            // Strength = 가장 안정된 축
-            const strengthAxis = AK.reduce((min, k) => axisVariance[k] < axisVariance[min] ? k : min, AK[0]);
-            // Shadow = baseline 이 0.2 이하이고 변동도 0.1 이내인 축 (baseline 은 E/C/T/O/X 키)
-            let shadowAxis = null;
-            for (const k of AK) {
-                if ((baseline[k] || 0.5) <= 0.2 && axisVariance[k] <= 0.1) { shadowAxis = k; break; }
-            }
-            // Growth = 변동 가장 큰 축 (strength 와 다르면)
-            const growthAxis = AK.reduce((max, k) => axisVariance[k] > axisVariance[max] ? k : max, AK[0]);
-
-            const ssgDescriptions = {
-                E: { strong: '정서 표현이 상황에 흔들리지 않고 일정 수준을 유지합니다.', shadow: '정서를 언어화하는 대역이 좁습니다. 감정이 없는 것이 아니라, 그것을 바깥으로 전달하는 통로가 좁을 뿐입니다. 상대가 상태를 오판할 가능성이 있습니다.', growth: '상황에 따라 정서 표현의 폭을 넓히는 연습이 다음 방향입니다.' },
-                C: { strong: '추진력이 상황과 무관하게 일관되게 유지됩니다.', shadow: '주도적 결정 표현이 제한적입니다. 주도의 필요가 있는 맥락에서 전달이 어려울 수 있습니다.', growth: '통제의 강약을 상황에 맞춰 조절하는 폭이 확장 지점입니다.' },
-                T: { strong: '분석 능력이 어떤 압력에도 독립적으로 작동합니다. 사고 구조가 외부 조건과 분리되어 유지됩니다.', shadow: '인지적 틀이 제한적입니다.', growth: '인지 스타일의 유연성을 확장하는 것이 다음 방향입니다.' },
-                O: { strong: '개방의 폭이 상황 독립적으로 유지됩니다.', shadow: '자기 개시의 대역이 좁습니다. 관계 맥락에서 자기를 드러내는 언어가 제한적입니다.', growth: '현재는 특정 맥락에서만 개방이 활성화됩니다. 더 약한 신뢰 관계에서도 부분적 개방이 가능해지면 관계의 폭이 확장됩니다.' },
-                X: { strong: '회복 탄성이 외부 자극에 관계없이 안정적으로 유지됩니다.', shadow: '정서 변동성이 크고 회복 대역이 좁습니다.', growth: '회복 경로의 다양화가 다음 방향입니다.' },
-            };
-
-            const ssgHtml = `
-                <div class="rpc-ssg">
-                    <div class="rpc-ssg-card S">
-                        <div class="rpc-ssg-label">STRENGTH</div>
-                        <div class="rpc-ssg-head">${AXIS_NAMES[strengthAxis]} 축의 일관성</div>
-                        <div class="rpc-ssg-body">${strengthAxis} 축의 상황 간 변동은 <span class="d">±${axisVariance[strengthAxis].toFixed(2)}</span> 수준입니다. ${ssgDescriptions[strengthAxis].strong}</div>
-                    </div>
-                    <div class="rpc-ssg-card Sh">
-                        <div class="rpc-ssg-label">SHADOW</div>
-                        <div class="rpc-ssg-head">${shadowAxis ? AXIS_NAMES[shadowAxis] + ' 축의 대역' : AXIS_NAMES[growthAxis] + ' 축의 편차'}</div>
-                        <div class="rpc-ssg-body">${shadowAxis ? `${shadowAxis} 축은 <span class="d">${(baseline[shadowAxis] || 0.5).toFixed(2)}</span> 기저선에 고정되어 있습니다. 상황이 바뀌어도 ±${axisVariance[shadowAxis].toFixed(2)} 이내의 변동만 나타납니다. ${ssgDescriptions[shadowAxis].shadow}` : `${growthAxis} 축의 변동폭이 ${axisVariance[growthAxis].toFixed(2)} 로 상황 의존도가 큽니다. ${ssgDescriptions[growthAxis].shadow || '이 축의 안정성이 다음 주제입니다.'}`}</div>
-                    </div>
-                    <div class="rpc-ssg-card G">
-                        <div class="rpc-ssg-label">GROWTH EDGE</div>
-                        <div class="rpc-ssg-head">${AXIS_NAMES[growthAxis]} 축의 확장</div>
-                        <div class="rpc-ssg-body">${growthAxis} 축의 최대 편차는 <span class="d">${axisVariance[growthAxis].toFixed(2)}</span> 입니다. ${ssgDescriptions[growthAxis].growth}</div>
-                    </div>
-                </div>
-            `;
-
-            // ─── [E] 조건부 예측 ───
-            const predictions = [];
-            if (stressShift && stressShift.E > 0.06) {
-                predictions.push({ if: '스트레스 직후 수 시간 이내', then: `정서(E) 가 평상시 대비 +${stressShift.E.toFixed(2)} 상승한 상태가 유지됩니다. 이 시간대의 중요한 결정은 이후 재평가될 가능성이 있습니다. 판단의 유예를 권장합니다.` });
-            }
-            if (lossShift && lossShift.X < -0.1) {
-                const ixr = intimacyShift && intimacyShift.X >= 0 ? ` 복귀 경로로는 친밀감 맥락(X ${intimacyShift.X >= 0 ? '+' : ''}${intimacyShift.X.toFixed(2)})으로의 이동이 효과적입니다.` : '';
-                predictions.push({ if: '상실 상황에 진입', then: `회복(X) 이 ${lossShift.X.toFixed(2)} 수준으로 하락합니다. 다른 상황 대비 가장 취약한 구간입니다.${ixr}` });
-            }
-            if (intimacyShift && intimacyShift.O > 0.05) {
-                predictions.push({ if: '신뢰가 형성되지 않은 관계의 초기 단계', then: `개방(O) 을 직접 요구받으면 닫힘 반응이 일어납니다. 상대가 먼저 시간을 들여 머물러 주는 방식이 개방에 도달하는 경로가 됩니다.` });
-            }
-            if (predictions.length === 0) {
-                predictions.push({ if: '일반적인 상호작용 상황', then: `축 값이 상황에 흔들리지 않고 유지됩니다. 예측 가능성이 이 프로필의 주요 특성입니다.` });
-            }
-            let predHtml = '<ul class="rpc-pred">';
-            predictions.forEach(p => {
-                predHtml += `<li><span class="rpc-tag-if">IF</span>${p.if}<span class="rpc-tag-then">THEN</span>${p.then}</li>`;
-            });
-            predHtml += '</ul>';
-
-            // ─── 최종 조립 ───
             let h = '<div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,166,35,0.15),transparent);"></div>';
-
-            // [A]
-            h += '<div class="rpc-block">';
             h += '<div class="rpc-card-label">// PATTERN DECLARATION</div>';
             h += '<div class="rpc-types">';
             patternTypes.forEach((t, i) => {
                 h += `<span class="rpc-type-tag${i === 0 ? ' primary' : ''}">${t}</span>`;
             });
             h += '</div>';
-            h += `<div class="rpc-narrative">${narrativeText}</div>`;
-            h += '</div>';
-
-            // [B]
-            h += '<div class="rpc-block">';
-            h += '<div class="rpc-card-label">// ASYMMETRY MATRIX · 상황 × 축 (평상시 대비)</div>';
-            h += matrixHtml;
-            h += '</div>';
-
-            // [D]
-            h += '<div class="rpc-block">';
-            h += '<div class="rpc-card-label">// STRENGTHS / SHADOWS / GROWTH EDGE</div>';
-            h += ssgHtml;
-            h += '</div>';
-
-            // [E]
-            h += '<div class="rpc-block">';
-            h += '<div class="rpc-card-label">// CONDITIONAL PREDICTIONS</div>';
-            h += predHtml;
-            h += '</div>';
-
+            h += `<div class="rpc-narrative-short">${synopsis}</div>`;
             card.innerHTML = h;
             card.style.display = 'block';
+        }
+
+        // ─── [D] SSG (서로 다른 3축 보장) ───
+        function buildTrajSSGCard(simData) {
+            const card = document.getElementById('trajSSGCard');
+            if (!card) return;
+            const prep = _rpcPrepare(simData);
+            if (!prep) { card.style.display = 'none'; return; }
+            const { AK, baseline, sitEntries } = prep;
+            const AXIS_NAMES = TRAJ_AXIS_NAMES;
+            const AXIS_COLORS = TRAJ_AXIS_COLORS;
+
+            const axisVariance = {};
+            AK.forEach(k => {
+                const diffs = sitEntries.filter(e => e.detected && e.key !== 'normal').map(e => Math.abs(e.shifts[k] || 0));
+                axisVariance[k] = diffs.length ? Math.max(...diffs) : 0;
+            });
+            // Strength = 변동 가장 작은 축
+            const strengthAxis = AK.reduce((min, k) => axisVariance[k] < axisVariance[min] ? k : min, AK[0]);
+            // Shadow = baseline 낮고 변동 좁은 축 (strengthAxis 제외)
+            let shadowAxis = null;
+            for (const k of AK) {
+                if (k === strengthAxis) continue;
+                if ((baseline[k] || 0.5) <= 0.2 && axisVariance[k] <= 0.1) { shadowAxis = k; break; }
+            }
+            // Growth = 변동 가장 큰 축 (strength, shadow 제외 보장)
+            let growthAxis = AK
+                .filter(k => k !== strengthAxis && k !== shadowAxis)
+                .reduce((max, k) => axisVariance[k] > axisVariance[max] ? k : max, AK.find(k => k !== strengthAxis && k !== shadowAxis) || 'O');
+            if (!shadowAxis) {
+                // Shadow 못 고르면 baseline 낮은 순 중 strength/growth 제외한 것
+                shadowAxis = AK
+                    .filter(k => k !== strengthAxis && k !== growthAxis)
+                    .reduce((min, k) => (baseline[k] || 0.5) < (baseline[min] || 0.5) ? k : min, AK.find(k => k !== strengthAxis && k !== growthAxis));
+            }
+
+            const ssgDesc = {
+                E: { s: '정서 표현이 상황에 흔들리지 않고 일정 수준을 유지합니다.', sh: '정서를 언어화하는 대역이 좁습니다. 감정이 없는 것이 아니라, 그것을 바깥으로 전달하는 통로가 좁을 뿐입니다. 상대가 상태를 오판할 가능성이 있습니다.', g: '상황에 따라 정서 표현의 폭을 넓히는 연습이 다음 방향입니다.' },
+                C: { s: '추진력이 상황과 무관하게 일관되게 유지됩니다.', sh: '주도적 결정 표현이 제한적입니다. 주도의 필요가 있는 맥락에서 전달이 어려울 수 있습니다.', g: '통제의 강약을 상황에 맞춰 조절하는 폭이 확장 지점입니다.' },
+                T: { s: '분석 능력이 어떤 압력에도 독립적으로 작동합니다. 사고 구조가 외부 조건과 분리되어 유지됩니다.', sh: '인지적 틀의 유연성이 제한적입니다.', g: '인지 스타일의 유연성을 확장하는 것이 다음 방향입니다.' },
+                O: { s: '개방의 폭이 상황 독립적으로 유지됩니다.', sh: '자기 개시의 대역이 좁습니다. 관계 맥락에서 자기를 드러내는 언어가 제한적입니다.', g: '현재는 특정 맥락에서만 개방이 활성화됩니다. 더 약한 신뢰 관계에서도 부분적 개방이 가능해지면 관계의 폭이 확장됩니다.' },
+                X: { s: '회복 탄성이 외부 자극에 관계없이 안정적으로 유지됩니다.', sh: '정서 변동성이 크고 회복 대역이 좁습니다.', g: '회복 경로의 다양화가 다음 방향입니다.' },
+            };
+
+            let h = '<div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,166,35,0.15),transparent);"></div>';
+            h += '<div class="rpc-card-label">// STRENGTHS / SHADOWS / GROWTH EDGE</div>';
+            h += `<div class="rpc-ssg">
+                <div class="rpc-ssg-card S">
+                    <div class="rpc-ssg-label">STRENGTH</div>
+                    <div class="rpc-ssg-axis" style="color:${AXIS_COLORS[strengthAxis]}">${strengthAxis} · ${AXIS_NAMES[strengthAxis]}</div>
+                    <div class="rpc-ssg-head">상황 간 일관성</div>
+                    <div class="rpc-ssg-body">${strengthAxis} 축의 상황 간 변동은 <span class="d">±${axisVariance[strengthAxis].toFixed(2)}</span> 수준입니다. ${ssgDesc[strengthAxis].s}</div>
+                </div>
+                <div class="rpc-ssg-card Sh">
+                    <div class="rpc-ssg-label">SHADOW</div>
+                    <div class="rpc-ssg-axis" style="color:${AXIS_COLORS[shadowAxis]}">${shadowAxis} · ${AXIS_NAMES[shadowAxis]}</div>
+                    <div class="rpc-ssg-head">표현 대역의 한계</div>
+                    <div class="rpc-ssg-body">${shadowAxis} 축은 <span class="d">${(baseline[shadowAxis] || 0.5).toFixed(2)}</span> 기저선에 고정되어 있습니다. 상황이 바뀌어도 ±${axisVariance[shadowAxis].toFixed(2)} 이내의 변동만 나타납니다. ${ssgDesc[shadowAxis].sh}</div>
+                </div>
+                <div class="rpc-ssg-card G">
+                    <div class="rpc-ssg-label">GROWTH EDGE</div>
+                    <div class="rpc-ssg-axis" style="color:${AXIS_COLORS[growthAxis]}">${growthAxis} · ${AXIS_NAMES[growthAxis]}</div>
+                    <div class="rpc-ssg-head">확장 지점</div>
+                    <div class="rpc-ssg-body">${growthAxis} 축의 최대 편차는 <span class="d">${axisVariance[growthAxis].toFixed(2)}</span> 입니다. ${ssgDesc[growthAxis].g}</div>
+                </div>
+            </div>`;
+            card.innerHTML = h;
+            card.style.display = 'block';
+        }
+
+        // ─── [E] PREDICTIONS (행동 중심) ───
+        function buildTrajPredictionsCard(simData) {
+            const card = document.getElementById('trajPredictionsCard');
+            if (!card) return;
+            const prep = _rpcPrepare(simData);
+            if (!prep) { card.style.display = 'none'; return; }
+            const { sitEntries } = prep;
+
+            const intimacyShift = sitEntries.find(s => s.key === 'intimacy' && s.detected)?.shifts;
+            const stressShift   = sitEntries.find(s => s.key === 'stress' && s.detected)?.shifts;
+            const lossShift     = sitEntries.find(s => s.key === 'loss' && s.detected)?.shifts;
+
+            const predictions = [];
+            if (stressShift && stressShift.E > 0.06) {
+                predictions.push({ if: '스트레스 직후 48시간 이내', then: '<strong>중요 결정 유예</strong>. 이 구간의 판단은 이후 재평가될 가능성이 높습니다.' });
+            }
+            if (lossShift && lossShift.X < -0.1) {
+                const ixr = intimacyShift && intimacyShift.X >= 0 ? ' <strong>친밀감 맥락으로 이동</strong>이 복귀 경로입니다.' : '';
+                predictions.push({ if: '상실 상황 + 지원 관계 부재', then: `회복(X) 이 가장 취약한 구간입니다.${ixr}` });
+            }
+            if (intimacyShift && intimacyShift.O > 0.05) {
+                predictions.push({ if: '관계 초기 단계 (신뢰 미형성)', then: '<strong>즉각 개방 요구 회피</strong>. 상대가 먼저 시간을 들여 머물러 주는 조건이 필요합니다.' });
+            }
+            if (predictions.length === 0) {
+                predictions.push({ if: '일반적인 상호작용 상황', then: '축 값이 상황에 흔들리지 않고 유지됩니다. 예측 가능성이 이 프로필의 주요 특성입니다.' });
+            }
+
+            let h = '<div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,166,35,0.15),transparent);"></div>';
+            h += '<div class="rpc-card-label">// CONDITIONAL PREDICTIONS · 조건부 행동 가이드</div>';
+            h += '<ul class="rpc-pred">';
+            predictions.forEach(p => {
+                h += `<li><span class="rpc-tag-if">IF</span>${p.if}<span class="rpc-tag-do">DO</span>${p.then}</li>`;
+            });
+            h += '</ul>';
+            card.innerHTML = h;
+            card.style.display = 'block';
+        }
+
+        // ─── [C] PER-SITUATION (탭 변경 시 재렌더) ───
+        // 모드 맵: key + 지배 shift 패턴 → { icon, name, func, cost, chips[] }
+        function _rpcResolveMode(key, shifts) {
+            if (key === 'normal') {
+                return {
+                    icon: '◆', name: '기본 모드',
+                    func: '분석과 주도의 조합이 기본값입니다. 추진력(C)과 인지(T)가 중심에 있고, 정서와 개방은 낮게 유지됩니다. 대화의 방향을 스스로 설계하며 상황을 통제 가능한 구조로 정리합니다.',
+                    cost: '정서·개방 대역이 기본적으로 좁아, 다른 상황에서도 극단으로 흔들리지 않는 대신 바닥에서의 진폭이 제한됩니다.',
+                    chips: [ {k:'strength', t:'+ 주도성'}, {k:'strength', t:'+ 분석 일관성'}, {k:'shadow', t:'− 정서 대역 좁음'} ],
+                };
+            }
+            if (key === 'stress') {
+                if (shifts.E > 0.05 && shifts.X < -0.05) {
+                    return {
+                        icon: '🛡️', name: '방어 엔지니어',
+                        func: '위기를 분석 가능한 과제로 재구성합니다. 감정을 문제 해결 모드로 우회시켜 단기 대응력을 확보합니다.',
+                        cost: '감정의 1차 처리가 후순위로 밀려 누적됩니다. 회복의 대역이 좁아지고, 장기 피로가 조용히 쌓입니다.',
+                        chips: [ {k:'strength', t:'+ 위기 분석력'}, {k:'strength', t:'+ 단기 안정성'}, {k:'shadow', t:'− 감정 적체'}, {k:'shadow', t:'− 회복 지연'} ],
+                    };
+                }
+                return {
+                    icon: '⚙️', name: '압력 조정자',
+                    func: '스트레스에 비교적 차분하게 대응합니다. 정서의 폭이 크지 않고 추진력이 유지됩니다.',
+                    cost: '안정적이지만 상황의 심각성을 과소평가할 수 있습니다.',
+                    chips: [ {k:'strength', t:'+ 안정적 대응'} ],
+                };
+            }
+            if (key === 'intimacy') {
+                if (shifts.O > 0.05) {
+                    return {
+                        icon: '🔓', name: '해제된 분석자',
+                        func: '분석의 틀을 유지한 채 자기 개시의 대역을 확장합니다. 신뢰가 검증된 맥락에서만 활성화되므로, 활성화 시점의 표현 정확도가 높습니다.',
+                        cost: '활성화 조건이 까다로워 개방 속도가 느립니다. 감정의 1차 언어가 아니라 분석의 2차 언어로 전달되어, 상대는 개시의 깊이를 과소평가할 수 있습니다.',
+                        chips: [ {k:'strength', t:'+ 표현 정확도'}, {k:'strength', t:'+ 신뢰 기반 개방'}, {k:'shadow', t:'− 개방 속도 느림'}, {k:'shadow', t:'− 감정 1차 언어 부재'} ],
+                    };
+                }
+                return {
+                    icon: '♥', name: '유지된 경계',
+                    func: '친밀감 맥락에서도 개방이 크게 활성화되지 않습니다.',
+                    cost: '일관된 자기를 유지하지만 관계 폭의 확장이 다음 주제가 됩니다.',
+                    chips: [ {k:'strength', t:'+ 일관된 자기'} ],
+                };
+            }
+            if (key === 'conflict') {
+                if (shifts.E > 0.05 && shifts.C > 0.03) {
+                    return {
+                        icon: '⚔️', name: '전투 직면',
+                        func: '마찰에 직면하며 주도권을 내세웁니다. 회피 대신 문제의 중심으로 들어가 빠른 해결을 추구합니다.',
+                        cost: '경계가 닫히며 상대의 관점을 수용하는 대역이 일시적으로 좁아집니다. 해결은 빠르나 복구가 필요한 관계 비용이 발생합니다.',
+                        chips: [ {k:'strength', t:'+ 직면력'}, {k:'shadow', t:'− 경계 폐쇄'} ],
+                    };
+                }
+                return {
+                    icon: '🔥', name: '갈등 흡수',
+                    func: '마찰에 대해 직접적 반응보다 내부 처리를 선호합니다.',
+                    cost: '충돌은 회피되지만 해결되지 않은 마찰이 누적될 수 있습니다.',
+                    chips: [ {k:'strength', t:'+ 충돌 회피'} ],
+                };
+            }
+            if (key === 'loss') {
+                if (shifts.X < -0.1) {
+                    return {
+                        icon: '🌧️', name: '회복 붕괴',
+                        func: '자극을 흡수하는 대역이 좁아지며, 일시적으로 자기 보호를 위한 고립이 활성화됩니다. 외부 요구에서 물러나 내부 정비로 전환합니다.',
+                        cost: '고립이 길어지면 복귀 속도가 느려집니다. 지원 관계가 없을 경우 X 축의 자연 회복은 제한적입니다.',
+                        chips: [ {k:'shadow', t:'− 회복력 급락'}, {k:'shadow', t:'− 고립 강화'}, {k:'strength', t:'+ 자기 보호 활성'} ],
+                    };
+                }
+                return {
+                    icon: '◇', name: '완만한 침잠',
+                    func: '상실에 대해 점진적으로 반응합니다.',
+                    cost: '회복 속도가 느릴 수 있습니다.',
+                    chips: [],
+                };
+            }
+            return { icon:'◆', name:'기본 모드', func:'', cost:'', chips:[] };
+        }
+
+        function renderTrajPerSituationCard(key, simData) {
+            const card = document.getElementById('trajPerSituationCard');
+            if (!card) return;
+            const prep = _rpcPrepare(simData);
+            if (!prep) { card.style.display = 'none'; return; }
+            const { AK, baseline, sitEntries } = prep;
+            const AXIS_NAMES = TRAJ_AXIS_NAMES;
+            const AXIS_COLORS = TRAJ_AXIS_COLORS;
+
+            const meta = RPC_SIT_META[key] || RPC_SIT_META.normal;
+            const e = sitEntries.find(s => s.key === key);
+            if (!e || !e.detected) { card.style.display = 'none'; return; }
+
+            // ─── LEAD SHIFT / BASELINE VALUES ───
+            let leadBlock;
+            if (key === 'normal') {
+                leadBlock = `
+                    <div class="rpc-ps-block">
+                        <div class="rpc-ps-label">// 기본값</div>
+                        <div class="rpc-base-grid">
+                            ${AK.map(k => `<div><div class="k">${k} ${AXIS_NAMES[k]}</div><div class="v" style="color:${AXIS_COLORS[k]}">${(baseline[k]||0).toFixed(2)}</div></div>`).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                const topAxes = AK.map(k => ({ k, shift: e.shifts[k], abs: Math.abs(e.shifts[k]) })).sort((a,b) => b.abs - a.abs);
+                const top = topAxes[0];
+                const second = topAxes[1];
+                const stable = topAxes.filter(x => x.abs < 0.04).map(x => x.k);
+                const axSign = top.shift >= 0 ? '+' : '';
+                const axDir = top.shift > 0.08 ? '↑↑' : top.shift > 0 ? '↑' : top.shift < -0.08 ? '↓↓' : '↓';
+                const absVal = (baseline[top.k] + top.shift).toFixed(2);
+
+                const directionWord = (shift) => shift > 0 ? '상승' : '하락';
+                const facts = [
+                    `주요 이동: <span class="ax" style="color:${AXIS_COLORS[top.k]}">${top.k}</span> ${top.shift >= 0 ? '+' : ''}${top.shift.toFixed(2)} (${directionWord(top.shift)})`,
+                ];
+                if (second && second.abs >= 0.04) {
+                    facts.push(`2차 이동: <span class="ax" style="color:${AXIS_COLORS[second.k]}">${second.k}</span> ${second.shift >= 0 ? '+' : ''}${second.shift.toFixed(2)} (${directionWord(second.shift)})`);
+                }
+                if (stable.length > 0) {
+                    const stableHtml = stable.map(k => `<span class="ax" style="color:${AXIS_COLORS[k]}">${k}</span>`).join('·');
+                    facts.push(`안정 유지: ${stableHtml} ±0.04 이내`);
+                }
+
+                leadBlock = `
+                    <div class="rpc-ps-block">
+                        <div class="rpc-ps-label">// LEAD SHIFT</div>
+                        <div class="rpc-lead">
+                            <div class="rpc-axis-pill">
+                                <div class="k">${top.k} · ${AXIS_NAMES[top.k]}</div>
+                                <div class="v" style="color:${AXIS_COLORS[top.k]}">${absVal}</div>
+                                <div class="d" style="color:${top.shift >= 0 ? '#34D399' : '#EF4444'}">${axSign}${top.shift.toFixed(2)} ${axDir}</div>
+                            </div>
+                            <div class="rpc-lead-facts"><ul>${facts.map(f => `<li>${f}</li>`).join('')}</ul></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // ─── ACTIVATED MODE (FUNCTION / COST) ───
+            const mode = _rpcResolveMode(key, e.shifts);
+            const modeLabel = key === 'normal' ? '// 기본 모드' : '// ACTIVATED MODE';
+            const modeBlock = `
+                <div class="rpc-ps-block">
+                    <div class="rpc-ps-label">${modeLabel}</div>
+                    <div class="rpc-mode">
+                        <div class="rpc-mode-head"><span class="mi">${mode.icon}</span><span class="mn">${mode.name}</span></div>
+                        <div class="rpc-mode-kv">
+                            ${mode.func ? `<div class="k">FUNCTION</div><div class="v">${mode.func}</div>` : ''}
+                            ${mode.cost ? `<div class="k">COST</div><div class="v">${mode.cost}</div>` : ''}
+                        </div>
+                        ${mode.chips.length ? `<div class="rpc-mode-chips">${mode.chips.map(c => `<span class="rpc-mode-chip ${c.k}">${c.t}</span>`).join('')}</div>` : ''}
+                    </div>
+                </div>
+            `;
+
+            // ─── RECOVERY SIGNATURE (세션 내 시간) ───
+            let recoveryBlock = '';
+            const trajPoints = e.trajectory;
+            if (trajPoints && trajPoints.length >= 2 && key !== 'normal') {
+                const recAxes = AK.map(k => ({ k, abs: Math.abs(e.shifts[k]) })).sort((a,b) => b.abs - a.abs).slice(0, 3).map(x => x.k);
+                let rows = '';
+                for (const k of recAxes) {
+                    const vals = trajPoints.map(p => p[k] || 0);
+                    const mn = Math.min(...vals), mx = Math.max(...vals);
+                    const mxIdx = vals.indexOf(mx), mnIdx = vals.indexOf(mn);
+                    const first = vals[0], last = vals[vals.length - 1];
+                    const range = mx - mn;
+                    let note;
+                    if (range < 0.05) note = '세션 전반에 걸쳐 변동이 적습니다.';
+                    else if (mxIdx > 0 && mxIdx < vals.length - 1) note = `t${mxIdx} 구간 피크 (${mx.toFixed(2)}) 후 조정. ${last >= first - 0.02 ? '안정적' : '하강'} 복귀.`;
+                    else if (mnIdx > 0 && mnIdx < vals.length - 1) note = `t${mnIdx} 구간 저점 (${mn.toFixed(2)}) 후 ${first > last ? '지속 하락' : '회복'}.`;
+                    else note = `t0 ${first.toFixed(2)} → t${vals.length-1} ${last.toFixed(2)}. 완만한 ${first < last ? '상승' : '하강'}.`;
+                    const col = AXIS_COLORS[k];
+                    const gradient = range > 0.05
+                        ? `linear-gradient(90deg, ${col}12, ${col}55 ${Math.round((mxIdx/(vals.length-1))*100)}%, ${col}22)`
+                        : `linear-gradient(90deg, ${col}18, ${col}30)`;
+                    rows += `<div class="rpc-rec-row"><span class="k" style="color:${col}">${k}</span><div class="bar"><div class="peak" style="background:${gradient}"></div></div><span class="label">${note}</span></div>`;
+                }
+                recoveryBlock = `<div class="rpc-ps-block"><div class="rpc-ps-label">// RECOVERY SIGNATURE · 세션 내 궤적</div>${rows}</div>`;
+            }
+
+            // 최종 조립
+            let h = `<div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,${meta.color}55,transparent);"></div>`;
+            h += `<div class="rpc-ps-head"><span class="icon" style="color:${meta.color}">${meta.icon}</span><span class="label">${meta.psTitle}</span><span class="meta">N=${e.sessions}</span></div>`;
+            h += `<div class="rpc-ps-sub">${meta.psSub}</div>`;
+            h += leadBlock;
+            h += modeBlock;
+            h += recoveryBlock;
+            card.innerHTML = h;
+            card.style.display = 'block';
+        }
+
+        // 전체 카드 일괄 렌더 (per-situation 제외 — 탭 변경 때 별도 호출)
+        function buildTrajResponseCard(simData) {
+            buildTrajMatrixCard(simData);
+            buildTrajPatternCard(simData);
+            buildTrajSSGCard(simData);
+            buildTrajPredictionsCard(simData);
+            // renderTrajPerSituationCard 은 switchTrajTab2 에서 호출
         }
 
         // ── Render Lens Panel ──
