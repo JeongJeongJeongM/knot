@@ -7532,17 +7532,21 @@ function buildProfileOverview(axes, profile) {
             const SIT_LABELS = { normal:'일반', stress:'스트레스', intimacy:'친밀감', conflict:'갈등', loss:'상실' };
             const SIT_COLORS = { normal:'#F5A623', stress:'#EF4444', intimacy:'#A78BFA', conflict:'#F97316', loss:'#6B7280' };
 
-            // v3.6.11: baseline 을 궤적 포인트 가중 평균으로 재정의.
-            //   기존 simData.axes 는 whole-conversation A1/A3 를 corpus-level 로 saturate
-            //   시켜 per-segment 궤적값과 스케일 불일치 (baseline=0.79 vs seg=0.05 같은).
-            //   수정: 모든 상황의 trajectory 평균 포인트들을 세션 수 가중평균.
+            // v3.6.12: baseline = 일반(normal) 세션 평균. "평상시" 가 곧 normal.
+            //   normal 데이터 없으면 다른 상황 가중평균 폴백, 그것도 없으면 simData.axes.
             const sitsForBase = simData.situational || {};
-            const AXIS_KEYS_SIM = ['emotion','drive','cognition','boundary','resilience'];
             let baseline;
-            {
+            const normalBase = sitsForBase.normal;
+            if (normalBase?.mean?.length >= 1 && normalBase.trajectoryCount >= 1) {
+                baseline = {};
+                for (const k of AK) {
+                    const sum = normalBase.mean.reduce((s, p) => s + (p[k] || 0), 0);
+                    baseline[AXIS_MAP[k]] = sum / normalBase.mean.length;
+                }
+            } else {
                 const accum = { E:0, C:0, T:0, O:0, X:0 };
                 let totalWeight = 0;
-                for (const [sk, sd] of Object.entries(sitsForBase)) {
+                for (const sd of Object.values(sitsForBase)) {
                     if (!sd?.mean || sd.mean.length === 0 || sd.trajectoryCount < 1) continue;
                     const weight = sd.trajectoryCount;
                     for (const k of AK) {
@@ -7553,12 +7557,8 @@ function buildProfileOverview(axes, profile) {
                 }
                 if (totalWeight > 0) {
                     baseline = {};
-                    for (const k of AK) {
-                        const simKey = AXIS_MAP[k];
-                        baseline[simKey] = accum[k] / totalWeight;
-                    }
+                    for (const k of AK) baseline[AXIS_MAP[k]] = accum[k] / totalWeight;
                 } else {
-                    // 폴백: measured 데이터 없으면 simData.axes 로 회귀 (기존 로직)
                     baseline = simData.axes;
                 }
             }
@@ -7586,6 +7586,8 @@ function buildProfileOverview(axes, profile) {
                 const sitData = sits[sitKey];
                 if (!sitData || !sitData.mean || sitData.mean.length === 0) continue;
                 if (sitData.trajectoryCount < 1) continue;
+                // v3.6.12: normal 이 baseline 이므로 normal 자신 대비는 항상 0 → 스킵
+                if (sitKey === 'normal') continue;
 
                 // 상황 내 축별 평균
                 const sitMean = {};
@@ -7977,11 +7979,23 @@ function buildProfileOverview(axes, profile) {
             const container = document.getElementById('trajDriftBars');
             if (!container) return;
 
-            // v3.6.11: baseline 을 trajectory 기반으로 재계산 (synthesis 와 동일 스케일).
-            //   simData.axes 는 corpus-level saturate 로 스케일 불일치.
+            // v3.6.12: baseline = 일반(normal) 세션 평균.
+            //   "평상시" 라는 말 자체가 일반 상황이므로 명시적으로 normal 을 baseline.
+            //   일반 탭에선 자기 자신 대비이므로 "평상시 대비" 줄 숨김 (sc.mode==='measured'
+            //   이고 현 탭이 normal 이면 스킵).
+            //   normal 데이터 없으면 다른 상황들의 가중평균 폴백.
             const sim = _trajSimData;
+            const currentTabKey = _trajCurrentTab;
             let baseAxes = null;
-            {
+            const normalData = sim?.situational?.normal;
+            if (normalData?.mean?.length >= 1 && normalData.trajectoryCount >= 1) {
+                baseAxes = {};
+                for (const k of AK) {
+                    const sum = normalData.mean.reduce((s, p) => s + (p[k] || 0), 0);
+                    baseAxes[AXIS_TO_KEY[k]] = sum / normalData.mean.length;
+                }
+            } else {
+                // 폴백: 다른 상황들 가중평균
                 const sits = sim?.situational || {};
                 const accum = { E:0, C:0, T:0, O:0, X:0 };
                 let totalWeight = 0;
@@ -8001,6 +8015,8 @@ function buildProfileOverview(axes, profile) {
                     baseAxes = sim?.axes;
                 }
             }
+            // 일반 탭이면 평상시 대비 표시 생략 (자기 자신이라 무의미)
+            const hideBaseDiff = (currentTabKey === 'normal');
 
             let html = '';
             AK.forEach(k => {
@@ -8021,13 +8037,13 @@ function buildProfileOverview(axes, profile) {
                 const axKey = AXIS_TO_KEY[k];
                 const baseline = baseAxes ? (baseAxes[axKey] || 0.5) : null;
 
-                // baseline 대비 편차
+                // baseline 대비 편차 — 일반 탭이면 표시 안 함 (자기 자신 대비 무의미)
                 let baseDiff = '';
-                if (baseline !== null && sessionMean !== null) {
+                if (!hideBaseDiff && baseline !== null && sessionMean !== null) {
                     const dv = sessionMean - baseline;
                     const dSign = dv >= 0 ? '+' : '';
                     const dc = Math.abs(dv) > 0.03 ? (dv > 0 ? '#34D399' : '#EF4444') : 'rgba(255,255,255,0.35)';
-                    baseDiff = `<span style="font-size:9px;color:${dc};font-family:'JetBrains Mono',monospace;">평상시 대비 ${dSign}${dv.toFixed(2)}</span>`;
+                    baseDiff = `<span style="font-size:9px;color:${dc};font-family:'JetBrains Mono',monospace;">평상시(일반) 대비 ${dSign}${dv.toFixed(2)}</span>`;
                 }
 
                 html += '<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);">';
