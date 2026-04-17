@@ -5067,6 +5067,94 @@ function computeMeasuredTimeSeries(rawMessages, prism, anchor, _features = null)
   };
 }
 
+// computeUserUsageProfile — LLM 사용 맥락 분류기.
+// 설계 근거 (v3.6.8):
+//   기존 E/O 축 regex 는 "ㅋㅋ/좋아/솔직히" 같은 감정-개시 마커 밀도로 측정.
+//   엔지니어링/분석 중심 유저는 이 마커를 거의 안 써서 축이 영구 바닥.
+//   이는 "정서 죽은 사람" 이 아니라 "LLM 을 태스크 도구로 쓰는 사람".
+//   절대값만 보면 공정하지 않음 → 사용 프로파일을 먼저 분류하고
+//   프로파일 안에서의 **상대 위치** 로 해석해야 함.
+// 분류 기준:
+//   - PRISM topic distribution (관계/건강/일상 vs 업무/기술/철학)
+//   - 감정 마커 밀도 (emotional/negEmo/posEmo 전체 평균)
+//   - 자기 개시 밀도 (intimacy regex)
+// 출력 프로파일: task_oriented / emotional / hybrid + 신뢰도
+function computeUserUsageProfile(prism, axes, features) {
+  if (!prism || !axes) return { profile: 'hybrid', confidence: 'low', reason: 'insufficient_data' };
+
+  // 1) 토픽 분포 — 감정/관계 토픽 vs 태스크 토픽 비율
+  const topics = prism?.topic_distribution?.topics || {};
+  const emotionalTopics = ['relationships', 'health', 'daily_life', 'entertainment'];
+  const taskTopics = ['work', 'technology', 'philosophy', 'finance', 'nature_science'];
+  const emotionalTopicRatio = emotionalTopics.reduce((s, t) => s + (topics[t]?.ratio || 0), 0);
+  const taskTopicRatio = taskTopics.reduce((s, t) => s + (topics[t]?.ratio || 0), 0);
+
+  // 2) 감정 마커 밀도 — whole-analysis 평균 기준
+  const emoDensity = axes?.intensity?.A1 || 0;  // 정서 강도 (정규화됨)
+  const expressiveDensity = axes?.intensity?.A3 || 0;
+  const intimacyDensity = axes?.intensity?.A12 || 0;
+  const emoOverall = (emoDensity + expressiveDensity + intimacyDensity) / 3;
+
+  // 3) 프로파일 판정
+  //    task: 태스크 토픽 우세 + 감정 마커 낮음
+  //    emotional: 감정 토픽 우세 OR 감정 마커 높음
+  //    hybrid: 둘 다 중간
+  let profile, reason;
+  if (taskTopicRatio >= 0.40 && emoOverall < 0.15) {
+    profile = 'task_oriented';
+    reason = `태스크 토픽 ${(taskTopicRatio * 100).toFixed(0)}% + 감정 마커 ${(emoOverall * 100).toFixed(0)}%`;
+  } else if (emotionalTopicRatio >= 0.40 || emoOverall >= 0.35) {
+    profile = 'emotional';
+    reason = `감정 토픽 ${(emotionalTopicRatio * 100).toFixed(0)}% + 감정 마커 ${(emoOverall * 100).toFixed(0)}%`;
+  } else {
+    profile = 'hybrid';
+    reason = `태스크 ${(taskTopicRatio * 100).toFixed(0)}% / 감정 ${(emotionalTopicRatio * 100).toFixed(0)}% / 마커 ${(emoOverall * 100).toFixed(0)}%`;
+  }
+
+  // 4) 신뢰도 — topic 합이 70% 이상이면 high, 40% 이상이면 medium
+  const topicCoverage = emotionalTopicRatio + taskTopicRatio;
+  const confidence = topicCoverage >= 0.7 ? 'high' : topicCoverage >= 0.4 ? 'medium' : 'low';
+
+  // 5) 프로파일별 축 기대 범위 — 향후 상대화 표시의 기준점.
+  //    절대 범위는 유저 집단 데이터 쌓이면 통계 기반으로 업데이트 예정.
+  //    현재는 휴리스틱.
+  const EXPECTED_RANGES = {
+    task_oriented: {
+      emotion:   [0.00, 0.18],  // 감정 마커 거의 없음
+      drive:     [0.40, 0.75],  // 주도성 표현 많음 (결론/결정)
+      cognition: [0.45, 0.80],  // 분석 추론 강함
+      boundary:  [0.05, 0.30],  // 자기 개시 적음
+      resilience:[0.30, 0.70],  // 정서 변동성 낮음 (CV 발산 감안)
+    },
+    emotional: {
+      emotion:   [0.25, 0.65],
+      drive:     [0.25, 0.55],
+      cognition: [0.25, 0.55],
+      boundary:  [0.30, 0.65],
+      resilience:[0.25, 0.60],
+    },
+    hybrid: {
+      emotion:   [0.10, 0.45],
+      drive:     [0.30, 0.65],
+      cognition: [0.35, 0.65],
+      boundary:  [0.15, 0.50],
+      resilience:[0.30, 0.65],
+    },
+  };
+
+  return {
+    profile,
+    confidence,
+    reason,
+    metrics: {
+      emotionalTopicRatio: Math.round(emotionalTopicRatio * 1000) / 1000,
+      taskTopicRatio: Math.round(taskTopicRatio * 1000) / 1000,
+      emoMarkerOverall: Math.round(emoOverall * 1000) / 1000,
+    },
+    expectedRanges: EXPECTED_RANGES[profile],
+  };
+}
+
 function runSimulation(axes, anchor, rawMessages, prism, _features = null) {
   const simAxes = extractSimAxes(axes);
   const trajectory = runTrajectorySimulation(simAxes);
@@ -5122,6 +5210,10 @@ function runSimulation(axes, anchor, rawMessages, prism, _features = null) {
     _situationalDebug.skip = true;
   }
 
+  // v3.6.8: LLM 사용 맥락 분류 — 태스크/감정/혼합 프로파일.
+  //   엔지니어링 유저의 E/O 절대값 바닥 문제 해소용. 축 해석 시 이 프로파일 참조.
+  const usageProfile = computeUserUsageProfile(prism, axes, _features);
+
   return {
     axes: simAxes,
     trajectory,
@@ -5132,6 +5224,7 @@ function runSimulation(axes, anchor, rawMessages, prism, _features = null) {
     measured,
     situational,         // { stress: {...}, intimacy: {...}, conflict: {...}, loss: {...}, normal: {...} }
     _situationalDebug,
+    usageProfile,        // { profile, confidence, reason, metrics, expectedRanges }
   };
 }
 
