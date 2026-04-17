@@ -975,6 +975,237 @@ const PRISM_DOMAIN_VOCABULARY = {
   ],
 };
 
+// ══════════════════════════════════════════════════════════════
+// v3.6.23 — PRISM Knowledge Graph v4 (Phase 1 prototype)
+// ══════════════════════════════════════════════════════════════
+// 설계 문서: engine/docs/KNOWLEDGE_GRAPH_v4_DESIGN.md
+// TermEntry 구조:
+//   id: 고유 식별자 (snake_case)
+//   labels: { ko: [...], en?: [...], orig?: [...] }  — 감지용 이형 리스트
+//   domains: [{ domain, weight }]   — 다중 도메인 가중 귀속
+//   depth: 1~5   — 1=도메인명, 5=원전 세부표현 (로그스케일 2^(depth-1))
+//   parents / children / related: 지시 관계 (id 배열)
+//   introduced_by / reframed_by: 계보
+//
+// Phase 1: ~50 entries (하이데거·들뢰즈·라캉·보드리야르·프로이트·푸코 중심)
+// Phase 2+: 도메인당 500~3,000 확장
+//
+// 병행: v3.6.22 PRISM_DOMAIN_VOCABULARY 유지 (legacy path), v4는 신설.
+
+const PRISM_KNOWLEDGE_GRAPH = [
+  // ─────── 메타 / 도메인명 (depth 1) ───────
+  { id: 'd_philosophy', labels: { ko: ['철학'], en: ['philosophy'] }, domains: [{domain:'philosophy',weight:1}], depth: 1 },
+  { id: 'd_psychology', labels: { ko: ['심리학'], en: ['psychology'] }, domains: [{domain:'psychology',weight:1}], depth: 1 },
+  { id: 'd_art', labels: { ko: ['예술', '미술'], en: ['art'] }, domains: [{domain:'art_design',weight:1}], depth: 1 },
+
+  // ─────── 분과 (depth 2) ───────
+  { id: 'field_ontology', labels: { ko: ['존재론'], en: ['ontology'] }, domains: [{domain:'philosophy',weight:1}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_epistemology', labels: { ko: ['인식론'], en: ['epistemology'] }, domains: [{domain:'philosophy',weight:1}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_phenomenology', labels: { ko: ['현상학'], en: ['phenomenology'], orig: ['Phänomenologie'] }, domains: [{domain:'philosophy',weight:1}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_existentialism', labels: { ko: ['실존주의'], en: ['existentialism'] }, domains: [{domain:'philosophy',weight:1}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_poststructuralism', labels: { ko: ['포스트구조주의', '후기구조주의'], en: ['post-structuralism', 'poststructuralism'] }, domains: [{domain:'philosophy',weight:1}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_psychoanalysis', labels: { ko: ['정신분석', '정신분석학'], en: ['psychoanalysis'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.5}], depth: 2, parents: ['d_psychology'] },
+  { id: 'field_contemporary_art', labels: { ko: ['동시대미술', '컨템포러리아트'], en: ['contemporary art'] }, domains: [{domain:'art_design',weight:1}], depth: 2, parents: ['d_art'] },
+
+  // ─────── 인물 (depth 3) ───────
+  { id: 'p_heidegger', labels: { ko: ['하이데거'], en: ['Heidegger'], orig: ['Martin Heidegger'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_phenomenology', 'field_existentialism'] },
+  { id: 'p_husserl', labels: { ko: ['후설'], en: ['Husserl'], orig: ['Edmund Husserl'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_phenomenology'] },
+  { id: 'p_sartre', labels: { ko: ['사르트르'], en: ['Sartre'], orig: ['Jean-Paul Sartre'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_existentialism', 'field_phenomenology'] },
+  { id: 'p_freud', labels: { ko: ['프로이트', '프로이드'], en: ['Freud'], orig: ['Sigmund Freud'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.4}], depth: 3, parents: ['field_psychoanalysis'] },
+  { id: 'p_lacan', labels: { ko: ['라캉'], en: ['Lacan'], orig: ['Jacques Lacan'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.8}], depth: 3, parents: ['field_psychoanalysis', 'field_poststructuralism'] },
+  { id: 'p_deleuze', labels: { ko: ['들뢰즈'], en: ['Deleuze'], orig: ['Gilles Deleuze'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_poststructuralism'] },
+  { id: 'p_guattari', labels: { ko: ['가타리'], en: ['Guattari'], orig: ['Félix Guattari'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.6}], depth: 3, parents: ['field_poststructuralism'] },
+  { id: 'p_foucault', labels: { ko: ['푸코'], en: ['Foucault'], orig: ['Michel Foucault'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.8}], depth: 3, parents: ['field_poststructuralism'] },
+  { id: 'p_derrida', labels: { ko: ['데리다'], en: ['Derrida'], orig: ['Jacques Derrida'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_poststructuralism'] },
+  { id: 'p_baudrillard', labels: { ko: ['보드리야르'], en: ['Baudrillard'], orig: ['Jean Baudrillard'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.5}], depth: 3, parents: ['field_poststructuralism'] },
+  { id: 'p_nietzsche', labels: { ko: ['니체'], en: ['Nietzsche'], orig: ['Friedrich Nietzsche'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_kant', labels: { ko: ['칸트'], en: ['Kant'], orig: ['Immanuel Kant'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_hegel', labels: { ko: ['헤겔'], en: ['Hegel'], orig: ['Georg Wilhelm Friedrich Hegel'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+
+  // ─────── 하이데거 개념 (depth 4~5) ───────
+  { id: 'hei_dasein', labels: { ko: ['현존재', '다자인', '현-존재'], en: ['Dasein', 'being-there'], orig: ['Dasein'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.3}], depth: 4, parents: ['p_heidegger'], introduced_by: 'p_heidegger', children: ['hei_being_in_world', 'hei_being_toward_death'], related: ['hei_mood', 'hei_authenticity'] },
+  { id: 'hei_being_in_world', labels: { ko: ['세계-내-존재', '세계내존재'], en: ['being-in-the-world'], orig: ['In-der-Welt-sein'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['hei_dasein'], introduced_by: 'p_heidegger' },
+  { id: 'hei_mood', labels: { ko: ['기분', '심정성'], en: ['mood', 'attunement'], orig: ['Stimmung', 'Befindlichkeit'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.4}], depth: 4, parents: ['hei_dasein'], introduced_by: 'p_heidegger', related: ['hei_anxiety'] },
+  { id: 'hei_anxiety', labels: { ko: ['불안'], en: ['anxiety', 'anguish'], orig: ['Angst'] }, domains: [{domain:'philosophy',weight:0.8},{domain:'psychology',weight:0.6}], depth: 4, parents: ['hei_mood'], related: ['hei_being_toward_death'] },
+  { id: 'hei_thrownness', labels: { ko: ['피투성', '피투됨'], en: ['thrownness'], orig: ['Geworfenheit'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['hei_dasein'], introduced_by: 'p_heidegger' },
+  { id: 'hei_projection', labels: { ko: ['기투', '기획투사'], en: ['projection'], orig: ['Entwurf'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['hei_dasein'], introduced_by: 'p_heidegger' },
+  { id: 'hei_authenticity', labels: { ko: ['본래성', '본래적'], en: ['authenticity'], orig: ['Eigentlichkeit'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['hei_dasein'], related: ['hei_inauthenticity', 'hei_being_toward_death'] },
+  { id: 'hei_inauthenticity', labels: { ko: ['비본래성', '비본래적'], en: ['inauthenticity'], orig: ['Uneigentlichkeit'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['hei_dasein'], related: ['hei_fallenness'] },
+  { id: 'hei_fallenness', labels: { ko: ['퇴락', '빠져있음'], en: ['fallenness'], orig: ['Verfallen'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['hei_dasein'], introduced_by: 'p_heidegger' },
+  { id: 'hei_being_toward_death', labels: { ko: ['죽음을-향한-존재', '죽음으로의존재', '죽음을향한존재'], en: ['being-toward-death'], orig: ['Sein-zum-Tode'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['hei_dasein'], introduced_by: 'p_heidegger', related: ['hei_anxiety', 'hei_authenticity'] },
+  { id: 'hei_ontological_difference', labels: { ko: ['존재론적차이', '존재론적 차이'], en: ['ontological difference'], orig: ['ontologische Differenz'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_heidegger'], introduced_by: 'p_heidegger' },
+  { id: 'hei_aletheia', labels: { ko: ['알레테이아', '탈은폐'], en: ['aletheia', 'unconcealment'], orig: ['ἀλήθεια'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_heidegger'], introduced_by: 'p_heidegger' },
+  { id: 'hei_gestell', labels: { ko: ['몰아세움', '닦달'], en: ['enframing'], orig: ['Gestell'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_heidegger'], introduced_by: 'p_heidegger' },
+
+  // ─────── 들뢰즈·가타리 개념 ───────
+  { id: 'dg_rhizome', labels: { ko: ['리좀'], en: ['rhizome'], orig: ['rhizome'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.5}], depth: 4, parents: ['p_deleuze', 'p_guattari'], introduced_by: 'p_deleuze', related: ['dg_bwo', 'dg_nomad', 'dg_deterritorialization'] },
+  { id: 'dg_bwo', labels: { ko: ['기관없는신체', '기관없는몸', 'CsO'], en: ['body without organs', 'BwO'], orig: ['corps sans organes'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.5}], depth: 5, parents: ['p_deleuze'], introduced_by: 'p_deleuze', related: ['dg_desiring_machine'] },
+  { id: 'dg_desiring_machine', labels: { ko: ['욕망기계', '욕망하는기계'], en: ['desiring-machine'], orig: ['machine désirante'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.6}], depth: 5, parents: ['p_deleuze', 'p_guattari'], introduced_by: 'p_deleuze', related: ['dg_bwo'] },
+  { id: 'dg_deterritorialization', labels: { ko: ['탈영토화'], en: ['deterritorialization'], orig: ['déterritorialisation'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_deleuze'], introduced_by: 'p_deleuze', related: ['dg_reterritorialization'] },
+  { id: 'dg_reterritorialization', labels: { ko: ['재영토화'], en: ['reterritorialization'], orig: ['reterritorialisation'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_deleuze'], related: ['dg_deterritorialization'] },
+  { id: 'dg_nomad', labels: { ko: ['노마드', '유목', '유목민'], en: ['nomad'], orig: ['nomade'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_deleuze'], related: ['dg_rhizome'] },
+  { id: 'dg_plane_immanence', labels: { ko: ['내재성의평면', '내재평면'], en: ['plane of immanence'], orig: ["plan d'immanence"] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_deleuze'], introduced_by: 'p_deleuze' },
+  { id: 'dg_anti_oedipus', labels: { ko: ['안티-오이디푸스', '안티오이디푸스'], en: ['Anti-Oedipus'], orig: ["L'Anti-Œdipe"] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.7}], depth: 4, parents: ['p_deleuze', 'p_guattari'], related: ['psa_oedipus'] },
+
+  // ─────── 라캉 개념 (psychology + philosophy 교차) ───────
+  { id: 'lac_mirror_stage', labels: { ko: ['거울단계'], en: ['mirror stage'], orig: ['stade du miroir'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.6}], depth: 4, parents: ['p_lacan'], introduced_by: 'p_lacan' },
+  { id: 'lac_symbolic', labels: { ko: ['상징계'], en: ['the Symbolic'], orig: ['Symbolique'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.7}], depth: 4, parents: ['p_lacan'], related: ['lac_imaginary', 'lac_real'] },
+  { id: 'lac_imaginary', labels: { ko: ['상상계'], en: ['the Imaginary'], orig: ['Imaginaire'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.7}], depth: 4, parents: ['p_lacan'], related: ['lac_symbolic', 'lac_real'] },
+  { id: 'lac_real', labels: { ko: ['실재계'], en: ['the Real'], orig: ['Réel'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.7}], depth: 4, parents: ['p_lacan'], related: ['lac_symbolic', 'lac_imaginary'] },
+  { id: 'lac_other', labels: { ko: ['대타자', '큰타자'], en: ['the Other', 'big Other'], orig: ['grand Autre'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.8}], depth: 4, parents: ['p_lacan'], introduced_by: 'p_lacan' },
+  { id: 'lac_objet_a', labels: { ko: ['오브제a', 'objet petit a'], en: ['objet petit a'], orig: ['objet petit a'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.7}], depth: 5, parents: ['p_lacan'], introduced_by: 'p_lacan' },
+  { id: 'lac_jouissance', labels: { ko: ['주이상스', '향유'], en: ['jouissance'], orig: ['jouissance'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.7}], depth: 5, parents: ['p_lacan'], introduced_by: 'p_lacan' },
+  { id: 'lac_name_of_father', labels: { ko: ['아버지의이름', "아버지의-이름"], en: ['Name-of-the-Father'], orig: ['Nom-du-Père'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.6}], depth: 5, parents: ['p_lacan'], introduced_by: 'p_lacan', related: ['psa_oedipus', 'psa_castration'] },
+  { id: 'lac_sinthome', labels: { ko: ['신토메'], en: ['sinthome'], orig: ['sinthome'] }, domains: [{domain:'psychology',weight:1}], depth: 5, parents: ['p_lacan'], introduced_by: 'p_lacan' },
+
+  // ─────── 프로이트·정신분석 핵심 ───────
+  { id: 'psa_unconscious', labels: { ko: ['무의식'], en: ['unconscious'], orig: ['das Unbewusste'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.5},{domain:'art_design',weight:0.3}], depth: 3, parents: ['field_psychoanalysis'], related: ['psa_id', 'psa_repression'] },
+  { id: 'psa_id', labels: { ko: ['이드', '원본능'], en: ['id'], orig: ['Es'] }, domains: [{domain:'psychology',weight:1}], depth: 4, parents: ['p_freud'], related: ['psa_ego', 'psa_superego'] },
+  { id: 'psa_ego', labels: { ko: ['자아'], en: ['ego'], orig: ['Ich'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.4}], depth: 3, parents: ['p_freud'] },
+  { id: 'psa_superego', labels: { ko: ['초자아', '초자아'], en: ['superego'], orig: ['Über-Ich'] }, domains: [{domain:'psychology',weight:1}], depth: 4, parents: ['p_freud'] },
+  { id: 'psa_oedipus', labels: { ko: ['오이디푸스', '오이디푸스콤플렉스', '오이디푸스 콤플렉스', '외디푸스'], en: ['Oedipus complex', 'Oedipus'], orig: ['Ödipuskomplex'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.7},{domain:'art_design',weight:0.5}], depth: 4, parents: ['p_freud'], introduced_by: 'p_freud', reframed_by: ['p_lacan', 'p_deleuze'], related: ['psa_castration', 'lac_name_of_father', 'dg_anti_oedipus'] },
+  { id: 'psa_castration', labels: { ko: ['거세불안', '거세공포', '거세'], en: ['castration anxiety', 'castration'], orig: ['Kastrationsangst'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.5}], depth: 5, parents: ['psa_oedipus'], introduced_by: 'p_freud' },
+  { id: 'psa_libido', labels: { ko: ['리비도'], en: ['libido'], orig: ['Libido'] }, domains: [{domain:'psychology',weight:1}], depth: 4, parents: ['p_freud'], related: ['psa_eros', 'psa_thanatos'] },
+  { id: 'psa_eros', labels: { ko: ['에로스'], en: ['Eros'], orig: ['Eros'] }, domains: [{domain:'psychology',weight:0.8},{domain:'philosophy',weight:0.6}], depth: 4, parents: ['p_freud'], related: ['psa_thanatos'] },
+  { id: 'psa_thanatos', labels: { ko: ['타나토스', '죽음충동'], en: ['Thanatos', 'death drive'], orig: ['Todestrieb'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.5}], depth: 4, parents: ['p_freud'] },
+  { id: 'psa_repression', labels: { ko: ['억압'], en: ['repression'], orig: ['Verdrängung'] }, domains: [{domain:'psychology',weight:1}], depth: 4, parents: ['p_freud'], related: ['psa_unconscious'] },
+  { id: 'psa_sublimation', labels: { ko: ['승화'], en: ['sublimation'], orig: ['Sublimierung'] }, domains: [{domain:'psychology',weight:1},{domain:'art_design',weight:0.6},{domain:'philosophy',weight:0.4}], depth: 4, parents: ['p_freud'] },
+  { id: 'psa_repetition_compulsion', labels: { ko: ['반복강박'], en: ['repetition compulsion'], orig: ['Wiederholungszwang'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.5}], depth: 5, parents: ['p_freud'] },
+  { id: 'psa_wolfman', labels: { ko: ['늑대인간', '늑대인간 사례'], en: ['Wolf Man', 'Wolfman case'] }, domains: [{domain:'psychology',weight:1}], depth: 5, parents: ['p_freud'], introduced_by: 'p_freud' },
+
+  // ─────── 보드리야르 ───────
+  { id: 'bau_simulacrum', labels: { ko: ['시뮬라크르', '시뮬라르크', '시뮬라크라'], en: ['simulacrum', 'simulacra'], orig: ['simulacre'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.7}], depth: 4, parents: ['p_baudrillard'], introduced_by: 'p_baudrillard', related: ['bau_simulation', 'bau_hyperreal'] },
+  { id: 'bau_simulation', labels: { ko: ['시뮬라시옹', '시뮬레이션'], en: ['simulation'], orig: ['simulation'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.6}], depth: 4, parents: ['p_baudrillard'], introduced_by: 'p_baudrillard', related: ['bau_simulacrum', 'bau_hyperreal'] },
+  { id: 'bau_hyperreal', labels: { ko: ['하이퍼리얼', '초실재', '과잉실재'], en: ['hyperreal', 'hyperreality'], orig: ['hyperréel'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.5}], depth: 4, parents: ['p_baudrillard'], introduced_by: 'p_baudrillard' },
+  { id: 'bau_implosion', labels: { ko: ['내파'], en: ['implosion'], orig: ['implosion'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_baudrillard'] },
+  { id: 'bau_symbolic_exchange', labels: { ko: ['상징교환'], en: ['symbolic exchange'], orig: ['échange symbolique'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_baudrillard'] },
+  { id: 'bau_seduction', labels: { ko: ['유혹', '유혹론'], en: ['seduction'], orig: ['séduction'] }, domains: [{domain:'philosophy',weight:0.8}], depth: 5, parents: ['p_baudrillard'] },
+
+  // ─────── 푸코 ───────
+  { id: 'fou_discourse', labels: { ko: ['담론'], en: ['discourse'], orig: ['discours'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.8}], depth: 3, parents: ['p_foucault'], related: ['fou_episteme', 'fou_power'] },
+  { id: 'fou_episteme', labels: { ko: ['에피스테메'], en: ['episteme'], orig: ['épistémè'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.6}], depth: 5, parents: ['p_foucault'], introduced_by: 'p_foucault' },
+  { id: 'fou_power', labels: { ko: ['권력', '권력/지식'], en: ['power', 'power/knowledge'], orig: ['pouvoir'] }, domains: [{domain:'philosophy',weight:0.8},{domain:'humanities_social',weight:1}], depth: 3, parents: ['p_foucault'], related: ['fou_biopolitics', 'fou_discipline'] },
+  { id: 'fou_panopticon', labels: { ko: ['판옵티콘'], en: ['panopticon'], orig: ['panoptique'] }, domains: [{domain:'philosophy',weight:0.7},{domain:'humanities_social',weight:1}], depth: 5, parents: ['p_foucault'] },
+  { id: 'fou_discipline', labels: { ko: ['규율', '규율권력', '규율사회'], en: ['discipline', 'disciplinary power'], orig: ['discipline'] }, domains: [{domain:'philosophy',weight:0.7},{domain:'humanities_social',weight:1}], depth: 4, parents: ['p_foucault'], related: ['fou_panopticon'] },
+  { id: 'fou_biopolitics', labels: { ko: ['생명정치', '생명권력'], en: ['biopolitics', 'biopower'], orig: ['biopolitique'] }, domains: [{domain:'philosophy',weight:0.8},{domain:'humanities_social',weight:1}], depth: 5, parents: ['p_foucault'], introduced_by: 'p_foucault' },
+  { id: 'fou_governmentality', labels: { ko: ['통치성'], en: ['governmentality'], orig: ['gouvernementalité'] }, domains: [{domain:'philosophy',weight:0.8},{domain:'humanities_social',weight:1}], depth: 5, parents: ['p_foucault'], introduced_by: 'p_foucault' },
+  { id: 'fou_genealogy', labels: { ko: ['계보학'], en: ['genealogy'], orig: ['généalogie'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_foucault'], reframed_by: ['p_foucault'], introduced_by: 'p_nietzsche' },
+
+  // ─────── 데리다 ───────
+  { id: 'der_differance', labels: { ko: ['차연'], en: ['différance'], orig: ['différance'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_derrida'], introduced_by: 'p_derrida', related: ['der_trace', 'der_deconstruction'] },
+  { id: 'der_deconstruction', labels: { ko: ['해체', '해체주의'], en: ['deconstruction'], orig: ['déconstruction'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.4}], depth: 4, parents: ['p_derrida'], introduced_by: 'p_derrida' },
+  { id: 'der_trace', labels: { ko: ['흔적'], en: ['trace'], orig: ['trace'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_derrida'] },
+
+  // ─────── 동시대미술 핵심 ───────
+  { id: 'art_relational_aesthetics', labels: { ko: ['관계미학'], en: ['relational aesthetics'], orig: ['esthétique relationnelle'] }, domains: [{domain:'art_design',weight:1}], depth: 4, parents: ['field_contemporary_art'] },
+  { id: 'art_site_specific', labels: { ko: ['장소특정적', '사이트스페시픽'], en: ['site-specific'] }, domains: [{domain:'art_design',weight:1}], depth: 4, parents: ['field_contemporary_art'] },
+  { id: 'art_post_internet', labels: { ko: ['포스트인터넷', '포스트디지털'], en: ['post-internet', 'post-digital'] }, domains: [{domain:'art_design',weight:1}], depth: 4, parents: ['field_contemporary_art'] },
+  { id: 'art_participatory', labels: { ko: ['참여예술'], en: ['participatory art'] }, domains: [{domain:'art_design',weight:1}], depth: 4, parents: ['field_contemporary_art'], related: ['art_relational_aesthetics'] },
+  { id: 'art_aura', labels: { ko: ['아우라'], en: ['aura'], orig: ['Aura'] }, domains: [{domain:'art_design',weight:1},{domain:'philosophy',weight:0.7}], depth: 4 },
+  { id: 'art_mimesis', labels: { ko: ['미메시스'], en: ['mimesis'], orig: ['μίμησις'] }, domains: [{domain:'art_design',weight:1},{domain:'philosophy',weight:0.8}], depth: 4 },
+  { id: 'art_sublime', labels: { ko: ['숭고'], en: ['sublime'], orig: ['Erhabene'] }, domains: [{domain:'art_design',weight:0.8},{domain:'philosophy',weight:1}], depth: 4 },
+  { id: 'art_catharsis', labels: { ko: ['카타르시스'], en: ['catharsis'], orig: ['κάθαρσις'] }, domains: [{domain:'art_design',weight:0.8},{domain:'philosophy',weight:0.9},{domain:'psychology',weight:0.6}], depth: 4 },
+];
+
+// ID 역인덱스 — O(1) 조회
+const PRISM_KG_BY_ID = Object.fromEntries(PRISM_KNOWLEDGE_GRAPH.map(t => [t.id, t]));
+
+// 모든 label → id 매핑 (단일 패스 감지용)
+// label 충돌 시 가장 긴 label 우선 + depth 높은 term 우선 (예: '현존재' > '존재')
+const PRISM_KG_LABEL_INDEX = (() => {
+  const idx = [];
+  for (const term of PRISM_KNOWLEDGE_GRAPH) {
+    for (const locale of ['ko', 'en', 'orig']) {
+      for (const label of (term.labels[locale] || [])) {
+        idx.push({ label, labelLower: label.toLowerCase(), termId: term.id, depth: term.depth, len: label.length });
+      }
+    }
+  }
+  // 긴 label 우선, 같은 길이면 depth 높은 것 우선
+  idx.sort((a, b) => b.len - a.len || b.depth - a.depth);
+  return idx;
+})();
+
+/**
+ * v3.6.23 — Knowledge Graph 기반 감지
+ * @param {string} text — 분석 대상
+ * @returns {{ detected: Set<string>, activeEdges: number }}
+ */
+function detectKnowledgeGraph(text) {
+  const textLower = text.toLowerCase();
+  const detected = new Set();
+  // 겹침 방지: 이미 매칭된 span은 skip — 긴 label 우선 sort 덕에 안전
+  // 간이 구현: 각 label includes 체크 (겹침 허용). Phase 2 에서 span tracking 도입.
+  for (const entry of PRISM_KG_LABEL_INDEX) {
+    if (textLower.includes(entry.labelLower)) {
+      detected.add(entry.termId);
+    }
+  }
+
+  // 활성 edge 수 집계 — 감지 집합 내부의 parent/child/related 연결
+  let activeEdges = 0;
+  for (const id of detected) {
+    const t = PRISM_KG_BY_ID[id];
+    if (!t) continue;
+    for (const pid of (t.parents || [])) if (detected.has(pid)) activeEdges++;
+    for (const rid of (t.related || [])) if (detected.has(rid)) activeEdges++;
+  }
+
+  return { detected, activeEdges };
+}
+
+/**
+ * 도메인별 전문성 점수
+ */
+function computeDomainExpertise(detected) {
+  const domainStats = {};
+  const depthWeight = [0, 1, 2, 4, 8, 16];  // depth 1~5 → 1,2,4,8,16
+
+  for (const id of detected) {
+    const t = PRISM_KG_BY_ID[id];
+    if (!t) continue;
+    for (const dom of t.domains) {
+      if (!domainStats[dom.domain]) {
+        domainStats[dom.domain] = { score: 0, maxDepth: 0, termCount: 0, depthDist: [0,0,0,0,0,0] };
+      }
+      const s = domainStats[dom.domain];
+      s.score += depthWeight[t.depth] * dom.weight;
+      s.maxDepth = Math.max(s.maxDepth, t.depth);
+      s.termCount++;
+      s.depthDist[t.depth]++;
+    }
+  }
+
+  // 도메인 내 edge 밀도 — 단일 용어 인용이 표준 발화이므로
+  // edge 는 "보조 보너스"로만 기능. 판정을 뒤집지 않음.
+  // (설계 결정: 2026-04-18 — co-occurrence 기반 전문성 판정 폐기)
+  for (const domain of Object.keys(domainStats)) {
+    let edges = 0;
+    for (const id of detected) {
+      const t = PRISM_KG_BY_ID[id];
+      if (!t || !t.domains.some(d => d.domain === domain)) continue;
+      for (const connId of [...(t.parents || []), ...(t.related || [])]) {
+        if (!detected.has(connId)) continue;
+        const connT = PRISM_KG_BY_ID[connId];
+        if (connT && connT.domains.some(d => d.domain === domain)) edges++;
+      }
+    }
+    domainStats[domain].edges = edges;
+    // edge 보너스는 소폭만 (이전 ×2 → ×0.5)
+    domainStats[domain].score += edges * 0.5;
+
+    // 레벨 분류 — depth 단일 신호 우선, edge 는 경계 승급 bonus
+    const { maxDepth, edges: e } = domainStats[domain];
+    if (maxDepth >= 5) domainStats[domain].level = 'expert';
+    else if (maxDepth >= 4) domainStats[domain].level = (e >= 2) ? 'expert' : 'advanced';
+    else if (maxDepth >= 3) domainStats[domain].level = (e >= 2) ? 'advanced' : 'intermediate';
+    else if (maxDepth >= 2) domainStats[domain].level = 'novice';
+    else domainStats[domain].level = 'surface';
+  }
+
+  return domainStats;
+}
+
 const PRISM_ABSTRACT_PATTERNS = [
   '개념', '본질', '의미', '가치', '구조', '체계', '패러다임', '프레임', '메타',
   '추상', '이론', '원리', '철학', '존재', '인식', '관점',
