@@ -3961,6 +3961,58 @@
         .traj-drift-val{font-size:11px;font-family:'JetBrains Mono',monospace;min-width:54px;text-align:right;font-weight:600}
         .traj-response-card{background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;padding:28px 32px;margin-bottom:24px;backdrop-filter:blur(16px);position:relative;overflow:hidden}
         .traj-response-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,166,35,0.15),transparent)}
+        /* v3.6.15: RESPONSE PATTERN 재설계 — [A][B][D][E] 섹션 스타일 */
+        .rpc-block{margin-top:30px}
+        .rpc-block:first-of-type{margin-top:0}
+        .rpc-card-label{font-size:10px;letter-spacing:2.5px;color:rgba(255,255,255,0.3);font-family:'JetBrains Mono',monospace;font-weight:600;margin-bottom:18px}
+        /* [A] 패턴 선언 */
+        .rpc-types{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+        .rpc-type-tag{font-size:13px;font-weight:700;color:#fff;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);padding:7px 14px;border-radius:6px;letter-spacing:-0.2px}
+        .rpc-type-tag.primary{background:rgba(245,166,35,0.08);border-color:rgba(245,166,35,0.35)}
+        .rpc-narrative{font-size:14px;color:rgba(255,255,255,0.78);line-height:1.9;letter-spacing:-0.1px}
+        .rpc-narrative strong{color:#fff;font-weight:600}
+        .rpc-chip{display:inline-block;padding:1px 7px;margin:0 1px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;border-radius:3px;letter-spacing:0.3px}
+        .rpc-chip.pos{background:rgba(52,211,153,0.10);color:#34D399;border:1px solid rgba(52,211,153,0.2)}
+        .rpc-chip.neg{background:rgba(239,68,68,0.10);color:#EF4444;border:1px solid rgba(239,68,68,0.2)}
+        /* [B] 매트릭스 */
+        .rpc-matrix-wrap{background:rgba(6,6,11,0.5);border:1px solid rgba(255,255,255,0.03);border-radius:10px;padding:18px}
+        .rpc-matrix{display:grid;grid-template-columns:120px repeat(5,1fr) 78px;gap:1px;background:rgba(255,255,255,0.04)}
+        .rpc-matrix > div{background:var(--surface-solid);padding:11px 8px;display:flex;align-items:center;justify-content:center;font-size:11px;min-height:44px}
+        .rpc-hdr-row{justify-content:flex-start !important;padding-left:12px !important;font-size:12px;font-weight:600;color:rgba(255,255,255,0.9)}
+        .rpc-hdr-col{font-family:'JetBrains Mono',monospace;color:var(--text-dim);font-size:10px;letter-spacing:0.5px;flex-direction:column;gap:2px}
+        .rpc-hdr-col .rpc-k{font-size:11px;font-weight:700}
+        .rpc-count{color:rgba(255,255,255,0.3);font-family:'JetBrains Mono',monospace;font-size:10px;margin-left:4px;font-weight:400}
+        .rpc-cell{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:12px}
+        .rpc-cell.big-up   {background:rgba(52,211,153,0.14) !important;color:#6EE7B7}
+        .rpc-cell.up       {background:rgba(52,211,153,0.06) !important;color:#34D399}
+        .rpc-cell.flat     {color:rgba(255,255,255,0.22)}
+        .rpc-cell.down     {background:rgba(239,68,68,0.06) !important;color:#EF4444}
+        .rpc-cell.big-down {background:rgba(239,68,68,0.14) !important;color:#FCA5A5}
+        .rpc-cell.missing  {color:rgba(255,255,255,0.3);font-size:10px;font-style:italic;font-weight:400;font-family:inherit}
+        .rpc-cell.rpc-row-total{font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.55);font-weight:600;font-size:11px}
+        .rpc-matrix-legend{font-size:10px;color:rgba(255,255,255,0.28);margin-top:10px;font-family:'JetBrains Mono',monospace;letter-spacing:0.5px}
+        /* [D] SSG */
+        .rpc-ssg{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+        .rpc-ssg-card{background:rgba(6,6,11,0.5);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:18px;position:relative}
+        .rpc-ssg-card::before{content:'';position:absolute;top:0;bottom:0;left:0;width:2px;border-radius:2px 0 0 2px}
+        .rpc-ssg-card.S::before{background:rgba(52,211,153,0.4)}
+        .rpc-ssg-card.Sh::before{background:rgba(239,68,68,0.4)}
+        .rpc-ssg-card.G::before{background:rgba(245,166,35,0.4)}
+        .rpc-ssg-label{font-size:9px;letter-spacing:2.5px;font-family:'JetBrains Mono',monospace;font-weight:700;margin-bottom:10px}
+        .rpc-ssg-card.S .rpc-ssg-label{color:#34D399}
+        .rpc-ssg-card.Sh .rpc-ssg-label{color:#EF4444}
+        .rpc-ssg-card.G .rpc-ssg-label{color:var(--ac)}
+        .rpc-ssg-head{font-size:13px;font-weight:700;color:#fff;margin-bottom:6px;letter-spacing:-0.2px}
+        .rpc-ssg-body{font-size:11.5px;color:rgba(255,255,255,0.6);line-height:1.8}
+        .rpc-ssg-body .d{font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.85);font-weight:600;padding:0 2px}
+        /* [E] Predictions */
+        .rpc-pred{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+        .rpc-pred li{background:rgba(6,6,11,0.5);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:13px 16px;font-size:12.5px;line-height:1.85;color:rgba(255,255,255,0.72);position:relative}
+        .rpc-pred li::before{content:'';position:absolute;top:0;bottom:0;left:0;width:2px;background:rgba(167,139,250,0.35);border-radius:2px 0 0 2px}
+        .rpc-pred li strong{color:#fff;font-weight:600}
+        .rpc-tag-if{display:inline-block;padding:1px 7px;font-size:9px;font-weight:700;letter-spacing:1.5px;border-radius:3px;margin-right:6px;font-family:'JetBrains Mono',monospace;background:rgba(167,139,250,0.1);color:var(--a4)}
+        .rpc-tag-then{display:inline-block;padding:1px 7px;font-size:9px;font-weight:700;letter-spacing:1.5px;border-radius:3px;margin:0 6px;font-family:'JetBrains Mono',monospace;background:rgba(245,166,35,0.08);color:var(--ac)}
+        @media (max-width:720px){.rpc-matrix{grid-template-columns:90px repeat(5,1fr) 52px}.rpc-ssg{grid-template-columns:1fr}}
         #trajSplit{height:460px}
         #trajSplit .lens-panel{height:100%}
         #trajSplit::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);z-index:1}
@@ -8122,52 +8174,218 @@ function buildProfileOverview(axes, profile) {
         }
 
         // ── Build Response Pattern Card ──
+        // v3.6.15: RESPONSE PATTERN 전면 재설계.
+        //   [A] 패턴 선언 + [B] 비대칭 매트릭스 + [D] Strengths/Shadows/Growth + [E] 조건부 예측.
+        //   본인 데이터 내 normal baseline 대비 상황별 편차 기반. 외부 기준·프로파일 불사용.
         function buildTrajResponseCard(simData) {
             const card = document.getElementById('trajResponseCard');
             if (!card) return;
 
-            // Analyze cross-scenario response pattern from stimulus data
             const AK = ['E','C','T','O','X'];
-            let patternName = '선택적 개방';
-            let patternDesc = '';
+            const AXIS_MAP = { E:'emotion', C:'drive', T:'cognition', O:'boundary', X:'resilience' };
+            const AXIS_NAMES = TRAJ_AXIS_NAMES;
+            const AXIS_COLORS = TRAJ_AXIS_COLORS;
+            const SIT_META = {
+                normal:   { label: '일반',    icon: '◆', color: '#F5A623' },
+                stress:   { label: '스트레스', icon: '⚡', color: '#EF4444' },
+                intimacy: { label: '친밀감',   icon: '♥',  color: '#A78BFA' },
+                conflict: { label: '갈등',    icon: '🔥', color: '#F97316' },
+                loss:     { label: '상실',    icon: '◇',  color: '#6B7280' },
+            };
 
-            // Derive pattern from stimulus deltas
-            if (simData.stimulus) {
-                const stressO = simData.stimulus.stress?.deltas?.O || 0;
-                const intimacyO = simData.stimulus.intimacy?.deltas?.O || 0;
-                const conflictO = simData.stimulus.conflict?.deltas?.O || 0;
-                const lossE = simData.stimulus.loss?.deltas?.E || 0;
+            // baseline = 일반 세션 평균 (v3.6.12)
+            const sits = simData.situational || {};
+            const normalData = sits.normal;
+            let baseline = null;
+            if (normalData?.mean?.length >= 1 && normalData.trajectoryCount >= 1) {
+                baseline = {};
+                AK.forEach(k => {
+                    const sum = normalData.mean.reduce((s, p) => s + (p[k] || 0), 0);
+                    baseline[k] = sum / normalData.mean.length;
+                });
+            }
+            if (!baseline) { card.style.display = 'none'; return; }
 
-                if (intimacyO > 0.1 && stressO < -0.05) {
-                    patternName = '선택적 개방';
-                    patternDesc = '위협적 맥락(스트레스·갈등)에서는 경계를 닫고 차단하지만, 안전한 맥락(친밀감)에서는 경계가 크게 열립니다. 아무에게나 열리지 않지만, 한 번 열리면 깊이 들어갑니다.';
-                    if (lossE > 0.2) patternDesc += ' 상실이 가장 큰 취약점이며, 이때 유일하게 전면적 붕괴가 나타납니다.';
-                } else if (stressO < -0.1 && conflictO < -0.1) {
-                    patternName = '전면 차단';
-                    patternDesc = '외부 자극이 부정적일 때 경계를 빠르게 닫고 내면으로 후퇴합니다. 자극의 종류에 관계없이 방어가 먼저 작동하는 패턴입니다.';
-                } else if (intimacyO > 0.15 && conflictO > 0) {
-                    patternName = '개방 유지';
-                    patternDesc = '갈등 상황에서도 경계를 유지하며, 친밀감에서는 더욱 크게 열립니다. 관계 지향적이며 충돌을 회피하지 않는 패턴입니다.';
-                } else {
-                    patternName = '균형 대응';
-                    patternDesc = '상황에 따라 경계를 유연하게 조절합니다. 극단적 개방이나 차단 없이 적응적으로 반응하는 패턴입니다.';
+            // 상황별 평균 + 편차
+            const sitEntries = [];
+            for (const sitKey of ['normal','stress','intimacy','conflict','loss']) {
+                const sd = sits[sitKey];
+                if (!sd?.mean?.length || sd.trajectoryCount < 1) {
+                    sitEntries.push({ key: sitKey, detected: false });
+                    continue;
                 }
+                const sitMean = {}; const shifts = {};
+                let totalAbs = 0;
+                AK.forEach(k => {
+                    const sum = sd.mean.reduce((s, p) => s + (p[k] || 0), 0);
+                    sitMean[k] = sum / sd.mean.length;
+                    shifts[k] = sitMean[k] - baseline[k];
+                    if (sitKey !== 'normal') totalAbs += Math.abs(shifts[k]);
+                });
+                sitEntries.push({ key: sitKey, detected: true, sessions: sd.trajectoryCount, mean: sitMean, shifts, totalAbs });
             }
 
-            // Use simData.responsePattern if the engine provides one
-            if (simData.responsePattern) {
-                if (simData.responsePattern.name) patternName = simData.responsePattern.name;
-                if (simData.responsePattern.desc) patternDesc = simData.responsePattern.desc;
-            }
+            // ─── [A] 패턴 선언 ───
+            const patternTypes = [];
+            const intimacyShift = sitEntries.find(s => s.key === 'intimacy' && s.detected)?.shifts;
+            const stressShift   = sitEntries.find(s => s.key === 'stress' && s.detected)?.shifts;
+            const lossShift     = sitEntries.find(s => s.key === 'loss' && s.detected)?.shifts;
+            const conflictShift = sitEntries.find(s => s.key === 'conflict' && s.detected)?.shifts;
 
-            let h = '';
-            h += '<div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,166,35,0.15),transparent);"></div>';
-            h += '<div style="display:flex;align-items:flex-start;gap:24px;">';
-            h += '<div style="flex:1;">';
-            h += '<div style="font-size:11px;letter-spacing:2px;color:var(--ac);font-family:\'JetBrains Mono\',monospace;margin-bottom:14px;">// RESPONSE PATTERN</div>';
-            h += '<div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:12px;">' + patternName + '</div>';
-            h += '<div style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.85;">' + patternDesc + '</div>';
-            h += '</div></div>';
+            if (intimacyShift && intimacyShift.O > 0.05 && (!stressShift || stressShift.O <= 0.03)) patternTypes.push('선택적 개방형');
+            if (stressShift && stressShift.E > 0.08 && stressShift.X < -0.05) patternTypes.push('스트레스 과반응형');
+            if (stressShift && Math.abs(stressShift.X) < 0.05 && conflictShift && Math.abs(conflictShift.X) < 0.05) patternTypes.push('압력 내성형');
+            if (lossShift && lossShift.X < -0.15) patternTypes.push('상실 취약형');
+            if (conflictShift && conflictShift.E > 0.08 && conflictShift.C > 0.05) patternTypes.push('갈등 직면형');
+            if (baseline.cognition >= 0.5 && baseline.drive >= 0.5 && patternTypes.length === 0) patternTypes.push('분석 주도형');
+            if (patternTypes.length === 0) patternTypes.push('중립형');
+
+            // 패턴 서술 (템플릿 기반)
+            const narrativeParts = [];
+            if (intimacyShift && intimacyShift.O > 0.05) {
+                const pct = Math.round((intimacyShift.O / Math.max(baseline.boundary, 0.05)) * 100);
+                narrativeParts.push(`친밀감 맥락에서는 개방이 평상시의 ${pct > 100 ? Math.round(pct/100 + 0.5) + '배' : pct + '% 수준'}으로 상승합니다 <span class="rpc-chip pos">O +${intimacyShift.O.toFixed(2)}</span>.`);
+            }
+            if (stressShift && stressShift.E > 0.05) {
+                narrativeParts.push(`스트레스 상황에서는 정서가 상승하고 <span class="rpc-chip neg">E +${stressShift.E.toFixed(2)}</span>, 회복력이 저하됩니다 <span class="rpc-chip neg">X ${stressShift.X.toFixed(2)}</span>.`);
+            }
+            if (lossShift && lossShift.X < -0.1) {
+                narrativeParts.push(`상실 상황에서는 회복력이 급락하여 <span class="rpc-chip neg">X ${lossShift.X.toFixed(2)}</span> 이 분석에서 가장 취약한 영역입니다.`);
+            }
+            const narrativeText = narrativeParts.length ? narrativeParts.join(' ') : '상황 간 유의미한 편차가 관찰되지 않습니다. 상황 독립적으로 일관된 반응 구조를 유지합니다.';
+
+            // ─── [B] 비대칭 매트릭스 HTML ───
+            let matrixHtml = '<div class="rpc-matrix-wrap"><div class="rpc-matrix">';
+            matrixHtml += '<div></div>';
+            AK.forEach(k => {
+                matrixHtml += `<div class="rpc-hdr-col"><span class="rpc-k" style="color:${AXIS_COLORS[k]}">${k}</span><span>${AXIS_NAMES[k]}</span></div>`;
+            });
+            matrixHtml += '<div class="rpc-hdr-col" style="font-size:9px">Σ|Δ|</div>';
+
+            for (const sitKey of ['stress','intimacy','conflict','loss']) {
+                const e = sitEntries.find(s => s.key === sitKey);
+                const meta = SIT_META[sitKey];
+                if (!e || !e.detected) {
+                    matrixHtml += `<div class="rpc-hdr-row" style="color:${meta.color};opacity:0.45">${meta.icon} ${meta.label}</div>`;
+                    matrixHtml += `<div class="rpc-cell missing" style="grid-column:span 5">이 분석에서는 감지되지 않았습니다</div>`;
+                    matrixHtml += `<div class="rpc-cell rpc-row-total">—</div>`;
+                    continue;
+                }
+                matrixHtml += `<div class="rpc-hdr-row" style="color:${meta.color}">${meta.icon} ${meta.label} <span class="rpc-count">(${e.sessions})</span></div>`;
+                AK.forEach(k => {
+                    const d = e.shifts[k];
+                    const abs = Math.abs(d);
+                    let cls = 'flat';
+                    if (d > 0.08) cls = 'big-up';
+                    else if (d > 0.03) cls = 'up';
+                    else if (d < -0.08) cls = 'big-down';
+                    else if (d < -0.03) cls = 'down';
+                    const sign = d >= 0 ? '+' : '';
+                    matrixHtml += `<div class="rpc-cell ${cls}">${sign}${d.toFixed(2)}</div>`;
+                });
+                matrixHtml += `<div class="rpc-cell rpc-row-total">${e.totalAbs.toFixed(2)}</div>`;
+            }
+            matrixHtml += '</div><div class="rpc-matrix-legend">· 색: <span style="color:#34D399">상승</span> / <span style="color:#EF4444">하락</span> / <span style="color:rgba(255,255,255,0.3)">변화 미미</span>&nbsp;&nbsp;· Σ|Δ| = 총 편차 (상황 활성도)</div></div>';
+
+            // ─── [D] Strengths / Shadows / Growth ───
+            // Strength: 상황 간 변동 가장 작은 축
+            // Shadow: baseline 값 자체가 낮지만 변동 대역도 좁은 축
+            // Growth: 가장 크게 움직이지만 한 상황에서만 활성화되는 축
+            const axisVariance = {};
+            AK.forEach(k => {
+                const diffs = sitEntries.filter(e => e.detected && e.key !== 'normal').map(e => Math.abs(e.shifts[k] || 0));
+                axisVariance[k] = diffs.length ? Math.max(...diffs) : 0;
+            });
+            // Strength = 가장 안정된 축
+            const strengthAxis = AK.reduce((min, k) => axisVariance[k] < axisVariance[min] ? k : min, AK[0]);
+            // Shadow = baseline 이 0.2 이하이고 변동도 0.1 이내인 축
+            let shadowAxis = null;
+            for (const k of AK) {
+                if (baseline[AXIS_MAP[k]] <= 0.2 && axisVariance[k] <= 0.1) { shadowAxis = k; break; }
+            }
+            // Growth = 변동 가장 큰 축 (strength 와 다르면)
+            const growthAxis = AK.reduce((max, k) => axisVariance[k] > axisVariance[max] ? k : max, AK[0]);
+
+            const ssgDescriptions = {
+                E: { strong: '정서 표현이 상황에 흔들리지 않고 일정 수준을 유지합니다.', shadow: '정서를 언어화하는 대역이 좁습니다. 감정이 없는 것이 아니라, 그것을 바깥으로 전달하는 통로가 좁을 뿐입니다. 상대가 상태를 오판할 가능성이 있습니다.', growth: '상황에 따라 정서 표현의 폭을 넓히는 연습이 다음 방향입니다.' },
+                C: { strong: '추진력이 상황과 무관하게 일관되게 유지됩니다.', shadow: '주도적 결정 표현이 제한적입니다. 주도의 필요가 있는 맥락에서 전달이 어려울 수 있습니다.', growth: '통제의 강약을 상황에 맞춰 조절하는 폭이 확장 지점입니다.' },
+                T: { strong: '분석 능력이 어떤 압력에도 독립적으로 작동합니다. 사고 구조가 외부 조건과 분리되어 유지됩니다.', shadow: '인지적 틀이 제한적입니다.', growth: '인지 스타일의 유연성을 확장하는 것이 다음 방향입니다.' },
+                O: { strong: '개방의 폭이 상황 독립적으로 유지됩니다.', shadow: '자기 개시의 대역이 좁습니다. 관계 맥락에서 자기를 드러내는 언어가 제한적입니다.', growth: '현재는 특정 맥락에서만 개방이 활성화됩니다. 더 약한 신뢰 관계에서도 부분적 개방이 가능해지면 관계의 폭이 확장됩니다.' },
+                X: { strong: '회복 탄성이 외부 자극에 관계없이 안정적으로 유지됩니다.', shadow: '정서 변동성이 크고 회복 대역이 좁습니다.', growth: '회복 경로의 다양화가 다음 방향입니다.' },
+            };
+
+            const ssgHtml = `
+                <div class="rpc-ssg">
+                    <div class="rpc-ssg-card S">
+                        <div class="rpc-ssg-label">STRENGTH</div>
+                        <div class="rpc-ssg-head">${AXIS_NAMES[strengthAxis]} 축의 일관성</div>
+                        <div class="rpc-ssg-body">${strengthAxis} 축의 상황 간 변동은 <span class="d">±${axisVariance[strengthAxis].toFixed(2)}</span> 수준입니다. ${ssgDescriptions[strengthAxis].strong}</div>
+                    </div>
+                    <div class="rpc-ssg-card Sh">
+                        <div class="rpc-ssg-label">SHADOW</div>
+                        <div class="rpc-ssg-head">${shadowAxis ? AXIS_NAMES[shadowAxis] + ' 축의 대역' : AXIS_NAMES[growthAxis] + ' 축의 편차'}</div>
+                        <div class="rpc-ssg-body">${shadowAxis ? `${shadowAxis} 축은 <span class="d">${baseline[AXIS_MAP[shadowAxis]].toFixed(2)}</span> 기저선에 고정되어 있습니다. 상황이 바뀌어도 ±${axisVariance[shadowAxis].toFixed(2)} 이내의 변동만 나타납니다. ${ssgDescriptions[shadowAxis].shadow}` : `${growthAxis} 축의 변동폭이 ${axisVariance[growthAxis].toFixed(2)} 로 상황 의존도가 큽니다. ${ssgDescriptions[growthAxis].shadow || '이 축의 안정성이 다음 주제입니다.'}`}</div>
+                    </div>
+                    <div class="rpc-ssg-card G">
+                        <div class="rpc-ssg-label">GROWTH EDGE</div>
+                        <div class="rpc-ssg-head">${AXIS_NAMES[growthAxis]} 축의 확장</div>
+                        <div class="rpc-ssg-body">${growthAxis} 축의 최대 편차는 <span class="d">${axisVariance[growthAxis].toFixed(2)}</span> 입니다. ${ssgDescriptions[growthAxis].growth}</div>
+                    </div>
+                </div>
+            `;
+
+            // ─── [E] 조건부 예측 ───
+            const predictions = [];
+            if (stressShift && stressShift.E > 0.06) {
+                predictions.push({ if: '스트레스 직후 수 시간 이내', then: `정서(E) 가 평상시 대비 +${stressShift.E.toFixed(2)} 상승한 상태가 유지됩니다. 이 시간대의 중요한 결정은 이후 재평가될 가능성이 있습니다. 판단의 유예를 권장합니다.` });
+            }
+            if (lossShift && lossShift.X < -0.1) {
+                const ixr = intimacyShift && intimacyShift.X >= 0 ? ` 복귀 경로로는 친밀감 맥락(X ${intimacyShift.X >= 0 ? '+' : ''}${intimacyShift.X.toFixed(2)})으로의 이동이 효과적입니다.` : '';
+                predictions.push({ if: '상실 상황에 진입', then: `회복(X) 이 ${lossShift.X.toFixed(2)} 수준으로 하락합니다. 다른 상황 대비 가장 취약한 구간입니다.${ixr}` });
+            }
+            if (intimacyShift && intimacyShift.O > 0.05) {
+                predictions.push({ if: '신뢰가 형성되지 않은 관계의 초기 단계', then: `개방(O) 을 직접 요구받으면 닫힘 반응이 일어납니다. 상대가 먼저 시간을 들여 머물러 주는 방식이 개방에 도달하는 경로가 됩니다.` });
+            }
+            if (predictions.length === 0) {
+                predictions.push({ if: '일반적인 상호작용 상황', then: `축 값이 상황에 흔들리지 않고 유지됩니다. 예측 가능성이 이 프로필의 주요 특성입니다.` });
+            }
+            let predHtml = '<ul class="rpc-pred">';
+            predictions.forEach(p => {
+                predHtml += `<li><span class="rpc-tag-if">IF</span>${p.if}<span class="rpc-tag-then">THEN</span>${p.then}</li>`;
+            });
+            predHtml += '</ul>';
+
+            // ─── 최종 조립 ───
+            let h = '<div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,166,35,0.15),transparent);"></div>';
+
+            // [A]
+            h += '<div class="rpc-block">';
+            h += '<div class="rpc-card-label">// PATTERN DECLARATION</div>';
+            h += '<div class="rpc-types">';
+            patternTypes.forEach((t, i) => {
+                h += `<span class="rpc-type-tag${i === 0 ? ' primary' : ''}">${t}</span>`;
+            });
+            h += '</div>';
+            h += `<div class="rpc-narrative">${narrativeText}</div>`;
+            h += '</div>';
+
+            // [B]
+            h += '<div class="rpc-block">';
+            h += '<div class="rpc-card-label">// ASYMMETRY MATRIX · 상황 × 축 (평상시 대비)</div>';
+            h += matrixHtml;
+            h += '</div>';
+
+            // [D]
+            h += '<div class="rpc-block">';
+            h += '<div class="rpc-card-label">// STRENGTHS / SHADOWS / GROWTH EDGE</div>';
+            h += ssgHtml;
+            h += '</div>';
+
+            // [E]
+            h += '<div class="rpc-block">';
+            h += '<div class="rpc-card-label">// CONDITIONAL PREDICTIONS</div>';
+            h += predHtml;
+            h += '</div>';
 
             card.innerHTML = h;
             card.style.display = 'block';
