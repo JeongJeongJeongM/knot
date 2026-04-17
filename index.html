@@ -4348,6 +4348,8 @@
             <div id="trajSynthesis" style="margin-bottom:24px;"></div>
             <!-- Scenario tabs -->
             <div class="traj-tabs" id="trajTabs"></div>
+            <!-- v3.6.14: 숨긴 상황 안내 (측정 실패 투명성) -->
+            <div id="trajHiddenNote"></div>
             <!-- Chart card: canvas + drift -->
             <div class="traj-chart-card" id="trajChartCard">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
@@ -7189,7 +7191,9 @@
                     }, 1000);
 
                     // Send raw_messages to server with timestamps preserved
-                    // Cap at 1500 messages and 3000 chars each to stay under 5MB worker limit
+                    // v3.6.14: cap 1500 → 3000. 샘플 커져 conflict/loss 세션 검출 확률 상승.
+                    //   Haiku scoring 은 worker 에서 500 cap 걸려있어 LLM 비용 변화 없음.
+                    //   Sonnet essay 는 raw message 안 받음. Worker CPU 만 소폭 증가.
                     const rawMessages = messages
                         .map(m => {
                             if (typeof m === 'string') return { sender: 'user', text: m };
@@ -7197,7 +7201,7 @@
                             return { sender: m.sender || 'user', text: text, timestamp: m.timestamp || m.created_at || null };
                         })
                         .filter(m => m.text && m.text.trim().length > 0)
-                        .slice(-1500)
+                        .slice(-3000)
                         .map(m => ({ ...m, text: m.text.length > 3000 ? m.text.slice(0, 3000) : m.text }));
                     const lensSummary = ''; // moved to server
                     const serverResult = await callWorkerAnalyze(rawMessages, lensSummary);
@@ -7720,9 +7724,18 @@ function buildProfileOverview(axes, profile) {
 
             // Build tabs
             const tabsWrap = document.getElementById('trajTabs');
+            // v3.6.14: trajectoryCount=0 인 상황은 탭 자체 숨김 (SIMULATED fallback 제거).
+            //   이번 분석 샘플에 해당 상황 세션이 없으면 아예 노출 X — UI 클린 + 오해 방지.
+            //   엔진 자체에서 빼는 게 아니라 데이터 유무에 따라 dynamic render.
+            const visibleTabs = TRAJ_SIT_TABS.filter(t => {
+                if (t.key === 'normal') return true; // 일반은 baseline 이라 항상 표시
+                const sit = simData.situational ? simData.situational[t.key] : null;
+                return !!(sit && sit.trajectoryCount >= 1);
+            });
+
             if (tabsWrap) {
                 let th = '';
-                TRAJ_SIT_TABS.forEach((t, i) => {
+                visibleTabs.forEach((t, i) => {
                     th += '<div class="traj-tab' + (i === 0 ? ' on' : '') + '" data-key="' + t.key + '" onclick="switchTrajTab2(this,\'' + t.key + '\')">' + t.icon + ' ' + t.label + '</div>';
                 });
                 tabsWrap.innerHTML = th;
@@ -7732,11 +7745,12 @@ function buildProfileOverview(axes, profile) {
             const nav = document.getElementById('trajNav');
             if (nav) {
                 let nh = '';
-                TRAJ_SIT_TABS.forEach((t, i) => {
+                visibleTabs.forEach((t, i) => {
                     const sit = simData.situational ? simData.situational[t.key] : null;
-                    // v3.6.7: 1세션으로도 MEASURED 허용 (conflict/loss 가 simulated 로 빠지는 문제 수정)
                     const hasMeasured = !!(sit && sit.trajectoryCount >= 1);
-                    const sub = hasMeasured ? (sit.sessionCount + ' sessions' + (sit.trajectoryCount < 3 ? ' · low conf' : '')) : (sit?.sessionCount ? sit.sessionCount + ' (simulated)' : 'simulated');
+                    const sub = hasMeasured
+                        ? (sit.sessionCount + ' sessions' + (sit.trajectoryCount < 3 ? ' · low conf' : ''))
+                        : 'baseline';
                     nh += '<div class="lens-nav-item' + (i === 0 ? ' active' : '') + '" data-key="' + t.key + '" onclick="switchTrajTab2(null,\'' + t.key + '\',this)">';
                     nh += '<span class="lens-nav-icon">' + t.icon + '</span>';
                     nh += '<div><div class="lens-nav-title">' + t.label + '</div>';
@@ -7745,11 +7759,29 @@ function buildProfileOverview(axes, profile) {
                 nav.innerHTML = nh;
             }
 
+            // 숨겨진 상황 수 안내 (측정 실패 투명성)
+            const hiddenCount = TRAJ_SIT_TABS.length - visibleTabs.length;
+            const trajHideNote = document.getElementById('trajHiddenNote');
+            if (trajHideNote) {
+                if (hiddenCount > 0) {
+                    const hiddenLabels = TRAJ_SIT_TABS
+                        .filter(t => !visibleTabs.find(v => v.key === t.key))
+                        .map(t => t.label).join(', ');
+                    trajHideNote.innerHTML =
+                        `<div style="font-size:10px;color:rgba(255,255,255,0.35);font-family:'JetBrains Mono',monospace;margin:8px 0 16px;text-align:center;">` +
+                        `// ${hiddenLabels} 상황: 이 분석에선 해당 세션 감지 안 됨 (숨김)` +
+                        `</div>`;
+                } else {
+                    trajHideNote.innerHTML = '';
+                }
+            }
+
             // Build response pattern card
             buildTrajResponseCard(simData);
 
-            // Render first tab
-            switchTrajTab2(document.querySelector('.traj-tab[data-key="normal"]'), 'normal');
+            // Render first visible tab
+            const firstTabKey = visibleTabs[0]?.key || 'normal';
+            switchTrajTab2(document.querySelector('.traj-tab[data-key="' + firstTabKey + '"]'), firstTabKey);
         }
 
         // ──────────────────────────────────────────────────────────
