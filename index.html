@@ -7770,9 +7770,10 @@ function buildProfileOverview(axes, profile) {
             _trajSimData = simData;
             if (!simData) return;
 
-            // v3.6.10: 다축 종합 해석 카드 렌더
-            //   baseline(전체 평균) + 상황별 편차 → "이 유저 = 어떤 정서 패턴" 유형화
-            renderTrajSynthesis(simData);
+            // v3.6.15: 다축 종합 해석(renderTrajSynthesis) 제거 — RESPONSE PATTERN 카드가 대체.
+            //   기존 흔적 남지 않도록 div 비움.
+            const synthWrap = document.getElementById('trajSynthesis');
+            if (synthWrap) synthWrap.innerHTML = '';
 
             // Build tabs
             const tabsWrap = document.getElementById('trajTabs');
@@ -8243,8 +8244,13 @@ function buildProfileOverview(axes, profile) {
             // 패턴 서술 (템플릿 기반)
             const narrativeParts = [];
             if (intimacyShift && intimacyShift.O > 0.05) {
-                const pct = Math.round((intimacyShift.O / Math.max(baseline.boundary, 0.05)) * 100);
-                narrativeParts.push(`친밀감 맥락에서는 개방이 평상시의 ${pct > 100 ? Math.round(pct/100 + 0.5) + '배' : pct + '% 수준'}으로 상승합니다 <span class="rpc-chip pos">O +${intimacyShift.O.toFixed(2)}</span>.`);
+                const baseO = baseline.O || 0.05;
+                const newVal = baseO + intimacyShift.O;
+                const ratio = newVal / Math.max(baseO, 0.03);
+                const pctText = ratio >= 1.5
+                    ? `평상시의 약 ${ratio.toFixed(1)}배 수준`
+                    : `평상시 대비 +${(intimacyShift.O * 100).toFixed(0)}% 지점`;
+                narrativeParts.push(`친밀감 맥락에서는 개방이 ${pctText}으로 상승합니다 <span class="rpc-chip pos">O +${intimacyShift.O.toFixed(2)}</span>.`);
             }
             if (stressShift && stressShift.E > 0.05) {
                 narrativeParts.push(`스트레스 상황에서는 정서가 상승하고 <span class="rpc-chip neg">E +${stressShift.E.toFixed(2)}</span>, 회복력이 저하됩니다 <span class="rpc-chip neg">X ${stressShift.X.toFixed(2)}</span>.`);
@@ -8298,10 +8304,10 @@ function buildProfileOverview(axes, profile) {
             });
             // Strength = 가장 안정된 축
             const strengthAxis = AK.reduce((min, k) => axisVariance[k] < axisVariance[min] ? k : min, AK[0]);
-            // Shadow = baseline 이 0.2 이하이고 변동도 0.1 이내인 축
+            // Shadow = baseline 이 0.2 이하이고 변동도 0.1 이내인 축 (baseline 은 E/C/T/O/X 키)
             let shadowAxis = null;
             for (const k of AK) {
-                if (baseline[AXIS_MAP[k]] <= 0.2 && axisVariance[k] <= 0.1) { shadowAxis = k; break; }
+                if ((baseline[k] || 0.5) <= 0.2 && axisVariance[k] <= 0.1) { shadowAxis = k; break; }
             }
             // Growth = 변동 가장 큰 축 (strength 와 다르면)
             const growthAxis = AK.reduce((max, k) => axisVariance[k] > axisVariance[max] ? k : max, AK[0]);
@@ -8324,7 +8330,7 @@ function buildProfileOverview(axes, profile) {
                     <div class="rpc-ssg-card Sh">
                         <div class="rpc-ssg-label">SHADOW</div>
                         <div class="rpc-ssg-head">${shadowAxis ? AXIS_NAMES[shadowAxis] + ' 축의 대역' : AXIS_NAMES[growthAxis] + ' 축의 편차'}</div>
-                        <div class="rpc-ssg-body">${shadowAxis ? `${shadowAxis} 축은 <span class="d">${baseline[AXIS_MAP[shadowAxis]].toFixed(2)}</span> 기저선에 고정되어 있습니다. 상황이 바뀌어도 ±${axisVariance[shadowAxis].toFixed(2)} 이내의 변동만 나타납니다. ${ssgDescriptions[shadowAxis].shadow}` : `${growthAxis} 축의 변동폭이 ${axisVariance[growthAxis].toFixed(2)} 로 상황 의존도가 큽니다. ${ssgDescriptions[growthAxis].shadow || '이 축의 안정성이 다음 주제입니다.'}`}</div>
+                        <div class="rpc-ssg-body">${shadowAxis ? `${shadowAxis} 축은 <span class="d">${(baseline[shadowAxis] || 0.5).toFixed(2)}</span> 기저선에 고정되어 있습니다. 상황이 바뀌어도 ±${axisVariance[shadowAxis].toFixed(2)} 이내의 변동만 나타납니다. ${ssgDescriptions[shadowAxis].shadow}` : `${growthAxis} 축의 변동폭이 ${axisVariance[growthAxis].toFixed(2)} 로 상황 의존도가 큽니다. ${ssgDescriptions[growthAxis].shadow || '이 축의 안정성이 다음 주제입니다.'}`}</div>
                     </div>
                     <div class="rpc-ssg-card G">
                         <div class="rpc-ssg-label">GROWTH EDGE</div>
