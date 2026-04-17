@@ -8208,7 +8208,10 @@ function buildProfileOverview(axes, profile) {
             if (!title || !badge) return;
 
             if (sc.mode === 'measured') {
-                title.textContent = '// MEASURED TRAJECTORY · MEAN OF ' + sc.sessions + ' SESSIONS · ' + sc.points.length + ' STEPS';
+                // v3.6.16: sessions (분류 총 세션) → trajectories (궤적 집계 세션) 로 변경.
+                //   3턴 미만 세션은 궤적 평균에 안 들어가므로 trajectories 가 실제 평균 기여 수.
+                //   Per-Situation 카드의 N= 값과 일치시킴.
+                title.textContent = '// MEASURED TRAJECTORY · MEAN OF ' + (sc.trajectories || sc.sessions) + ' SESSIONS · ' + sc.points.length + ' STEPS';
                 badge.className = 'traj-mode-badge';
                 badge.style.background = 'rgba(52,211,153,0.12)';
                 badge.style.borderColor = 'rgba(52,211,153,0.35)';
