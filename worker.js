@@ -1868,10 +1868,30 @@ class PrismP2DepthAnalyzer {
     const engagementDensity = deepEngagementMarkers / (texts.length + PRISM_CONFIG.EPSILON);
     const engagementBoost = engagementDensity > 0.5 ? 0.15 : engagementDensity > 0.25 ? 0.08 : engagementDensity > 0.1 ? 0.04 : 0;
 
+    // 5) v3.6.23 — Knowledge Graph 기반 깊이 신호
+    //   depth 4~5 전문 용어 감지 = 해당 도메인 숙련 → 대화 내 깊이 기여.
+    //   단일 용어만으로도 판정 (co-occurrence 의존 X). 설계 Phase 4 폐기 원칙 준수.
+    let kgBoost = 0;
+    if (typeof detectKnowledgeGraph === 'function') {
+      const { detected: kgDetected } = detectKnowledgeGraph(allText);
+      if (kgDetected.size > 0) {
+        let kgMaxDepth = 0;
+        for (const id of kgDetected) {
+          const t = PRISM_KG_BY_ID[id];
+          if (t && t.depth > kgMaxDepth) kgMaxDepth = t.depth;
+        }
+        if (kgMaxDepth >= 5) kgBoost = 0.15;
+        else if (kgMaxDepth >= 4) kgBoost = 0.10;
+        else if (kgMaxDepth >= 3) kgBoost = 0.05;
+        else if (kgMaxDepth >= 2) kgBoost = 0.02;
+      }
+    }
+
     // 보정된 가중 평균
     //   v3.6: 4 부스트 합이 최대 +0.80 이라 기저 casual(0.15) + 부스트만으로 creative 도달.
     //   → 부스트 총합 상한을 +0.25 로 제한하고, 각 부스트의 scale 도 조정.
-    const rawBoostSum = domainBoost + persistenceBoost + abstractBoost + engagementBoost;
+    //   v3.6.23: kgBoost 추가 (상한은 그대로 유지)
+    const rawBoostSum = domainBoost + persistenceBoost + abstractBoost + engagementBoost + kgBoost;
     const cappedBoost = Math.min(0.25, rawBoostSum * 0.5);  // 합계 50% 감쇠 + 상한 0.25
     const adjustedWeight = Math.min(0.95, avgWeight + cappedBoost);
     const overall = this._weightToLevel(adjustedWeight);
@@ -1991,9 +2011,56 @@ class PrismP3VocabularyAnalyzer {
     const abstraction = this._analyzeAbstraction(allText);
     const registerRange = this._analyzeRegister(texts);
 
+    // v3.6.23 — Knowledge Graph v4: 지식 기반 전문성 산출 (depth 단일 신호)
+    const kg = this._detectKG(allText);
+
     return {
       diversity, dominant_domains: dominantDomains, abstraction, register_range: registerRange,
       lexical_diversity_raw: Math.round(ttr * 10000) / 10000,
+      knowledge_graph: kg,
+    };
+  }
+
+  _detectKG(allText) {
+    // PRISM_KNOWLEDGE_GRAPH 가 로드된 경우만 동작 (환경 가드)
+    if (typeof PRISM_KNOWLEDGE_GRAPH === 'undefined' || typeof detectKnowledgeGraph !== 'function') {
+      return { domains: [], detected_terms: [], max_depth: 0, total_terms: 0 };
+    }
+    const { detected, activeEdges } = detectKnowledgeGraph(allText);
+    if (detected.size === 0) {
+      return { domains: [], detected_terms: [], max_depth: 0, total_terms: 0, active_edges: 0 };
+    }
+    const stats = computeDomainExpertise(detected);
+    // 사용자 노출용: 도메인별 정렬 + 대표 용어
+    const domains = Object.entries(stats)
+      .map(([domain, s]) => {
+        // 이 도메인에 속한 감지 term 중 depth 높은 순으로 상위 5개
+        const topTerms = [...detected]
+          .map(id => PRISM_KG_BY_ID[id])
+          .filter(t => t && t.domains.some(d => d.domain === domain))
+          .sort((a, b) => b.depth - a.depth)
+          .slice(0, 5)
+          .map(t => ({ id: t.id, label: t.labels.ko[0], depth: t.depth }));
+        return {
+          domain,
+          level: s.level,
+          max_depth: s.maxDepth,
+          score: Math.round(s.score * 10) / 10,
+          term_count: s.termCount,
+          edges: s.edges,
+          depth_distribution: s.depthDist,
+          top_terms: topTerms,
+        };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    const maxDepthOverall = Math.max(...[...detected].map(id => (PRISM_KG_BY_ID[id]||{}).depth || 0));
+    return {
+      domains,
+      detected_terms: [...detected].map(id => ({ id, label: (PRISM_KG_BY_ID[id]||{}).labels?.ko?.[0], depth: (PRISM_KG_BY_ID[id]||{}).depth })),
+      max_depth: maxDepthOverall,
+      total_terms: detected.size,
+      active_edges: activeEdges,
     };
   }
 
