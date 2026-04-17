@@ -12185,7 +12185,9 @@ function displayResult() {
         }
 
         /* Split-view lens data store — DYNAMICS (5 behavior lenses) + OUTLOOK (3 prediction lenses) */
-        const DYNAMICS_KEYS = ['persona', 'cognitive_topology', 'control_system', 'emotional_energy', 'defense_system'];
+        // v3.6.19: cognitive_terrain (구 이름) 도 포함 — 과거 분석 데이터 호환성.
+        //   INDIVIDUAL_SECTIONS 의 현 키는 cognitive_topology. 둘 다 있어도 filter 는 일치하는 것만.
+        const DYNAMICS_KEYS = ['persona', 'cognitive_topology', 'cognitive_terrain', 'control_system', 'emotional_energy', 'defense_system'];
         const OUTLOOK_KEYS = ['risk_model', 'growth_direction', 'unconscious'];
         let _dynSections = [];
         let _outlookSections = [];
@@ -12202,9 +12204,29 @@ function displayResult() {
                 renderTrajLens(trajSection);
             }
 
+            // v3.6.19: key 미스매치 방어 — title 로도 매칭해 복구.
+            //   LLM 이 key 잘못 생성하거나 구 이름(cognitive_terrain) 썼을 때 title 기반 백업.
+            const TITLE_TO_KEY = {
+                '페르소나':'persona', '사유의 지형':'cognitive_topology',
+                '통제 체계':'control_system', '정서 에너지':'emotional_energy',
+                '방어 체계':'defense_system', '행동 궤적':'behavioral_trajectory',
+                '위험 모델':'risk_model', '성장 지향점':'growth_direction',
+                '무의식':'unconscious',
+            };
+            const normalizedSections = sections.map(s => {
+                if (!s.key && s.title && TITLE_TO_KEY[s.title]) {
+                    return { ...s, key: TITLE_TO_KEY[s.title] };
+                }
+                // cognitive_terrain (구 이름) → cognitive_topology 로 정규화
+                if (s.key === 'cognitive_terrain') return { ...s, key: 'cognitive_topology' };
+                // growth_orientation → growth_direction
+                if (s.key === 'growth_orientation') return { ...s, key: 'growth_direction' };
+                return s;
+            });
+
             // Split sections into DYNAMICS vs OUTLOOK
-            const dynRaw = sections.filter(s => DYNAMICS_KEYS.includes(s.key));
-            const outlookRaw = sections.filter(s => OUTLOOK_KEYS.includes(s.key));
+            const dynRaw = normalizedSections.filter(s => DYNAMICS_KEYS.includes(s.key));
+            const outlookRaw = normalizedSections.filter(s => OUTLOOK_KEYS.includes(s.key));
             _dynSections = dynRaw;
             _outlookSections = outlookRaw;
 

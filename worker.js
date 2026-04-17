@@ -6775,13 +6775,16 @@ ${hasCompact ? '- [축소] 표시된 subsection: 150~200자 (신호량이 적어
 - [축소] 섹션은 "데이터가 명확히 지지하지 않는 해석" 을 만들지 마세요. 관찰되지 않은 방어 패턴·붕괴 트리거·무의식적 동기를 서술로 만들지 않습니다.\n`;
 
   activeSections.forEach((section, i) => {
-    prompt += `\n### ${i + 1}. ${section.title}${section.compact ? ' [축소]' : ''}\n`;
+    // v3.6.19: key 를 prompt 에 명시 — LLM 이 출력 JSON 의 key 필드를 정확히 채우도록.
+    //   이전: title 만 보고 LLM 이 key 자동 생성 → cognitive_topology 가 가끔 다른 이름으로 튀어나옴.
+    prompt += `\n### ${i + 1}. ${section.title}  (key: \`${section.key}\`)${section.compact ? ' [축소]' : ''}\n`;
     prompt += `- summary: 1~2문장 요약\n`;
     section.subsections.forEach(sub => {
       const lenRule = section.compact ? '150-200자' : '250-300자';
       prompt += `- ${sub}: ${lenRule} 서술\n`;
     });
   });
+  prompt += `\n⚠️ 각 섹션의 JSON \`key\` 필드는 위에 명시된 영문 키를 그대로 사용하세요 (예: "cognitive_topology"). 임의 변경 금지.\n`;
 
   prompt += `
 
