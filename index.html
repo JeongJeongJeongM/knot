@@ -7564,7 +7564,18 @@ function buildProfileOverview(axes, profile) {
                 sessions = situation.sessionCount || situation.trajectoryCount;
                 trajectories = situation.trajectoryCount;
                 points = situation.mean;
-                if (points.length >= 2) {
+                // v3.6.7: drift robust — mean(first 3) vs mean(last 3) (중간 피크 반영).
+                //   이전 last-first 는 첫/끝만 같으면 0 으로 떨어져 세션 내 변화 놓침.
+                if (points.length >= 6) {
+                    const windowN = 3;
+                    const head = points.slice(0, windowN);
+                    const tail = points.slice(-windowN);
+                    AK.forEach(k => {
+                        const hMean = head.reduce((s, p) => s + (p[k] || 0), 0) / windowN;
+                        const tMean = tail.reduce((s, p) => s + (p[k] || 0), 0) / windowN;
+                        drift[k] = Math.round((tMean - hMean) * 1000) / 1000;
+                    });
+                } else if (points.length >= 2) {
                     const first = points[0], last = points[points.length - 1];
                     AK.forEach(k => { drift[k] = Math.round((last[k] - first[k]) * 1000) / 1000; });
                 }
