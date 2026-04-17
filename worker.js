@@ -3594,12 +3594,16 @@ function computeSessionTrajectory(session, features, prism, anchor) {
 
     // X (resilience): identity A2 공식과 정합. CV 기반 (std / mean) → 1 - CV*0.5.
     //   perMsgEmo 는 identity 와 동일하게 Math.min(1, ...) 캡 적용.
+    // v3.6.9: CV 분모에 0.05 floor 적용. 이전 `emoMean + 1e-4` 는 저정서 유저
+    //   (mean ≈ 0) 에서 CV 폭발 → X clamp 0 으로 박혀 "회복력 바닥" 오탐 주범.
+    //   0.05 floor 의 의미: "정서 평균 5% 이하는 측정 의미 약함 — CV 대신
+    //   std 의 절대값을 스케일 한 것과 유사" → 저정서 유저도 자연스럽게 0.5+.
     let X = 0.5;
     if (segment.length >= 2) {
       const perMsgEmo = segment.map(p => Math.min(1, p.counts.perMsgEmo / Math.max(1, p.len / 50)));
       const emoMean = perMsgEmo.reduce((a, b) => a + b, 0) / perMsgEmo.length;
       const emoStd = Math.sqrt(perMsgEmo.reduce((s, v) => s + (v - emoMean) ** 2, 0) / perMsgEmo.length);
-      const emoCV = emoStd / (emoMean + 1e-4);
+      const emoCV = emoStd / Math.max(emoMean, 0.05);
       X = Math.max(0, Math.min(1, 1 - emoCV * 0.5));
     }
 
@@ -3778,7 +3782,8 @@ function precomputeAxes(rawMessages, prism, anchor, _features = null) {
   });
   const emoMean = perMsgEmotion.reduce((a, b) => a + b, 0) / (perMsgEmotion.length + EPS);
   const emoStd = Math.sqrt(perMsgEmotion.reduce((s, v) => s + (v - emoMean) ** 2, 0) / (perMsgEmotion.length + EPS));
-  const emoCV = emoStd / (emoMean + EPS);
+  // v3.6.9: CV 분모 floor 0.05 — 저정서 유저(mean≈0) 에서 CV 폭발 → A2 0 박힘 문제.
+  const emoCV = emoStd / Math.max(emoMean, 0.05);
   // 극성 전환 — cache 의 posEmo/negEmo 카운트 사용
   let polarityFlips = 0;
   let prevPolarity = 0;
@@ -4990,7 +4995,8 @@ function computeMeasuredTimeSeries(rawMessages, prism, anchor, _features = null)
     const perSegEmo = segSlice.map(p => Math.min(1, p.counts.perMsgEmo / Math.max(1, p.len / 50)));
     const mean = perSegEmo.reduce((a, b) => a + b, 0) / (perSegEmo.length + EPS);
     const stdv = Math.sqrt(perSegEmo.reduce((s, v) => s + (v - mean) ** 2, 0) / (perSegEmo.length + EPS));
-    const emoCV = stdv / (mean + EPS);
+    // v3.6.9: CV 분모 floor 0.05 (저정서 segment 에서 CV 발산 방지)
+    const emoCV = stdv / Math.max(mean, 0.05);
     const A2 = Math.max(0, Math.min(1, 1 - emoCV * 0.5));
 
     // v3.6.6: 공식을 computeSessionTrajectory 및 identity SERVER_TYPE_AXES 와 정합.
