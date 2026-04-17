@@ -3285,7 +3285,10 @@ const SESSION_CONFIG = {
   //   경우가 많아 세션이 너무 잘게 쪼개지면 상황 시그널이 축적 안 됨 (124/130 normal 현상).
   //   6시간이면 "오전 대화 세션" / "오후 대화 세션" 정도로 자연스럽게 묶임.
   TIME_GAP_MS: 6 * 60 * 60 * 1000,
-  MIN_TURNS_FOR_TRAJECTORY: 10,
+  // v3.6.7: 10 → 6. 10턴 미만 세션이 전부 탈락하던 문제.
+  //   실데이터에서 conflict/loss 세션이 짧은 경우가 많음 (5-8턴).
+  //   10 기준이면 이들이 MEASURED 에서 빠져 SIMULATED fallback.
+  MIN_TURNS_FOR_TRAJECTORY: 6,
   TRAJECTORY_STEPS: 10,
   SITUATIONS: ['stress', 'intimacy', 'conflict', 'loss', 'normal'],
 };

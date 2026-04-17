@@ -7598,9 +7598,10 @@ function buildProfileOverview(axes, profile) {
             const colors = { E: '#EF4444', C: '#22D3EE', T: '#60A5FA', O: '#A78BFA', X: '#34D399' };
 
             const situation = simData.situational ? simData.situational[key] : null;
-            // v3.6.6: 분기 단순화 — normal 은 1세션으로도 표시 허용, 다른 상황은 2세션 이상.
-            //   이전 hasMeasured / hasMeasuredLoose 두 변수 대신 단일 minSessions 로.
-            const minSessions = (key === 'normal') ? 1 : 2;
+            // v3.6.7: 모든 상황에 minSessions=1 로 통일. 1세션 MEASURED 가 SIMULATED 보다 정보량 있음.
+            //   이전 2세션 기준 때문에 conflict/loss 가 거의 항상 SIMULATED 로 빠지던 문제.
+            //   1세션일 땐 std=0 이 나오므로 밴드 안 그려지지만 drift·mean 자체는 실측.
+            const minSessions = 1;
             const canMeasure = !!(situation && situation.trajectoryCount >= minSessions && situation.mean && situation.mean.length > 0);
 
             let modeBadge, dataModeTxt, descText, chartTitle, trajPoints, drift = {}, std = null;
@@ -7611,10 +7612,16 @@ function buildProfileOverview(axes, profile) {
                 sourceCount = situation.trajectoryCount;
                 trajPoints = situation.mean;
                 std = situation.std;
-                modeBadge = '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.35);color:#34D399;font-family:\'JetBrains Mono\',monospace;">🟢 MEASURED</span>';
-                dataModeTxt = 'DATA.MODE = OBSERVED · N=' + sourceCount + ' sessions';
-                descText = `<strong style="color:${tabCfg.color};">${tabCfg.icon} ${tabCfg.label}</strong> — 이 상황으로 분류된 <strong>${sourceCount}개 세션</strong>의 턴별 5축 추이를 평균한 실측 궤적입니다. 각 세션을 10-step 으로 정규화해 평균(선)과 표준편차(밴드)를 함께 표시합니다.`;
-                chartTitle = `// MEASURED TRAJECTORY · MEAN OF ${sourceCount} SESSIONS · 10 STEPS`;
+                // v3.6.7: N=1 일 때는 LOW CONFIDENCE 배지로 구분 (std 없음, 단일 세션)
+                if (sourceCount >= 3) {
+                    modeBadge = '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.35);color:#34D399;font-family:\'JetBrains Mono\',monospace;">🟢 MEASURED</span>';
+                } else {
+                    modeBadge = '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(245,166,35,0.12);border:1px solid rgba(245,166,35,0.35);color:#F5A623;font-family:\'JetBrains Mono\',monospace;">🟡 MEASURED · LOW CONFIDENCE</span>';
+                }
+                dataModeTxt = 'DATA.MODE = OBSERVED · N=' + sourceCount + ' session' + (sourceCount > 1 ? 's' : '');
+                const nNote = sourceCount === 1 ? ' (1세션 기반 — 표준편차 밴드 없음, 신뢰도 낮음)' : sourceCount === 2 ? ' (2세션 기반 — 신뢰도 제한적)' : '';
+                descText = `<strong style="color:${tabCfg.color};">${tabCfg.icon} ${tabCfg.label}</strong> — 이 상황으로 분류된 <strong>${sourceCount}개 세션</strong>의 턴별 5축 추이를 평균한 실측 궤적입니다${nNote}. 각 세션을 10-step 으로 정규화해 평균(선)과 표준편차(밴드)를 함께 표시합니다.`;
+                chartTitle = `// MEASURED TRAJECTORY · MEAN OF ${sourceCount} SESSION${sourceCount > 1 ? 'S' : ''} · 10 STEPS`;
                 // v3.6.6: drift = mean(last 3) - mean(first 3).
                 //   이전 last-first 는 중간 피크가 있어도 시작/끝 값만 보면 0 이 나와 세션 내
                 //   변화를 놓쳤음. robust 지표로 앞/뒤 3-step 평균 차이 사용.
