@@ -4344,8 +4344,8 @@
                 <h2>행동 궤적</h2>
                 <p>외부 자극이 당신을 어떻게 변형시키는가</p>
             </div>
-            <!-- v3.6.8: 사용 프로파일 배지 — 축 해석의 맥락 (태스크/감정/혼합) -->
-            <div id="trajUsageProfile" style="margin-bottom:20px;"></div>
+            <!-- v3.6.10: 다축 종합 해석 카드 — baseline + 상황별 편차 → 감정 패턴 유형화 -->
+            <div id="trajSynthesis" style="margin-bottom:24px;"></div>
             <!-- Scenario tabs -->
             <div class="traj-tabs" id="trajTabs"></div>
             <!-- Chart card: canvas + drift -->
@@ -7509,34 +7509,183 @@ function buildProfileOverview(axes, profile) {
             { key: 'loss',     label: '상실',    icon: '◇',  color: '#6B7280' },
         ];
 
+        // ──────────────────────────────────────────────────────────
+        // renderTrajSynthesis — 다축 종합 해석 카드 (v3.6.10)
+        // 원리:
+        //   baseline = simData.axes (전체 대화 평균 E/C/T/O/X)
+        //   상황별 평균 = situational[k].mean 에서 축별 평균
+        //   편차 = 상황평균 - baseline (본인 기준 상대)
+        //   해석 단계:
+        //     1) baseline 특성 서술 ("분석 주도형 / 감정 절제")
+        //     2) 유의미한 편차 (|Δ| ≥ 0.06) 수집 + 방향
+        //     3) 편차 패턴 종합 → 정서 패턴 유형 명명
+        // 원칙: 외부 기준 비교 없이 본인 데이터 내 고저차로 서술.
+        // ──────────────────────────────────────────────────────────
+        function renderTrajSynthesis(simData) {
+            const wrap = document.getElementById('trajSynthesis');
+            if (!wrap || !simData || !simData.axes) { if (wrap) wrap.innerHTML = ''; return; }
+
+            const AK = ['E','C','T','O','X'];
+            const AXIS_MAP = { E:'emotion', C:'drive', T:'cognition', O:'boundary', X:'resilience' };
+            const AXIS_NAMES = TRAJ_AXIS_NAMES;
+            const AXIS_COLORS = TRAJ_AXIS_COLORS;
+            const SIT_LABELS = { normal:'일반', stress:'스트레스', intimacy:'친밀감', conflict:'갈등', loss:'상실' };
+            const SIT_COLORS = { normal:'#F5A623', stress:'#EF4444', intimacy:'#A78BFA', conflict:'#F97316', loss:'#6B7280' };
+
+            const baseline = simData.axes;  // {emotion, drive, cognition, boundary, resilience}
+
+            // ── 1) baseline 특성 태그 ──
+            const baseTags = [];
+            if (baseline.cognition >= 0.55)      baseTags.push({ label: '분석·인과 추론 우세', tone: 'T' });
+            else if (baseline.cognition <= 0.35) baseTags.push({ label: '감성·직관 우세',       tone: 'T' });
+            if (baseline.drive >= 0.55)          baseTags.push({ label: '대화 주도성 강함',     tone: 'C' });
+            else if (baseline.drive <= 0.35)     baseTags.push({ label: '동조·관찰 경향',       tone: 'C' });
+            if (baseline.emotion <= 0.15)        baseTags.push({ label: '감정 표현 절제',       tone: 'E' });
+            else if (baseline.emotion >= 0.40)   baseTags.push({ label: '감정 표현 풍부',       tone: 'E' });
+            if (baseline.boundary <= 0.20)       baseTags.push({ label: '자기 개시 적음',       tone: 'O' });
+            else if (baseline.boundary >= 0.50)  baseTags.push({ label: '개방적·자기 공유',     tone: 'O' });
+            if (baseline.resilience >= 0.60)     baseTags.push({ label: '정서 안정 (변동 적음)', tone: 'X' });
+            else if (baseline.resilience <= 0.30) baseTags.push({ label: '정서 변동 큼',         tone: 'X' });
+
+            // ── 2) 상황별 편차 수집 ──
+            const sits = simData.situational || {};
+            const allShifts = [];
+            const sitSummaries = [];
+            const SHIFT_THRESHOLD = 0.06;
+
+            for (const sitKey of ['normal','stress','intimacy','conflict','loss']) {
+                const sitData = sits[sitKey];
+                if (!sitData || !sitData.mean || sitData.mean.length === 0) continue;
+                if (sitData.trajectoryCount < 1) continue;
+
+                // 상황 내 축별 평균
+                const sitMean = {};
+                AK.forEach(k => {
+                    const sum = sitData.mean.reduce((s, p) => s + (p[k] || 0), 0);
+                    sitMean[k] = sum / sitData.mean.length;
+                });
+
+                // baseline 대비 편차
+                const sitShifts = [];
+                AK.forEach(k => {
+                    const base = baseline[AXIS_MAP[k]] || 0.5;
+                    const diff = sitMean[k] - base;
+                    if (Math.abs(diff) >= SHIFT_THRESHOLD) {
+                        const shift = { sit: sitKey, axis: k, diff, sitValue: sitMean[k], base, sessions: sitData.trajectoryCount };
+                        sitShifts.push(shift);
+                        allShifts.push(shift);
+                    }
+                });
+
+                if (sitShifts.length > 0) {
+                    sitSummaries.push({ sit: sitKey, shifts: sitShifts, sessions: sitData.trajectoryCount });
+                }
+            }
+
+            // ── 3) 유형 명명 (inferred pattern type) ──
+            //   대표 shift 조합으로 간단한 유형 추론
+            const patternTypeTags = [];
+
+            // 개방이 친밀감에서만 튀면 "선택적 개방"
+            const intimacyOup = allShifts.find(s => s.sit === 'intimacy' && s.axis === 'O' && s.diff > 0.08);
+            const otherOdown = allShifts.filter(s => s.axis === 'O' && s.sit !== 'intimacy' && s.diff < -0.05);
+            if (intimacyOup && otherOdown.length >= 1) patternTypeTags.push('선택적 개방형');
+
+            // 스트레스/갈등에서 X 유지 → 외부 충격 안정
+            const stressXhold = sits.stress?.mean ? Math.abs(((sits.stress.mean.reduce((s,p)=>s+(p.X||0),0)/sits.stress.mean.length) - baseline.resilience)) < 0.08 : false;
+            const conflictXhold = sits.conflict?.mean ? Math.abs(((sits.conflict.mean.reduce((s,p)=>s+(p.X||0),0)/sits.conflict.mean.length) - baseline.resilience)) < 0.08 : false;
+            if (stressXhold && conflictXhold) patternTypeTags.push('압력 내성형');
+
+            // 상실에서 X 크게 하락 → 상실 취약
+            const lossXdown = allShifts.find(s => s.sit === 'loss' && s.axis === 'X' && s.diff < -0.10);
+            if (lossXdown) patternTypeTags.push('상실 취약형');
+
+            // 스트레스에서 E 급등 + X 하락 → 스트레스 반응 강
+            const stressEup = allShifts.find(s => s.sit === 'stress' && s.axis === 'E' && s.diff > 0.10);
+            const stressXdown = allShifts.find(s => s.sit === 'stress' && s.axis === 'X' && s.diff < -0.10);
+            if (stressEup && stressXdown) patternTypeTags.push('스트레스 과반응형');
+
+            // 갈등에서 C/E 같이 급등 → 전투 진입
+            const conflictCup = allShifts.find(s => s.sit === 'conflict' && s.axis === 'C' && s.diff > 0.08);
+            const conflictEup = allShifts.find(s => s.sit === 'conflict' && s.axis === 'E' && s.diff > 0.08);
+            if (conflictCup && conflictEup) patternTypeTags.push('갈등 직면형');
+
+            // 전체 편차 거의 없음 → 정체 일관형
+            if (allShifts.length <= 2) patternTypeTags.push('정체 일관형 (상황 영향 적음)');
+
+            // baseline 기반 기본 유형 (shift 없어도 하나는 붙도록)
+            if (patternTypeTags.length === 0) {
+                if (baseline.cognition >= 0.5 && baseline.drive >= 0.5) patternTypeTags.push('분석 주도형');
+                else if (baseline.emotion >= 0.4 && baseline.boundary >= 0.4) patternTypeTags.push('정서 개방형');
+                else patternTypeTags.push('중립형');
+            }
+
+            // ── 4) HTML 렌더 ──
+            let html = '<div style="background:linear-gradient(135deg,rgba(167,139,250,0.08),rgba(245,166,35,0.04));border:1px solid rgba(167,139,250,0.3);border-radius:12px;padding:20px 24px;">';
+            html += '<div style="font-size:10px;letter-spacing:2px;color:rgba(167,139,250,0.85);font-weight:700;font-family:\'JetBrains Mono\',monospace;margin-bottom:14px;">// 다축 종합 해석 · 당신의 정서 패턴</div>';
+
+            // 유형 태그 — 메인 타이틀 역할
+            html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">';
+            patternTypeTags.forEach(tag => {
+                html += `<span style="font-size:14px;font-weight:700;color:#fff;background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.4);padding:6px 14px;border-radius:8px;">${tag}</span>`;
+            });
+            html += '</div>';
+
+            // baseline 특성
+            if (baseTags.length > 0) {
+                html += '<div style="margin-bottom:14px;">';
+                html += '<div style="font-size:10px;color:#888;font-family:\'JetBrains Mono\',monospace;margin-bottom:6px;">평상시 (BASELINE)</div>';
+                html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+                baseTags.forEach(t => {
+                    const c = AXIS_COLORS[t.tone] || '#aaa';
+                    html += `<span style="font-size:11px;color:${c};background:${c}15;border:1px solid ${c}35;padding:4px 10px;border-radius:6px;font-family:'Noto Sans KR',sans-serif;">${t.label}</span>`;
+                });
+                html += '</div>';
+                // 실제 baseline 수치
+                html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:10px;font-family:\'JetBrains Mono\',monospace;color:#777;">';
+                AK.forEach(k => {
+                    const v = (baseline[AXIS_MAP[k]] || 0.5).toFixed(2);
+                    html += `<span style="color:${AXIS_COLORS[k]};">${k}=${v}</span>`;
+                });
+                html += '</div>';
+                html += '</div>';
+            }
+
+            // 상황별 핵심 편차
+            if (sitSummaries.length > 0) {
+                html += '<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);">';
+                html += '<div style="font-size:10px;color:#888;font-family:\'JetBrains Mono\',monospace;margin-bottom:8px;">상황별 이동 (평상시 대비)</div>';
+                sitSummaries.forEach(s => {
+                    const sitCol = SIT_COLORS[s.sit] || '#aaa';
+                    html += `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;flex-wrap:wrap;">`;
+                    html += `<span style="font-size:11px;font-weight:700;color:${sitCol};min-width:74px;">${SIT_LABELS[s.sit]} <span style="font-weight:400;color:#666;font-family:'JetBrains Mono',monospace;">(${s.sessions})</span></span>`;
+                    html += `<div style="flex:1;min-width:200px;display:flex;gap:6px;flex-wrap:wrap;">`;
+                    // 절대값 큰 순
+                    s.shifts.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+                    s.shifts.forEach(sh => {
+                        const ac = AXIS_COLORS[sh.axis];
+                        const sign = sh.diff > 0 ? '+' : '';
+                        const arrow = sh.diff > 0.08 ? '↑↑' : sh.diff > 0 ? '↑' : sh.diff < -0.08 ? '↓↓' : '↓';
+                        html += `<span style="font-size:11px;font-family:'JetBrains Mono',monospace;color:${ac};padding:2px 8px;background:${ac}12;border:1px solid ${ac}30;border-radius:5px;">${sh.axis} ${AXIS_NAMES[sh.axis]} ${arrow} ${sign}${sh.diff.toFixed(2)}</span>`;
+                    });
+                    html += `</div></div>`;
+                });
+                html += '</div>';
+            } else {
+                html += '<div style="margin-top:12px;font-size:11px;color:#888;line-height:1.6;">상황별 유의미한 편차(|Δ| ≥ 0.06) 가 관찰되지 않음 — 상황에 관계없이 일관된 정체성을 유지하는 패턴.</div>';
+            }
+
+            html += '</div>';
+            wrap.innerHTML = html;
+        }
+
         function renderTrajectoryChart(simData) {
             _trajSimData = simData;
             if (!simData) return;
 
-            // v3.6.8: 사용 프로파일 배지 렌더 — "태스크 중심 / 감정 중심 / 혼합"
-            //   절대 E/O 축 값을 해석하는 기준점. 바닥=나쁨 오해 방지.
-            const upWrap = document.getElementById('trajUsageProfile');
-            if (upWrap && simData.usageProfile) {
-                const up = simData.usageProfile;
-                const pMeta = {
-                    task_oriented: { label: 'TASK-ORIENTED', desc: '주로 분석·작업·질문 목적으로 LLM 을 사용하는 유형. 감정 표현 축(E·O)이 자연스럽게 낮게 나옵니다. 바닥값이 "감정 결여" 가 아니라 "이 맥락에서 감정을 덜 투입한 결과".', color: '#60A5FA', icon: '⚙️' },
-                    emotional:     { label: 'EMOTIONAL',     desc: '관계·감정·일상 맥락에서 LLM 을 대화 상대로 활용하는 유형. 정서·개방 축이 활성화되며 감정 마커가 풍부합니다.', color: '#F472B6', icon: '💗' },
-                    hybrid:        { label: 'HYBRID',        desc: '태스크와 감정적 사용이 혼합된 유형. 상황에 따라 축 값이 달라지는 범위가 넓습니다.', color: '#A78BFA', icon: '🔀' },
-                };
-                const meta = pMeta[up.profile] || pMeta.hybrid;
-                const confBadge = up.confidence === 'high' ? '' :
-                    ` <span style="font-size:9px;color:rgba(255,255,255,0.35);font-family:'JetBrains Mono',monospace;margin-left:6px;">· ${up.confidence === 'medium' ? '중' : '저'} 신뢰도</span>`;
-                upWrap.innerHTML =
-                    `<div style="background:linear-gradient(135deg,${meta.color}12,${meta.color}04);border:1px solid ${meta.color}40;border-radius:10px;padding:14px 18px;">` +
-                    `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">` +
-                    `<span style="font-size:18px;">${meta.icon}</span>` +
-                    `<span style="font-size:10px;letter-spacing:2px;color:${meta.color};font-weight:700;font-family:'JetBrains Mono',monospace;">// USAGE PROFILE · ${meta.label}</span>` +
-                    confBadge +
-                    `</div>` +
-                    `<div style="font-size:12px;color:#bbb;line-height:1.6;">${meta.desc}</div>` +
-                    `<div style="font-size:10px;color:#666;margin-top:8px;font-family:'JetBrains Mono',monospace;">근거: ${up.reason}</div>` +
-                    `</div>`;
-            }
+            // v3.6.10: 다축 종합 해석 카드 렌더
+            //   baseline(전체 평균) + 상황별 편차 → "이 유저 = 어떤 정서 패턴" 유형화
+            renderTrajSynthesis(simData);
 
             // Build tabs
             const tabsWrap = document.getElementById('trajTabs');
@@ -7799,12 +7948,10 @@ function buildProfileOverview(axes, profile) {
             const container = document.getElementById('trajDriftBars');
             if (!container) return;
 
-            // v3.6.8: baseline (전체 대화 평균) + expectedRange (프로파일 기대치) 기반 맥락.
-            //   "절대값 낮음 = 나쁨" 오해 제거. "너 평균 대비 / 프로파일 기대 대비" 로 표시.
+            // v3.6.10: baseline(전체 대화 평균) 대비 편차만 표시. EXPECTED_RANGES(외부 기준) 제거.
+            //   본인 데이터 내 상대 위치가 해석의 유일 기준.
             const sim = _trajSimData;
             const baseAxes = sim?.axes;
-            const profile = sim?.usageProfile;
-            const expRanges = profile?.expectedRanges;
 
             let html = '';
             AK.forEach(k => {
@@ -7814,39 +7961,27 @@ function buildProfileOverview(axes, profile) {
                 const barColor = isPos ? '#34D399' : '#EF4444';
                 const sign = isPos ? '+' : '';
 
-                // 현 세션 평균값 (trajPoints 평균)
+                // 현 세션 평균
                 let sessionMean = null;
                 if (sc.points && sc.points.length) {
                     const sum = sc.points.reduce((s, p) => s + (p[k] || 0), 0);
                     sessionMean = sum / sc.points.length;
                 }
 
-                // baseline (전체 대화 평균) — simAxes 에서
+                // baseline (전체 대화 평균)
                 const axKey = AXIS_TO_KEY[k];
                 const baseline = baseAxes ? (baseAxes[axKey] || 0.5) : null;
 
-                // 기대 범위 판정
-                let rangeContext = '';
-                if (expRanges && expRanges[axKey] && sessionMean !== null) {
-                    const [lo, hi] = expRanges[axKey];
-                    let label, labelColor;
-                    if (sessionMean < lo) { label = '기대범위 아래'; labelColor = 'rgba(255,255,255,0.4)'; }
-                    else if (sessionMean > hi) { label = '기대범위 위'; labelColor = '#34D399'; }
-                    else { label = '기대범위 내'; labelColor = 'rgba(255,255,255,0.55)'; }
-                    rangeContext = `<span style="font-size:9px;color:${labelColor};font-family:'JetBrains Mono',monospace;">· ${label} [${lo.toFixed(2)}~${hi.toFixed(2)}]</span>`;
-                }
-
-                // baseline 대비 편차 표시
+                // baseline 대비 편차
                 let baseDiff = '';
                 if (baseline !== null && sessionMean !== null) {
                     const dv = sessionMean - baseline;
                     const dSign = dv >= 0 ? '+' : '';
                     const dc = Math.abs(dv) > 0.03 ? (dv > 0 ? '#34D399' : '#EF4444') : 'rgba(255,255,255,0.35)';
-                    baseDiff = `<span style="font-size:9px;color:${dc};font-family:'JetBrains Mono',monospace;">평균${dSign}${dv.toFixed(2)}</span>`;
+                    baseDiff = `<span style="font-size:9px;color:${dc};font-family:'JetBrains Mono',monospace;">평상시 대비 ${dSign}${dv.toFixed(2)}</span>`;
                 }
 
                 html += '<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);">';
-                // Row 1: label | bar | drift value
                 html += '<div style="display:flex;align-items:center;gap:12px;">';
                 html += '<span class="traj-drift-label" style="color:' + colors[k] + ';min-width:68px;">' + k + ' <span style="font-weight:400;opacity:0.6;">' + TRAJ_AXIS_NAMES[k] + '</span></span>';
                 html += '<div style="flex:1;height:5px;background:rgba(255,255,255,0.06);border-radius:3px;position:relative;overflow:visible;">';
@@ -7855,12 +7990,10 @@ function buildProfileOverview(axes, profile) {
                 html += '</div>';
                 html += '<span style="font-size:11px;font-family:\'JetBrains Mono\',monospace;min-width:50px;text-align:right;color:' + barColor + ';font-weight:600;">' + sign + d.toFixed(3) + '</span>';
                 html += '</div>';
-                // Row 2: session mean + baseline context (only if available)
                 if (sessionMean !== null) {
                     html += '<div style="display:flex;align-items:center;gap:10px;margin-top:4px;padding-left:80px;flex-wrap:wrap;">';
                     html += `<span style="font-size:9px;color:rgba(255,255,255,0.35);font-family:'JetBrains Mono',monospace;">이 상황 평균 ${sessionMean.toFixed(2)}</span>`;
                     if (baseDiff) html += baseDiff;
-                    if (rangeContext) html += rangeContext;
                     html += '</div>';
                 }
                 html += '</div>';

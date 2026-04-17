@@ -5121,33 +5121,9 @@ function computeUserUsageProfile(prism, axes, features) {
   const topicCoverage = emotionalTopicRatio + taskTopicRatio;
   const confidence = topicCoverage >= 0.7 ? 'high' : topicCoverage >= 0.4 ? 'medium' : 'low';
 
-  // 5) 프로파일별 축 기대 범위 — 향후 상대화 표시의 기준점.
-  //    절대 범위는 유저 집단 데이터 쌓이면 통계 기반으로 업데이트 예정.
-  //    현재는 휴리스틱.
-  const EXPECTED_RANGES = {
-    task_oriented: {
-      emotion:   [0.00, 0.18],  // 감정 마커 거의 없음
-      drive:     [0.40, 0.75],  // 주도성 표현 많음 (결론/결정)
-      cognition: [0.45, 0.80],  // 분석 추론 강함
-      boundary:  [0.05, 0.30],  // 자기 개시 적음
-      resilience:[0.30, 0.70],  // 정서 변동성 낮음 (CV 발산 감안)
-    },
-    emotional: {
-      emotion:   [0.25, 0.65],
-      drive:     [0.25, 0.55],
-      cognition: [0.25, 0.55],
-      boundary:  [0.30, 0.65],
-      resilience:[0.25, 0.60],
-    },
-    hybrid: {
-      emotion:   [0.10, 0.45],
-      drive:     [0.30, 0.65],
-      cognition: [0.35, 0.65],
-      boundary:  [0.15, 0.50],
-      resilience:[0.30, 0.65],
-    },
-  };
-
+  // v3.6.10: EXPECTED_RANGES 제거. 외부 기준(프로파일 공통 범위) 대신
+  //   "본인 baseline 대비 상황별 편차" 로 해석 — 다축 종합 해석 카드에서 처리.
+  //   프로파일 값 자체는 추후 서술 phrasing 에 활용 가능하도록 유지.
   return {
     profile,
     confidence,
@@ -5157,7 +5133,6 @@ function computeUserUsageProfile(prism, axes, features) {
       taskTopicRatio: Math.round(taskTopicRatio * 1000) / 1000,
       emoMarkerOverall: Math.round(emoOverall * 1000) / 1000,
     },
-    expectedRanges: EXPECTED_RANGES[profile],
   };
 }
 
