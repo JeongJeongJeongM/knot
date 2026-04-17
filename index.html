@@ -7794,23 +7794,17 @@ function buildProfileOverview(axes, profile) {
                 tabsWrap.innerHTML = th;
             }
 
-            // Build lens-nav
-            const nav = document.getElementById('trajNav');
-            if (nav) {
-                let nh = '';
-                visibleTabs.forEach((t, i) => {
-                    const sit = simData.situational ? simData.situational[t.key] : null;
-                    const hasMeasured = !!(sit && sit.trajectoryCount >= 1);
-                    const sub = hasMeasured
-                        ? (sit.sessionCount + ' sessions' + (sit.trajectoryCount < 3 ? ' · low conf' : ''))
-                        : 'baseline';
-                    nh += '<div class="lens-nav-item' + (i === 0 ? ' active' : '') + '" data-key="' + t.key + '" onclick="switchTrajTab2(null,\'' + t.key + '\',this)">';
-                    nh += '<span class="lens-nav-icon">' + t.icon + '</span>';
-                    nh += '<div><div class="lens-nav-title">' + t.label + '</div>';
-                    nh += '<div class="lens-nav-sub">' + sub + '</div></div></div>';
-                });
-                nav.innerHTML = nh;
-            }
+            // v3.6.15 fix2: 구 lens-nav 패널 (일반/스트레스/친밀감 + TRAJ_STIM 하드코딩 텍스트 +
+            //   중복 축 변동 패턴) 제거. RESPONSE PATTERN 카드가 [A][B][D][E] 로 완전 대체.
+            //   #trajSplit 은 LLM 에세이(behavioral_trajectory subsections) 전용으로 남김.
+            //   LLM 에세이 도착 전까지 숨김.
+            const trajSplitEl = document.getElementById('trajSplit');
+            const navEl = document.getElementById('trajNav');
+            const trajPanelEl = document.getElementById('trajPanelContent');
+            if (navEl) navEl.innerHTML = '';
+            if (trajPanelEl) trajPanelEl.innerHTML = '';
+            // LLM essay 가 renderTrajLens 로 후에 채우면 display 복원.
+            if (trajSplitEl) trajSplitEl.style.display = 'none';
 
             // 숨겨진 상황 수 안내 (측정 실패 투명성)
             const hiddenCount = TRAJ_SIT_TABS.length - visibleTabs.length;
@@ -7954,8 +7948,8 @@ function buildProfileOverview(axes, profile) {
             _trajRenderDrift(sc);
             // Update chart meta
             _trajUpdateChartMeta(sc);
-            // Render lens panel
-            renderTrajLensPanel(key, _trajSimData);
+            // v3.6.15 fix2: renderTrajLensPanel 호출 제거. 구 per-situation 보일러플레이트
+            //   + 중복 축 변동 패턴 출력 금지. #trajSplit 은 LLM essay 전용.
         }
 
         // ── Draw Line Chart (Canvas 2D — production exact, JetBrains Mono) ──
@@ -11938,6 +11932,10 @@ function displayResult() {
             const nav = document.getElementById('trajNav');
             const panel = document.getElementById('trajPanelContent');
             if (!nav || !panel) return;
+
+            // v3.6.15 fix2: LLM 에세이 도착 시 #trajSplit 표시 복원 (renderTrajectoryChart 에서 숨겨놓음)
+            const splitEl = document.getElementById('trajSplit');
+            if (splitEl) splitEl.style.display = '';
 
             _trajSummary = trajSection.summary || '';
             _trajSubsections = Array.isArray(trajSection.subsections) ? trajSection.subsections : [];
