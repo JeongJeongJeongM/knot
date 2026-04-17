@@ -3285,10 +3285,10 @@ const SESSION_CONFIG = {
   //   경우가 많아 세션이 너무 잘게 쪼개지면 상황 시그널이 축적 안 됨 (124/130 normal 현상).
   //   6시간이면 "오전 대화 세션" / "오후 대화 세션" 정도로 자연스럽게 묶임.
   TIME_GAP_MS: 6 * 60 * 60 * 1000,
-  // v3.6.7: 10 → 6. 10턴 미만 세션이 전부 탈락하던 문제.
-  //   실데이터에서 conflict/loss 세션이 짧은 경우가 많음 (5-8턴).
-  //   10 기준이면 이들이 MEASURED 에서 빠져 SIMULATED fallback.
-  MIN_TURNS_FOR_TRAJECTORY: 6,
+  // v3.6.11: 6 → 3. 짧은 frustration 세션("씨발 왜 틀렸어" 2-3턴) 포함.
+  //   trajectory 10-step 정규화 시 세그먼트당 1턴 밑으로 내려가지만 대표값으로 쓸 수 있음.
+  //   기존 6턴 기준에서도 conflict/loss trajectoryCount = 0 문제 발생 (small sample).
+  MIN_TURNS_FOR_TRAJECTORY: 3,
   TRAJECTORY_STEPS: 10,
   SITUATIONS: ['stress', 'intimacy', 'conflict', 'loss', 'normal'],
 };
@@ -3507,7 +3507,10 @@ function classifySessionSituation(session, features) {
   const maxOther = Math.max(rawScores.stress, rawScores.conflict, rawScores.intimacy, rawScores.loss);
   const scores = { ...rawScores, normal: Math.max(0.20, 1 - maxOther) };
 
-  const THRESHOLD = 0.22;
+  // v3.6.11: 0.22 → 0.18. small sample 에서 conflict/loss 세션이 0개로 떨어지던 문제.
+  //   full dataset 에선 conflict 7.6% 였는데 1,500 msg cap 샘플에선 0개 classified.
+  //   threshold 0.04 하향으로 경계 케이스 흡수.
+  const THRESHOLD = 0.18;
   let situation = 'normal';
   let maxScore = scores.normal;
   let bestNonNormal = null, bestNonNormalScore = 0;

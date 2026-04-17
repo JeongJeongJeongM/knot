@@ -7532,7 +7532,36 @@ function buildProfileOverview(axes, profile) {
             const SIT_LABELS = { normal:'일반', stress:'스트레스', intimacy:'친밀감', conflict:'갈등', loss:'상실' };
             const SIT_COLORS = { normal:'#F5A623', stress:'#EF4444', intimacy:'#A78BFA', conflict:'#F97316', loss:'#6B7280' };
 
-            const baseline = simData.axes;  // {emotion, drive, cognition, boundary, resilience}
+            // v3.6.11: baseline 을 궤적 포인트 가중 평균으로 재정의.
+            //   기존 simData.axes 는 whole-conversation A1/A3 를 corpus-level 로 saturate
+            //   시켜 per-segment 궤적값과 스케일 불일치 (baseline=0.79 vs seg=0.05 같은).
+            //   수정: 모든 상황의 trajectory 평균 포인트들을 세션 수 가중평균.
+            const sitsForBase = simData.situational || {};
+            const AXIS_KEYS_SIM = ['emotion','drive','cognition','boundary','resilience'];
+            let baseline;
+            {
+                const accum = { E:0, C:0, T:0, O:0, X:0 };
+                let totalWeight = 0;
+                for (const [sk, sd] of Object.entries(sitsForBase)) {
+                    if (!sd?.mean || sd.mean.length === 0 || sd.trajectoryCount < 1) continue;
+                    const weight = sd.trajectoryCount;
+                    for (const k of AK) {
+                        const sum = sd.mean.reduce((s, p) => s + (p[k] || 0), 0);
+                        accum[k] += (sum / sd.mean.length) * weight;
+                    }
+                    totalWeight += weight;
+                }
+                if (totalWeight > 0) {
+                    baseline = {};
+                    for (const k of AK) {
+                        const simKey = AXIS_MAP[k];
+                        baseline[simKey] = accum[k] / totalWeight;
+                    }
+                } else {
+                    // 폴백: measured 데이터 없으면 simData.axes 로 회귀 (기존 로직)
+                    baseline = simData.axes;
+                }
+            }
 
             // ── 1) baseline 특성 태그 ──
             const baseTags = [];
@@ -7948,10 +7977,30 @@ function buildProfileOverview(axes, profile) {
             const container = document.getElementById('trajDriftBars');
             if (!container) return;
 
-            // v3.6.10: baseline(전체 대화 평균) 대비 편차만 표시. EXPECTED_RANGES(외부 기준) 제거.
-            //   본인 데이터 내 상대 위치가 해석의 유일 기준.
+            // v3.6.11: baseline 을 trajectory 기반으로 재계산 (synthesis 와 동일 스케일).
+            //   simData.axes 는 corpus-level saturate 로 스케일 불일치.
             const sim = _trajSimData;
-            const baseAxes = sim?.axes;
+            let baseAxes = null;
+            {
+                const sits = sim?.situational || {};
+                const accum = { E:0, C:0, T:0, O:0, X:0 };
+                let totalWeight = 0;
+                for (const sd of Object.values(sits)) {
+                    if (!sd?.mean || sd.mean.length === 0 || sd.trajectoryCount < 1) continue;
+                    const weight = sd.trajectoryCount;
+                    for (const k of AK) {
+                        const sum = sd.mean.reduce((s, p) => s + (p[k] || 0), 0);
+                        accum[k] += (sum / sd.mean.length) * weight;
+                    }
+                    totalWeight += weight;
+                }
+                if (totalWeight > 0) {
+                    baseAxes = {};
+                    for (const k of AK) baseAxes[AXIS_TO_KEY[k]] = accum[k] / totalWeight;
+                } else {
+                    baseAxes = sim?.axes;
+                }
+            }
 
             let html = '';
             AK.forEach(k => {
