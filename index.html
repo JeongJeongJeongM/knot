@@ -4467,6 +4467,8 @@
             <div class="traj-response-card" id="trajMatrixCard" style="display:none;"></div>
             <!-- 2. PATTERN DECLARATION -->
             <div class="traj-response-card" id="trajPatternCard" style="display:none;"></div>
+            <!-- v3.6.17: Per-Situation 위에도 탭 — 스크롤 없이 탭 전환 -->
+            <div class="traj-tabs" id="trajTabsBottom" style="margin-top:24px;"></div>
             <!-- 3. PER-SITUATION (탭 선택 시 동적 재렌더) -->
             <div class="traj-response-card" id="trajPerSituationCard" style="display:none;"></div>
             <!-- 4. STRENGTHS / SHADOWS / GROWTH -->
@@ -7841,13 +7843,17 @@ function buildProfileOverview(axes, profile) {
                 return !!(sit && sit.trajectoryCount >= 1);
             });
 
-            if (tabsWrap) {
+            // v3.6.17: 상단(trajTabs) + 하단(trajTabsBottom) 두 위치에 동일 탭 렌더
+            const _buildTabsHtml = () => {
                 let th = '';
                 visibleTabs.forEach((t, i) => {
                     th += '<div class="traj-tab' + (i === 0 ? ' on' : '') + '" data-key="' + t.key + '" onclick="switchTrajTab2(this,\'' + t.key + '\')">' + t.icon + ' ' + t.label + '</div>';
                 });
-                tabsWrap.innerHTML = th;
-            }
+                return th;
+            };
+            if (tabsWrap) tabsWrap.innerHTML = _buildTabsHtml();
+            const tabsWrapBottom = document.getElementById('trajTabsBottom');
+            if (tabsWrapBottom) tabsWrapBottom.innerHTML = _buildTabsHtml();
 
             // v3.6.15 fix2: 구 lens-nav 패널 (일반/스트레스/친밀감 + TRAJ_STIM 하드코딩 텍스트 +
             //   중복 축 변동 패턴) 제거. RESPONSE PATTERN 카드가 [A][B][D][E] 로 완전 대체.
@@ -7972,22 +7978,21 @@ function buildProfileOverview(axes, profile) {
             const sc = _trajResolveScenario(key, _trajSimData);
             const tabCfg = sc.tabCfg;
 
-            // Update tabs
-            document.querySelectorAll('#trajTabs .traj-tab').forEach(t => {
+            // v3.6.17: 상단(trajTabs) + 하단(trajTabsBottom) 양쪽 active 상태 동기화
+            document.querySelectorAll('#trajTabs .traj-tab, #trajTabsBottom .traj-tab').forEach(t => {
                 t.classList.remove('on');
                 t.style.background = '';
                 t.style.color = '';
                 t.style.borderColor = '';
                 t.style.boxShadow = '';
             });
-            const activeTab = tabEl || document.querySelector('#trajTabs .traj-tab[data-key="' + key + '"]');
-            if (activeTab) {
-                activeTab.classList.add('on');
-                activeTab.style.background = tabCfg.color;
-                activeTab.style.borderColor = tabCfg.color;
-                activeTab.style.color = key === 'loss' ? '#fff' : '#000';
-                activeTab.style.boxShadow = '0 0 14px ' + tabCfg.color + '40';
-            }
+            document.querySelectorAll('#trajTabs .traj-tab[data-key="' + key + '"], #trajTabsBottom .traj-tab[data-key="' + key + '"]').forEach(t => {
+                t.classList.add('on');
+                t.style.background = tabCfg.color;
+                t.style.borderColor = tabCfg.color;
+                t.style.color = key === 'loss' ? '#fff' : '#000';
+                t.style.boxShadow = '0 0 14px ' + tabCfg.color + '40';
+            });
 
             // Update lens-nav
             document.querySelectorAll('#trajNav .lens-nav-item').forEach(n => n.classList.remove('active'));
