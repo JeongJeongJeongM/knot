@@ -12580,9 +12580,29 @@ function displayResult() {
 
                 // Topic distribution — horizontal stacked bar
                 const td = prism.topic_distribution;
-                const TOPIC_NAMES = { philosophy: '철학', art_culture: '예술·문화', health: '건강', technology: '기술', daily_life: '일상', relationships: '관계', work: '직장', food: '음식', nature_science: '자연·과학', entertainment: '엔터테인먼트', finance: '금융', other: '기타' };
+                const TOPIC_NAMES = { tech_science: '기술·과학', work_career: '일·커리어', money_economy: '돈·경제', health_body: '건강·몸', relationships: '관계', daily_life: '일상', food: '음식', culture_media: '문화·미디어', thought_society: '사유·사회', travel: '여행', other: '기타' };
+                // v3.6.20: backward compat — 이전 17분류 데이터를 새 10분류로 흡수
+                const OLD_TO_NEW_TOPIC = {
+                    technology: 'tech_science', nature_science: 'tech_science',
+                    work: 'work_career', education: 'work_career',
+                    finance: 'money_economy',
+                    health: 'health_body', sports: 'health_body',
+                    art_culture: 'culture_media', entertainment: 'culture_media',
+                    philosophy: 'thought_society', politics_society: 'thought_society',
+                    psychology: 'relationships',
+                    humor: null
+                };
                 if (td && td.topics && typeof td.topics === 'object') {
-                    const entries = Object.entries(td.topics).map(([k, v]) => [k, v.ratio || 0]).sort((a, b) => b[1] - a[1]).slice(0, 6);
+                    // 구 키 → 신 키 병합
+                    const merged = {};
+                    Object.entries(td.topics).forEach(([k, v]) => {
+                        const mappedKey = (k in OLD_TO_NEW_TOPIC) ? OLD_TO_NEW_TOPIC[k] : k;
+                        if (mappedKey === null) return; // 드롭
+                        const ratio = (v && typeof v === 'object') ? (v.ratio || 0) : (typeof v === 'number' ? v : 0);
+                        if (!merged[mappedKey]) merged[mappedKey] = 0;
+                        merged[mappedKey] += ratio;
+                    });
+                    const entries = Object.entries(merged).sort((a, b) => b[1] - a[1]).slice(0, 6);
                     const total = entries.reduce((s, [, v]) => s + v, 0) || 1;
                     const topicColors = ['#F5A623', '#60A5FA', '#A78BFA', '#4ADE80', '#EC4899', '#FBBF24'];
                     html += '<div class="lens-data-bar-name" style="width:auto;text-align:left;margin-bottom:8px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,166,35,0.5);font-family:JetBrains Mono,monospace;">주제 분포</div>';
