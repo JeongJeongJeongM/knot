@@ -22,6 +22,7 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
@@ -12409,7 +12410,135 @@ function displayResult() {
             }
         }
 
+        // 실제 결과 페이지 DOM을 html2canvas로 캡처. SHARE 섹션·사이드 네비·진행바 등 크롬 일시 숨김.
         async function _renderLongformPoster(profile, shareCode) {
+            if (typeof html2canvas !== 'function') throw new Error('html2canvas 로드 실패');
+            const root = document.querySelector('.screen.result');
+            if (!root) throw new Error('결과 페이지를 찾을 수 없습니다');
+
+            // 숨길 요소 수집 — 캡처 전 inline style 저장 후 복원
+            const hideSelectors = [
+                '#sideNav',                         // 개인 분석 사이드 네비
+                '.side-nav',                        // fallback
+                '#scrollProgress',                  // 상단 진행 바
+                '.scroll-progress',
+                '#knotScrollProgress',
+                '#resultSection3',                  // SHARE 섹션 (버튼·코드)
+                '#shareOverlay',                    // 오버레이
+                '.auth-pill', '.auth-gate',         // 인증 UI
+                '#topNav', '.top-nav'
+            ];
+            const hidden = [];
+            hideSelectors.forEach(sel => {
+                document.querySelectorAll(sel).forEach(el => {
+                    hidden.push({ el, prev: el.style.display });
+                    el.style.display = 'none';
+                });
+            });
+
+            // 모든 result-section inner 강제 visible (기본 opacity:0 → transform:translateY)
+            const innerEls = [];
+            document.querySelectorAll('.screen.result .result-section-inner').forEach(el => {
+                innerEls.push({ el, op: el.style.opacity, tr: el.style.transform });
+                el.style.opacity = '1';
+                el.style.transform = 'none';
+            });
+
+            // 캡처 대상 배경을 명시 (BG)
+            const prevBg = root.style.backgroundColor;
+            root.style.backgroundColor = '#08080D';
+
+            let resultCanvas;
+            try {
+                resultCanvas = await html2canvas(root, {
+                    backgroundColor: '#08080D',
+                    scale: 1.5,                 // 선명도 (CPU 비용 증가)
+                    useCORS: true,
+                    logging: false,
+                    windowWidth: Math.max(1100, root.scrollWidth),
+                    windowHeight: root.scrollHeight,
+                    ignoreElements: (el) => {
+                        // 추가 안전 장치
+                        if (!el || !el.classList) return false;
+                        return el.classList.contains('scroll-progress')
+                            || el.id === 'resultSection3'
+                            || el.id === 'shareOverlay';
+                    }
+                });
+            } finally {
+                // 복원
+                hidden.forEach(h => { h.el.style.display = h.prev; });
+                innerEls.forEach(x => { x.el.style.opacity = x.op; x.el.style.transform = x.tr; });
+                root.style.backgroundColor = prevBg;
+            }
+
+            // ── 푸터(QR + 브랜드 + URL) 캔버스 별도 생성 후 하단 합성 ──
+            const footerH = Math.round(260 * 1.5); // scale에 맞춤
+            const footerCanvas = _renderPosterFooter(resultCanvas.width, footerH, shareCode);
+
+            // 합성
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = resultCanvas.width;
+            finalCanvas.height = resultCanvas.height + footerCanvas.height;
+            const fctx = finalCanvas.getContext('2d');
+            fctx.fillStyle = '#08080D';
+            fctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+            fctx.drawImage(resultCanvas, 0, 0);
+            fctx.drawImage(footerCanvas, 0, resultCanvas.height);
+
+            return new Promise(res => finalCanvas.toBlob(res, 'image/png', 0.95));
+        }
+
+        // 롱폼 하단 QR 푸터 (html2canvas 출력에 붙일 부분)
+        function _renderPosterFooter(W, H, shareCode) {
+            const c = document.createElement('canvas');
+            c.width = W; c.height = H;
+            const ctx = c.getContext('2d');
+            const AC = '#F5A623', MUTE = 'rgba(255,255,255,0.35)';
+            ctx.fillStyle = '#08080D';
+            ctx.fillRect(0, 0, W, H);
+            // divider
+            const grd = ctx.createLinearGradient(120, 0, W - 120, 0);
+            grd.addColorStop(0, 'rgba(245,166,35,0)');
+            grd.addColorStop(0.5, 'rgba(245,166,35,0.3)');
+            grd.addColorStop(1, 'rgba(245,166,35,0)');
+            ctx.strokeStyle = grd; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(120, 40); ctx.lineTo(W - 120, 40); ctx.stroke();
+
+            const qrSize = Math.round(180);
+            const qrX = 120, qrY = 70;
+            const shareUrl = `https://knot-ai.pages.dev/share/${shareCode || ''}`;
+            // 진짜 QR
+            try {
+                if (typeof QRCode !== 'undefined') {
+                    const qrDiv = document.createElement('div');
+                    qrDiv.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                    document.body.appendChild(qrDiv);
+                    new QRCode(qrDiv, { text: shareUrl, width: qrSize, height: qrSize, colorDark: '#000', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.M });
+                    const qrCanvas = qrDiv.querySelector('canvas');
+                    ctx.fillStyle = '#fff';
+                    roundRect(ctx, qrX - 8, qrY - 8, qrSize + 16, qrSize + 16, 10); ctx.fill();
+                    if (qrCanvas) ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+                    qrDiv.remove();
+                }
+            } catch (e) {}
+
+            // 우측 텍스트
+            const tx = qrX + qrSize + 40;
+            ctx.textAlign = 'left';
+            ctx.fillStyle = AC; ctx.font = '800 44px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillText('KNOT_', tx, qrY + 46);
+            ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '400 18px "JetBrains Mono", monospace';
+            ctx.fillText('AI BEHAVIORAL ANALYSIS', tx, qrY + 76);
+            ctx.fillStyle = AC; ctx.font = '500 18px "JetBrains Mono", monospace';
+            ctx.fillText(`knot-ai.pages.dev/share/${shareCode || 'xxxxxxxx'}`, tx, qrY + 130);
+            ctx.fillStyle = MUTE; ctx.font = '400 15px "JetBrains Mono", monospace';
+            ctx.fillText('QR 또는 링크로 원본 분석 열람', tx, qrY + 158);
+            return c;
+        }
+
+        // (legacy 보존) 캔버스 기반 포스터 — 더 이상 사용 안 하지만 함수 시그니처 유지
+        async function _renderLongformPosterLegacy(profile, shareCode) {
             const W = 1200;
             const H_MAX = 5200;
             const BG = '#08080D', AC = '#F5A623', TEXT = '#E8E8E8', DIM = 'rgba(255,255,255,0.55)', MUTE = 'rgba(255,255,255,0.35)';
