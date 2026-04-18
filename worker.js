@@ -11497,7 +11497,7 @@ export default {
         return jsonResponse({ error: 'Not found' }, 404, corsHeaders);
       }
 
-      // ──── GET /share/:id ── index.html 그대로 서빙 (클라이언트에서 share 모드 처리) ────
+      // ──── GET /share/:id ── index.html + share-specific OG 메타 주입 ────
       if (request.method === 'GET' && url.pathname.startsWith('/share/')) {
         const shareId = url.pathname.split('/share/')[1];
         if (shareId && env.SHARE_STORE) {
@@ -11506,7 +11506,52 @@ export default {
             if (data) {
               const html = await env.SHARE_STORE.get('__INDEX_HTML__');
               if (html) {
-                return new Response(html, {
+                // shareData 에서 OG 메타 정보 추출
+                let ogTitle = 'KNOT — AI 행동 분석';
+                let ogDesc = '대화에서 읽어내는 당신의 인지·정서·관계 구조 분석';
+                let ogImage = 'https://knot-ai.pages.dev/og-default.png';
+                try {
+                  const sd = JSON.parse(data);
+                  if (sd.type === 'match') {
+                    // 매칭 공유
+                    const mi = sd.matchIdentity || {};
+                    const idA = (sd.profileA && sd.profileA.identity) || sd.identityA || {};
+                    const idB = (sd.profileB && sd.profileB.identity) || sd.identityB || {};
+                    const nameA = idA.archetype || idA.name || idA.code || 'A';
+                    const nameB = idB.archetype || idB.name || idB.code || 'B';
+                    ogTitle = `${nameA} × ${nameB} — ${mi.name || '호환성 분석'}`;
+                    ogDesc = (mi.tagline || '') + (sd.compatibility ? ` · COMPAT ${sd.compatibility}` : '');
+                    ogDesc = ogDesc.trim() || '두 사람의 관계 구조 심층 분석';
+                  } else {
+                    // 개인 분석 공유
+                    const id = sd.identity || {};
+                    const name = id.archetype || id.name || 'KNOT 분석 결과';
+                    const code = id.code || '';
+                    const tag = id.tagline || '';
+                    ogTitle = `${name}${code ? ' · ' + code : ''}`;
+                    ogDesc = tag || '대화에서 읽어내는 당신의 인지·정서·관계 구조';
+                  }
+                } catch {}
+                const escape = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                const shareUrl = `https://knot-ai.pages.dev/share/${shareId}`;
+                const newMeta = `
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="KNOT">
+<meta property="og:title" content="${escape(ogTitle)}">
+<meta property="og:description" content="${escape(ogDesc)}">
+<meta property="og:image" content="${escape(ogImage)}">
+<meta property="og:url" content="${escape(shareUrl)}">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escape(ogTitle)}">
+<meta name="twitter:description" content="${escape(ogDesc)}">
+<meta name="twitter:image" content="${escape(ogImage)}">
+<meta name="description" content="${escape(ogDesc)}">`;
+                const patched = html.replace(
+                  /<!-- OG_META_START -->[\s\S]*?<!-- OG_META_END -->/,
+                  `<!-- OG_META_START -->${newMeta}<!-- OG_META_END -->`
+                );
+                return new Response(patched, {
                   headers: { 'Content-Type': 'text/html;charset=UTF-8', 'Cache-Control': 'no-cache', ...corsHeaders },
                 });
               }
