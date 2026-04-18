@@ -1025,8 +1025,8 @@ const PRISM_KNOWLEDGE_GRAPH = [
   // ─────── 하이데거 개념 (depth 4~5) ───────
   { id: 'hei_dasein', labels: { ko: ['현존재', '다자인', '현-존재'], en: ['Dasein', 'being-there'], orig: ['Dasein'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.3}], depth: 4, parents: ['p_heidegger'], introduced_by: 'p_heidegger', children: ['hei_being_in_world', 'hei_being_toward_death'], related: ['hei_mood', 'hei_authenticity'] },
   { id: 'hei_being_in_world', labels: { ko: ['세계-내-존재', '세계내존재'], en: ['being-in-the-world'], orig: ['In-der-Welt-sein'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['hei_dasein'], introduced_by: 'p_heidegger' },
-  { id: 'hei_mood', labels: { ko: ['기분', '심정성'], en: ['mood', 'attunement'], orig: ['Stimmung', 'Befindlichkeit'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.4}], depth: 4, parents: ['hei_dasein'], introduced_by: 'p_heidegger', related: ['hei_anxiety'] },
-  { id: 'hei_anxiety', labels: { ko: ['불안'], en: ['anxiety', 'anguish'], orig: ['Angst'] }, domains: [{domain:'philosophy',weight:0.8},{domain:'psychology',weight:0.6}], depth: 4, parents: ['hei_mood'], related: ['hei_being_toward_death'] },
+  { id: 'hei_mood', labels: { ko: ['심정성', '하이데거 기분'], en: ['mood', 'attunement'], orig: ['Stimmung', 'Befindlichkeit'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.4}], depth: 4, parents: ['hei_dasein'], introduced_by: 'p_heidegger', related: ['hei_anxiety'] },
+  { id: 'hei_anxiety', labels: { ko: ['실존적 불안', '하이데거 불안'], en: ['anxiety', 'anguish', 'Angst'], orig: ['Angst'] }, domains: [{domain:'philosophy',weight:0.8},{domain:'psychology',weight:0.6}], depth: 4, parents: ['hei_mood'], related: ['hei_being_toward_death'] },
   { id: 'hei_thrownness', labels: { ko: ['피투성', '피투됨'], en: ['thrownness'], orig: ['Geworfenheit'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['hei_dasein'], introduced_by: 'p_heidegger' },
   { id: 'hei_projection', labels: { ko: ['기투', '기획투사'], en: ['projection'], orig: ['Entwurf'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['hei_dasein'], introduced_by: 'p_heidegger' },
   { id: 'hei_authenticity', labels: { ko: ['본래성', '본래적'], en: ['authenticity'], orig: ['Eigentlichkeit'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['hei_dasein'], related: ['hei_inauthenticity', 'hei_being_toward_death'] },
@@ -1038,12 +1038,12 @@ const PRISM_KNOWLEDGE_GRAPH = [
   { id: 'hei_gestell', labels: { ko: ['몰아세움', '닦달'], en: ['enframing'], orig: ['Gestell'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_heidegger'], introduced_by: 'p_heidegger' },
 
   // ─────── 들뢰즈·가타리 개념 ───────
-  { id: 'dg_rhizome', labels: { ko: ['리좀'], en: ['rhizome'], orig: ['rhizome'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.5}], depth: 4, parents: ['p_deleuze', 'p_guattari'], introduced_by: 'p_deleuze', related: ['dg_bwo', 'dg_nomad', 'dg_deterritorialization'] },
+  { id: 'dg_rhizome', labels: { ko: ['리좀(들뢰즈)', '리좀형'], en: ['rhizome'], orig: ['rhizome'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.5}], depth: 4, parents: ['p_deleuze', 'p_guattari'], introduced_by: 'p_deleuze', related: ['dg_bwo', 'dg_nomad', 'dg_deterritorialization'] },
   { id: 'dg_bwo', labels: { ko: ['기관없는신체', '기관없는몸', 'CsO'], en: ['body without organs', 'BwO'], orig: ['corps sans organes'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.5}], depth: 5, parents: ['p_deleuze'], introduced_by: 'p_deleuze', related: ['dg_desiring_machine'] },
   { id: 'dg_desiring_machine', labels: { ko: ['욕망기계', '욕망하는기계'], en: ['desiring-machine'], orig: ['machine désirante'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.6}], depth: 5, parents: ['p_deleuze', 'p_guattari'], introduced_by: 'p_deleuze', related: ['dg_bwo'] },
   { id: 'dg_deterritorialization', labels: { ko: ['탈영토화'], en: ['deterritorialization'], orig: ['déterritorialisation'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_deleuze'], introduced_by: 'p_deleuze', related: ['dg_reterritorialization'] },
   { id: 'dg_reterritorialization', labels: { ko: ['재영토화'], en: ['reterritorialization'], orig: ['reterritorialisation'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_deleuze'], related: ['dg_deterritorialization'] },
-  { id: 'dg_nomad', labels: { ko: ['노마드', '유목', '유목민'], en: ['nomad'], orig: ['nomade'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_deleuze'], related: ['dg_rhizome'] },
+  { id: 'dg_nomad', labels: { ko: ['노마드', '유목민'], en: ['nomad'], orig: ['nomade'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_deleuze'], related: ['dg_rhizome'] },
   { id: 'dg_plane_immanence', labels: { ko: ['내재성의평면', '내재평면'], en: ['plane of immanence'], orig: ["plan d'immanence"] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_deleuze'], introduced_by: 'p_deleuze' },
   { id: 'dg_anti_oedipus', labels: { ko: ['안티-오이디푸스', '안티오이디푸스'], en: ['Anti-Oedipus'], orig: ["L'Anti-Œdipe"] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.7}], depth: 4, parents: ['p_deleuze', 'p_guattari'], related: ['psa_oedipus'] },
 
@@ -1054,22 +1054,22 @@ const PRISM_KNOWLEDGE_GRAPH = [
   { id: 'lac_real', labels: { ko: ['실재계'], en: ['the Real'], orig: ['Réel'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.7}], depth: 4, parents: ['p_lacan'], related: ['lac_symbolic', 'lac_imaginary'] },
   { id: 'lac_other', labels: { ko: ['대타자', '큰타자'], en: ['the Other', 'big Other'], orig: ['grand Autre'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.8}], depth: 4, parents: ['p_lacan'], introduced_by: 'p_lacan' },
   { id: 'lac_objet_a', labels: { ko: ['오브제a', 'objet petit a'], en: ['objet petit a'], orig: ['objet petit a'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.7}], depth: 5, parents: ['p_lacan'], introduced_by: 'p_lacan' },
-  { id: 'lac_jouissance', labels: { ko: ['주이상스', '향유'], en: ['jouissance'], orig: ['jouissance'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.7}], depth: 5, parents: ['p_lacan'], introduced_by: 'p_lacan' },
+  { id: 'lac_jouissance', labels: { ko: ['주이상스'], en: ['jouissance'], orig: ['jouissance'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.7}], depth: 5, parents: ['p_lacan'], introduced_by: 'p_lacan' },
   { id: 'lac_name_of_father', labels: { ko: ['아버지의이름', "아버지의-이름"], en: ['Name-of-the-Father'], orig: ['Nom-du-Père'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.6}], depth: 5, parents: ['p_lacan'], introduced_by: 'p_lacan', related: ['psa_oedipus', 'psa_castration'] },
   { id: 'lac_sinthome', labels: { ko: ['신토메'], en: ['sinthome'], orig: ['sinthome'] }, domains: [{domain:'psychology',weight:1}], depth: 5, parents: ['p_lacan'], introduced_by: 'p_lacan' },
 
   // ─────── 프로이트·정신분석 핵심 ───────
   { id: 'psa_unconscious', labels: { ko: ['무의식'], en: ['unconscious'], orig: ['das Unbewusste'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.5},{domain:'art_design',weight:0.3}], depth: 3, parents: ['field_psychoanalysis'], related: ['psa_id', 'psa_repression'] },
-  { id: 'psa_id', labels: { ko: ['이드', '원본능'], en: ['id'], orig: ['Es'] }, domains: [{domain:'psychology',weight:1}], depth: 4, parents: ['p_freud'], related: ['psa_ego', 'psa_superego'] },
-  { id: 'psa_ego', labels: { ko: ['자아'], en: ['ego'], orig: ['Ich'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.4}], depth: 3, parents: ['p_freud'] },
+  { id: 'psa_id', labels: { ko: ['이드(정신분석)', '원본능'], en: ['id'], orig: ['Es'] }, domains: [{domain:'psychology',weight:1}], depth: 4, parents: ['p_freud'], related: ['psa_ego', 'psa_superego'] },
+  { id: 'psa_ego', labels: { ko: ['자아(정신분석)'], en: ['ego'], orig: ['Ich'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.4}], depth: 3, parents: ['p_freud'] },
   { id: 'psa_superego', labels: { ko: ['초자아', '초자아'], en: ['superego'], orig: ['Über-Ich'] }, domains: [{domain:'psychology',weight:1}], depth: 4, parents: ['p_freud'] },
   { id: 'psa_oedipus', labels: { ko: ['오이디푸스', '오이디푸스콤플렉스', '오이디푸스 콤플렉스', '외디푸스'], en: ['Oedipus complex', 'Oedipus'], orig: ['Ödipuskomplex'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.7},{domain:'art_design',weight:0.5}], depth: 4, parents: ['p_freud'], introduced_by: 'p_freud', reframed_by: ['p_lacan', 'p_deleuze'], related: ['psa_castration', 'lac_name_of_father', 'dg_anti_oedipus'] },
-  { id: 'psa_castration', labels: { ko: ['거세불안', '거세공포', '거세'], en: ['castration anxiety', 'castration'], orig: ['Kastrationsangst'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.5}], depth: 5, parents: ['psa_oedipus'], introduced_by: 'p_freud' },
+  { id: 'psa_castration', labels: { ko: ['거세불안', '거세공포'], en: ['castration anxiety', 'castration'], orig: ['Kastrationsangst'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.5}], depth: 5, parents: ['psa_oedipus'], introduced_by: 'p_freud' },
   { id: 'psa_libido', labels: { ko: ['리비도'], en: ['libido'], orig: ['Libido'] }, domains: [{domain:'psychology',weight:1}], depth: 4, parents: ['p_freud'], related: ['psa_eros', 'psa_thanatos'] },
   { id: 'psa_eros', labels: { ko: ['에로스'], en: ['Eros'], orig: ['Eros'] }, domains: [{domain:'psychology',weight:0.8},{domain:'philosophy',weight:0.6}], depth: 4, parents: ['p_freud'], related: ['psa_thanatos'] },
   { id: 'psa_thanatos', labels: { ko: ['타나토스', '죽음충동'], en: ['Thanatos', 'death drive'], orig: ['Todestrieb'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.5}], depth: 4, parents: ['p_freud'] },
-  { id: 'psa_repression', labels: { ko: ['억압'], en: ['repression'], orig: ['Verdrängung'] }, domains: [{domain:'psychology',weight:1}], depth: 4, parents: ['p_freud'], related: ['psa_unconscious'] },
-  { id: 'psa_sublimation', labels: { ko: ['승화'], en: ['sublimation'], orig: ['Sublimierung'] }, domains: [{domain:'psychology',weight:1},{domain:'art_design',weight:0.6},{domain:'philosophy',weight:0.4}], depth: 4, parents: ['p_freud'] },
+  { id: 'psa_repression', labels: { ko: ['억압기제', '프로이트 억압'], en: ['repression'], orig: ['Verdrängung'] }, domains: [{domain:'psychology',weight:1}], depth: 4, parents: ['p_freud'], related: ['psa_unconscious'] },
+  { id: 'psa_sublimation', labels: { ko: ['승화(방어기제)', '정신분석 승화'], en: ['sublimation'], orig: ['Sublimierung'] }, domains: [{domain:'psychology',weight:1},{domain:'art_design',weight:0.6},{domain:'philosophy',weight:0.4}], depth: 4, parents: ['p_freud'] },
   { id: 'psa_repetition_compulsion', labels: { ko: ['반복강박'], en: ['repetition compulsion'], orig: ['Wiederholungszwang'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.5}], depth: 5, parents: ['p_freud'] },
   { id: 'psa_wolfman', labels: { ko: ['늑대인간', '늑대인간 사례'], en: ['Wolf Man', 'Wolfman case'] }, domains: [{domain:'psychology',weight:1}], depth: 5, parents: ['p_freud'], introduced_by: 'p_freud' },
 
@@ -1077,24 +1077,24 @@ const PRISM_KNOWLEDGE_GRAPH = [
   { id: 'bau_simulacrum', labels: { ko: ['시뮬라크르', '시뮬라르크', '시뮬라크라'], en: ['simulacrum', 'simulacra'], orig: ['simulacre'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.7}], depth: 4, parents: ['p_baudrillard'], introduced_by: 'p_baudrillard', related: ['bau_simulation', 'bau_hyperreal'] },
   { id: 'bau_simulation', labels: { ko: ['시뮬라시옹', '시뮬레이션'], en: ['simulation'], orig: ['simulation'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.6}], depth: 4, parents: ['p_baudrillard'], introduced_by: 'p_baudrillard', related: ['bau_simulacrum', 'bau_hyperreal'] },
   { id: 'bau_hyperreal', labels: { ko: ['하이퍼리얼', '초실재', '과잉실재'], en: ['hyperreal', 'hyperreality'], orig: ['hyperréel'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.5}], depth: 4, parents: ['p_baudrillard'], introduced_by: 'p_baudrillard' },
-  { id: 'bau_implosion', labels: { ko: ['내파'], en: ['implosion'], orig: ['implosion'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_baudrillard'] },
+  { id: 'bau_implosion', labels: { ko: ['내파(보드리야르)'], en: ['implosion'], orig: ['implosion'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_baudrillard'] },
   { id: 'bau_symbolic_exchange', labels: { ko: ['상징교환'], en: ['symbolic exchange'], orig: ['échange symbolique'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_baudrillard'] },
-  { id: 'bau_seduction', labels: { ko: ['유혹', '유혹론'], en: ['seduction'], orig: ['séduction'] }, domains: [{domain:'philosophy',weight:0.8}], depth: 5, parents: ['p_baudrillard'] },
+  { id: 'bau_seduction', labels: { ko: ['유혹론', '보드리야르 유혹'], en: ['seduction'], orig: ['séduction'] }, domains: [{domain:'philosophy',weight:0.8}], depth: 5, parents: ['p_baudrillard'] },
 
   // ─────── 푸코 ───────
-  { id: 'fou_discourse', labels: { ko: ['담론'], en: ['discourse'], orig: ['discours'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.8}], depth: 3, parents: ['p_foucault'], related: ['fou_episteme', 'fou_power'] },
+  { id: 'fou_discourse', labels: { ko: ['담론(푸코)', '담론분석', '담론구성체'], en: ['discourse'], orig: ['discours'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.8}], depth: 3, parents: ['p_foucault'], related: ['fou_episteme', 'fou_power'] },
   { id: 'fou_episteme', labels: { ko: ['에피스테메'], en: ['episteme'], orig: ['épistémè'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.6}], depth: 5, parents: ['p_foucault'], introduced_by: 'p_foucault' },
-  { id: 'fou_power', labels: { ko: ['권력', '권력/지식'], en: ['power', 'power/knowledge'], orig: ['pouvoir'] }, domains: [{domain:'philosophy',weight:0.8},{domain:'humanities_social',weight:1}], depth: 3, parents: ['p_foucault'], related: ['fou_biopolitics', 'fou_discipline'] },
+  { id: 'fou_power', labels: { ko: ['권력/지식', '푸코 권력', '미시권력'], en: ['power', 'power/knowledge'], orig: ['pouvoir'] }, domains: [{domain:'philosophy',weight:0.8},{domain:'humanities_social',weight:1}], depth: 3, parents: ['p_foucault'], related: ['fou_biopolitics', 'fou_discipline'] },
   { id: 'fou_panopticon', labels: { ko: ['판옵티콘'], en: ['panopticon'], orig: ['panoptique'] }, domains: [{domain:'philosophy',weight:0.7},{domain:'humanities_social',weight:1}], depth: 5, parents: ['p_foucault'] },
-  { id: 'fou_discipline', labels: { ko: ['규율', '규율권력', '규율사회'], en: ['discipline', 'disciplinary power'], orig: ['discipline'] }, domains: [{domain:'philosophy',weight:0.7},{domain:'humanities_social',weight:1}], depth: 4, parents: ['p_foucault'], related: ['fou_panopticon'] },
+  { id: 'fou_discipline', labels: { ko: ['규율권력', '규율사회', '푸코 규율'], en: ['discipline', 'disciplinary power'], orig: ['discipline'] }, domains: [{domain:'philosophy',weight:0.7},{domain:'humanities_social',weight:1}], depth: 4, parents: ['p_foucault'], related: ['fou_panopticon'] },
   { id: 'fou_biopolitics', labels: { ko: ['생명정치', '생명권력'], en: ['biopolitics', 'biopower'], orig: ['biopolitique'] }, domains: [{domain:'philosophy',weight:0.8},{domain:'humanities_social',weight:1}], depth: 5, parents: ['p_foucault'], introduced_by: 'p_foucault' },
   { id: 'fou_governmentality', labels: { ko: ['통치성'], en: ['governmentality'], orig: ['gouvernementalité'] }, domains: [{domain:'philosophy',weight:0.8},{domain:'humanities_social',weight:1}], depth: 5, parents: ['p_foucault'], introduced_by: 'p_foucault' },
   { id: 'fou_genealogy', labels: { ko: ['계보학'], en: ['genealogy'], orig: ['généalogie'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_foucault'], reframed_by: ['p_foucault'], introduced_by: 'p_nietzsche' },
 
   // ─────── 데리다 ───────
   { id: 'der_differance', labels: { ko: ['차연'], en: ['différance'], orig: ['différance'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_derrida'], introduced_by: 'p_derrida', related: ['der_trace', 'der_deconstruction'] },
-  { id: 'der_deconstruction', labels: { ko: ['해체', '해체주의'], en: ['deconstruction'], orig: ['déconstruction'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.4}], depth: 4, parents: ['p_derrida'], introduced_by: 'p_derrida' },
-  { id: 'der_trace', labels: { ko: ['흔적'], en: ['trace'], orig: ['trace'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_derrida'] },
+  { id: 'der_deconstruction', labels: { ko: ['해체주의', '데리다 해체'], en: ['deconstruction'], orig: ['déconstruction'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.4}], depth: 4, parents: ['p_derrida'], introduced_by: 'p_derrida' },
+  { id: 'der_trace', labels: { ko: ['데리다 흔적', '차연의 흔적'], en: ['trace'], orig: ['trace'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_derrida'] },
 
   // ─────── 동시대미술 핵심 ───────
   { id: 'art_relational_aesthetics', labels: { ko: ['관계미학'], en: ['relational aesthetics'], orig: ['esthétique relationnelle'] }, domains: [{domain:'art_design',weight:1}], depth: 4, parents: ['field_contemporary_art'] },
@@ -1105,6 +1105,521 @@ const PRISM_KNOWLEDGE_GRAPH = [
   { id: 'art_mimesis', labels: { ko: ['미메시스'], en: ['mimesis'], orig: ['μίμησις'] }, domains: [{domain:'art_design',weight:1},{domain:'philosophy',weight:0.8}], depth: 4 },
   { id: 'art_sublime', labels: { ko: ['숭고'], en: ['sublime'], orig: ['Erhabene'] }, domains: [{domain:'art_design',weight:0.8},{domain:'philosophy',weight:1}], depth: 4 },
   { id: 'art_catharsis', labels: { ko: ['카타르시스'], en: ['catharsis'], orig: ['κάθαρσις'] }, domains: [{domain:'art_design',weight:0.8},{domain:'philosophy',weight:0.9},{domain:'psychology',weight:0.6}], depth: 4 },
+  // ═══ science domain (batch 1 - 174 entries from agent batch) ═══
+  // ===== TOP-LEVEL (depth 1) =====
+  { id: 'sci_science', labels: { ko: ['과학'], en: ['Science'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 1, children: ['sci_physics', 'sci_chemistry', 'sci_biology', 'sci_math', 'sci_earth', 'sci_medicine'] },
+  { id: 'sci_math', labels: { ko: ['수학'], en: ['Mathematics'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.3 }], depth: 1, parents: ['sci_science'] },
+  { id: 'sci_physics', labels: { ko: ['물리학', '물리'], en: ['Physics'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 1, parents: ['sci_science'] },
+  { id: 'sci_chemistry', labels: { ko: ['화학'], en: ['Chemistry'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 1, parents: ['sci_science'] },
+  { id: 'sci_biology', labels: { ko: ['생물학'], en: ['Biology'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 1, parents: ['sci_science'] },
+  { id: 'sci_medicine', labels: { ko: ['의학'], en: ['Medicine'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 1, parents: ['sci_science'] },
+  { id: 'sci_earth', labels: { ko: ['지구과학'], en: ['Earth Science'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 1, parents: ['sci_science'] },
+  { id: 'sci_astronomy', labels: { ko: ['천문학'], en: ['Astronomy'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 1, parents: ['sci_science'] },
+
+  // ===== MATH FIELDS (depth 2) =====
+  { id: 'field_algebra', labels: { ko: ['대수학'], en: ['Algebra'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['sci_math'] },
+  { id: 'field_analysis', labels: { ko: ['해석학'], en: ['Analysis'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['sci_math'] },
+  { id: 'field_geometry', labels: { ko: ['기하학'], en: ['Geometry'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['sci_math'] },
+  { id: 'field_topology', labels: { ko: ['위상수학'], en: ['Topology'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['sci_math'] },
+  { id: 'field_number_theory', labels: { ko: ['수론', '정수론'], en: ['Number Theory'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['sci_math'] },
+  { id: 'field_combinatorics', labels: { ko: ['조합론'], en: ['Combinatorics'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['sci_math'] },
+  { id: 'field_graph_theory', labels: { ko: ['그래프이론'], en: ['Graph Theory'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.4 }], depth: 2, parents: ['sci_math'] },
+  { id: 'field_probability', labels: { ko: ['확률론'], en: ['Probability Theory'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.5 }], depth: 2, parents: ['sci_math'] },
+  { id: 'field_statistics', labels: { ko: ['통계학'], en: ['Statistics'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.4 }], depth: 2, parents: ['sci_math'] },
+  { id: 'field_information_theory', labels: { ko: ['정보이론'], en: ['Information Theory'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.6 }], depth: 2, parents: ['sci_math'] },
+  { id: 'field_logic', labels: { ko: ['논리학', '수리논리'], en: ['Mathematical Logic'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.5 }], depth: 2, parents: ['sci_math'] },
+  { id: 'field_set_theory', labels: { ko: ['집합론'], en: ['Set Theory'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.4 }], depth: 2, parents: ['sci_math'] },
+  { id: 'field_category_theory', labels: { ko: ['범주론'], en: ['Category Theory'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.3 }], depth: 2, parents: ['sci_math'] },
+  { id: 'field_differential_eq', labels: { ko: ['미분방정식'], en: ['Differential Equations'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['field_analysis'] },
+  { id: 'field_functional_analysis', labels: { ko: ['함수해석학'], en: ['Functional Analysis'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['field_analysis'] },
+  { id: 'field_measure_theory', labels: { ko: ['측도론'], en: ['Measure Theory'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['field_analysis'] },
+  { id: 'field_complex_analysis', labels: { ko: ['복소해석학'], en: ['Complex Analysis'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['field_analysis'] },
+  { id: 'field_real_analysis', labels: { ko: ['실해석학'], en: ['Real Analysis'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['field_analysis'] },
+  { id: 'field_diff_geometry', labels: { ko: ['미분기하학'], en: ['Differential Geometry'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['field_geometry'] },
+  { id: 'field_algebraic_geometry', labels: { ko: ['대수기하학'], en: ['Algebraic Geometry'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['field_geometry', 'field_algebra'] },
+  { id: 'field_algebraic_topology', labels: { ko: ['대수위상수학'], en: ['Algebraic Topology'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['field_topology'] },
+  { id: 'field_commutative_algebra', labels: { ko: ['가환대수'], en: ['Commutative Algebra'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['field_algebra'] },
+  { id: 'field_group_theory', labels: { ko: ['군론'], en: ['Group Theory'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['field_algebra'] },
+  { id: 'field_galois_theory', labels: { ko: ['갈루아이론'], en: ['Galois Theory'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['field_algebra'] },
+  { id: 'field_analytic_nt', labels: { ko: ['해석적 수론'], en: ['Analytic Number Theory'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['field_number_theory'] },
+  { id: 'field_bayesian_stat', labels: { ko: ['베이지안 통계'], en: ['Bayesian Statistics'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.5 }], depth: 2, parents: ['field_statistics'] },
+  { id: 'field_nonparametric_stat', labels: { ko: ['비모수 통계'], en: ['Nonparametric Statistics'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['field_statistics'] },
+  { id: 'field_time_series', labels: { ko: ['시계열 분석'], en: ['Time Series Analysis'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'finance', weight: 0.4 }], depth: 2, parents: ['field_statistics'] },
+  { id: 'field_stochastic_proc', labels: { ko: ['확률과정론'], en: ['Stochastic Processes'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 2, parents: ['field_probability'] },
+
+  // ===== MATHEMATICIANS (depth 3) =====
+  { id: 'p_euclid', labels: { ko: ['유클리드'], en: ['Euclid'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.3 }], depth: 3, parents: ['field_geometry'] },
+  { id: 'p_archimedes', labels: { ko: ['아르키메데스'], en: ['Archimedes'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['sci_math', 'sci_physics'] },
+  { id: 'p_pythagoras', labels: { ko: ['피타고라스'], en: ['Pythagoras'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.5 }], depth: 3, parents: ['sci_math'] },
+  { id: 'p_fermat', labels: { ko: ['페르마'], en: ['Pierre de Fermat'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_number_theory'] },
+  { id: 'p_newton', labels: { ko: ['뉴턴'], en: ['Isaac Newton'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.3 }], depth: 3, parents: ['sci_physics', 'sci_math'] },
+  { id: 'p_leibniz', labels: { ko: ['라이프니츠'], en: ['Gottfried Leibniz'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.7 }], depth: 3, parents: ['sci_math'] },
+  { id: 'p_euler', labels: { ko: ['오일러'], en: ['Leonhard Euler'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['sci_math'] },
+  { id: 'p_gauss', labels: { ko: ['가우스'], en: ['Carl Friedrich Gauss'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['sci_math'] },
+  { id: 'p_cauchy', labels: { ko: ['코시'], en: ['Augustin-Louis Cauchy'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_analysis'] },
+  { id: 'p_riemann', labels: { ko: ['리만'], en: ['Bernhard Riemann'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_geometry', 'field_analysis', 'field_number_theory'] },
+  { id: 'p_poincare', labels: { ko: ['푸앵카레', '포앵카레'], en: ['Henri Poincaré'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.3 }], depth: 3, parents: ['field_topology'] },
+  { id: 'p_cantor', labels: { ko: ['칸토어', '칸토르'], en: ['Georg Cantor'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.4 }], depth: 3, parents: ['field_set_theory'] },
+  { id: 'p_dedekind', labels: { ko: ['데데킨트'], en: ['Richard Dedekind'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_number_theory'] },
+  { id: 'p_peano', labels: { ko: ['페아노'], en: ['Giuseppe Peano'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.3 }], depth: 3, parents: ['field_logic'] },
+  { id: 'p_hilbert', labels: { ko: ['힐베르트'], en: ['David Hilbert'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.3 }], depth: 3, parents: ['sci_math', 'field_logic'] },
+  { id: 'p_godel', labels: { ko: ['괴델'], en: ['Kurt Gödel'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.6 }], depth: 3, parents: ['field_logic'] },
+  { id: 'p_turing', labels: { ko: ['튜링'], en: ['Alan Turing'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.6 }, { domain: 'philosophy', weight: 0.3 }], depth: 3, parents: ['field_logic'] },
+  { id: 'p_church', labels: { ko: ['처치'], en: ['Alonzo Church'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.4 }], depth: 3, parents: ['field_logic'] },
+  { id: 'p_von_neumann', labels: { ko: ['폰 노이만', '폰노이만'], en: ['John von Neumann'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.5 }], depth: 3, parents: ['sci_math', 'sci_physics'] },
+  { id: 'p_shannon', labels: { ko: ['섀넌'], en: ['Claude Shannon'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.7 }], depth: 3, parents: ['field_information_theory'] },
+  { id: 'p_wiener', labels: { ko: ['위너'], en: ['Norbert Wiener'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.5 }], depth: 3, parents: ['field_probability'] },
+  { id: 'p_kolmogorov', labels: { ko: ['콜모고로프'], en: ['Andrey Kolmogorov'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_probability'] },
+  { id: 'p_grothendieck', labels: { ko: ['그로텐디크'], en: ['Alexander Grothendieck'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_algebraic_geometry'] },
+  { id: 'p_noether', labels: { ko: ['에미 뇌터'], en: ['Emmy Noether'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_algebra', 'sci_physics'] },
+  { id: 'p_perelman', labels: { ko: ['페렐만'], en: ['Grigori Perelman'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_topology'] },
+  { id: 'p_tao', labels: { ko: ['테렌스 타오', '테렌스타오'], en: ['Terence Tao'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_analysis', 'field_number_theory'] },
+  { id: 'p_mirzakhani', labels: { ko: ['미르자카니'], en: ['Maryam Mirzakhani'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_geometry'] },
+  { id: 'p_witten', labels: { ko: ['에드워드 위튼', '위튼'], en: ['Edward Witten'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['sci_math', 'sci_physics'] },
+  { id: 'p_weil', labels: { ko: ['앙드레 베유', '베유'], en: ['André Weil'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_algebraic_geometry', 'field_number_theory'] },
+  { id: 'p_galois', labels: { ko: ['갈루아'], en: ['Évariste Galois'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_galois_theory'] },
+  { id: 'p_abel', labels: { ko: ['아벨'], en: ['Niels Henrik Abel'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_algebra'] },
+  { id: 'p_lagrange', labels: { ko: ['라그랑주'], en: ['Joseph-Louis Lagrange'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['sci_math', 'sci_physics'] },
+  { id: 'p_laplace', labels: { ko: ['라플라스'], en: ['Pierre-Simon Laplace'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_probability', 'sci_physics'] },
+  { id: 'p_fourier', labels: { ko: ['푸리에'], en: ['Joseph Fourier'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_analysis'] },
+  { id: 'p_lobachevsky', labels: { ko: ['로바쳅스키'], en: ['Nikolai Lobachevsky'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_geometry'] },
+  { id: 'p_bolyai', labels: { ko: ['보여이'], en: ['János Bolyai'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_geometry'] },
+  { id: 'p_erdos', labels: { ko: ['에르되시'], en: ['Paul Erdős'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_combinatorics', 'field_number_theory'] },
+
+  // ===== MATH CONCEPTS (depth 4-5) =====
+  { id: 'mth_axiom', labels: { ko: ['수학 공리', '공리(수학)'], en: ['Axiom'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.4 }], depth: 4, parents: ['field_logic'] },
+  { id: 'mth_theorem', labels: { ko: ['수학 정리', '수학정리'], en: ['Theorem'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_logic'] },
+  { id: 'mth_proof', labels: { ko: ['수학 증명', '수학적 증명'], en: ['Mathematical Proof'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.3 }], depth: 4, parents: ['field_logic'] },
+  { id: 'mth_lemma', labels: { ko: ['보조정리'], en: ['Lemma'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_logic'] },
+  { id: 'mth_conjecture', labels: { ko: ['수학 추측', '수학적 추측'], en: ['Conjecture'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_logic'] },
+  { id: 'mth_zfc', labels: { ko: ['ZFC 공리계'], en: ['ZFC Axioms'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.4 }], depth: 4, parents: ['field_set_theory'] },
+  { id: 'mth_continuum_hyp', labels: { ko: ['연속체 가설'], en: ['Continuum Hypothesis'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.4 }], depth: 5, parents: ['field_set_theory'], introduced_by: '칸토어' },
+  { id: 'mth_godel_incompleteness', labels: { ko: ['괴델 불완전성 정리'], en: ['Gödel Incompleteness Theorems'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.7 }], depth: 4, parents: ['field_logic'], introduced_by: '괴델' },
+  { id: 'mth_halting_problem', labels: { ko: ['정지 문제'], en: ['Halting Problem'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.5 }], depth: 4, parents: ['field_logic'], introduced_by: '튜링' },
+  { id: 'mth_turing_machine', labels: { ko: ['튜링 기계'], en: ['Turing Machine'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.7 }], depth: 4, parents: ['field_logic'], introduced_by: '튜링' },
+  { id: 'mth_lambda_calculus', labels: { ko: ['람다 계산법'], en: ['Lambda Calculus'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.6 }], depth: 4, parents: ['field_logic'], introduced_by: '처치' },
+  { id: 'mth_peano_axioms', labels: { ko: ['페아노 공리계'], en: ['Peano Axioms'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_logic'], introduced_by: '페아노' },
+  { id: 'mth_russell_paradox', labels: { ko: ['러셀 역설'], en: ['Russell Paradox'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'philosophy', weight: 0.6 }], depth: 5, parents: ['field_set_theory'] },
+  { id: 'mth_aleph', labels: { ko: ['알레프 수'], en: ['Aleph Number'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 5, parents: ['field_set_theory'], introduced_by: '칸토어' },
+  { id: 'mth_module', labels: { ko: ['가군'], en: ['Module'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_algebra'] },
+  { id: 'mth_vector_space', labels: { ko: ['벡터공간'], en: ['Vector Space'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_algebra'] },
+  { id: 'mth_linear_map', labels: { ko: ['선형사상'], en: ['Linear Map'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.4 }], depth: 4, parents: ['field_algebra'] },
+  { id: 'mth_eigenvalue', labels: { ko: ['고윳값'], en: ['Eigenvalue'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.5 }], depth: 4, parents: ['field_algebra'] },
+  { id: 'mth_determinant', labels: { ko: ['행렬식'], en: ['Determinant'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_algebra'] },
+  { id: 'mth_tensor', labels: { ko: ['텐서'], en: ['Tensor'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.6 }], depth: 4, parents: ['field_algebra'] },
+  { id: 'mth_homomorphism', labels: { ko: ['준동형사상'], en: ['Homomorphism'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_algebra'] },
+  { id: 'mth_isomorphism', labels: { ko: ['동형사상'], en: ['Isomorphism'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_algebra'] },
+  { id: 'mth_galois_group', labels: { ko: ['갈루아 군'], en: ['Galois Group'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 5, parents: ['field_galois_theory'], introduced_by: '갈루아' },
+  { id: 'mth_lie_group', labels: { ko: ['리 군'], en: ['Lie Group'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_group_theory', 'field_diff_geometry'] },
+  { id: 'mth_lie_algebra', labels: { ko: ['리 대수'], en: ['Lie Algebra'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_algebra'] },
+  { id: 'mth_symmetric_group', labels: { ko: ['대칭군'], en: ['Symmetric Group'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 5, parents: ['field_group_theory'] },
+  { id: 'mth_limit', labels: { ko: ['극한(수학)', '수학 극한'], en: ['Limit'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_real_analysis'] },
+  { id: 'mth_continuity', labels: { ko: ['연속성'], en: ['Continuity'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_real_analysis'] },
+  { id: 'mth_derivative', labels: { ko: ['미분함수', '도함수', '수학 미분'], en: ['Derivative'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_real_analysis'], introduced_by: '뉴턴' },
+  { id: 'mth_integral', labels: { ko: ['적분학', '수학 적분'], en: ['Integral'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_real_analysis'] },
+  { id: 'mth_fundamental_calc', labels: { ko: ['미적분학 기본정리'], en: ['Fundamental Theorem of Calculus'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 5, parents: ['field_real_analysis'] },
+  { id: 'mth_taylor_series', labels: { ko: ['테일러 급수'], en: ['Taylor Series'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_real_analysis'] },
+  { id: 'mth_fourier_series', labels: { ko: ['푸리에 급수'], en: ['Fourier Series'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_analysis'], introduced_by: '푸리에' },
+  { id: 'mth_fourier_transform', labels: { ko: ['푸리에 변환'], en: ['Fourier Transform'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.4 }], depth: 4, parents: ['field_analysis'], introduced_by: '푸리에' },
+  { id: 'mth_laplace_transform', labels: { ko: ['라플라스 변환'], en: ['Laplace Transform'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_analysis'] },
+  { id: 'mth_lebesgue_measure', labels: { ko: ['르베그 측도'], en: ['Lebesgue Measure'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_measure_theory'] },
+  { id: 'mth_lebesgue_integral', labels: { ko: ['르베그 적분'], en: ['Lebesgue Integral'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_measure_theory'] },
+  { id: 'mth_hilbert_space', labels: { ko: ['힐베르트 공간'], en: ['Hilbert Space'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_functional_analysis'], introduced_by: '힐베르트' },
+  { id: 'mth_banach_space', labels: { ko: ['바나흐 공간'], en: ['Banach Space'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_functional_analysis'] },
+  { id: 'mth_operator', labels: { ko: ['작용소'], en: ['Operator'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_functional_analysis'] },
+  { id: 'mth_spectral_theorem', labels: { ko: ['스펙트럼 정리'], en: ['Spectral Theorem'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 5, parents: ['field_functional_analysis'] },
+  { id: 'mth_cauchy_integral', labels: { ko: ['코시 적분공식'], en: ['Cauchy Integral Formula'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 5, parents: ['field_complex_analysis'], introduced_by: '코시' },
+  { id: 'mth_residue_theorem', labels: { ko: ['유수 정리'], en: ['Residue Theorem'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 5, parents: ['field_complex_analysis'] },
+  { id: 'mth_holomorphic', labels: { ko: ['정칙함수', '홀로모픽'], en: ['Holomorphic Function'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_complex_analysis'] },
+  { id: 'mth_riemann_surface', labels: { ko: ['리만 곡면'], en: ['Riemann Surface'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_complex_analysis'], introduced_by: '리만' },
+  { id: 'mth_riemann_zeta', labels: { ko: ['리만 제타 함수'], en: ['Riemann Zeta Function'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_analytic_nt'], introduced_by: '리만' },
+  { id: 'mth_riemann_hypothesis', labels: { ko: ['리만 가설'], en: ['Riemann Hypothesis'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 5, parents: ['field_analytic_nt'], introduced_by: '리만' },
+  { id: 'mth_prime_theorem', labels: { ko: ['소수 정리'], en: ['Prime Number Theorem'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_analytic_nt'] },
+  { id: 'mth_fermat_last', labels: { ko: ['페르마 마지막 정리'], en: ['Fermat Last Theorem'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 5, parents: ['field_number_theory'], introduced_by: '페르마' },
+  { id: 'mth_p_adic', labels: { ko: ['p진수'], en: ['p-adic Numbers'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_number_theory'] },
+  { id: 'mth_diophantine', labels: { ko: ['디오판토스 방정식'], en: ['Diophantine Equations'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_number_theory'] },
+  { id: 'mth_euclidean_geom', labels: { ko: ['유클리드 기하'], en: ['Euclidean Geometry'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_geometry'], introduced_by: '유클리드' },
+  { id: 'mth_noneuclidean', labels: { ko: ['비유클리드 기하'], en: ['Non-Euclidean Geometry'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_geometry'] },
+  { id: 'mth_riemannian_geom', labels: { ko: ['리만 기하'], en: ['Riemannian Geometry'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_diff_geometry'], introduced_by: '리만' },
+  { id: 'mth_symplectic_geom', labels: { ko: ['심플렉틱 기하'], en: ['Symplectic Geometry'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 3, parents: ['field_diff_geometry'] },
+  { id: 'mth_manifold', labels: { ko: ['다양체'], en: ['Manifold'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_diff_geometry', 'field_topology'] },
+  { id: 'mth_metric_tensor', labels: { ko: ['계량 텐서'], en: ['Metric Tensor'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_diff_geometry'] },
+  { id: 'mth_curvature', labels: { ko: ['곡률'], en: ['Curvature'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_diff_geometry'] },
+  { id: 'mth_geodesic', labels: { ko: ['측지선'], en: ['Geodesic'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_diff_geometry'] },
+  { id: 'mth_topology_space', labels: { ko: ['위상공간'], en: ['Topological Space'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_topology'] },
+  { id: 'mth_homotopy', labels: { ko: ['호모토피'], en: ['Homotopy'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_algebraic_topology'] },
+  { id: 'mth_homology', labels: { ko: ['호몰로지'], en: ['Homology'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_algebraic_topology'] },
+  { id: 'mth_cohomology', labels: { ko: ['코호몰로지'], en: ['Cohomology'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_algebraic_topology'] },
+  { id: 'mth_poincare_conj', labels: { ko: ['푸앵카레 추측'], en: ['Poincaré Conjecture'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 5, parents: ['field_topology'], introduced_by: '푸앵카레' },
+  { id: 'mth_euler_characteristic', labels: { ko: ['오일러 지표'], en: ['Euler Characteristic'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 5, parents: ['field_algebraic_topology'], introduced_by: '오일러' },
+  { id: 'mth_fundamental_group', labels: { ko: ['기본군'], en: ['Fundamental Group'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 5, parents: ['field_algebraic_topology'], introduced_by: '푸앵카레' },
+  { id: 'mth_scheme', labels: { ko: ['스킴'], en: ['Scheme'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_algebraic_geometry'], introduced_by: '그로텐디크' },
+  { id: 'mth_functor', labels: { ko: ['함자'], en: ['Functor'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_category_theory'] },
+  { id: 'mth_category', labels: { ko: ['범주(수학)', '범주론의 범주'], en: ['Category'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_category_theory'] },
+  { id: 'mth_natural_transformation', labels: { ko: ['자연변환'], en: ['Natural Transformation'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 5, parents: ['field_category_theory'] },
+  { id: 'mth_graph', labels: { ko: ['그래프'], en: ['Graph'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.5 }], depth: 4, parents: ['field_graph_theory'] },
+  { id: 'mth_euler_bridges', labels: { ko: ['쾨니히스베르크 다리 문제'], en: ['Seven Bridges of Königsberg'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 5, parents: ['field_graph_theory'], introduced_by: '오일러' },
+  { id: 'mth_four_color', labels: { ko: ['사색 정리'], en: ['Four Color Theorem'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 5, parents: ['field_graph_theory'] },
+  { id: 'mth_ramsey', labels: { ko: ['램지 이론'], en: ['Ramsey Theory'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_combinatorics'] },
+  { id: 'mth_markov_chain', labels: { ko: ['마르코프 연쇄'], en: ['Markov Chain'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.5 }], depth: 4, parents: ['field_stochastic_proc'] },
+  { id: 'mth_martingale', labels: { ko: ['마틴게일'], en: ['Martingale'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'finance', weight: 0.5 }], depth: 4, parents: ['field_stochastic_proc'] },
+  { id: 'mth_brownian_motion', labels: { ko: ['브라운 운동'], en: ['Brownian Motion'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'finance', weight: 0.4 }], depth: 4, parents: ['field_stochastic_proc'] },
+  { id: 'mth_ito_calculus', labels: { ko: ['이토 미적분'], en: ['Itô Calculus'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'finance', weight: 0.5 }], depth: 4, parents: ['field_stochastic_proc'] },
+  { id: 'mth_sde', labels: { ko: ['확률미분방정식'], en: ['Stochastic Differential Equation'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_stochastic_proc'] },
+  { id: 'mth_clt', labels: { ko: ['중심극한정리'], en: ['Central Limit Theorem'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_probability'] },
+  { id: 'mth_lln', labels: { ko: ['큰 수의 법칙'], en: ['Law of Large Numbers'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_probability'] },
+  { id: 'mth_bayes_theorem', labels: { ko: ['베이즈 정리'], en: ['Bayes Theorem'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.7 }], depth: 4, parents: ['field_probability'] },
+  { id: 'mth_random_variable', labels: { ko: ['확률변수'], en: ['Random Variable'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_probability'] },
+  { id: 'mth_expectation', labels: { ko: ['기댓값'], en: ['Expected Value'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_probability'] },
+  { id: 'mth_variance', labels: { ko: ['통계 분산', '분산(통계)'], en: ['Variance'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_probability'] },
+  { id: 'mth_covariance', labels: { ko: ['공분산'], en: ['Covariance'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_probability'] },
+  { id: 'mth_normal_dist', labels: { ko: ['정규분포'], en: ['Normal Distribution'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_probability'] },
+  { id: 'mth_binomial_dist', labels: { ko: ['이항분포'], en: ['Binomial Distribution'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_probability'] },
+  { id: 'mth_poisson_dist', labels: { ko: ['포아송 분포'], en: ['Poisson Distribution'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_probability'] },
+  { id: 'mth_exponential_dist', labels: { ko: ['지수분포'], en: ['Exponential Distribution'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_probability'] },
+  { id: 'mth_gamma_dist', labels: { ko: ['감마분포'], en: ['Gamma Distribution'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_probability'] },
+  { id: 'mth_beta_dist', labels: { ko: ['베타분포'], en: ['Beta Distribution'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_probability'] },
+  { id: 'mth_chi_squared', labels: { ko: ['카이제곱 분포'], en: ['Chi-squared Distribution'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_probability'] },
+  { id: 'mth_t_dist', labels: { ko: ['t분포'], en: ['Student t-distribution'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_statistics'] },
+  { id: 'mth_f_dist', labels: { ko: ['F분포'], en: ['F-distribution'] }, domains: [{ domain: 'science', weight: 1.0 }], depth: 4, parents: ['field_statistics'] },
+  { id: 'mth_entropy', labels: { ko: ['엔트로피'], en: ['Entropy'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.6 }], depth: 4, parents: ['field_information_theory'], introduced_by: '섀넌' },
+  { id: 'mth_mutual_info', labels: { ko: ['상호정보량'], en: ['Mutual Information'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.7 }], depth: 4, parents: ['field_information_theory'] },
+  { id: 'mth_kl_divergence', labels: { ko: ['KL 발산'], en: ['Kullback–Leibler Divergence'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.8 }], depth: 4, parents: ['field_information_theory'] },
+  { id: 'mth_channel_capacity', labels: { ko: ['채널 용량'], en: ['Channel Capacity'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.4 }], depth: 5, parents: ['field_information_theory'], introduced_by: '섀넌' },
+  { id: 'mth_kolmogorov_complexity', labels: { ko: ['콜모고로프 복잡도'], en: ['Kolmogorov Complexity'] }, domains: [{ domain: 'science', weight: 1.0 }, { domain: 'ml_ai', weight: 0.5 }], depth: 5, parents: ['field_information_theory'], introduced_by: '콜모고로프' },
+
+  // ══════════════════════════════════════════════════════════════
+  // v3.6.24 — philosophy 도메인 확장 (batch 1, ~180 entries)
+  // ══════════════════════════════════════════════════════════════
+
+  // ─── 분과 추가 ───
+  { id: 'field_analytic', labels: { ko: ['분석철학'], en: ['analytic philosophy'] }, domains: [{domain:'philosophy',weight:1}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_metaphysics', labels: { ko: ['형이상학'], en: ['metaphysics'] }, domains: [{domain:'philosophy',weight:1}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_ethics', labels: { ko: ['윤리학'], en: ['ethics'] }, domains: [{domain:'philosophy',weight:1}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_political_phil', labels: { ko: ['정치철학'], en: ['political philosophy'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_aesthetics', labels: { ko: ['미학'], en: ['aesthetics'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.8}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_philosophy_mind', labels: { ko: ['심리철학', '마음의 철학'], en: ['philosophy of mind'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.5}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_philosophy_science', labels: { ko: ['과학철학'], en: ['philosophy of science'] }, domains: [{domain:'philosophy',weight:1},{domain:'science',weight:0.5}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_philosophy_language', labels: { ko: ['언어철학'], en: ['philosophy of language'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.5}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_hermeneutics', labels: { ko: ['해석학'], en: ['hermeneutics'] }, domains: [{domain:'philosophy',weight:1}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_critical_theory', labels: { ko: ['비판이론', '프랑크푸르트학파'], en: ['critical theory', 'Frankfurt School'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_pragmatism', labels: { ko: ['프래그머티즘', '실용주의'], en: ['pragmatism'] }, domains: [{domain:'philosophy',weight:1}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_structuralism', labels: { ko: ['구조주의'], en: ['structuralism'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.5}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_eastern_phil', labels: { ko: ['동양철학'], en: ['Eastern philosophy'] }, domains: [{domain:'philosophy',weight:1}], depth: 2, parents: ['d_philosophy'] },
+  { id: 'field_confucianism', labels: { ko: ['유교', '유가사상'], en: ['Confucianism'] }, domains: [{domain:'philosophy',weight:1}], depth: 2, parents: ['field_eastern_phil'] },
+  { id: 'field_daoism', labels: { ko: ['도가', '도교'], en: ['Daoism', 'Taoism'] }, domains: [{domain:'philosophy',weight:1}], depth: 2, parents: ['field_eastern_phil'] },
+  { id: 'field_buddhism_phil', labels: { ko: ['불교철학'], en: ['Buddhist philosophy'] }, domains: [{domain:'philosophy',weight:1}], depth: 2, parents: ['field_eastern_phil'] },
+  { id: 'field_neoconfucianism', labels: { ko: ['성리학', '신유학'], en: ['Neo-Confucianism'] }, domains: [{domain:'philosophy',weight:1}], depth: 2, parents: ['field_confucianism'] },
+
+  // ─── 고대 ───
+  { id: 'p_plato', labels: { ko: ['플라톤'], en: ['Plato'], orig: ['Πλάτων'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_aristotle', labels: { ko: ['아리스토텔레스'], en: ['Aristotle'], orig: ['Ἀριστοτέλης'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_socrates', labels: { ko: ['소크라테스'], en: ['Socrates'], orig: ['Σωκράτης'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_epicurus', labels: { ko: ['에피쿠로스'], en: ['Epicurus'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_seneca', labels: { ko: ['세네카'], en: ['Seneca'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_epictetus', labels: { ko: ['에픽테토스'], en: ['Epictetus'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_marcus_aurelius', labels: { ko: ['마르쿠스 아우렐리우스'], en: ['Marcus Aurelius'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_plotinus', labels: { ko: ['플로티노스'], en: ['Plotinus'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'pla_idea', labels: { ko: ['이데아'], en: ['idea', 'Form'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_plato'], introduced_by: 'p_plato' },
+  { id: 'pla_cave', labels: { ko: ['동굴의 비유', '동굴비유'], en: ['allegory of the cave'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_plato'], introduced_by: 'p_plato' },
+  { id: 'pla_anamnesis', labels: { ko: ['상기설'], en: ['anamnesis'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_plato'], introduced_by: 'p_plato' },
+  { id: 'pla_republic', labels: { ko: ['국가론'], en: ['Republic'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_plato'] },
+  { id: 'pla_philosopher_king', labels: { ko: ['철인왕'], en: ['philosopher king'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_plato'] },
+  { id: 'ari_metaphysics_book', labels: { ko: ['형이상학(아리스토텔레스)'], en: ['Metaphysics (Aristotle)'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_aristotle'] },
+  { id: 'ari_nicomachean', labels: { ko: ['니코마코스 윤리학'], en: ['Nicomachean Ethics'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_aristotle'] },
+  { id: 'ari_four_causes', labels: { ko: ['4원인설', '네 가지 원인'], en: ['four causes'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_aristotle'], introduced_by: 'p_aristotle' },
+  { id: 'ari_entelecheia', labels: { ko: ['엔텔레케이아'], en: ['entelechy'], orig: ['ἐντελέχεια'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_aristotle'], introduced_by: 'p_aristotle' },
+  { id: 'ari_phronesis', labels: { ko: ['프로네시스', '실천지'], en: ['phronesis'], orig: ['φρόνησις'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_aristotle'] },
+  { id: 'ari_eudaimonia', labels: { ko: ['에우다이모니아'], en: ['eudaimonia'], orig: ['εὐδαιμονία'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_aristotle'], introduced_by: 'p_aristotle' },
+  { id: 'ari_virtue_ethics', labels: { ko: ['덕윤리'], en: ['virtue ethics'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_ethics'] },
+  { id: 'ari_substance', labels: { ko: ['실체(아리스토텔레스)', '우시아'], en: ['substance', 'ousia'], orig: ['οὐσία'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_aristotle'] },
+  { id: 'sto_ataraxia', labels: { ko: ['아타락시아'], en: ['ataraxia'], orig: ['ἀταραξία'] }, domains: [{domain:'philosophy',weight:1}], depth: 4 },
+  { id: 'sto_apatheia', labels: { ko: ['아파테이아'], en: ['apatheia'], orig: ['ἀπάθεια'] }, domains: [{domain:'philosophy',weight:1}], depth: 4 },
+  { id: 'sto_stoicism', labels: { ko: ['스토아주의'], en: ['Stoicism'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+
+  // ─── 중세 ───
+  { id: 'p_augustine', labels: { ko: ['아우구스티누스'], en: ['Augustine of Hippo'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_aquinas', labels: { ko: ['아퀴나스', '토마스 아퀴나스'], en: ['Thomas Aquinas'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_ockham', labels: { ko: ['오캄'], en: ['William of Ockham'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'med_occam_razor', labels: { ko: ['오캄의 면도날'], en: ["Occam's razor"] }, domains: [{domain:'philosophy',weight:1},{domain:'science',weight:0.4}], depth: 4, parents: ['p_ockham'], introduced_by: 'p_ockham' },
+  { id: 'med_summa', labels: { ko: ['신학대전'], en: ['Summa Theologica'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_aquinas'] },
+
+  // ─── 근대 ───
+  { id: 'p_descartes', labels: { ko: ['데카르트'], en: ['Descartes', 'René Descartes'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_spinoza', labels: { ko: ['스피노자'], en: ['Spinoza'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_leibniz_phil', labels: { ko: ['라이프니츠(철학)'], en: ['Leibniz (philosophy)'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_hobbes', labels: { ko: ['홉스'], en: ['Thomas Hobbes'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.6}], depth: 3 },
+  { id: 'p_locke', labels: { ko: ['로크'], en: ['John Locke'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.5}], depth: 3 },
+  { id: 'p_berkeley', labels: { ko: ['버클리(철학)'], en: ['George Berkeley'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_hume', labels: { ko: ['흄'], en: ['David Hume'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'des_cogito', labels: { ko: ['코기토', '나는 생각한다 고로 존재한다'], en: ['cogito', 'cogito ergo sum'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_descartes'], introduced_by: 'p_descartes' },
+  { id: 'des_methodic_doubt', labels: { ko: ['방법적 회의'], en: ['methodic doubt'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_descartes'], introduced_by: 'p_descartes' },
+  { id: 'des_mind_body', labels: { ko: ['심신이원론'], en: ['mind-body dualism'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.4}], depth: 4, parents: ['p_descartes'], introduced_by: 'p_descartes' },
+  { id: 'spi_ethica', labels: { ko: ['에티카'], en: ['Ethics (Spinoza)'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_spinoza'] },
+  { id: 'spi_conatus', labels: { ko: ['코나투스'], en: ['conatus'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_spinoza'], introduced_by: 'p_spinoza' },
+  { id: 'spi_deus_natura', labels: { ko: ['신즉자연'], en: ['Deus sive Natura'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_spinoza'] },
+  { id: 'lei_monad', labels: { ko: ['모나드'], en: ['monad'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_leibniz_phil'], introduced_by: 'p_leibniz_phil' },
+  { id: 'lei_preestablished', labels: { ko: ['예정조화'], en: ['pre-established harmony'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_leibniz_phil'], introduced_by: 'p_leibniz_phil' },
+  { id: 'loc_tabula_rasa', labels: { ko: ['타불라라사', '백지설'], en: ['tabula rasa'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.4}], depth: 4, parents: ['p_locke'] },
+  { id: 'hum_impression_idea', labels: { ko: ['인상과 관념'], en: ['impression and idea'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_hume'] },
+  { id: 'hum_is_ought', labels: { ko: ['흄의 법칙', '존재-당위 구분'], en: ['is-ought problem'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_hume'], introduced_by: 'p_hume' },
+  { id: 'hob_leviathan', labels: { ko: ['리바이어던'], en: ['Leviathan'] }, domains: [{domain:'philosophy',weight:0.7},{domain:'humanities_social',weight:1}], depth: 4, parents: ['p_hobbes'] },
+  { id: 'hob_state_of_nature', labels: { ko: ['자연상태'], en: ['state of nature'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 4, parents: ['p_hobbes'] },
+  { id: 'hob_social_contract', labels: { ko: ['사회계약론', '사회계약'], en: ['social contract'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 4 },
+
+  // ─── 칸트 ───
+  { id: 'kan_critique_pure', labels: { ko: ['순수이성비판'], en: ['Critique of Pure Reason'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_kant'] },
+  { id: 'kan_critique_practical', labels: { ko: ['실천이성비판'], en: ['Critique of Practical Reason'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_kant'] },
+  { id: 'kan_critique_judgment', labels: { ko: ['판단력비판'], en: ['Critique of Judgment'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.5}], depth: 4, parents: ['p_kant'] },
+  { id: 'kan_categorical_imperative', labels: { ko: ['정언명령'], en: ['categorical imperative'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_kant'], introduced_by: 'p_kant' },
+  { id: 'kan_thing_in_itself', labels: { ko: ['물자체'], en: ['thing-in-itself'], orig: ['Ding an sich'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_kant'], introduced_by: 'p_kant' },
+  { id: 'kan_a_priori', labels: { ko: ['선험적', '아프리오리'], en: ['a priori'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_kant'] },
+  { id: 'kan_synthetic_apriori', labels: { ko: ['선험적 종합판단'], en: ['synthetic a priori'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_kant'], introduced_by: 'p_kant' },
+  { id: 'kan_copernican_turn', labels: { ko: ['코페르니쿠스적 전회', '코페르니쿠스적 전환'], en: ['Copernican turn'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_kant'] },
+  { id: 'kan_sublime', labels: { ko: ['숭고(칸트)'], en: ['sublime (Kant)'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.6}], depth: 5, parents: ['kan_critique_judgment'] },
+
+  // ─── 헤겔 ───
+  { id: 'heg_phenomenology_spirit', labels: { ko: ['정신현상학'], en: ['Phenomenology of Spirit'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_hegel'] },
+  { id: 'heg_dialectic', labels: { ko: ['변증법'], en: ['dialectic'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['p_hegel'] },
+  { id: 'heg_aufhebung', labels: { ko: ['아우프헤붕', '헤겔 지양', '변증법적 지양'], en: ['Aufhebung', 'sublation'], orig: ['Aufhebung'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_hegel'], introduced_by: 'p_hegel' },
+  { id: 'heg_absolute_spirit', labels: { ko: ['절대정신'], en: ['absolute spirit'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_hegel'], introduced_by: 'p_hegel' },
+  { id: 'heg_master_slave', labels: { ko: ['주인과 노예'], en: ['master-slave dialectic'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.4}], depth: 4, parents: ['p_hegel'], introduced_by: 'p_hegel' },
+  { id: 'heg_recognition', labels: { ko: ['인정투쟁'], en: ['recognition', 'struggle for recognition'], orig: ['Anerkennung'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.5}], depth: 4, parents: ['p_hegel'] },
+  { id: 'heg_geist', labels: { ko: ['정신(헤겔)', '가이스트'], en: ['Geist'], orig: ['Geist'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_hegel'] },
+
+  // ─── 마르크스 ───
+  { id: 'p_marx', labels: { ko: ['마르크스'], en: ['Karl Marx'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.8}], depth: 3 },
+  { id: 'mar_capital', labels: { ko: ['자본론'], en: ['Capital', 'Das Kapital'] }, domains: [{domain:'philosophy',weight:0.7},{domain:'humanities_social',weight:1},{domain:'finance',weight:0.4}], depth: 4, parents: ['p_marx'] },
+  { id: 'mar_historical_materialism', labels: { ko: ['사적유물론', '역사유물론'], en: ['historical materialism'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 4, parents: ['p_marx'], introduced_by: 'p_marx' },
+  { id: 'mar_dialectical_materialism', labels: { ko: ['변증법적 유물론'], en: ['dialectical materialism'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_marx'] },
+  { id: 'mar_commodity_fetishism', labels: { ko: ['상품 물신주의', '물신주의'], en: ['commodity fetishism'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.6}], depth: 4, parents: ['p_marx'], introduced_by: 'p_marx' },
+  { id: 'mar_surplus_value', labels: { ko: ['잉여가치'], en: ['surplus value'] }, domains: [{domain:'philosophy',weight:0.7},{domain:'humanities_social',weight:0.8},{domain:'finance',weight:0.5}], depth: 4, parents: ['p_marx'], introduced_by: 'p_marx' },
+  { id: 'mar_alienation', labels: { ko: ['소외(마르크스)', '노동소외'], en: ['alienation'], orig: ['Entfremdung'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.4}], depth: 4, parents: ['p_marx'], introduced_by: 'p_marx' },
+  { id: 'mar_verdinglichung', labels: { ko: ['물화(마르크스)', '베르딩리중'], en: ['reification'], orig: ['Verdinglichung'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_marx'] },
+  { id: 'mar_class_struggle', labels: { ko: ['계급투쟁'], en: ['class struggle'] }, domains: [{domain:'philosophy',weight:0.7},{domain:'humanities_social',weight:1}], depth: 4, parents: ['p_marx'] },
+  { id: 'mar_ideology', labels: { ko: ['이데올로기'], en: ['ideology'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 3, parents: ['p_marx'] },
+  { id: 'p_althusser', labels: { ko: ['알튀세', '알튀세르'], en: ['Althusser'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'alt_isa', labels: { ko: ['이데올로기 국가장치'], en: ['Ideological State Apparatuses'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.6}], depth: 5, parents: ['p_althusser'], introduced_by: 'p_althusser' },
+  { id: 'alt_interpellation', labels: { ko: ['호명(알튀세)', '알튀세 호명'], en: ['interpellation'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_althusser'], introduced_by: 'p_althusser' },
+
+  // ─── 니체 ───
+  { id: 'nie_will_to_power', labels: { ko: ['권력의지', '힘에의 의지'], en: ['will to power'], orig: ['Wille zur Macht'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_nietzsche'], introduced_by: 'p_nietzsche' },
+  { id: 'nie_eternal_return', labels: { ko: ['영원회귀'], en: ['eternal return'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_nietzsche'], introduced_by: 'p_nietzsche' },
+  { id: 'nie_ubermensch', labels: { ko: ['위버멘쉬', '니체 초인'], en: ['Übermensch'], orig: ['Übermensch'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_nietzsche'], introduced_by: 'p_nietzsche' },
+  { id: 'nie_god_dead', labels: { ko: ['신의 죽음'], en: ['God is dead'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_nietzsche'], introduced_by: 'p_nietzsche' },
+  { id: 'nie_slave_morality', labels: { ko: ['노예도덕'], en: ['slave morality'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_nietzsche'] },
+  { id: 'nie_master_morality', labels: { ko: ['주인도덕'], en: ['master morality'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_nietzsche'] },
+  { id: 'nie_ressentiment', labels: { ko: ['르상티망', '니체 원한'], en: ['ressentiment'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.5}], depth: 4, parents: ['p_nietzsche'], introduced_by: 'p_nietzsche' },
+  { id: 'nie_genealogy_morals', labels: { ko: ['도덕의 계보'], en: ['On the Genealogy of Morals'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_nietzsche'] },
+  { id: 'nie_zarathustra', labels: { ko: ['차라투스트라는 이렇게 말했다', '차라투스트라'], en: ['Thus Spoke Zarathustra'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_nietzsche'] },
+  { id: 'nie_apollo_dionysus', labels: { ko: ['디오니소스적', '아폴론적'], en: ['Apollonian and Dionysian'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.6}], depth: 4, parents: ['p_nietzsche'], introduced_by: 'p_nietzsche' },
+  { id: 'nie_nihilism', labels: { ko: ['허무주의', '니힐리즘'], en: ['nihilism'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['p_nietzsche'] },
+  { id: 'nie_perspectivism', labels: { ko: ['관점주의'], en: ['perspectivism'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_nietzsche'], introduced_by: 'p_nietzsche' },
+
+  // ─── 키에르케고르·쇼펜하우어 ───
+  { id: 'p_kierkegaard', labels: { ko: ['키에르케고르', '키르케고르'], en: ['Kierkegaard'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_existentialism'] },
+  { id: 'kie_leap_of_faith', labels: { ko: ['신앙의 도약'], en: ['leap of faith'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_kierkegaard'], introduced_by: 'p_kierkegaard' },
+  { id: 'kie_despair', labels: { ko: ['죽음에 이르는 병'], en: ['The Sickness Unto Death'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_kierkegaard'] },
+  { id: 'kie_stages', labels: { ko: ['실존단계'], en: ['stages of life'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_kierkegaard'] },
+  { id: 'p_schopenhauer', labels: { ko: ['쇼펜하우어'], en: ['Schopenhauer'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'sch_will_representation', labels: { ko: ['의지와 표상으로서의 세계'], en: ['The World as Will and Representation'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_schopenhauer'] },
+
+  // ─── 분석철학 ───
+  { id: 'p_frege', labels: { ko: ['프레게'], en: ['Frege', 'Gottlob Frege'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_analytic'] },
+  { id: 'p_russell', labels: { ko: ['러셀', '버트런드 러셀'], en: ['Bertrand Russell'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_analytic'] },
+  { id: 'p_wittgenstein', labels: { ko: ['비트겐슈타인'], en: ['Wittgenstein'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_analytic'] },
+  { id: 'p_quine', labels: { ko: ['콰인'], en: ['Quine'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_analytic'] },
+  { id: 'p_kripke', labels: { ko: ['크립키'], en: ['Kripke'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_analytic'] },
+  { id: 'p_davidson', labels: { ko: ['데이빗슨'], en: ['Donald Davidson'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_analytic'] },
+  { id: 'p_putnam', labels: { ko: ['퍼트남'], en: ['Hilary Putnam'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_analytic'] },
+  { id: 'p_lewis', labels: { ko: ['데이비드 루이스'], en: ['David Lewis'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_analytic'] },
+  { id: 'p_chalmers', labels: { ko: ['차머스'], en: ['David Chalmers'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_philosophy_mind'] },
+  { id: 'p_dennett', labels: { ko: ['데닛'], en: ['Daniel Dennett'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_philosophy_mind'] },
+  { id: 'p_searle', labels: { ko: ['설(철학자)', '존 설'], en: ['John Searle'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_philosophy_mind'] },
+  { id: 'p_nagel', labels: { ko: ['네이글'], en: ['Thomas Nagel'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_philosophy_mind'] },
+  { id: 'fre_sinn_bedeutung', labels: { ko: ['뜻과 지시체'], en: ['sense and reference'], orig: ['Sinn und Bedeutung'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_frege'], introduced_by: 'p_frege' },
+  { id: 'rus_descriptions', labels: { ko: ['기술이론'], en: ['theory of descriptions'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_russell'], introduced_by: 'p_russell' },
+  { id: 'wit_tractatus', labels: { ko: ['논리철학논고', '논고'], en: ['Tractatus Logico-Philosophicus'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_wittgenstein'] },
+  { id: 'wit_philosophical_investigations', labels: { ko: ['철학적 탐구'], en: ['Philosophical Investigations'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_wittgenstein'] },
+  { id: 'wit_language_game', labels: { ko: ['언어놀이', '언어게임'], en: ['language game'], orig: ['Sprachspiel'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_wittgenstein'], introduced_by: 'p_wittgenstein' },
+  { id: 'wit_family_resemblance', labels: { ko: ['가족유사성'], en: ['family resemblance'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_wittgenstein'], introduced_by: 'p_wittgenstein' },
+  { id: 'wit_private_language', labels: { ko: ['사적언어 논변'], en: ['private language argument'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_wittgenstein'], introduced_by: 'p_wittgenstein' },
+  { id: 'wit_form_of_life', labels: { ko: ['삶의 형식'], en: ['form of life'], orig: ['Lebensform'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_wittgenstein'], introduced_by: 'p_wittgenstein' },
+  { id: 'qui_two_dogmas', labels: { ko: ['경험주의의 두 독단'], en: ['Two Dogmas of Empiricism'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_quine'] },
+  { id: 'qui_indeterminacy', labels: { ko: ['번역 불확정성'], en: ['indeterminacy of translation'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_quine'], introduced_by: 'p_quine' },
+  { id: 'kri_rigid_designator', labels: { ko: ['고정지시자'], en: ['rigid designator'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_kripke'], introduced_by: 'p_kripke' },
+  { id: 'kri_naming_necessity', labels: { ko: ['이름과 필연'], en: ['Naming and Necessity'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_kripke'] },
+  { id: 'put_twin_earth', labels: { ko: ['쌍둥이지구'], en: ['Twin Earth'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_putnam'], introduced_by: 'p_putnam' },
+  { id: 'put_semantic_externalism', labels: { ko: ['의미의 외재주의'], en: ['semantic externalism'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_putnam'] },
+  { id: 'lew_modal_realism', labels: { ko: ['양상실재론', '가능세계 실재론'], en: ['modal realism'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_lewis'], introduced_by: 'p_lewis' },
+  { id: 'cha_hard_problem', labels: { ko: ['의식의 어려운 문제'], en: ['hard problem of consciousness'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.5}], depth: 4, parents: ['p_chalmers'], introduced_by: 'p_chalmers' },
+  { id: 'cha_zombie', labels: { ko: ['철학적 좀비'], en: ['philosophical zombie', 'p-zombie'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_chalmers'] },
+  { id: 'nag_what_bat', labels: { ko: ['박쥐가 된다는 것은 어떤 것인가'], en: ['What Is It Like to Be a Bat?'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_nagel'], introduced_by: 'p_nagel' },
+  { id: 'sea_chinese_room', labels: { ko: ['중국어방'], en: ['Chinese room'] }, domains: [{domain:'philosophy',weight:1},{domain:'ml_ai',weight:0.5}], depth: 5, parents: ['p_searle'], introduced_by: 'p_searle' },
+  { id: 'pmd_qualia', labels: { ko: ['퀄리아', '감각질'], en: ['qualia'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.4}], depth: 4, parents: ['field_philosophy_mind'] },
+  { id: 'pmd_functionalism', labels: { ko: ['기능주의(철학)'], en: ['functionalism (philosophy)'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['field_philosophy_mind'] },
+  { id: 'pmd_physicalism', labels: { ko: ['물리주의'], en: ['physicalism'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['field_philosophy_mind'] },
+  { id: 'pmd_supervenience', labels: { ko: ['수반성', '수반(철학)'], en: ['supervenience'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['field_philosophy_mind'] },
+
+  // ─── 프랑크푸르트학파 ───
+  { id: 'p_adorno', labels: { ko: ['아도르노'], en: ['Adorno'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.6}], depth: 3, parents: ['field_critical_theory'] },
+  { id: 'p_horkheimer', labels: { ko: ['호르크하이머'], en: ['Horkheimer'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_critical_theory'] },
+  { id: 'p_benjamin', labels: { ko: ['벤야민', '발터 벤야민'], en: ['Walter Benjamin'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.7}], depth: 3, parents: ['field_critical_theory'] },
+  { id: 'p_marcuse', labels: { ko: ['마르쿠제'], en: ['Marcuse'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_critical_theory'] },
+  { id: 'p_habermas', labels: { ko: ['하버마스'], en: ['Habermas'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 3, parents: ['field_critical_theory'] },
+  { id: 'p_honneth', labels: { ko: ['호네트'], en: ['Axel Honneth'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_critical_theory'] },
+  { id: 'ado_dialectic_enlightenment', labels: { ko: ['계몽의 변증법'], en: ['Dialectic of Enlightenment'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_adorno','p_horkheimer'] },
+  { id: 'ado_negative_dialectics', labels: { ko: ['부정변증법'], en: ['Negative Dialectics'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_adorno'], introduced_by: 'p_adorno' },
+  { id: 'ado_culture_industry', labels: { ko: ['문화산업'], en: ['culture industry'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7},{domain:'art_design',weight:0.5}], depth: 4, parents: ['p_adorno','p_horkheimer'], introduced_by: 'p_adorno' },
+  { id: 'ado_identity_thinking', labels: { ko: ['동일성 사고'], en: ['identity thinking'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_adorno'], introduced_by: 'p_adorno' },
+  { id: 'ben_mechanical_reproduction', labels: { ko: ['기술복제시대의 예술작품', '기술복제'], en: ['The Work of Art in the Age of Mechanical Reproduction'] }, domains: [{domain:'philosophy',weight:0.7},{domain:'art_design',weight:1}], depth: 4, parents: ['p_benjamin'], introduced_by: 'p_benjamin' },
+  { id: 'ben_arcades', labels: { ko: ['파사주', '아케이드 프로젝트'], en: ['Arcades Project'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_benjamin'] },
+  { id: 'ben_history_theses', labels: { ko: ['역사철학테제'], en: ['Theses on the Philosophy of History'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_benjamin'] },
+  { id: 'mcu_one_dim', labels: { ko: ['일차원적 인간'], en: ['One-Dimensional Man'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_marcuse'], introduced_by: 'p_marcuse' },
+  { id: 'hab_communicative_action', labels: { ko: ['의사소통행위'], en: ['communicative action'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.6}], depth: 4, parents: ['p_habermas'], introduced_by: 'p_habermas' },
+  { id: 'hab_public_sphere', labels: { ko: ['공론장'], en: ['public sphere'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 4, parents: ['p_habermas'], introduced_by: 'p_habermas' },
+  { id: 'hab_lifeworld_colonization', labels: { ko: ['생활세계의 식민화'], en: ['colonization of the lifeworld'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_habermas'], introduced_by: 'p_habermas' },
+
+  // ─── 현대 (Badiou, Rancière, Žižek, Agamben, Meillassoux, Levinas, Negri) ───
+  { id: 'p_badiou', labels: { ko: ['바디우'], en: ['Alain Badiou'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_ranciere', labels: { ko: ['랑시에르'], en: ['Rancière', 'Jacques Rancière'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_zizek', labels: { ko: ['지젝'], en: ['Slavoj Žižek'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.4}], depth: 3 },
+  { id: 'p_agamben', labels: { ko: ['아감벤'], en: ['Agamben'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_meillassoux', labels: { ko: ['메이야수'], en: ['Meillassoux'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_harman', labels: { ko: ['하먼', '그레이엄 하먼'], en: ['Graham Harman'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_levinas', labels: { ko: ['레비나스'], en: ['Levinas'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_negri', labels: { ko: ['네그리'], en: ['Antonio Negri'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.6}], depth: 3 },
+  { id: 'bad_being_event', labels: { ko: ['존재와 사건'], en: ['Being and Event'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_badiou'] },
+  { id: 'bad_truth_event', labels: { ko: ['사건(바디우)', '진리-사건'], en: ['event (Badiou)'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_badiou'], introduced_by: 'p_badiou' },
+  { id: 'bad_generic', labels: { ko: ['유적(바디우)'], en: ['generic'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_badiou'] },
+  { id: 'ran_partage', labels: { ko: ['감각적인 것의 나눔'], en: ['distribution of the sensible'], orig: ['partage du sensible'] }, domains: [{domain:'philosophy',weight:1},{domain:'art_design',weight:0.5}], depth: 5, parents: ['p_ranciere'], introduced_by: 'p_ranciere' },
+  { id: 'ran_mesentente', labels: { ko: ['불화(랑시에르)'], en: ['disagreement', 'mésentente'], orig: ['mésentente'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_ranciere'] },
+  { id: 'ziz_sublime_object', labels: { ko: ['숭고한 대상의 이데올로기'], en: ['The Sublime Object of Ideology'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_zizek'] },
+  { id: 'ziz_parallax', labels: { ko: ['시차적 관점'], en: ['parallax view'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_zizek'] },
+  { id: 'aga_homo_sacer', labels: { ko: ['호모 사케르'], en: ['Homo Sacer'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.5}], depth: 4, parents: ['p_agamben'], introduced_by: 'p_agamben' },
+  { id: 'aga_bare_life', labels: { ko: ['벌거벗은 생명'], en: ['bare life'], orig: ['nuda vita'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_agamben'], introduced_by: 'p_agamben' },
+  { id: 'aga_state_exception', labels: { ko: ['예외상태'], en: ['state of exception'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.6}], depth: 4, parents: ['p_agamben'] },
+  { id: 'mei_after_finitude', labels: { ko: ['이후의 유한성'], en: ['After Finitude'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_meillassoux'] },
+  { id: 'mei_correlationism', labels: { ko: ['상관주의'], en: ['correlationism'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_meillassoux'], introduced_by: 'p_meillassoux' },
+  { id: 'mei_speculative_realism', labels: { ko: ['사변적 실재론'], en: ['speculative realism'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'har_ooo', labels: { ko: ['객체지향 존재론'], en: ['object-oriented ontology', 'OOO'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_harman'], introduced_by: 'p_harman' },
+  { id: 'lev_totality_infinity', labels: { ko: ['전체성과 무한'], en: ['Totality and Infinity'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_levinas'] },
+  { id: 'lev_face', labels: { ko: ['얼굴(레비나스)'], en: ['face (Levinas)'], orig: ['visage'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_levinas'], introduced_by: 'p_levinas' },
+  { id: 'lev_other_other', labels: { ko: ['타자(레비나스)'], en: ['Other (Levinas)'], orig: ['autrui'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_levinas'] },
+  { id: 'lev_ethics_first', labels: { ko: ['제일철학으로서의 윤리'], en: ['ethics as first philosophy'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_levinas'], introduced_by: 'p_levinas' },
+  { id: 'lev_il_y_a', labels: { ko: ['일리야', 'il y a'], en: ['there is', 'il y a'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_levinas'], introduced_by: 'p_levinas' },
+  { id: 'neg_empire', labels: { ko: ['제국(네그리)'], en: ['Empire (Negri, Hardt)'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 4, parents: ['p_negri'] },
+  { id: 'neg_multitude', labels: { ko: ['다중(네그리)'], en: ['multitude'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.6}], depth: 4, parents: ['p_negri'] },
+
+  // ─── 포스트식민·페미니즘 ───
+  { id: 'p_butler', labels: { ko: ['버틀러', '주디스 버틀러'], en: ['Judith Butler'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.6}], depth: 3 },
+  { id: 'p_haraway', labels: { ko: ['해러웨이', '다나 해러웨이'], en: ['Donna Haraway'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_fanon', labels: { ko: ['파농', '프란츠 파농'], en: ['Frantz Fanon'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 3 },
+  { id: 'p_said', labels: { ko: ['사이드', '에드워드 사이드'], en: ['Edward Said'] }, domains: [{domain:'philosophy',weight:0.7},{domain:'humanities_social',weight:1}], depth: 3 },
+  { id: 'p_spivak', labels: { ko: ['스피박'], en: ['Gayatri Spivak'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 3 },
+  { id: 'p_bhabha', labels: { ko: ['호미 바바'], en: ['Homi Bhabha'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 3 },
+  { id: 'p_irigaray', labels: { ko: ['이리가레'], en: ['Luce Irigaray'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_kristeva', labels: { ko: ['크리스테바'], en: ['Julia Kristeva'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.5}], depth: 3 },
+  { id: 'p_beauvoir', labels: { ko: ['보부아르'], en: ['Simone de Beauvoir'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_existentialism'] },
+  { id: 'but_gender_trouble', labels: { ko: ['젠더 트러블'], en: ['Gender Trouble'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.5}], depth: 4, parents: ['p_butler'], introduced_by: 'p_butler' },
+  { id: 'but_performativity', labels: { ko: ['수행성', '퍼포머티비티'], en: ['performativity'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.5}], depth: 4, parents: ['p_butler'], introduced_by: 'p_butler' },
+  { id: 'har_cyborg', labels: { ko: ['사이보그 선언'], en: ['Cyborg Manifesto'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_haraway'], introduced_by: 'p_haraway' },
+  { id: 'har_situated_knowledge', labels: { ko: ['상황적 지식'], en: ['situated knowledges'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_haraway'], introduced_by: 'p_haraway' },
+  { id: 'fan_black_skin', labels: { ko: ['검은 피부 하얀 가면'], en: ['Black Skin, White Masks'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 4, parents: ['p_fanon'] },
+  { id: 'fan_wretched', labels: { ko: ['대지의 저주받은 자들'], en: ['The Wretched of the Earth'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 4, parents: ['p_fanon'] },
+  { id: 'sai_orientalism', labels: { ko: ['오리엔탈리즘'], en: ['Orientalism'] }, domains: [{domain:'philosophy',weight:0.6},{domain:'humanities_social',weight:1}], depth: 4, parents: ['p_said'], introduced_by: 'p_said' },
+  { id: 'spi_subaltern', labels: { ko: ['서발턴', '서발턴은 말할 수 있는가'], en: ['Can the Subaltern Speak?', 'subaltern'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.8}], depth: 4, parents: ['p_spivak'], introduced_by: 'p_spivak' },
+  { id: 'bha_hybridity', labels: { ko: ['혼종성'], en: ['hybridity'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 4, parents: ['p_bhabha'] },
+  { id: 'bha_third_space', labels: { ko: ['제3의 공간'], en: ['third space'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_bhabha'], introduced_by: 'p_bhabha' },
+  { id: 'bea_second_sex', labels: { ko: ['제2의 성'], en: ['The Second Sex'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_beauvoir'] },
+  { id: 'kri_abjection', labels: { ko: ['아브젝시옹'], en: ['abjection'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.6}], depth: 4, parents: ['p_kristeva'], introduced_by: 'p_kristeva' },
+
+  // ─── 정치철학 ───
+  { id: 'p_rawls', labels: { ko: ['롤스', '존 롤스'], en: ['John Rawls'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 3, parents: ['field_political_phil'] },
+  { id: 'p_arendt', labels: { ko: ['아렌트', '한나 아렌트'], en: ['Hannah Arendt'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 3, parents: ['field_political_phil'] },
+  { id: 'p_nozick', labels: { ko: ['노직'], en: ['Robert Nozick'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_sen', labels: { ko: ['아마르티아 센'], en: ['Amartya Sen'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.6},{domain:'finance',weight:0.4}], depth: 3 },
+  { id: 'p_sandel', labels: { ko: ['샌델', '마이클 샌델'], en: ['Michael Sandel'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_taylor', labels: { ko: ['찰스 테일러'], en: ['Charles Taylor'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'raw_theory_justice', labels: { ko: ['정의론'], en: ['A Theory of Justice'] }, domains: [{domain:'philosophy',weight:1},{domain:'humanities_social',weight:0.7}], depth: 4, parents: ['p_rawls'] },
+  { id: 'raw_veil_ignorance', labels: { ko: ['무지의 베일'], en: ['veil of ignorance'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_rawls'], introduced_by: 'p_rawls' },
+  { id: 'raw_original_position', labels: { ko: ['원초적 입장'], en: ['original position'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_rawls'], introduced_by: 'p_rawls' },
+  { id: 'raw_difference_principle', labels: { ko: ['차등 원칙'], en: ['difference principle'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_rawls'] },
+  { id: 'are_human_condition', labels: { ko: ['인간의 조건'], en: ['The Human Condition'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_arendt'] },
+  { id: 'are_banality_evil', labels: { ko: ['악의 평범성'], en: ['banality of evil'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_arendt'], introduced_by: 'p_arendt' },
+  { id: 'are_vita_activa', labels: { ko: ['활동적 삶', '비타 악티바'], en: ['vita activa'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_arendt'] },
+  { id: 'noz_anarchy_state', labels: { ko: ['아나키 국가 유토피아'], en: ['Anarchy, State, and Utopia'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_nozick'] },
+  { id: 'noz_minimal_state', labels: { ko: ['최소국가'], en: ['minimal state'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_nozick'], introduced_by: 'p_nozick' },
+  { id: 'sen_capability', labels: { ko: ['역량 접근법'], en: ['capability approach'] }, domains: [{domain:'philosophy',weight:0.8},{domain:'humanities_social',weight:0.7},{domain:'finance',weight:0.5}], depth: 4, parents: ['p_sen'], introduced_by: 'p_sen' },
+  { id: 'san_communitarianism', labels: { ko: ['공동체주의'], en: ['communitarianism'] }, domains: [{domain:'philosophy',weight:1}], depth: 4 },
+
+  // ─── 과학철학 ───
+  { id: 'p_popper', labels: { ko: ['포퍼', '칼 포퍼'], en: ['Karl Popper'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_philosophy_science'] },
+  { id: 'p_kuhn', labels: { ko: ['쿤', '토마스 쿤'], en: ['Thomas Kuhn'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_philosophy_science'] },
+  { id: 'p_lakatos', labels: { ko: ['라카토스'], en: ['Imre Lakatos'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'p_feyerabend', labels: { ko: ['파이어아벤트'], en: ['Paul Feyerabend'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'pop_falsifiability', labels: { ko: ['반증가능성'], en: ['falsifiability'] }, domains: [{domain:'philosophy',weight:1},{domain:'science',weight:0.6}], depth: 4, parents: ['p_popper'], introduced_by: 'p_popper' },
+  { id: 'pop_open_society', labels: { ko: ['열린 사회와 그 적들'], en: ['The Open Society and Its Enemies'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_popper'] },
+  { id: 'kuh_paradigm_shift', labels: { ko: ['패러다임 전환'], en: ['paradigm shift'] }, domains: [{domain:'philosophy',weight:1},{domain:'science',weight:0.5}], depth: 4, parents: ['p_kuhn'], introduced_by: 'p_kuhn' },
+  { id: 'kuh_incommensurability', labels: { ko: ['비공약성'], en: ['incommensurability'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_kuhn'] },
+  { id: 'kuh_structure_revolutions', labels: { ko: ['과학혁명의 구조'], en: ['The Structure of Scientific Revolutions'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_kuhn'] },
+  { id: 'lak_research_program', labels: { ko: ['연구 프로그램'], en: ['research programme'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_lakatos'], introduced_by: 'p_lakatos' },
+  { id: 'fey_against_method', labels: { ko: ['방법에 반대한다'], en: ['Against Method'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_feyerabend'], introduced_by: 'p_feyerabend' },
+
+  // ─── 현상학·사르트르·메를로퐁티·해석학 ───
+  { id: 'p_merleau_ponty', labels: { ko: ['메를로퐁티'], en: ['Merleau-Ponty'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_phenomenology'] },
+  { id: 'p_gadamer', labels: { ko: ['가다머'], en: ['Gadamer'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_hermeneutics'] },
+  { id: 'p_ricoeur', labels: { ko: ['리쾨르', '폴 리쾨르'], en: ['Paul Ricoeur'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_hermeneutics'] },
+  { id: 'mer_phenomenology_perception', labels: { ko: ['지각의 현상학'], en: ['Phenomenology of Perception'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_merleau_ponty'] },
+  { id: 'mer_flesh', labels: { ko: ['살(메를로퐁티)'], en: ['flesh (Merleau-Ponty)'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_merleau_ponty'], introduced_by: 'p_merleau_ponty' },
+  { id: 'gad_truth_method', labels: { ko: ['진리와 방법'], en: ['Truth and Method'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_gadamer'] },
+  { id: 'gad_fusion_horizons', labels: { ko: ['지평융합'], en: ['fusion of horizons'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_gadamer'], introduced_by: 'p_gadamer' },
+  { id: 'hus_intentionality', labels: { ko: ['지향성(현상학)'], en: ['intentionality'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_husserl'] },
+  { id: 'hus_epoche', labels: { ko: ['에포케', '판단중지'], en: ['epoché'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_husserl'], introduced_by: 'p_husserl' },
+  { id: 'hus_lifeworld', labels: { ko: ['생활세계'], en: ['lifeworld'], orig: ['Lebenswelt'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_husserl'], introduced_by: 'p_husserl' },
+  { id: 'sar_being_nothingness', labels: { ko: ['존재와 무'], en: ['Being and Nothingness'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_sartre'] },
+  { id: 'sar_bad_faith', labels: { ko: ['자기기만'], en: ['bad faith'], orig: ['mauvaise foi'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_sartre'], introduced_by: 'p_sartre' },
+  { id: 'sar_for_itself', labels: { ko: ['대자존재', '즉자대자'], en: ['for-itself', 'pour-soi'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_sartre'] },
+  { id: 'sar_existence_essence', labels: { ko: ['실존이 본질에 앞선다'], en: ['existence precedes essence'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_sartre'], introduced_by: 'p_sartre' },
+
+  // ─── 동양철학 ───
+  { id: 'p_confucius', labels: { ko: ['공자'], en: ['Confucius'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_confucianism'] },
+  { id: 'p_mencius', labels: { ko: ['맹자'], en: ['Mencius'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_confucianism'] },
+  { id: 'p_xunzi', labels: { ko: ['순자'], en: ['Xunzi'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_confucianism'] },
+  { id: 'p_laozi', labels: { ko: ['노자'], en: ['Laozi'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_daoism'] },
+  { id: 'p_zhuangzi', labels: { ko: ['장자(인물)'], en: ['Zhuangzi'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_daoism'] },
+  { id: 'p_zhuxi', labels: { ko: ['주희', '주자'], en: ['Zhu Xi'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_neoconfucianism'] },
+  { id: 'p_wangyangming', labels: { ko: ['왕양명'], en: ['Wang Yangming'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_neoconfucianism'] },
+  { id: 'p_wonhyo', labels: { ko: ['원효'], en: ['Wonhyo'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_buddhism_phil'] },
+  { id: 'p_toegye', labels: { ko: ['퇴계', '이황'], en: ['Toegye', 'Yi Hwang'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_neoconfucianism'] },
+  { id: 'p_yulgok', labels: { ko: ['율곡', '이이'], en: ['Yulgok', 'Yi I'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_neoconfucianism'] },
+  { id: 'p_dasan', labels: { ko: ['다산', '정약용'], en: ['Jeong Yak-yong'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
+  { id: 'con_ren', labels: { ko: ['인(유학)', '인의예지'], en: ['ren', 'benevolence'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_confucius'] },
+  { id: 'con_li_rite', labels: { ko: ['예(유학)'], en: ['li', 'ritual'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_confucius'] },
+  { id: 'con_analects', labels: { ko: ['논어'], en: ['Analects'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_confucius'] },
+  { id: 'men_innate_good', labels: { ko: ['성선설'], en: ['theory of innate goodness'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_mencius'], introduced_by: 'p_mencius' },
+  { id: 'men_haoran', labels: { ko: ['호연지기'], en: ['haoran zhi qi'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_mencius'] },
+  { id: 'xun_innate_bad', labels: { ko: ['성악설'], en: ['theory of innate badness'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_xunzi'], introduced_by: 'p_xunzi' },
+  { id: 'lao_dao_de_jing', labels: { ko: ['도덕경'], en: ['Tao Te Ching'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_laozi'] },
+  { id: 'lao_wuwei', labels: { ko: ['무위자연'], en: ['wu wei'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_laozi'], introduced_by: 'p_laozi' },
+  { id: 'zhu_butterfly_dream', labels: { ko: ['호접지몽', '나비의 꿈'], en: ['butterfly dream'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_zhuangzi'] },
+  { id: 'zhu_qiwulun', labels: { ko: ['제물론'], en: ['Discussion on Making All Things Equal'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_zhuangzi'] },
+  { id: 'zhu_xiaoyao', labels: { ko: ['소요유'], en: ['Free and Easy Wandering'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_zhuangzi'] },
+  { id: 'zhx_li_qi', labels: { ko: ['이기론'], en: ['li-qi theory'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['field_neoconfucianism'] },
+  { id: 'zhx_gewu', labels: { ko: ['격물치지'], en: ['investigation of things'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_zhuxi'] },
+  { id: 'wan_liangzhi', labels: { ko: ['치양지', '왕양명 양지'], en: ['innate knowing', 'liangzhi'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_wangyangming'], introduced_by: 'p_wangyangming' },
+  { id: 'wan_xin_li', labels: { ko: ['심즉리'], en: ['mind is principle'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_wangyangming'] },
+  { id: 'won_hwajaeng', labels: { ko: ['화쟁사상', '화쟁'], en: ['hwajaeng'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_wonhyo'], introduced_by: 'p_wonhyo' },
+  { id: 'toe_four_seven', labels: { ko: ['사단칠정', '사칠논쟁'], en: ['four-seven debate'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_toegye'] },
+  { id: 'yul_gibal', labels: { ko: ['기발이승일도설'], en: ["Yulgok's qi-li"] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_yulgok'] },
+  { id: 'bud_emptiness', labels: { ko: ['공(불교)', '슌야타'], en: ['emptiness', 'śūnyatā'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['field_buddhism_phil'] },
+  { id: 'bud_dependent_origination', labels: { ko: ['연기(불교)'], en: ['dependent origination'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['field_buddhism_phil'] },
+  { id: 'bud_anatman', labels: { ko: ['무아'], en: ['non-self'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.4}], depth: 4, parents: ['field_buddhism_phil'] },
+  { id: 'bud_madhyamaka', labels: { ko: ['중관'], en: ['Madhyamaka'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['field_buddhism_phil'] },
+  { id: 'bud_yogacara', labels: { ko: ['유식', '유식학'], en: ['Yogācāra'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['field_buddhism_phil'] },
+  { id: 'bud_alaya', labels: { ko: ['아뢰야식'], en: ['ālaya-vijñāna'] }, domains: [{domain:'philosophy',weight:1},{domain:'psychology',weight:0.4}], depth: 5, parents: ['bud_yogacara'] },
+  { id: 'bud_sudden_gradual', labels: { ko: ['돈오점수', '돈점 논쟁'], en: ['sudden vs gradual enlightenment'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['field_buddhism_phil'] },
+  { id: 'bud_huatou', labels: { ko: ['선불교 화두', '공안 화두', '선공안'], en: ['huatou', 'koan'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['field_buddhism_phil'] },
 ];
 
 // ID 역인덱스 — O(1) 조회
@@ -1127,80 +1642,72 @@ const PRISM_KG_LABEL_INDEX = (() => {
 })();
 
 /**
- * v3.6.23 — Knowledge Graph 기반 감지
- * @param {string} text — 분석 대상
- * @returns {{ detected: Set<string>, activeEdges: number }}
+ * v3.6.24 — Knowledge Graph 감지 (빈도 기반, depth 계층 폐기)
+ *
+ * 설계 변경 사유 (2026-04-18):
+ *   "전문가가 depth 1~5 단계적으로 말하지 않는다. '철학'과 '현존재'를
+ *    같은 빈도로 섞어 씀." — depth 가중은 자곤 사용자 과보호 편향.
+ *   빈도 × (다음 단계 세션 누적) 이 실제 숙련도와 더 잘 맞음.
+ *
+ * 반환: { frequency: Map<termId, count>, totalMatches: number }
  */
 function detectKnowledgeGraph(text) {
   const textLower = text.toLowerCase();
-  const detected = new Set();
-  // 겹침 방지: 이미 매칭된 span은 skip — 긴 label 우선 sort 덕에 안전
-  // 간이 구현: 각 label includes 체크 (겹침 허용). Phase 2 에서 span tracking 도입.
+  const frequency = new Map();
+  let totalMatches = 0;
+
   for (const entry of PRISM_KG_LABEL_INDEX) {
-    if (textLower.includes(entry.labelLower)) {
-      detected.add(entry.termId);
+    // 빈도 카운트 — String.split 기반 (regex 안전: 특수문자 없는 label 위주)
+    // 간이 구현: indexOf 반복으로 overlap 없이 셈.
+    const needle = entry.labelLower;
+    if (needle.length === 0) continue;
+    let count = 0;
+    let pos = 0;
+    while (true) {
+      const idx = textLower.indexOf(needle, pos);
+      if (idx === -1) break;
+      count++;
+      pos = idx + needle.length;
+    }
+    if (count > 0) {
+      frequency.set(entry.termId, (frequency.get(entry.termId) || 0) + count);
+      totalMatches += count;
     }
   }
 
-  // 활성 edge 수 집계 — 감지 집합 내부의 parent/child/related 연결
-  let activeEdges = 0;
-  for (const id of detected) {
-    const t = PRISM_KG_BY_ID[id];
-    if (!t) continue;
-    for (const pid of (t.parents || [])) if (detected.has(pid)) activeEdges++;
-    for (const rid of (t.related || [])) if (detected.has(rid)) activeEdges++;
-  }
-
-  return { detected, activeEdges };
+  return { frequency, totalMatches };
 }
 
 /**
- * 도메인별 전문성 점수
+ * 도메인별 원점수 (raw score) 계산 — level 분류 폐기
+ *
+ * score[domain] = Σ (term_frequency × domain_weight)
+ *
+ * level (expert/advanced/...) 대신 raw score 만 반환.
+ * 상위 N개 도메인 하이라이트는 소비자(프론트/P2) 에서 분위수로 판단.
  */
-function computeDomainExpertise(detected) {
+function computeDomainExpertise(frequency) {
   const domainStats = {};
-  const depthWeight = [0, 1, 2, 4, 8, 16];  // depth 1~5 → 1,2,4,8,16
 
-  for (const id of detected) {
-    const t = PRISM_KG_BY_ID[id];
+  for (const [termId, count] of frequency) {
+    const t = PRISM_KG_BY_ID[termId];
     if (!t) continue;
     for (const dom of t.domains) {
       if (!domainStats[dom.domain]) {
-        domainStats[dom.domain] = { score: 0, maxDepth: 0, termCount: 0, depthDist: [0,0,0,0,0,0] };
+        domainStats[dom.domain] = { score: 0, termCount: 0, topTerms: [] };
       }
       const s = domainStats[dom.domain];
-      s.score += depthWeight[t.depth] * dom.weight;
-      s.maxDepth = Math.max(s.maxDepth, t.depth);
+      s.score += count * dom.weight;
       s.termCount++;
-      s.depthDist[t.depth]++;
+      s.topTerms.push({ id: termId, count, weight: dom.weight });
     }
   }
 
-  // 도메인 내 edge 밀도 — 단일 용어 인용이 표준 발화이므로
-  // edge 는 "보조 보너스"로만 기능. 판정을 뒤집지 않음.
-  // (설계 결정: 2026-04-18 — co-occurrence 기반 전문성 판정 폐기)
+  // 도메인별 topTerms 빈도 내림차순 정렬, 상위 5개만 유지
   for (const domain of Object.keys(domainStats)) {
-    let edges = 0;
-    for (const id of detected) {
-      const t = PRISM_KG_BY_ID[id];
-      if (!t || !t.domains.some(d => d.domain === domain)) continue;
-      for (const connId of [...(t.parents || []), ...(t.related || [])]) {
-        if (!detected.has(connId)) continue;
-        const connT = PRISM_KG_BY_ID[connId];
-        if (connT && connT.domains.some(d => d.domain === domain)) edges++;
-      }
-    }
-    domainStats[domain].edges = edges;
-    // edge 보너스는 소폭만 (이전 ×2 → ×0.5)
-    domainStats[domain].score += edges * 0.5;
-
-    // 레벨 분류 — depth 단일 신호 우선, edge 는 경계 승급 bonus
-    const { maxDepth, edges: e } = domainStats[domain];
-    if (maxDepth >= 5) domainStats[domain].level = 'expert';
-    else if (maxDepth >= 4) domainStats[domain].level = (e >= 2) ? 'expert' : 'advanced';
-    else if (maxDepth >= 3) domainStats[domain].level = (e >= 2) ? 'advanced' : 'intermediate';
-    else if (maxDepth >= 2) domainStats[domain].level = 'novice';
-    else domainStats[domain].level = 'surface';
+    domainStats[domain].topTerms.sort((a, b) => (b.count * b.weight) - (a.count * a.weight));
+    domainStats[domain].topTerms = domainStats[domain].topTerms.slice(0, 5);
+    domainStats[domain].score = Math.round(domainStats[domain].score * 10) / 10;
   }
 
   return domainStats;
@@ -1868,22 +2375,22 @@ class PrismP2DepthAnalyzer {
     const engagementDensity = deepEngagementMarkers / (texts.length + PRISM_CONFIG.EPSILON);
     const engagementBoost = engagementDensity > 0.5 ? 0.15 : engagementDensity > 0.25 ? 0.08 : engagementDensity > 0.1 ? 0.04 : 0;
 
-    // 5) v3.6.23 — Knowledge Graph 기반 깊이 신호
-    //   depth 4~5 전문 용어 감지 = 해당 도메인 숙련 → 대화 내 깊이 기여.
-    //   단일 용어만으로도 판정 (co-occurrence 의존 X). 설계 Phase 4 폐기 원칙 준수.
+    // 5) v3.6.24 — Knowledge Graph 빈도 기반 도메인 집중도 신호
+    //   설계 변경 (depth 계층 폐기): 전문가가 자곤을 단계적으로 쓰지 않음.
+    //   실제 숙련 = 같은 도메인 어휘를 반복적·지속적으로 사용.
+    //   단일 메시지 내 최고 도메인 점수 / 텍스트 길이로 집중도 추정.
     let kgBoost = 0;
     if (typeof detectKnowledgeGraph === 'function') {
-      const { detected: kgDetected } = detectKnowledgeGraph(allText);
-      if (kgDetected.size > 0) {
-        let kgMaxDepth = 0;
-        for (const id of kgDetected) {
-          const t = PRISM_KG_BY_ID[id];
-          if (t && t.depth > kgMaxDepth) kgMaxDepth = t.depth;
-        }
-        if (kgMaxDepth >= 5) kgBoost = 0.15;
-        else if (kgMaxDepth >= 4) kgBoost = 0.10;
-        else if (kgMaxDepth >= 3) kgBoost = 0.05;
-        else if (kgMaxDepth >= 2) kgBoost = 0.02;
+      const { frequency, totalMatches } = detectKnowledgeGraph(allText);
+      if (totalMatches > 0) {
+        const stats = computeDomainExpertise(frequency);
+        const topScore = Math.max(0, ...Object.values(stats).map(s => s.score));
+        // 텍스트 길이 정규화 — 100자당 1.0 기준
+        const density = topScore / Math.max(100, allText.length) * 100;
+        if (density >= 5) kgBoost = 0.15;
+        else if (density >= 2) kgBoost = 0.10;
+        else if (density >= 0.5) kgBoost = 0.05;
+        else if (density > 0) kgBoost = 0.02;
       }
     }
 
@@ -2022,45 +2529,33 @@ class PrismP3VocabularyAnalyzer {
   }
 
   _detectKG(allText) {
-    // PRISM_KNOWLEDGE_GRAPH 가 로드된 경우만 동작 (환경 가드)
+    // v3.6.24 빈도 기반 — depth/level 폐기, raw score 만
     if (typeof PRISM_KNOWLEDGE_GRAPH === 'undefined' || typeof detectKnowledgeGraph !== 'function') {
-      return { domains: [], detected_terms: [], max_depth: 0, total_terms: 0 };
+      return { domains: [], total_terms: 0, total_matches: 0 };
     }
-    const { detected, activeEdges } = detectKnowledgeGraph(allText);
-    if (detected.size === 0) {
-      return { domains: [], detected_terms: [], max_depth: 0, total_terms: 0, active_edges: 0 };
+    const { frequency, totalMatches } = detectKnowledgeGraph(allText);
+    if (frequency.size === 0) {
+      return { domains: [], total_terms: 0, total_matches: 0 };
     }
-    const stats = computeDomainExpertise(detected);
-    // 사용자 노출용: 도메인별 정렬 + 대표 용어
+    const stats = computeDomainExpertise(frequency);
+
+    // 도메인별 score 내림차순
     const domains = Object.entries(stats)
-      .map(([domain, s]) => {
-        // 이 도메인에 속한 감지 term 중 depth 높은 순으로 상위 5개
-        const topTerms = [...detected]
-          .map(id => PRISM_KG_BY_ID[id])
-          .filter(t => t && t.domains.some(d => d.domain === domain))
-          .sort((a, b) => b.depth - a.depth)
-          .slice(0, 5)
-          .map(t => ({ id: t.id, label: t.labels.ko[0], depth: t.depth }));
-        return {
-          domain,
-          level: s.level,
-          max_depth: s.maxDepth,
-          score: Math.round(s.score * 10) / 10,
-          term_count: s.termCount,
-          edges: s.edges,
-          depth_distribution: s.depthDist,
-          top_terms: topTerms,
-        };
-      })
+      .map(([domain, s]) => ({
+        domain,
+        score: s.score,
+        term_count: s.termCount,
+        top_terms: s.topTerms.map(tt => {
+          const t = PRISM_KG_BY_ID[tt.id];
+          return { id: tt.id, label: t?.labels?.ko?.[0], count: tt.count };
+        }),
+      }))
       .sort((a, b) => b.score - a.score);
 
-    const maxDepthOverall = Math.max(...[...detected].map(id => (PRISM_KG_BY_ID[id]||{}).depth || 0));
     return {
       domains,
-      detected_terms: [...detected].map(id => ({ id, label: (PRISM_KG_BY_ID[id]||{}).labels?.ko?.[0], depth: (PRISM_KG_BY_ID[id]||{}).depth })),
-      max_depth: maxDepthOverall,
-      total_terms: detected.size,
-      active_edges: activeEdges,
+      total_terms: frequency.size,     // 감지된 고유 term 수
+      total_matches: totalMatches,     // 전체 매칭 횟수 (빈도 합)
     };
   }
 

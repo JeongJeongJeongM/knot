@@ -12647,42 +12647,43 @@ function displayResult() {
                     html += '</div>';
                 }
 
-                // v3.6.23 — Knowledge Graph 기반 도메인 전문성
+                // v3.6.24 — Knowledge Graph 빈도 기반 도메인 집중도
                 const kg = voc && voc.knowledge_graph;
                 if (kg && kg.domains && kg.domains.length) {
-                    const LEVEL_LABEL = { expert: '전문가', advanced: '숙련', intermediate: '중급', novice: '입문', surface: '표면' };
-                    const LEVEL_COLOR = { expert: '#EC4899', advanced: '#A78BFA', intermediate: '#60A5FA', novice: '#4ADE80', surface: 'rgba(255,255,255,0.4)' };
                     const DOMAIN_LABEL_KG = {
                         philosophy: '철학', psychology: '심리학', art_design: '예술·디자인',
                         science: '과학', ml_ai: 'ML·AI', tech_engineering: '엔지니어링',
                         finance: '금융', humanities_social: '인문·사회'
                     };
+                    // 상위 도메인 점수 기준 막대 스케일링
+                    const topScore = kg.domains[0].score || 1;
+                    const DOMAIN_COLORS = ['#F5A623', '#EC4899', '#A78BFA', '#60A5FA', '#4ADE80'];
                     html += '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.04);">';
-                    html += '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,166,35,0.5);font-family:JetBrains Mono,monospace;margin-bottom:10px;">지식 그래프 · 도메인 전문성</div>';
-                    kg.domains.slice(0, 4).forEach(d => {
-                        const col = LEVEL_COLOR[d.level] || 'rgba(255,255,255,0.4)';
+                    html += `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
+                        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,166,35,0.5);font-family:JetBrains Mono,monospace;">지식 그래프 · 도메인 집중도</span>
+                        <span style="font-size:10px;color:rgba(255,255,255,0.35);font-family:JetBrains Mono,monospace;">매칭 ${kg.total_matches || 0} · 고유 ${kg.total_terms || 0}</span>
+                    </div>`;
+                    kg.domains.slice(0, 5).forEach((d, i) => {
+                        const col = DOMAIN_COLORS[i] || 'rgba(255,255,255,0.4)';
                         const label = DOMAIN_LABEL_KG[d.domain] || d.domain;
+                        const pct = Math.min(100, (d.score / topScore) * 100);
                         html += `<div style="margin-bottom:10px;">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
                                 <span style="font-size:12px;color:rgba(255,255,255,0.8);">${label}</span>
-                                <span style="display:flex;align-items:center;gap:8px;">
-                                    <span style="font-family:JetBrains Mono,monospace;font-size:10px;color:rgba(255,255,255,0.4);">depth ${d.max_depth}/5 · ${d.term_count}</span>
-                                    <span style="font-size:11px;font-weight:600;color:${col};">${LEVEL_LABEL[d.level] || d.level}</span>
-                                </span>
+                                <span style="font-family:JetBrains Mono,monospace;font-size:11px;color:${col};font-weight:600;">${d.score}</span>
+                            </div>
+                            <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;margin-bottom:5px;overflow:hidden;">
+                                <div style="width:${pct}%;height:100%;background:${col};"></div>
                             </div>`;
                         if (d.top_terms && d.top_terms.length) {
                             html += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
                             d.top_terms.forEach(t => {
-                                const opacity = 0.4 + (t.depth * 0.12);
-                                html += `<span style="font-size:10px;padding:2px 6px;background:rgba(255,255,255,0.04);border:1px solid ${col}33;color:rgba(255,255,255,${opacity});border-radius:3px;font-family:JetBrains Mono,monospace;" title="depth ${t.depth}">${t.label}</span>`;
+                                html += `<span style="font-size:10px;padding:2px 6px;background:rgba(255,255,255,0.04);border:1px solid ${col}33;color:rgba(255,255,255,0.65);border-radius:3px;font-family:JetBrains Mono,monospace;" title="빈도 ${t.count}">${t.label}<span style="color:${col};margin-left:3px;opacity:0.7;">×${t.count}</span></span>`;
                             });
                             html += '</div>';
                         }
                         html += '</div>';
                     });
-                    if (kg.active_edges > 0) {
-                        html += `<div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;font-family:JetBrains Mono,monospace;">활성 지시관계 ${kg.active_edges}</div>`;
-                    }
                     html += '</div>';
                 }
 
