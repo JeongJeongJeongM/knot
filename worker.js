@@ -13220,7 +13220,7 @@ function switchTab(id, el) {
         await env.SHARE_STORE.put(shareId, JSON.stringify(body), {
           expirationTtl: 60 * 60 * 24 * 30,
         });
-        const shareUrl = `https://knot-exodia.ashirmallo.workers.dev/share/${shareId}`;
+        const shareUrl = `https://knot-ai.pages.dev/share/${shareId}`;
         return jsonResponse({ shareUrl, shareId }, 200, corsHeaders);
       } catch (e) {
         return jsonResponse({ error: e.message }, 500, corsHeaders);
