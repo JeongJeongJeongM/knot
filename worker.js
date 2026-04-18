@@ -6357,19 +6357,21 @@ function isOriginAllowed(origin) {
 }
 
 async function checkRateLimit(ip, endpoint, limit, env) {
-  if (!env.RATE_LIMITER) {
-    console.warn('[RateLimit] RATE_LIMITER binding missing — fail-closed');
-    return false;
+  // RATE_LIMITER 전용 KV 미설정 시 SHARE_STORE 재사용 (키 프리픽스 'rl:' 으로 충돌 회피)
+  const kv = env.RATE_LIMITER || env.SHARE_STORE;
+  if (!kv) {
+    console.warn('[RateLimit] no KV binding available — fail-open (no limit)');
+    return true;
   }
   const key = `rl:${ip}:${endpoint}`;
   try {
-    const current = parseInt(await env.RATE_LIMITER.get(key) || '0');
+    const current = parseInt(await kv.get(key) || '0');
     if (current >= limit) return false;
-    await env.RATE_LIMITER.put(key, String(current + 1), { expirationTtl: RATE_LIMIT_WINDOW });
+    await kv.put(key, String(current + 1), { expirationTtl: RATE_LIMIT_WINDOW });
     return true;
   } catch (e) {
-    console.error('[RateLimit] Error — fail-closed:', e.message);
-    return false;
+    console.error('[RateLimit] Error — fail-open:', e.message);
+    return true;
   }
 }
 
