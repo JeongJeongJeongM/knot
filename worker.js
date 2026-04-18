@@ -5110,6 +5110,22 @@ class PrismP4CuriosityAnalyzer {
   }
 }
 
+// v3.6.40 — 격리 유틸리티: analyzer 하나 실패해도 다른 결과 보존
+// 과거 사례 (P5 도입 v3.6.36): analyzer 내부 throw 가 analyzePrism 전체를 crash 시켜
+// prism null → stage 2 에세이 대부분 실패. 이하 래퍼로 격리.
+function _runAnalyzerSafe(name, fn, fallback) {
+  const t0 = Date.now();
+  try {
+    const result = fn();
+    const dt = Date.now() - t0;
+    if (dt > 500) console.warn(`[PRISM perf] ${name} took ${dt}ms (>500ms)`);
+    return { ok: true, value: result, ms: dt };
+  } catch (e) {
+    console.error(`[PRISM ${name} crash]`, e.message, e.stack?.split('\n').slice(0, 3).join(' | '));
+    return { ok: false, value: fallback, ms: Date.now() - t0, error: e.message };
+  }
+}
+
 function analyzePrism(messages, selfReportedInterests = null) {
   if (!messages || messages.length === 0) {
     return {
@@ -5139,27 +5155,59 @@ function analyzePrism(messages, selfReportedInterests = null) {
   }
 
   const inputHash = prismComputeHash(texts.join('||'));
+  const perf = {};
+  const errors = {};
 
-  const p1 = new PrismP1TopicAnalyzer();
-  const topicDist = p1.analyze(texts, selfReportedInterests);
+  // v3.6.40 — 각 analyzer 를 격리 실행. 하나 실패해도 빈 fallback 으로 진행.
+  const r1 = _runAnalyzerSafe('P1', () => new PrismP1TopicAnalyzer().analyze(texts, selfReportedInterests),
+    { topics: {}, diversity_index: 0, dominant_category: null });
+  const topicDist = r1.value;
+  perf.p1 = r1.ms;
+  if (!r1.ok) errors.p1 = r1.error;
 
-  const p2 = new PrismP2DepthAnalyzer();
-  const engagement = p2.analyze(texts, topicDist);
+  const r2 = _runAnalyzerSafe('P2', () => new PrismP2DepthAnalyzer().analyze(texts, topicDist),
+    { overall_depth: 'casual', depth_consistency: 'variable', depth_by_topic: {}, depth_scores_per_turn: [] });
+  const engagement = r2.value;
+  perf.p2 = r2.ms;
+  if (!r2.ok) errors.p2 = r2.error;
 
-  for (const [cat, entry] of Object.entries(topicDist.topics)) {
-    if (engagement.depth_by_topic[cat]) {
-      entry.depth = engagement.depth_by_topic[cat];
+  try {
+    for (const [cat, entry] of Object.entries(topicDist.topics || {})) {
+      if (engagement.depth_by_topic?.[cat]) {
+        entry.depth = engagement.depth_by_topic[cat];
+      }
     }
+  } catch {}
+
+  const r3 = _runAnalyzerSafe('P3', () => new PrismP3VocabularyAnalyzer().analyze(texts),
+    { diversity: 'moderate', dominant_domains: [], abstraction: 'balanced', register_range: 'moderate', lexical_diversity_raw: 0 });
+  const vocabulary = r3.value;
+  perf.p3 = r3.ms;
+  if (!r3.ok) errors.p3 = r3.error;
+
+  const r4 = _runAnalyzerSafe('P4', () => new PrismP4CuriosityAnalyzer().analyze(texts),
+    { question_ratio: 0, dominant_type: 'factual', depth_vs_breadth: 'balanced', follow_up_tendency: 'moderate', question_type_distribution: {} });
+  const curiosity = r4.value;
+  perf.p4 = r4.ms;
+  if (!r4.ok) errors.p4 = r4.error;
+
+  // #11: L3.5 Consistency Volatility — P2 의 depth_scores_per_turn 재사용
+  const rc = _runAnalyzerSafe('consistency', () => l3ConsistencyVolatility(texts, PRISM_CONFIG.DEPTH_LEVEL_WEIGHTS, engagement.depth_scores_per_turn || []),
+    { volatility: 0, stability: 'stable' });
+  const consistency = rc.value;
+  perf.consistency = rc.ms;
+
+  // 최소 viable: P1·P2·P3·P4 전부 실패하면 error 반환 (stage 2 에 빈 prism 전달 방지)
+  const okCount = [r1.ok, r2.ok, r3.ok, r4.ok].filter(Boolean).length;
+  if (okCount === 0) {
+    console.error('[PRISM total failure]', errors);
+    return {
+      error: 'ANALYZER_TOTAL_FAILURE',
+      message: 'All analyzers failed',
+      errors,
+      metadata: { perf, turn_count: texts.length },
+    };
   }
-
-  const p3 = new PrismP3VocabularyAnalyzer();
-  const vocabulary = p3.analyze(texts);
-
-  const p4 = new PrismP4CuriosityAnalyzer();
-  const curiosity = p4.analyze(texts);
-
-  // #11: L3.5 Consistency Volatility — P2 의 depth_scores_per_turn 재사용 (중복 계산 제거)
-  const consistency = l3ConsistencyVolatility(texts, PRISM_CONFIG.DEPTH_LEVEL_WEIGHTS, engagement.depth_scores_per_turn);
 
   return {
     topic_distribution: topicDist,
@@ -5173,6 +5221,8 @@ function analyzePrism(messages, selfReportedInterests = null) {
       input_hash: inputHash,
       turn_count: texts.length,
       preprocessed_from: messages.length,
+      perf,
+      errors: Object.keys(errors).length > 0 ? errors : undefined,
     },
   };
 }
