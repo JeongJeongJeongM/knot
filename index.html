@@ -10591,11 +10591,14 @@ function displayResult() {
                     initMatchScrollAnimations();
                 } else {
                     // 개인 분석 공유 뷰
-                    const identity = profile.identity || {};
+                    // v3.6.43: axes / identity fallback 강화 — 누락 필드 때문에 displayResult 가
+                    // throw 하고 login 화면이 그대로 남는 버그 수정.
+                    const identity = profile.identity || { emoji: '🔮', code: '?', name: 'Shared Profile', tagline: '' };
                     const sections = profile.sections || [];
+                    const axes = profile.axes || { intensity: {}, structural: {}, trait: {} };
                     currentProfile = {
                         identity: identity,
-                        axes: profile.axes || null,
+                        axes: axes,
                         simulation: profile.simulation || null,
                         prism: profile.prism || null,
                         anchor: profile.anchor || null,
@@ -10603,7 +10606,20 @@ function displayResult() {
                         _isSharedView: true,
                         _shareCode: shareCode
                     };
-                    displayResult(currentProfile);
+
+                    // displayResult 가 부분 실패해도 login 덮도록 먼저 result 화면 강제 전환
+                    try {
+                        showScreen('result');
+                    } catch (e) {
+                        console.warn('[Share] showScreen result failed:', e);
+                    }
+
+                    try {
+                        displayResult(currentProfile);
+                    } catch (e) {
+                        console.error('[Share] displayResult failed:', e);
+                        // result 화면은 이미 켰으니 부분 렌더된 상태로 진행
+                    }
 
                     // 공유 뷰: SHARE 섹션을 CTA 버튼으로 교체 + 피드백 숨기기
                     // v3.6.42: worker 도메인에서 "/" 는 같은 페이지라 메인으로 안 감.
