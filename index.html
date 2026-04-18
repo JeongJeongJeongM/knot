@@ -10477,8 +10477,15 @@ function displayResult() {
                 // JSON API로 데이터 fetch
                 const resp = await fetch(WORKER_URL + '/share-data/' + encodeURIComponent(shareCode));
                 if (!resp.ok) {
-                    // fallback: 레거시 HTML 직접 이동
-                    location.href = WORKER_URL + '/share/' + encodeURIComponent(shareCode);
+                    // v3.6.42: 리다이렉트 루프 제거. 현재 URL 이 이미 worker domain 의 /share/ 이면
+                    // 레거시 이동은 같은 페이지로 무한 루프 → 대신 에러 표시.
+                    console.error('[Share] fetch failed:', resp.status, 'code:', shareCode);
+                    document.body.innerHTML = `
+                        <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;background:#0b0b0b;color:#fff;font-family:'JetBrains Mono',monospace;">
+                            <h2 style="font-size:18px;margin-bottom:12px;color:#F5A623;">공유 링크를 불러올 수 없습니다</h2>
+                            <p style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:24px;">HTTP ${resp.status}${resp.status === 429 ? ' — 잠시 후 다시 시도해주세요' : resp.status === 404 ? ' — 만료되었거나 존재하지 않는 링크' : ''}</p>
+                            <a href="/" style="padding:12px 32px;background:linear-gradient(135deg,#F5A623,#EC4899);color:#000;font-weight:700;text-decoration:none;border-radius:8px;">메인으로 이동</a>
+                        </div>`;
                     return;
                 }
                 const profile = await resp.json();
@@ -10599,11 +10606,14 @@ function displayResult() {
                     displayResult(currentProfile);
 
                     // 공유 뷰: SHARE 섹션을 CTA 버튼으로 교체 + 피드백 숨기기
+                    // v3.6.42: worker 도메인에서 "/" 는 같은 페이지라 메인으로 안 감.
+                    // Pages 메인 URL 로 명시.
+                    const MAIN_URL = 'https://knot-ai.pages.dev';
                     const shareSection = document.getElementById('resultSection3');
                     if (shareSection) {
                         shareSection.innerHTML = `
                             <div style="text-align:center;padding:60px 20px;">
-                                <a href="/" style="display:inline-block;padding:16px 48px;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#000;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;border-radius:12px;text-decoration:none;letter-spacing:1px;box-shadow:0 0 30px rgba(245,166,35,0.3);transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 0 40px rgba(245,166,35,0.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 0 30px rgba(245,166,35,0.3)'">나도 분석하기</a>
+                                <a href="${MAIN_URL}" style="display:inline-block;padding:16px 48px;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#000;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;border-radius:12px;text-decoration:none;letter-spacing:1px;box-shadow:0 0 30px rgba(245,166,35,0.3);transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 0 40px rgba(245,166,35,0.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 0 30px rgba(245,166,35,0.3)'">나도 분석하기</a>
                             </div>`;
                     }
                     const feedbackPanel = document.getElementById('feedbackContent');

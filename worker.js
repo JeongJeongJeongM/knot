@@ -11482,7 +11482,7 @@ export default {
 
       // ──── GET /share-data/:id ── JSON API (프론트엔드용) ────
       if (request.method === 'GET' && url.pathname.startsWith('/share-data/')) {
-        if (!(await checkRateLimit(ip, 'share-read', 30, env))) {
+        if (!(await checkRateLimit(ip, 'share-read', 300, env))) {
           return jsonResponse({ error: '요청이 너무 많습니다.' }, 429, corsHeaders);
         }
         const shareId = url.pathname.split('/share-data/')[1];
