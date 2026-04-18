@@ -12687,6 +12687,70 @@ function displayResult() {
                     html += '</div>';
                 }
 
+                // v3.6.36 — 토픽 × 퀄리티 2축 매트릭스
+                const tq = prism.topic_quality;
+                if (tq && tq.topic_quality_matrix && Object.keys(tq.topic_quality_matrix).length > 0) {
+                    const TOPIC_LABEL = {
+                        tech_science: '기술·과학', work_career: '일·커리어', money_economy: '돈·경제',
+                        health_body: '건강·몸', relationships: '관계', daily_life: '일상', food: '음식',
+                        culture_media: '문화·미디어', thought_society: '사유·사회', travel: '여행',
+                        game: '게임', food_casual: '음식(일상)', travel_casual: '여행(일상)',
+                        relationship_daily: '관계(일상)', work_casual: '일(일상)', shopping_daily: '쇼핑',
+                        fitness_daily: '운동·피트니스', media_daily: '미디어·SNS',
+                    };
+                    const matrix = tq.topic_quality_matrix;
+                    const entries = Object.entries(matrix).sort((a, b) => b[1].quality - a[1].quality);
+                    const maxFreq = Math.max(...entries.map(([, p]) => p.frequency), 1);
+                    html += '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.04);">';
+                    html += `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
+                        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,166,35,0.5);font-family:JetBrains Mono,monospace;">토픽 × 퀄리티</span>
+                        <span style="font-size:10px;color:rgba(255,255,255,0.35);font-family:JetBrains Mono,monospace;">avg ${(tq.interpretation?.average_quality || 0).toFixed(2)}</span>
+                    </div>`;
+                    entries.slice(0, 8).forEach(([topic, p]) => {
+                        const label = TOPIC_LABEL[topic] || topic;
+                        const qPct = (p.quality * 100).toFixed(0);
+                        const freqBar = (p.frequency / maxFreq * 100).toFixed(0);
+                        // quality 색상: ≥0.6 pink, ≥0.4 violet, ≥0.25 blue, 미만 dim
+                        const qColor = p.quality >= 0.6 ? '#EC4899'
+                                     : p.quality >= 0.4 ? '#A78BFA'
+                                     : p.quality >= 0.25 ? '#60A5FA'
+                                     : 'rgba(255,255,255,0.35)';
+                        // 빈 깡통 후보 표시
+                        const emptyFlag = p.quality < 0.3 && p.frequency >= 3;
+                        html += `<div style="margin-bottom:9px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+                                <span style="font-size:12px;color:rgba(255,255,255,0.82);">${label}${emptyFlag ? '<span style="margin-left:6px;font-size:9px;color:#F87171;">피상</span>' : ''}</span>
+                                <span style="display:flex;gap:8px;align-items:baseline;">
+                                    <span style="font-family:JetBrains Mono,monospace;font-size:10px;color:rgba(255,255,255,0.35);">×${p.frequency}</span>
+                                    <span style="font-family:JetBrains Mono,monospace;font-size:11px;color:${qColor};font-weight:600;">Q ${qPct}</span>
+                                </span>
+                            </div>
+                            <div style="display:flex;gap:4px;">
+                                <div style="flex:${freqBar};height:3px;background:rgba(255,255,255,0.12);border-radius:2px;"></div>
+                                <div style="flex:${100 - freqBar};"></div>
+                            </div>
+                            <div style="height:3px;background:rgba(255,255,255,0.04);border-radius:2px;margin-top:3px;overflow:hidden;">
+                                <div style="width:${qPct}%;height:100%;background:${qColor};"></div>
+                            </div>
+                            ${p.top_terms && p.top_terms.length ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;">${p.top_terms.slice(0, 4).map(t => `<span style="font-size:9px;padding:1px 5px;background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.5);border-radius:2px;font-family:JetBrains Mono,monospace;">${t}</span>`).join('')}</div>` : ''}
+                        </div>`;
+                    });
+                    // 해석 요약
+                    const interp = tq.interpretation || {};
+                    if (interp.high_quality_topics && interp.high_quality_topics.length > 0 ||
+                        interp.low_quality_topics && interp.low_quality_topics.length > 0) {
+                        html += '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(255,255,255,0.04);font-size:10px;line-height:1.5;color:rgba(255,255,255,0.45);font-family:JetBrains Mono,monospace;">';
+                        if (interp.high_quality_topics?.length) {
+                            html += `진짜 관심사: <span style="color:#EC4899;">${interp.high_quality_topics.map(t => TOPIC_LABEL[t.topic] || t.topic).join(' · ')}</span><br>`;
+                        }
+                        if (interp.low_quality_topics?.length) {
+                            html += `피상적 다룸: <span style="color:#F87171;">${interp.low_quality_topics.map(t => TOPIC_LABEL[t.topic] || t.topic).join(' · ')}</span>`;
+                        }
+                        html += '</div>';
+                    }
+                    html += '</div>';
+                }
+
                 html += '</div>';
                 return html;
             }

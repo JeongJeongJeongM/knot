@@ -4955,6 +4955,54 @@ class PrismP3VocabularyAnalyzer {
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// v3.6.36 — P5 TopicQualityAnalyzer 상수 블록
+// ══════════════════════════════════════════════════════════════
+// 설계: 2축 (Topic × Quality). Quality = 7축 가중평균.
+
+// 일상 토픽 키워드 — KG 전문어와 별개로 일상 대화 토픽 라벨링
+const DAILY_TOPIC_KEYWORDS = {
+  game: ['게임', 'RPG', 'FPS', '엘든링', '디아블로', '배그', '배틀그라운드', '롤', 'LoL', '오버워치', '발로란트', '스팀', '닌텐도', '플스', 'PS5', 'Xbox', '던파', '메이플', '리니지', '와우', '포켓몬', '몬헌', '사이버펑크', '젤다', '마크', '마인크래프트', '로블록스', '피파', 'GTA', '레벨업', '빌드', '스펙', '공략', '템', '아이템', '캐릭', '렙업', '퀘스트', '길드', '파티', '보스레이드', '랭크', '솔큐', '듀오', '스트리머', '인방', '치지직'],
+  food_casual: ['맛집', '배달', '요기요', '배민', '쿠팡이츠', '점심메뉴', '저녁메뉴', '밥 뭐 먹', '뭐 먹을까', '치킨', '피자', '라멘', '쌀국수', '돈까스', '김밥', '떡볶이', '편의점', '도시락', '술자리', '회식', '소주', '맥주', '하이볼', '치맥', '삼겹살', '곱창', '대창', '막창', '갈비', '초밥', '회', '사시미', '라면', '국밥', '해장', '카페', '디저트', '빵집', '브런치', '아메리카노'],
+  travel_casual: ['여행', '호텔', '에어비앤비', '비행기', '항공권', '패키지', '자유여행', '배낭여행', '워홀', '어학연수', '유럽여행', '동남아', '일본여행', '제주도', '부산여행', '출장', '출국', '귀국', '면세점', '환전', '호캉스', '스테이', '캠핑', '차박', '글램핑', '숙소'],
+  relationship_daily: ['친구', '베프', '절친', '동창', '선배', '후배', '동기', '동료', '상사', '부장', '팀장', '애인', '여친', '남친', '썸', '연애', '소개팅', '미팅', '데이트', '결혼', '신혼', '육아', '시댁', '처가', '부모님', '엄마', '아빠', '형제', '자매', '형', '누나', '동생'],
+  work_casual: ['회사', '출근', '퇴근', '야근', '주말근무', '월급', '연봉', '보너스', '성과급', '프로젝트', '회의', '미팅', '업무', '상사', '팀', '프리랜서', '이직', '퇴사', '면접', '인턴', '공채', '자소서', '신입', '경력', '승진', '인사평가', '재택', '재택근무', '사내', '복지', '4대보험'],
+  shopping_daily: ['쇼핑', '쿠팡', '네이버페이', '무신사', '브랜디', '지그재그', '오늘의집', '당근', '중고', '세일', '할인', '블프', '블랙프라이데이', '직구', '해외직구', '지름', '욕구불만', '득템', '플렉스'],
+  fitness_daily: ['운동', '헬스', '헬스장', '피티', 'PT', '유산소', '러닝', '조깅', '크로스핏', '필라테스', '요가', '수영', '등산', '자전거', '홈트', '다이어트', '감량', '벌크업', '프로틴', '단백질', '식단'],
+  media_daily: ['유튜브', '넷플릭스', '디즈니플러스', '왓챠', '티빙', '웨이브', '쿠팡플레이', '인스타', '인스타그램', '틱톡', '트위터', 'X(트위터)', '페이스북', '스레드', '블로그', '브런치', '커뮤', '디씨', '펨코', '일베', '에펨', '뽐뿌', '개드립', '오유', '보배드림'],
+};
+
+// Quality 7축 마커 패턴
+const QUALITY_MARKERS = {
+  // 피상어 (quality 감점)
+  shallow: /(진짜\s|완전\s|좀\s|그냥\s|이거\s|그거\s|막\s|뭐 그런|그런 느낌|좀 그래|개\s|존\s|ㄹㅇ|ㅇㅇ|ㅋㅋ|ㅎㅎ|ㄹㄷ)/g,
+  // 추상·개념 명사 (content_depth)
+  abstract_nouns: /(개념|본질|구조|원리|패턴|차원|층위|체계|메커니즘|논리|가치관|맥락|함의|전제|프레임|관점|방법론|사유)/g,
+  // 인과 마커 (content_depth)
+  causal: /(때문에|때문이|이유는|원인은|기제|메커니즘|그래서|따라서|결과적으로|귀결|야기|초래)/g,
+  // 종속·조건 접속 (sentence_structure)
+  subordinate: /(면서|는데|지만|므로|거나|든지|려면|면\s|때\s|듯이|처럼|만큼|에도 불구|에 비해|라 하더라도|라고 해도)/g,
+  // 논증·대조 (reasoning_markers)
+  reasoning: /(근데|그런데|반면|오히려|하지만|다만|대조적|와 달리|에 비해|그럼에도|에도 불구하고|한편|게다가|더구나|나아가|요컨대)/g,
+  // 입장 명시 (stance_clarity)
+  stance: /(내 생각엔|내가 보기엔|개인적으로는|개인적으론|나는.{0,8}라고|내 입장에선|내 관점에선|라고 본다|라고 믿|라고 생각|내 기준으로|내 식으로)/g,
+  // 예시 활용 (example_usage)
+  example: /(예를 들|가령|예컨대|이를테면|구체적으로|의 경우|실제로|한 예로|비근하게|비유하자면|마치\s.{0,15}처럼)/g,
+  // 메타 성찰 (meta_reflection)
+  meta: /(왜 이렇게 생각|반대로 보면|반대로 생각|되돌아보|다시 생각|근본적으로 따지|근본적으로 보|한 걸음 떨어|돌이켜보면|따지고 보면|곱씹어 보|파고 들어가면|아 근데 생각해보니|잠깐\s.{0,10}(다시|아니))/g,
+  // 출처 인식 보너스
+  citation: /(에 따르면|의 주장은|라는 관점|의 논의에 따르|라는 이론|의 개념으로|의 프레임|을 빌리자면)/g,
+  // 불확실성 인정 보너스
+  uncertainty: /(확실하지(는)? 않지만|아마도|일 수도|가능성이|단정할 수|애매하지만|다만 이건 내 생각)/g,
+};
+
+// sigmoid-like normalizer: density 를 0~1 로 clamp
+function _normDensity(count, size, slope = 4) {
+  const d = count / Math.max(1, size);
+  // 0.1 density ≈ 0.5 saturation, slope 로 곡률 조정
+  return 1 - Math.exp(-d * slope);
+}
+
 class PrismP4CuriosityAnalyzer {
   analyze(texts) {
     if (!texts || texts.length === 0) {
@@ -5110,6 +5158,213 @@ class PrismP4CuriosityAnalyzer {
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// v3.6.36 — P5 TopicQualityAnalyzer
+// ══════════════════════════════════════════════════════════════
+// 핵심 가설: 한 사람의 프로필 = (토픽, 그 토픽을 말할 때의 언어 질) 2축.
+// 빈도는 증거·부수 지표. 진짜 시그널은 토픽별 담화 질.
+//
+// Quality 7축:
+//   0.20 × vocab_refinement    — 전문어 정제 vs 피상어
+//   0.15 × content_depth       — 추상·인과
+//   0.12 × sentence_structure  — 문장 복잡도·종속절
+//   0.15 × reasoning_markers   — 논증·대조·조건
+//   0.13 × stance_clarity      — 자기 입장 명시
+//   0.12 × example_usage       — 구체 예시
+//   0.13 × meta_reflection     — 자기 사고에 대한 사고
+//
+// 보너스: +citation, +uncertainty. 피상어 중복은 ×0.85 multiplier.
+class PrismP5TopicQualityAnalyzer {
+  analyze(texts, topicDistribution) {
+    if (!texts || texts.length === 0) {
+      return { topic_quality_matrix: {}, interpretation: {} };
+    }
+
+    // 1. 메시지별 토픽 라벨링 (KG + PRISM_TOPIC_KEYWORDS + DAILY_TOPIC_KEYWORDS)
+    const topicsPerMsg = texts.map(t => this._assignTopics(t));
+
+    // 2. 토픽별 메시지 버킷팅 (한 메시지가 여러 토픽 가능)
+    const buckets = {};
+    for (let i = 0; i < texts.length; i++) {
+      for (const topic of topicsPerMsg[i]) {
+        if (!buckets[topic]) buckets[topic] = [];
+        buckets[topic].push(texts[i]);
+      }
+    }
+
+    // 3. 버킷별 quality 측정
+    const matrix = {};
+    for (const [topic, msgs] of Object.entries(buckets)) {
+      if (msgs.length < 2) continue; // 2개 미만은 통계 불가
+      const q = this._computeQuality(msgs);
+      matrix[topic] = {
+        frequency: msgs.length,
+        quality: Math.round(q.total * 1000) / 1000,
+        axes: {
+          vocab_refinement: Math.round(q.vocab * 100) / 100,
+          content_depth: Math.round(q.depth * 100) / 100,
+          sentence_structure: Math.round(q.structure * 100) / 100,
+          reasoning_markers: Math.round(q.reasoning * 100) / 100,
+          stance_clarity: Math.round(q.stance * 100) / 100,
+          example_usage: Math.round(q.example * 100) / 100,
+          meta_reflection: Math.round(q.meta * 100) / 100,
+        },
+        top_terms: this._extractTerms(msgs, topic).slice(0, 5),
+        sample_count: Math.min(msgs.length, 3),
+      };
+    }
+
+    return {
+      topic_quality_matrix: matrix,
+      interpretation: this._interpret(matrix),
+    };
+  }
+
+  _assignTopics(text) {
+    const topics = new Set();
+    const tl = text.toLowerCase();
+    // PRISM_TOPIC_KEYWORDS (전문 10개 카테고리)
+    for (const [cat, keywords] of Object.entries(PRISM_TOPIC_KEYWORDS)) {
+      for (const kw of keywords) {
+        if (tl.includes(kw.toLowerCase())) { topics.add(cat); break; }
+      }
+    }
+    // DAILY_TOPIC_KEYWORDS (일상 토픽)
+    for (const [cat, keywords] of Object.entries(DAILY_TOPIC_KEYWORDS)) {
+      for (const kw of keywords) {
+        if (tl.includes(kw.toLowerCase())) { topics.add(cat); break; }
+      }
+    }
+    return [...topics];
+  }
+
+  _computeQuality(msgs) {
+    const allText = msgs.join(' ');
+    const totalChars = allText.length;
+    const msgCount = msgs.length;
+
+    // 각 축 raw count
+    const shallowCount = (allText.match(QUALITY_MARKERS.shallow) || []).length;
+    const abstractCount = (allText.match(QUALITY_MARKERS.abstract_nouns) || []).length;
+    const causalCount = (allText.match(QUALITY_MARKERS.causal) || []).length;
+    const subordinateCount = (allText.match(QUALITY_MARKERS.subordinate) || []).length;
+    const reasoningCount = (allText.match(QUALITY_MARKERS.reasoning) || []).length;
+    const stanceCount = (allText.match(QUALITY_MARKERS.stance) || []).length;
+    const exampleCount = (allText.match(QUALITY_MARKERS.example) || []).length;
+    const metaCount = (allText.match(QUALITY_MARKERS.meta) || []).length;
+    const citationCount = (allText.match(QUALITY_MARKERS.citation) || []).length;
+    const uncertaintyCount = (allText.match(QUALITY_MARKERS.uncertainty) || []).length;
+
+    // KG 전문어 매칭 — vocab_refinement 의 핵심 신호
+    let kgHits = 0;
+    if (typeof PRISM_KG_LABEL_INDEX !== 'undefined') {
+      const tl = allText.toLowerCase();
+      for (const entry of PRISM_KG_LABEL_INDEX) {
+        if (tl.includes(entry.labelLower)) kgHits++;
+      }
+    }
+
+    // 문장 구조: 평균 문장 길이 (음절 기준) + 종속절 밀도
+    const sentences = allText.split(/[.!?。\n]+/).filter(s => s.trim().length > 0);
+    const avgSentLen = sentences.length > 0 ? totalChars / sentences.length : 0;
+
+    // 축 1: vocab_refinement
+    //   KG 전문어 밀도 (높을수록 +) + 피상어 밀도 (높을수록 -)
+    const kgDensity = kgHits / msgCount;
+    const shallowDensity = shallowCount / msgCount;
+    const vocab = Math.max(0, Math.min(1,
+      _normDensity(kgHits, msgCount, 1.5) - shallowDensity * 0.15
+    ));
+
+    // 축 2: content_depth
+    const depth = Math.min(1,
+      _normDensity(abstractCount, msgCount, 2.5) * 0.6 +
+      _normDensity(causalCount, msgCount, 2.5) * 0.4
+    );
+
+    // 축 3: sentence_structure
+    //   문장 평균 길이 정규화 (30자 = 0.5, 80자 이상 = 1.0)
+    const lenScore = Math.min(1, avgSentLen / 80);
+    const subordinateDensity = _normDensity(subordinateCount, msgCount, 1.2);
+    const structure = (lenScore + subordinateDensity) / 2;
+
+    // 축 4: reasoning_markers
+    const reasoning = _normDensity(reasoningCount, msgCount, 2.5);
+
+    // 축 5: stance_clarity
+    const stance = _normDensity(stanceCount, msgCount, 3);
+
+    // 축 6: example_usage
+    const example = _normDensity(exampleCount, msgCount, 3);
+
+    // 축 7: meta_reflection
+    const meta = _normDensity(metaCount, msgCount, 4);
+
+    // 가중 평균
+    let total =
+      0.20 * vocab +
+      0.15 * depth +
+      0.12 * structure +
+      0.15 * reasoning +
+      0.13 * stance +
+      0.12 * example +
+      0.13 * meta;
+
+    // 보너스
+    const citationBonus = Math.min(0.05, citationCount / msgCount * 0.5);
+    const uncertaintyBonus = Math.min(0.03, uncertaintyCount / msgCount * 0.3);
+    total += citationBonus + uncertaintyBonus;
+
+    // 피상어 과다 시 페널티 (×0.85)
+    if (shallowDensity > 0.5) total *= 0.85;
+
+    return {
+      total: Math.max(0, Math.min(1, total)),
+      vocab, depth, structure, reasoning, stance, example, meta,
+    };
+  }
+
+  _extractTerms(msgs, topic) {
+    // 해당 토픽 KG 매칭 term 추출
+    const allText = msgs.join(' ').toLowerCase();
+    const hits = [];
+    if (typeof PRISM_KNOWLEDGE_GRAPH !== 'undefined') {
+      for (const term of PRISM_KNOWLEDGE_GRAPH) {
+        for (const locale of ['ko', 'en']) {
+          for (const label of (term.labels[locale] || [])) {
+            if (allText.includes(label.toLowerCase())) {
+              hits.push(label);
+              break;
+            }
+          }
+        }
+      }
+    }
+    return hits;
+  }
+
+  _interpret(matrix) {
+    const entries = Object.entries(matrix);
+    if (entries.length === 0) return {};
+
+    const sortedByQuality = [...entries].sort((a, b) => b[1].quality - a[1].quality);
+    const sortedByFreq = [...entries].sort((a, b) => b[1].frequency - a[1].frequency);
+
+    const highQ = entries.filter(([, p]) => p.quality >= 0.55 && p.frequency >= 3);
+    const lowQHighFreq = entries.filter(([, p]) => p.quality < 0.3 && p.frequency >= 3);
+    const avgQ = entries.reduce((s, [, p]) => s + p.quality, 0) / entries.length;
+
+    return {
+      dominant_topic: sortedByFreq[0]?.[0] || null,
+      highest_quality_topic: sortedByQuality[0]?.[0] || null,
+      high_quality_topics: highQ.map(([t, p]) => ({ topic: t, quality: p.quality, frequency: p.frequency })),
+      low_quality_topics: lowQHighFreq.map(([t, p]) => ({ topic: t, quality: p.quality, frequency: p.frequency })),
+      average_quality: Math.round(avgQ * 1000) / 1000,
+      topic_count: entries.length,
+    };
+  }
+}
+
 function analyzePrism(messages, selfReportedInterests = null) {
   if (!messages || messages.length === 0) {
     return {
@@ -5158,6 +5413,10 @@ function analyzePrism(messages, selfReportedInterests = null) {
   const p4 = new PrismP4CuriosityAnalyzer();
   const curiosity = p4.analyze(texts);
 
+  // v3.6.36 — P5: 2축 (토픽×퀄리티) 담화 프로파일
+  const p5 = new PrismP5TopicQualityAnalyzer();
+  const topicQuality = p5.analyze(texts, topicDist);
+
   // #11: L3.5 Consistency Volatility — P2 의 depth_scores_per_turn 재사용 (중복 계산 제거)
   const consistency = l3ConsistencyVolatility(texts, PRISM_CONFIG.DEPTH_LEVEL_WEIGHTS, engagement.depth_scores_per_turn);
 
@@ -5166,6 +5425,7 @@ function analyzePrism(messages, selfReportedInterests = null) {
     engagement: { ...engagement, consistency_volatility: consistency },
     vocabulary: vocabulary,
     curiosity: curiosity,
+    topic_quality: topicQuality,
     metadata: {
       engine_version: PRISM_CONFIG.ENGINE_VERSION,
       spec_version: PRISM_CONFIG.SPEC_VERSION,
