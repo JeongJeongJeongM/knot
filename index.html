@@ -6342,6 +6342,16 @@
                 // 인사이트 카드 + 타임라인 (목업 구조)
                 try { renderMatchInsightCards(r.crossSim || null, pndAxesA, pndAxesB); } catch(e) {}
                 try { renderMatchTimeline(r.crossSim || null, pndAxesA, pndAxesB); } catch(e) {}
+                // v3.6.45 Phase 2: 신규 섹션
+                try {
+                    var pndPA = (r.profileA) || { identity: r.identityA, axes: pndAxesA, simulation: (r.profileA && r.profileA.simulation) || null };
+                    var pndPB = (r.profileB) || { identity: r.identityB, axes: pndAxesB, simulation: (r.profileB && r.profileB.simulation) || null };
+                    if (!pndPA.identity) pndPA.identity = r.identityA;
+                    if (!pndPA.axes) pndPA.axes = pndAxesA;
+                    if (!pndPB.identity) pndPB.identity = r.identityB;
+                    if (!pndPB.axes) pndPB.axes = pndAxesB;
+                    renderMatchPhase2(pndPA, pndPB, matchId);
+                } catch(e) { console.error('[MatchPhase2 pnd]', e); }
                 if (r.crossSim && typeof buildCrossSimInsight === 'function') {
                     try {
                         var pndCrossHTML = buildCrossSimInsight(r.crossSim, matchId, r.crossSituational);
@@ -6672,6 +6682,16 @@
             // 인사이트 카드 + 타임라인 (목업 구조)
             try { renderMatchInsightCards(m.crossSim || null, axesA, axesB); } catch(e) { console.log('[KNOT] InsightCards error:', e.message); }
             try { renderMatchTimeline(m.crossSim || null, axesA, axesB); } catch(e) { console.log('[KNOT] Timeline error:', e.message); }
+            // v3.6.45 Phase 2: 신규 섹션
+            try {
+                var mPA = m.profileA || { identity: m.identityA, axes: axesA, simulation: null };
+                var mPB = m.profileB || { identity: m.identityB, axes: axesB, simulation: null };
+                if (!mPA.identity) mPA.identity = m.identityA;
+                if (!mPA.axes) mPA.axes = axesA;
+                if (!mPB.identity) mPB.identity = m.identityB;
+                if (!mPB.axes) mPB.axes = axesB;
+                renderMatchPhase2(mPA, mPB, mi);
+            } catch(e) { console.log('[KNOT] MatchPhase2 error:', e.message); }
             // 레거시 캐시용
             if (m.crossSim && typeof buildCrossSimInsight === 'function') {
                 try {
@@ -9711,6 +9731,279 @@ function displayResult() {
             container.innerHTML = html;
         }
 
+        // ─── v3.6.45 Phase 2 통합 헬퍼 ───
+        function renderMatchPhase2(pA, pB, matchIdentity) {
+            try { renderMatchRarity(pA, pB); } catch (e) { console.error('[MatchPhase2 rarity]', e); }
+            try { renderMatchDualTrajectory(pA, pB); } catch (e) { console.error('[MatchPhase2 trajectory]', e); }
+            try { renderMatchOutlook(pA, pB, matchIdentity); } catch (e) { console.error('[MatchPhase2 outlook]', e); }
+        }
+
+        // ─── v3.6.45 Phase 2a: 매칭 RARITY ───
+        function renderMatchRarity(pA, pB) {
+            const comboValueEl = document.getElementById('matchRarityComboValue');
+            const comboLabelEl = document.getElementById('matchRarityComboLabel');
+            const aValueEl = document.getElementById('matchRarityAValue');
+            const aNameEl = document.getElementById('matchRarityAName');
+            const bValueEl = document.getElementById('matchRarityBValue');
+            const bNameEl = document.getElementById('matchRarityBName');
+            if (!comboValueEl) return;
+
+            const idA = (pA && pA.identity) || {};
+            const idB = (pB && pB.identity) || {};
+            const axRA = idA.axisResults || [];
+            const axRB = idB.axisResults || [];
+            const distA = computeDistinctiveness(axRA);
+            const distB = computeDistinctiveness(axRB);
+
+            function fmtPct(p) {
+                if (typeof p !== 'number' || !isFinite(p)) return '–';
+                return p < 0.1 ? p.toFixed(2) + '%' : p.toFixed(1) + '%';
+            }
+
+            const typeA = distA ? distA.typePercent : null;
+            const typeB = distB ? distB.typePercent : null;
+
+            if (typeA != null) {
+                aValueEl.textContent = fmtPct(typeA);
+                aNameEl.textContent = (idA.name || idA.code || '—') + ' · 상위 ' + fmtPct(typeA);
+            }
+            if (typeB != null) {
+                bValueEl.textContent = fmtPct(typeB);
+                bNameEl.textContent = (idB.name || idB.code || '—') + ' · 상위 ' + fmtPct(typeB);
+            }
+
+            // 조합 희귀도 heuristic: 두 유형이 독립 사건이면 곱의 규모.
+            // 개별 %가 비율이므로 (pA/100) × (pB/100) × 100 = 조합 상대빈도 근사.
+            // 실제 조합 통계가 백엔드에 쌓이면 대체. Phase 2 에선 추정치.
+            if (typeA != null && typeB != null) {
+                const combo = (typeA * typeB) / 100;
+                comboValueEl.textContent = fmtPct(combo);
+                const rank = combo < 0.01 ? '극희소' : combo < 0.1 ? '매우 희귀' : combo < 1 ? '희귀' : combo < 5 ? '드문' : '흔한';
+                comboLabelEl.textContent = rank + ' 조합 · 전체 중 ' + fmtPct(combo) + ' (추정)';
+            } else {
+                comboValueEl.textContent = '–';
+                comboLabelEl.textContent = '개인 분석 데이터 부족 — 희소성 산정 불가';
+            }
+        }
+
+        // ─── v3.6.45 Phase 2b: 매칭 듀얼 TRAJECTORY ───
+        function renderMatchDualTrajectory(pA, pB) {
+            const canvas = document.getElementById('matchDualTrajectoryCanvas');
+            const legend = document.getElementById('matchTrajLegend');
+            const syncEl = document.getElementById('matchSyncPatterns');
+            if (!canvas) return;
+
+            const simA = (pA && pA.simulation && pA.simulation.trajectory) || null;
+            const simB = (pB && pB.simulation && pB.simulation.trajectory) || null;
+
+            if (!simA || !simB) {
+                if (syncEl) syncEl.textContent = '양쪽 모두의 궤적 데이터가 저장돼 있지 않습니다. 최근 개인 분석을 돌린 뒤 다시 시도해 주세요.';
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.font = '13px "JetBrains Mono", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('궤적 데이터 없음', canvas.width / 2, canvas.height / 2);
+                if (legend) legend.innerHTML = '';
+                return;
+            }
+
+            const AXES = [
+                { key: 'E', name: '정서', color: '#F5A623' },
+                { key: 'C', name: '동력', color: '#60A5FA' },
+                { key: 'T', name: '인지', color: '#A78BFA' },
+                { key: 'O', name: '경계', color: '#4ADE80' },
+                { key: 'X', name: '회복', color: '#EC4899' },
+            ];
+
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width, H = canvas.height;
+            ctx.clearRect(0, 0, W, H);
+
+            // 영역: 좌측 라벨 60, 우측 여백 20, 상하 여백 30
+            const pad = { l: 60, r: 20, t: 30, b: 40 };
+            const plotW = W - pad.l - pad.r;
+            const plotH = H - pad.t - pad.b;
+            const axisRowH = plotH / AXES.length;
+
+            // 배경
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.fillRect(pad.l, pad.t, plotW, plotH);
+
+            // 0 중심선
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 1;
+            AXES.forEach(function(ax, i) {
+                const cy = pad.t + axisRowH * (i + 0.5);
+                ctx.beginPath(); ctx.moveTo(pad.l, cy); ctx.lineTo(pad.l + plotW, cy); ctx.stroke();
+            });
+
+            // drift ±0.15 를 ±(axisRowH*0.4) 스케일로
+            const maxDrift = 0.15;
+            const scale = (axisRowH * 0.4) / maxDrift;
+
+            const driftA = simA.drift || {};
+            const driftB = simB.drift || {};
+            const syncNotes = [];
+
+            AXES.forEach(function(ax, i) {
+                const cy = pad.t + axisRowH * (i + 0.5);
+                const dA = Math.max(-maxDrift, Math.min(maxDrift, driftA[ax.key] || 0));
+                const dB = Math.max(-maxDrift, Math.min(maxDrift, driftB[ax.key] || 0));
+
+                // 축 라벨
+                ctx.fillStyle = 'rgba(255,255,255,0.55)';
+                ctx.font = '11px "JetBrains Mono", monospace';
+                ctx.textAlign = 'right';
+                ctx.fillText(ax.name, pad.l - 10, cy + 4);
+
+                // A 막대 (실선)
+                const aEndX = pad.l + plotW * 0.5 + dA * scale * 6;
+                const cx = pad.l + plotW * 0.5;
+                ctx.strokeStyle = ax.color;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - 5);
+                ctx.lineTo(aEndX, cy - 5);
+                ctx.stroke();
+                // A 점
+                ctx.fillStyle = ax.color;
+                ctx.beginPath(); ctx.arc(aEndX, cy - 5, 4, 0, Math.PI * 2); ctx.fill();
+
+                // B 막대 (점선)
+                const bEndX = cx + dB * scale * 6;
+                ctx.strokeStyle = ax.color;
+                ctx.setLineDash([3, 3]);
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy + 5);
+                ctx.lineTo(bEndX, cy + 5);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                // B 점 (outline)
+                ctx.beginPath(); ctx.arc(bEndX, cy + 5, 4, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fill();
+                ctx.strokeStyle = ax.color; ctx.lineWidth = 2; ctx.stroke();
+
+                // sync 판정
+                if (Math.abs(dA) < 0.015 && Math.abs(dB) < 0.015) return;
+                const same = (dA >= 0 && dB >= 0) || (dA <= 0 && dB <= 0);
+                if (same) syncNotes.push({ axis: ax.name, kind: 'sync', a: dA, b: dB });
+                else syncNotes.push({ axis: ax.name, kind: 'async', a: dA, b: dB });
+            });
+
+            // 중심축
+            ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(pad.l + plotW * 0.5, pad.t);
+            ctx.lineTo(pad.l + plotW * 0.5, pad.t + plotH);
+            ctx.stroke();
+
+            // 하단 라벨
+            ctx.fillStyle = 'rgba(255,255,255,0.35)';
+            ctx.font = '9px "JetBrains Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('← 하강    기저    상승 →', pad.l + plotW * 0.5, H - 12);
+
+            // 범례
+            if (legend) {
+                let lh = '<span>A 실선</span><span>B 점선</span>';
+                AXES.forEach(function(ax) {
+                    lh += '<span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;background:' + ax.color + ';border-radius:50%;"></span>' + ax.name + '</span>';
+                });
+                legend.innerHTML = lh;
+            }
+
+            // Sync/async 요약
+            if (syncEl) {
+                if (syncNotes.length === 0) {
+                    syncEl.innerHTML = '<div style="color:rgba(255,255,255,0.5);">두 사람 모두 유의미한 드리프트가 측정되지 않았습니다.</div>';
+                } else {
+                    const syncList = syncNotes.filter(n => n.kind === 'sync');
+                    const asyncList = syncNotes.filter(n => n.kind === 'async');
+                    let html = '';
+                    if (syncList.length) {
+                        html += '<div style="margin-bottom:8px;"><span style="color:#4ADE80;font-weight:600;">같은 방향:</span> ' +
+                                syncList.map(n => n.axis + '(' + (n.a > 0 ? '↑' : '↓') + ')').join(' · ') + '</div>';
+                    }
+                    if (asyncList.length) {
+                        html += '<div><span style="color:#F87171;font-weight:600;">엇갈림:</span> ' +
+                                asyncList.map(n => n.axis + '(A ' + (n.a > 0 ? '↑' : '↓') + ' · B ' + (n.b > 0 ? '↑' : '↓') + ')').join(' · ') + '</div>';
+                    }
+                    syncEl.innerHTML = html;
+                }
+            }
+        }
+
+        // ─── v3.6.45 Phase 2c: 매칭 OUTLOOK (heuristic) ───
+        function renderMatchOutlook(pA, pB, matchIdentity) {
+            const riskEl = document.getElementById('matchOutlookRisk');
+            const growthEl = document.getElementById('matchOutlookGrowth');
+            const shadowEl = document.getElementById('matchOutlookShadow');
+            if (!riskEl) return;
+
+            const axA = (pA && pA.axes) || {};
+            const axB = (pB && pB.axes) || {};
+            const intA = axA.intensity || {};
+            const intB = axB.intensity || {};
+
+            function diff(k) { return (intA[k] || 0.5) - (intB[k] || 0.5); }
+
+            const AXIS_LABELS = {
+                fs: '정서', ah: '동력', tr: '인지', ow: '경계', xv: '회복', ei: '에너지'
+            };
+            const AXIS_POLES = {
+                fs: ['절제', '표출'], ah: ['맞춤', '주도'], tr: ['공감', '분석'],
+                ow: ['경계', '개방'], xv: ['고수', '유연'], ei: ['내향', '외향']
+            };
+
+            // 축 차이 계산
+            const diffs = Object.keys(AXIS_LABELS).map(k => ({
+                key: k, name: AXIS_LABELS[k], delta: diff(k),
+                polesA: intA[k] >= 0.5 ? AXIS_POLES[k][1] : AXIS_POLES[k][0],
+                polesB: intB[k] >= 0.5 ? AXIS_POLES[k][1] : AXIS_POLES[k][0],
+            }));
+
+            // RISK: 차이가 큰(|delta| > 0.25) 축 중 에너지·경계·정서가 반대인 경우
+            const riskAxes = diffs.filter(d => Math.abs(d.delta) > 0.25).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 3);
+            const growthAxes = diffs.filter(d => Math.abs(d.delta) > 0.15 && Math.abs(d.delta) <= 0.35).slice(0, 3);
+            const shadowAxes = diffs.filter(d => Math.abs(d.delta) > 0.2).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 2);
+
+            let riskHTML = '';
+            if (riskAxes.length > 0) {
+                riskHTML = riskAxes.map(d => {
+                    return '<div style="margin-bottom:8px;"><b style="color:#F87171;">' + d.name + '</b> — A는 ' + d.polesA + ' 쪽(' + (intA[d.key] * 100).toFixed(0) + ')이고 B는 ' + d.polesB + ' 쪽(' + (intB[d.key] * 100).toFixed(0) + '). 누적되면 이 축에서 갈등이 폭발할 수 있습니다.</div>';
+                }).join('');
+            } else {
+                riskHTML = '축 간 큰 격차가 감지되지 않습니다. 대신 일상 상호작용에서 발생하는 사소한 마찰이 누적되지 않도록 정기적 점검이 필요합니다.';
+            }
+            riskEl.innerHTML = riskHTML;
+
+            let growthHTML = '';
+            if (growthAxes.length > 0) {
+                growthHTML = growthAxes.map(d => {
+                    return '<div style="margin-bottom:8px;"><b style="color:#4ADE80;">' + d.name + '</b> — 서로 다른 방향에 있어 상대의 시야를 빌릴 수 있는 영역입니다. A의 ' + d.polesA + ' 감각과 B의 ' + d.polesB + ' 감각이 교환되면 확장 가능합니다.</div>';
+                }).join('');
+            } else {
+                growthHTML = '축 분포가 유사합니다. 같은 방향으로 함께 밀어갈 수 있으나, 한쪽이 약점일 때 보완해줄 상대가 없다는 점이 양날의 검입니다.';
+            }
+            growthEl.innerHTML = growthHTML;
+
+            let shadowHTML = '';
+            if (shadowAxes.length > 0) {
+                shadowHTML = shadowAxes.map(d => {
+                    const aHigh = intA[d.key] > intB[d.key];
+                    const who = aHigh ? 'A' : 'B';
+                    const other = aHigh ? 'B' : 'A';
+                    return '<div style="margin-bottom:8px;"><b style="color:#A78BFA;">' + d.name + '</b> — ' + who + '가 표면적으로 강하지만, 그 이면에는 ' + other + '가 보이는 반대 태도를 의식적으로 억압한 흔적일 수 있습니다. 상대가 가진 것이 자기 안의 금지된 것과 닮아 있을 때 끌림과 반발이 동시에 일어납니다.</div>';
+                }).join('');
+            } else {
+                shadowHTML = '두 사람의 축 프로필이 비슷해 상호 투사가 덜 나타나지만, 비슷한 약점을 공유할 가능성이 있습니다. 각자의 그림자를 혼자서 다루는 습관이 관계로 투사되지 않도록 관찰해볼 수 있습니다.';
+            }
+            shadowEl.innerHTML = shadowHTML;
+        }
+
         // ─── 축별 비교 렌더링 헬퍼 ───
         function renderMatchAxisCompare(axesA, axesB) {
             const container = document.getElementById('matchAxisRows');
@@ -9955,18 +10248,25 @@ function displayResult() {
                 renderMatchTimeline(null, currentProfile.axes, matchProfile.axes);
             }
 
+            // v3.6.45 Phase 2: 신규 커플 섹션 렌더 (RARITY / TRAJECTORY / OUTLOOK)
+            renderMatchPhase2(
+                { identity: idA, axes: currentProfile.axes, simulation: currentProfile.simulation || null },
+                { identity: idB, axes: matchProfile.axes, simulation: matchProfile.simulation || null },
+                matchId
+            );
+
             // Hide analyzing UI, show results
             matchAnalyzingEngine.hide();
             document.getElementById('matchResultsContainer').classList.remove('hidden');
 
-            // Cache match result for sharing — 원본 데이터 저장
+            // Cache match result for sharing — 원본 데이터 저장 (v3.6.45: simulation 추가)
             window._lastMatchResult = {
                 type: 'match',
                 identityA: idA,
                 identityB: idB,
                 matchIdentity: matchId,
-                profileA: { axes: currentProfile.axes, identity: idA },
-                profileB: { axes: matchProfile.axes, identity: idB },
+                profileA: { axes: currentProfile.axes, identity: idA, simulation: currentProfile.simulation || null },
+                profileB: { axes: matchProfile.axes, identity: idB, simulation: matchProfile.simulation || null },
                 crossSim: llmMatch ? llmMatch.crossSimulation : null,
                 compatDetail: llmMatch ? llmMatch.serverCompatibility : null,
                 sections: llmMatch ? llmMatch.sections : [],
@@ -10648,6 +10948,16 @@ function displayResult() {
                     }
                     try { renderMatchInsightCards(profile.crossSim || null, axesA, axesB); } catch(e) {}
                     try { renderMatchTimeline(profile.crossSim || null, axesA, axesB); } catch(e) {}
+                    // v3.6.45 Phase 2: share 뷰 신규 섹션
+                    try {
+                        var sharePA = profile.profileA || { identity: idA, axes: axesA, simulation: null };
+                        var sharePB = profile.profileB || { identity: idB, axes: axesB, simulation: null };
+                        if (!sharePA.identity) sharePA.identity = idA;
+                        if (!sharePA.axes) sharePA.axes = axesA;
+                        if (!sharePB.identity) sharePB.identity = idB;
+                        if (!sharePB.axes) sharePB.axes = axesB;
+                        renderMatchPhase2(sharePA, sharePB, mi);
+                    } catch(e) { console.error('[MatchPhase2 share]', e); }
                     if (profile.crossSim && typeof buildCrossSimInsight === 'function') {
                         try {
                             var crossHTML = buildCrossSimInsight(profile.crossSim, mi, profile.crossSituational);
