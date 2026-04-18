@@ -4581,8 +4581,11 @@
     <!-- Match Side Navigation (screen 바깥 — position:fixed가 transform에 영향 안 받도록) -->
     <nav class="side-nav" id="matchSideNav">
         <div class="side-nav-item active" data-section="0"><span class="side-nav-label">IDENTITY</span><div class="side-nav-dot"></div></div>
+        <div class="side-nav-item" data-section="Rarity"><span class="side-nav-label">RARITY</span><div class="side-nav-dot"></div></div>
         <div class="side-nav-item" data-section="1"><span class="side-nav-label">RADAR</span><div class="side-nav-dot"></div></div>
         <div class="side-nav-item" data-section="2"><span class="side-nav-label">DYNAMICS</span><div class="side-nav-dot"></div></div>
+        <div class="side-nav-item" data-section="Trajectory"><span class="side-nav-label">TRAJECTORY</span><div class="side-nav-dot"></div></div>
+        <div class="side-nav-item" data-section="Outlook"><span class="side-nav-label">OUTLOOK</span><div class="side-nav-dot"></div></div>
         <div class="side-nav-item" data-section="3"><span class="side-nav-label">ANALYSIS</span><div class="side-nav-dot"></div></div>
         <div class="side-nav-item" data-section="4"><span class="side-nav-label">SHARE</span><div class="side-nav-dot"></div></div>
     </nav>
@@ -4784,10 +4787,42 @@
                     </div>
                 </section>
 
-                <!-- ═══ STEP 02: RADAR — 목업 구조 그대로 ═══ -->
+                <!-- ═══ STEP 02: RARITY — 신규 (Phase 1 껍데기) ═══ -->
+                <section class="result-section" id="matchSectionRarity">
+                    <div class="result-section-inner">
+                        <div class="step-indicator">STEP 02 — RARITY</div>
+                        <div class="section-heading-block">
+                            <h2>희소성</h2>
+                            <p>이 관계 조합과 두 사람의 개인 희소성</p>
+                        </div>
+                        <div id="matchRarityContent" style="display:flex;flex-direction:column;gap:18px;">
+                            <!-- 관계 조합 희귀도 -->
+                            <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:24px;text-align:center;">
+                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:10px;">RELATIONSHIP COMBO</div>
+                                <div id="matchRarityComboValue" style="font-size:38px;font-weight:300;color:var(--ac);font-family:'JetBrains Mono',monospace;letter-spacing:-1px;">–</div>
+                                <div id="matchRarityComboLabel" style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:6px;">조합 희귀도 산정 대기</div>
+                            </div>
+                            <!-- 개별 희소성 병치 -->
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:18px;">
+                                    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(245,166,35,0.6);letter-spacing:2px;margin-bottom:6px;">PROFILE A</div>
+                                    <div id="matchRarityAValue" style="font-size:22px;font-weight:300;color:#F5A623;font-family:'JetBrains Mono',monospace;">–</div>
+                                    <div id="matchRarityAName" style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;">–</div>
+                                </div>
+                                <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:18px;">
+                                    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(96,165,250,0.6);letter-spacing:2px;margin-bottom:6px;">PROFILE B</div>
+                                    <div id="matchRarityBValue" style="font-size:22px;font-weight:300;color:#60A5FA;font-family:'JetBrains Mono',monospace;">–</div>
+                                    <div id="matchRarityBName" style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;">–</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ═══ STEP 03: RADAR — 목업 구조 그대로 ═══ -->
                 <section class="result-section" id="matchSection1">
                     <div class="result-section-inner">
-                        <div class="step-indicator">STEP 02 — RADAR</div>
+                        <div class="step-indicator">STEP 03 — RADAR</div>
 
                         <!-- 5D 레이더 — 목업 .radar-section -->
                         <div class="radar-section">
@@ -4810,10 +4845,10 @@
                     </div>
                 </section>
 
-                <!-- ═══ STEP 03: DYNAMICS — 목업 구조 그대로 ═══ -->
+                <!-- ═══ STEP 04: DYNAMICS — 목업 구조 그대로 ═══ -->
                 <section class="result-section" id="matchSection2">
                     <div class="result-section-inner">
-                        <div class="step-indicator">STEP 03 — DYNAMICS</div>
+                        <div class="step-indicator">STEP 04 — DYNAMICS</div>
 
                         <!-- 인사이트 카드 4장 — 목업 .insight-cards -->
                         <div class="insight-cards" id="matchInsightCards">
@@ -4853,10 +4888,59 @@
                     </div>
                 </section>
 
-                <!-- ═══ STEP 04: DEEP ANALYSIS (lens-split) ═══ -->
+                <!-- ═══ STEP 05: TRAJECTORY — 신규 (Phase 1 껍데기) ═══ -->
+                <section class="result-section" id="matchSectionTrajectory">
+                    <div class="result-section-inner">
+                        <div class="step-indicator">STEP 05 — TRAJECTORY</div>
+                        <div class="section-heading-block">
+                            <h2>관계 궤적</h2>
+                            <p>시간에 따른 두 사람의 축 변화 — 동기화와 엇갈림</p>
+                        </div>
+                        <div id="matchTrajectoryContent">
+                            <!-- Dual trajectory chart (양쪽 profile.simulation 병치) -->
+                            <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:20px;">
+                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:12px;">AXIS DRIFT — A vs B</div>
+                                <canvas id="matchDualTrajectoryCanvas" width="800" height="320" style="width:100%;height:auto;display:block;"></canvas>
+                                <div id="matchTrajLegend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:10px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.55);"></div>
+                            </div>
+                            <!-- Sync / async 패턴 -->
+                            <div style="margin-top:14px;background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:18px;">
+                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:10px;">SYNC PATTERNS</div>
+                                <div id="matchSyncPatterns" style="font-size:12px;line-height:1.6;color:rgba(255,255,255,0.65);">궤적 데이터 산정 대기</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ═══ STEP 06: OUTLOOK — 신규 (Phase 1 껍데기) ═══ -->
+                <section class="result-section" id="matchSectionOutlook">
+                    <div class="result-section-inner">
+                        <div class="step-indicator">STEP 06 — OUTLOOK</div>
+                        <div class="section-heading-block">
+                            <h2>관계 전망</h2>
+                            <p>위험, 성장, 그리고 서로에게 비추는 그림자</p>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:14px;">
+                            <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:20px;border-left:3px solid #F87171;">
+                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#F87171;letter-spacing:2px;margin-bottom:10px;">RISK — 폭발 지점</div>
+                                <div id="matchOutlookRisk" style="font-size:13px;line-height:1.75;color:rgba(255,255,255,0.75);">관계 위험 분석 대기</div>
+                            </div>
+                            <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:20px;border-left:3px solid #4ADE80;">
+                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#4ADE80;letter-spacing:2px;margin-bottom:10px;">GROWTH — 보완·확장</div>
+                                <div id="matchOutlookGrowth" style="font-size:13px;line-height:1.75;color:rgba(255,255,255,0.75);">관계 성장 방향 분석 대기</div>
+                            </div>
+                            <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:20px;border-left:3px solid #A78BFA;">
+                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#A78BFA;letter-spacing:2px;margin-bottom:10px;">SHADOW — 서로에게 비추는 거울</div>
+                                <div id="matchOutlookShadow" style="font-size:13px;line-height:1.75;color:rgba(255,255,255,0.75);">무의식적 투영 분석 대기</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ═══ STEP 07: DEEP ANALYSIS (lens-split) ═══ -->
                 <section class="result-section" id="matchSection3">
                     <div class="result-section-inner">
-                        <div class="step-indicator">STEP 04 — ANALYSIS</div>
+                        <div class="step-indicator">STEP 07 — ANALYSIS</div>
                         <div class="section-heading-block">
                             <h2>심층 분석</h2>
                             <p>다양한 관점에서 두 사람의 관계를 해석합니다</p>
@@ -4894,10 +4978,10 @@
                     </div>
                 </section>
 
-                <!-- ═══ STEP 05: SHARE ═══ -->
+                <!-- ═══ STEP 08: SHARE ═══ -->
                 <section class="result-section" id="matchSection4">
                     <div class="result-section-inner" style="text-align:center;">
-                        <div class="step-indicator" style="justify-content:center;">STEP 06 — SHARE</div>
+                        <div class="step-indicator" style="justify-content:center;">STEP 08 — SHARE</div>
                         <div class="section-heading-block" style="text-align:center;">
                             <h2>공유</h2>
                             <p>매칭 결과를 공유하세요</p>
