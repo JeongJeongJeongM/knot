@@ -6835,6 +6835,10 @@ function sanitizePrism(prism) {
   if (prism.curiosity && typeof prism.curiosity === 'object') {
     clean.curiosity = deepSanitize(prism.curiosity);
   }
+  // v3.6.36 — P5 TopicQualityAnalyzer output (토픽 × 퀄리티 2축)
+  if (prism.topic_quality && typeof prism.topic_quality === 'object') {
+    clean.topic_quality = deepSanitize(prism.topic_quality);
+  }
   if (prism.metadata && typeof prism.metadata === 'object') {
     clean.metadata = deepSanitize(prism.metadata);
   }
