@@ -6341,7 +6341,7 @@ const RATE_LIMIT_WINDOW = 60;
 const MAX_SIZE_ANALYZE = 10 * 1024 * 1024; // 10MB (전처리가 1000개로 잘라줌)
 const MAX_SIZE_MATCH = 10 * 1024 * 1024;   // 10MB
 const MAX_SIZE_FEEDBACK = 10 * 1024;
-const MAX_SIZE_SHARE = 50 * 1024;
+const MAX_SIZE_SHARE = 200 * 1024;  // v3.6.41: profile+essay sections 여유 공간 (KV 자체 한도 25MB)
 const ADMIN_EMAILS = ['ashirmallo@gmail.com', 'nakkdoor@gmail.com', 'zion062214@gmail.com', 'merrysj92@gmail.com'];
 const WEEKLY_ANALYSIS_LIMIT = 1;
 

@@ -10915,6 +10915,8 @@ function displayResult() {
                     sections: currentProfile.llmResult?.sections || [],
                     timestamp: currentProfile.timestamp
                 };
+                const payloadSize = new Blob([JSON.stringify(shareData)]).size;
+                console.log('[Share] payload size:', payloadSize, 'bytes');
                 const resp = await fetch(WORKER_URL + '/share', {
                     method: 'POST',
                     headers: {
@@ -10923,13 +10925,19 @@ function displayResult() {
                     },
                     body: JSON.stringify(shareData)
                 });
-                if (!resp.ok) throw new Error('\uc11c\ubc84 \uc624\ub958');
+                if (!resp.ok) {
+                    let serverMsg = '';
+                    try { const err = await resp.json(); serverMsg = err.error || err.message || ''; }
+                    catch { serverMsg = await resp.text().catch(() => ''); }
+                    throw new Error(`HTTP ${resp.status}${serverMsg ? ' — ' + serverMsg : ''} (payload ${payloadSize} bytes)`);
+                }
                 const result = await resp.json();
                 document.getElementById('shareUrlInput').value = result.shareUrl;
                 document.getElementById('shareUrlResult').classList.add('active');
                 btn.textContent = '\u2705 \ub9c1\ud06c \uc0dd\uc131 \uc644\ub8cc';
                 setTimeout(() => { btn.textContent = '\ud83d\udd17 \uacf5\uc720 \ub9c1\ud06c \ub9cc\ub4e4\uae30'; btn.disabled = false; }, 3000);
             } catch (e) {
+                console.error('[Share] failed:', e);
                 alert('\uacf5\uc720 \ub9c1\ud06c \uc0dd\uc131 \uc2e4\ud328: ' + e.message);
                 btn.textContent = '\ud83d\udd17 \uacf5\uc720 \ub9c1\ud06c \ub9cc\ub4e4\uae30';
                 btn.disabled = false;
