@@ -12410,7 +12410,100 @@ function displayResult() {
             }
         }
 
-        // 실제 결과 페이지 DOM을 html2canvas로 캡처. SHARE 섹션·사이드 네비·진행바 등 크롬 일시 숨김.
+        // 탭/렌즈 컴포넌트 확장 — 캡처용으로 모든 서브 컨텐츠 펼침
+        function _expandLensForCapture(lensSplitId, sections, panelContentId, icons) {
+            const root = document.getElementById(lensSplitId);
+            if (!root || !Array.isArray(sections) || !sections.length) return null;
+            const panel = document.getElementById(panelContentId);
+            const nav = root.querySelector('.lens-nav');
+            if (!panel) return null;
+            const orig = {
+                panelHTML: panel.innerHTML,
+                navDisp: nav ? nav.style.display : '',
+                rootHeight: root.style.height,
+                rootCols: root.style.gridTemplateColumns,
+                rootDisp: root.style.display
+            };
+            if (nav) nav.style.display = 'none';
+            root.style.height = 'auto';
+            root.style.gridTemplateColumns = '1fr';
+            root.style.display = 'block';
+
+            let html = '';
+            sections.forEach((sec, idx) => {
+                const title = sanitizeHTML(sec.title || sec.key || '');
+                const summary = typeof formatLLMContent === 'function' ? formatLLMContent(sec.summary || '') : sanitizeHTML(sec.summary || '');
+                let subsHTML = '';
+                (sec.subsections || []).forEach(sub => {
+                    const sT = sanitizeHTML(sub.title || '');
+                    const sC = typeof formatLLMContent === 'function' ? formatLLMContent(sub.content || '') : sanitizeHTML(sub.content || '');
+                    if (sC) subsHTML += `<div class="lens-panel-sub-title">${sT}</div><div class="lens-panel-sub-body">${sC}</div>`;
+                });
+                html += `<div style="padding:18px 0 26px;${idx < sections.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.06);' : ''}">
+                    <div class="lens-panel-title"><span>${icons[idx % icons.length]}</span><span>${title}</span></div>
+                    ${summary ? `<div class="lens-panel-summary">${summary}</div>` : ''}
+                    ${subsHTML}
+                </div>`;
+            });
+            panel.innerHTML = html || orig.panelHTML;
+
+            return { restore: () => {
+                panel.innerHTML = orig.panelHTML;
+                if (nav) nav.style.display = orig.navDisp;
+                root.style.height = orig.rootHeight;
+                root.style.gridTemplateColumns = orig.rootCols;
+                root.style.display = orig.rootDisp;
+            }};
+        }
+
+        // TRAJECTORY per-situation card: 각 탭 순회하며 HTML 수집
+        function _expandTrajTabsForCapture() {
+            const perSituationCard = document.getElementById('trajPerSituationCard');
+            const tabsTop = document.getElementById('trajTabs');
+            const tabsBottom = document.getElementById('trajTabsBottom');
+            if (!perSituationCard || !tabsTop) return null;
+            const tabs = Array.from(tabsTop.querySelectorAll('[data-sit]'));
+            if (tabs.length < 2) return null;
+
+            const orig = {
+                cardHTML: perSituationCard.innerHTML,
+                cardDisp: perSituationCard.style.display,
+                tabsTopDisp: tabsTop.style.display,
+                tabsBotDisp: tabsBottom ? tabsBottom.style.display : '',
+                activeTab: tabsTop.querySelector('[data-sit].active')?.getAttribute('data-sit')
+            };
+
+            // 각 탭 클릭해서 card 내용 수집
+            let combined = '';
+            try {
+                tabs.forEach(t => {
+                    const key = t.getAttribute('data-sit');
+                    if (!key) return;
+                    try { t.click(); } catch(e) {}
+                    combined += `<div style="margin-bottom:24px;">${perSituationCard.innerHTML}</div>`;
+                });
+                if (combined) {
+                    perSituationCard.innerHTML = combined;
+                    perSituationCard.style.display = '';
+                    tabsTop.style.display = 'none';
+                    if (tabsBottom) tabsBottom.style.display = 'none';
+                }
+            } catch(e) {}
+
+            return { restore: () => {
+                perSituationCard.innerHTML = orig.cardHTML;
+                perSituationCard.style.display = orig.cardDisp;
+                tabsTop.style.display = orig.tabsTopDisp;
+                if (tabsBottom) tabsBottom.style.display = orig.tabsBotDisp;
+                // 원래 활성 탭 복원
+                if (orig.activeTab) {
+                    const tab = tabsTop.querySelector(`[data-sit="${orig.activeTab}"]`);
+                    if (tab) try { tab.click(); } catch(e) {}
+                }
+            }};
+        }
+
+        // 실제 결과 페이지 DOM을 html2canvas로 캡처. 크롬 숨김 + 탭 컨텐츠 전부 펼침.
         async function _renderLongformPoster(profile, shareCode) {
             if (typeof html2canvas !== 'function') throw new Error('html2canvas 로드 실패');
             const root = document.querySelector('.screen.result');
@@ -12444,6 +12537,32 @@ function displayResult() {
                 el.style.transform = 'none';
             });
 
+            // 탭/렌즈 컴포넌트 전부 펼침 (캡처용)
+            const restorers = [];
+            try {
+                // _dynSections / _outlookSections / _trajSubsections 는 script top-level let
+                // → 직접 이름 접근
+                const dynSecs = (typeof _dynSections !== 'undefined') ? _dynSections : [];
+                const outlookSecs = (typeof _outlookSections !== 'undefined') ? _outlookSections : [];
+                const trajSubs = (typeof _trajSubsections !== 'undefined') ? _trajSubsections : [];
+
+                const dynR = _expandLensForCapture('dynSplit', dynSecs, 'dynPanelContent', ['🔍', '💡', '🎭', '🛡️', '🌊']);
+                if (dynR) restorers.push(dynR);
+                const outlookR = _expandLensForCapture('outlookSplit', outlookSecs, 'outlookPanelContent', ['🌀', '🔮', '✨']);
+                if (outlookR) restorers.push(outlookR);
+                if (trajSubs.length) {
+                    const trajSections = trajSubs.map(sub => ({
+                        title: sub.title || '',
+                        summary: sub.content || '',
+                        subsections: []
+                    }));
+                    const trajR = _expandLensForCapture('trajSplit', trajSections, 'trajPanelContent', ['📈', '🎯', '🔁']);
+                    if (trajR) restorers.push(trajR);
+                }
+                const trajTabsR = _expandTrajTabsForCapture();
+                if (trajTabsR) restorers.push(trajTabsR);
+            } catch(e) { console.warn('[poster expand]', e); }
+
             // 캡처 대상 배경을 명시 (BG)
             const prevBg = root.style.backgroundColor;
             root.style.backgroundColor = '#08080D';
@@ -12467,6 +12586,7 @@ function displayResult() {
                 });
             } finally {
                 // 복원
+                restorers.forEach(r => { try { r.restore(); } catch(e) {} });
                 hidden.forEach(h => { h.el.style.display = h.prev; });
                 innerEls.forEach(x => { x.el.style.opacity = x.op; x.el.style.transform = x.tr; });
                 root.style.backgroundColor = prevBg;
