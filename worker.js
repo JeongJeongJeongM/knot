@@ -10928,6 +10928,39 @@ export default {
       }
 
       // ──── GET /my-matches ── 로그인 사용자의 매칭 이력 ────
+      // v3.6.31 — 사용자 어휘 도메인 누적 조회 (KG v4)
+      if (request.method === 'GET' && url.pathname === '/my-vocab-accumulation') {
+        const auth = await requireAuth(request, env);
+        if (auth.error) {
+          return jsonResponse({ error: auth.error }, auth.status, corsHeaders);
+        }
+        const db = env.KNOT_DB;
+        if (!db) {
+          return jsonResponse({ error: 'DB not configured' }, 500, corsHeaders);
+        }
+        try {
+          const rows = await db.prepare(
+            `SELECT domain, total_score, total_matches, session_count, first_seen, last_seen, last_session_score
+             FROM user_vocab_accumulation
+             WHERE user_id = ?
+             ORDER BY total_score DESC`
+          ).bind(auth.user.sub).all();
+          const domains = (rows?.results || []).map(r => ({
+            domain: r.domain,
+            total_score: Math.round((r.total_score || 0) * 10) / 10,
+            total_matches: r.total_matches || 0,
+            session_count: r.session_count || 0,
+            avg_score: r.session_count > 0 ? Math.round((r.total_score / r.session_count) * 10) / 10 : 0,
+            first_seen: r.first_seen,
+            last_seen: r.last_seen,
+            last_session_score: Math.round((r.last_session_score || 0) * 10) / 10,
+          }));
+          return jsonResponse({ domains, total_sessions_tracked: domains.reduce((m, d) => Math.max(m, d.session_count), 0) }, 200, corsHeaders);
+        } catch (e) {
+          return jsonResponse({ error: 'vocab accumulation query failed', detail: e.message }, 500, corsHeaders);
+        }
+      }
+
       if (request.method === 'GET' && url.pathname === '/my-matches') {
         const auth = await requireAuth(request, env);
         if (auth.error) {
@@ -10986,6 +11019,27 @@ export default {
         }
       }
 
+      // ──── GET /migrate-vocab ── v3.6.31 비파괴 마이그레이션 (신규 테이블만) ────
+      if (request.method === 'GET' && url.pathname === '/migrate-vocab') {
+        const key = url.searchParams.get('key');
+        if (!env.ADMIN_KEY || !key || key !== env.ADMIN_KEY) {
+          return new Response('Unauthorized', { status: 401 });
+        }
+        const db = env.KNOT_DB;
+        if (!db) return new Response('DB not configured', { status: 500 });
+        const statements = [
+          `CREATE TABLE IF NOT EXISTS user_vocab_accumulation (user_id TEXT NOT NULL REFERENCES users(id), domain TEXT NOT NULL, total_score REAL DEFAULT 0, total_matches INTEGER DEFAULT 0, session_count INTEGER DEFAULT 0, first_seen TEXT DEFAULT (datetime('now')), last_seen TEXT DEFAULT (datetime('now')), last_session_score REAL DEFAULT 0, PRIMARY KEY (user_id, domain))`,
+          `CREATE INDEX IF NOT EXISTS idx_vocab_acc_user ON user_vocab_accumulation(user_id)`,
+          `CREATE INDEX IF NOT EXISTS idx_vocab_acc_last_seen ON user_vocab_accumulation(last_seen)`,
+        ];
+        const results = [];
+        for (const sql of statements) {
+          try { await db.prepare(sql).run(); results.push({ sql: sql.slice(0, 70) + '...', ok: true }); }
+          catch (e) { results.push({ sql: sql.slice(0, 70) + '...', ok: false, error: e.message }); }
+        }
+        return jsonResponse({ migrated: 'user_vocab_accumulation', results }, 200, corsHeaders);
+      }
+
       // ──── GET /migrate ── DB Schema Migration ────
       if (request.method === 'GET' && url.pathname === '/migrate') {
         const key = url.searchParams.get('key');
@@ -11038,6 +11092,11 @@ export default {
           `CREATE INDEX idx_feedback_user ON feedback(user_id)`,
           `CREATE INDEX idx_feedback_analysis ON feedback(analysis_id)`,
           `CREATE INDEX idx_feedback_date ON feedback(created_at)`,
+
+          // v3.6.31 — KG v4 세션 누적: 사용자별·도메인별 어휘 점수 누계
+          `CREATE TABLE IF NOT EXISTS user_vocab_accumulation (user_id TEXT NOT NULL REFERENCES users(id), domain TEXT NOT NULL, total_score REAL DEFAULT 0, total_matches INTEGER DEFAULT 0, session_count INTEGER DEFAULT 0, first_seen TEXT DEFAULT (datetime('now')), last_seen TEXT DEFAULT (datetime('now')), last_session_score REAL DEFAULT 0, PRIMARY KEY (user_id, domain))`,
+          `CREATE INDEX IF NOT EXISTS idx_vocab_acc_user ON user_vocab_accumulation(user_id)`,
+          `CREATE INDEX IF NOT EXISTS idx_vocab_acc_last_seen ON user_vocab_accumulation(last_seen)`,
 
           // Views
           `CREATE VIEW v_daily_stats AS SELECT date(created_at) as day, COUNT(*) as analysis_count, COUNT(DISTINCT user_id) as unique_users, AVG(message_count) as avg_messages, COUNT(CASE WHEN status = 'complete' THEN 1 END) as completed, COUNT(CASE WHEN status = 'error' THEN 1 END) as errors FROM analyses GROUP BY date(created_at) ORDER BY day DESC`,
@@ -11831,6 +11890,31 @@ function switchTab(id, el) {
                 await env.KNOT_DB.prepare(
                   `UPDATE users SET total_analyses = total_analyses + 1 WHERE id = ?`
                 ).bind(userId).run().catch(e => console.error('[D1 user count]', e.message));
+
+                // v3.6.31 — KG 세션 누적 upsert (사용자별·도메인별)
+                try {
+                  const kg = prism?.vocabulary?.knowledge_graph;
+                  if (kg && Array.isArray(kg.domains) && kg.domains.length > 0) {
+                    const now = new Date().toISOString();
+                    for (const d of kg.domains) {
+                      if (!d.domain || typeof d.score !== 'number') continue;
+                      await env.KNOT_DB.prepare(
+                        `INSERT INTO user_vocab_accumulation
+                           (user_id, domain, total_score, total_matches, session_count, first_seen, last_seen, last_session_score)
+                         VALUES (?, ?, ?, ?, 1, ?, ?, ?)
+                         ON CONFLICT(user_id, domain) DO UPDATE SET
+                           total_score = total_score + excluded.total_score,
+                           total_matches = total_matches + excluded.total_matches,
+                           session_count = session_count + 1,
+                           last_seen = excluded.last_seen,
+                           last_session_score = excluded.last_session_score`
+                      ).bind(userId, d.domain, d.score, d.term_count || 0, now, now, d.score).run();
+                    }
+                  }
+                } catch (vocabErr) {
+                  console.error('[D1 vocab accumulation]', vocabErr.message);
+                  // non-fatal: 누적 실패해도 분석 자체는 보존
+                }
 
                 // Log session
                 await env.KNOT_DB.prepare(
