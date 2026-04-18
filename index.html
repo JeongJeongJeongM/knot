@@ -21,6 +21,7 @@
     <!-- OG_META_END -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
@@ -4719,8 +4720,9 @@
                 <h2>공유 & 내보내기</h2>
                 <p>나의 분석 결과를 친구에게 공유하세요</p>
             </div>
-            <div style="display:flex;gap:12px;justify-content:center;margin-bottom:24px;">
+            <div style="display:flex;gap:12px;justify-content:center;margin-bottom:24px;flex-wrap:wrap;">
                 <button class="share-url-btn" id="shareUrlBtn" onclick="generateShareURL()">공유 링크 만들기</button>
+                <button class="share-url-btn" id="longformBtn" onclick="generateLongformPoster()" style="background:transparent;border:1px solid var(--ac);color:var(--ac);">포스터로 저장</button>
             </div>
             <div class="share-url-result" id="shareUrlResult">
                 <input type="text" id="shareUrlInput" readonly style="font-family:'Courier New',monospace;">
@@ -12383,6 +12385,525 @@ function displayResult() {
         }
 
         // ===== Multi-Card Instagram Carousel =====
+        // ============ LONGFORM POSTER (B) ============
+        // 1200 × 변동 세로 단일 PNG — 분석 전부를 인포그래픽으로 쌓음.
+        async function generateLongformPoster() {
+            if (!currentProfile) { alert('분석 결과가 없습니다'); return; }
+            const btn = document.getElementById('longformBtn');
+            const orig = btn ? btn.textContent : '';
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ 생성 중...'; }
+            try {
+                const shareCode = await getOrCreateShareCode();
+                const blob = await _renderLongformPoster(currentProfile, shareCode);
+                const url = URL.createObjectURL(blob);
+                const name = (currentProfile.identity && (currentProfile.identity.archetype || currentProfile.identity.name)) || 'profile';
+                const fname = `KNOT_${name.replace(/[^\w가-힣]/g,'_')}_${shareCode || Date.now()}.png`;
+                const a = document.createElement('a');
+                a.href = url; a.download = fname; document.body.appendChild(a); a.click();
+                setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 500);
+                if (btn) { btn.textContent = '✅ 저장 완료'; setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2500); }
+            } catch (e) {
+                console.error('[Longform]', e);
+                alert('포스터 생성 실패: ' + e.message);
+                if (btn) { btn.textContent = orig; btn.disabled = false; }
+            }
+        }
+
+        async function _renderLongformPoster(profile, shareCode) {
+            const W = 1200;
+            const H_MAX = 5200;
+            const BG = '#08080D', AC = '#F5A623', TEXT = '#E8E8E8', DIM = 'rgba(255,255,255,0.55)', MUTE = 'rgba(255,255,255,0.35)';
+            const canvas = createCard(W, H_MAX);
+            const ctx = canvas.getContext('2d');
+
+            // bg
+            ctx.fillStyle = BG;
+            ctx.fillRect(0, 0, W, H_MAX);
+            // subtle gradient top
+            const g1 = ctx.createLinearGradient(0, 0, 0, 600);
+            g1.addColorStop(0, 'rgba(245,166,35,0.08)');
+            g1.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = g1; ctx.fillRect(0, 0, W, 600);
+
+            let y = 80;
+
+            // ═══ 01 BRAND HEADER ═══
+            ctx.fillStyle = AC; ctx.textAlign = 'center';
+            ctx.font = '800 44px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillText('KNOT_', W / 2, y); y += 24;
+            ctx.fillStyle = MUTE; ctx.font = '400 11px "JetBrains Mono", monospace';
+            ctx.fillText('A I   B E H A V I O R A L   A N A L Y S I S   E N G I N E', W / 2, y); y += 60;
+
+            // ═══ 02 HERO ═══
+            const id = profile.identity || {};
+            const emoji = id.emoji || '🔮';
+            const name = id.archetype || id.name || '미지의 윤곽';
+            const code = id.code || 'E-XX';
+            const tagline = id.tagline || '';
+            const rarity = id.rarity || id.percent || null;
+
+            ctx.font = '80px "Segoe UI Emoji", "Apple Color Emoji", serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(emoji, W / 2, y + 20); y += 100;
+
+            ctx.fillStyle = TEXT; ctx.font = '600 42px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillText(name, W / 2, y); y += 40;
+
+            ctx.fillStyle = AC; ctx.font = '500 14px "JetBrains Mono", monospace';
+            const codeLine = code + (rarity ? `  ·  ${typeof rarity === 'number' ? rarity.toFixed(1) + '%' : rarity}` : '');
+            ctx.fillText(codeLine, W / 2, y); y += 34;
+
+            if (tagline) {
+                ctx.fillStyle = DIM;
+                ctx.font = '400 17px -apple-system, BlinkMacSystemFont, sans-serif';
+                y = _wrapText(ctx, tagline, W / 2, y + 14, W - 220, 26, 'center');
+                y += 8;
+            }
+            y += 40;
+
+            // ═══ 03 DIVIDER ═══
+            y = _drawSectionLabel(ctx, W, y, AC, MUTE, '01', 'SIGNATURE SCORES');
+
+            // ═══ 04 SCORES (3 cards) ═══
+            const scores = _extractScores(profile);
+            const cardGap = 16;
+            const cardW = (W - 120 - cardGap * 2) / 3;
+            const cardH = 130;
+            scores.forEach((s, i) => {
+                const x = 60 + i * (cardW + cardGap);
+                _drawCard(ctx, x, y, cardW, cardH, 'rgba(255,255,255,0.03)', 'rgba(255,255,255,0.08)');
+                ctx.fillStyle = s.color; ctx.textAlign = 'center';
+                ctx.font = '300 44px "JetBrains Mono", monospace';
+                ctx.fillText(s.val, x + cardW / 2, y + 60);
+                ctx.fillStyle = TEXT; ctx.font = '500 14px -apple-system, BlinkMacSystemFont, sans-serif';
+                ctx.fillText(s.label, x + cardW / 2, y + 90);
+                ctx.fillStyle = MUTE; ctx.font = '400 11px "JetBrains Mono", monospace';
+                ctx.fillText(s.sub, x + cardW / 2, y + 110);
+            });
+            y += cardH + 50;
+
+            // ═══ 05 RADAR ═══
+            y = _drawSectionLabel(ctx, W, y, AC, MUTE, '02', '5D RADAR');
+            y = _drawPosterRadar(ctx, W, y, profile, AC) + 40;
+
+            // ═══ 06 AXIS SIGNATURE ═══
+            y = _drawSectionLabel(ctx, W, y, AC, MUTE, '03', 'AXIS SIGNATURE');
+            y = _drawPosterAxes(ctx, W, y, profile, AC, TEXT, DIM, MUTE) + 40;
+
+            // ═══ 07 TOPICS ═══
+            const topics = _extractTopics(profile);
+            if (topics.length) {
+                y = _drawSectionLabel(ctx, W, y, AC, MUTE, '04', 'TOPIC SIGNATURE');
+                y = _drawPosterTopics(ctx, W, y, topics, AC, MUTE) + 40;
+            }
+
+            // ═══ 08 VOICE (signature line) ═══
+            const voice = _extractVoice(profile);
+            if (voice) {
+                y = _drawSectionLabel(ctx, W, y, AC, MUTE, '05', 'SIGNATURE VOICE');
+                y = _drawPosterVoice(ctx, W, y, voice, AC, TEXT, MUTE) + 40;
+            }
+
+            // ═══ 09 STRUCTURAL TAGS ═══
+            const structs = _extractStructural(profile);
+            if (structs.length) {
+                y = _drawSectionLabel(ctx, W, y, AC, MUTE, '06', 'STRUCTURAL TAGS');
+                y = _drawPosterStructBars(ctx, W, y, structs, AC, TEXT, DIM) + 40;
+            }
+
+            // ═══ 10~14 LLM SECTION SUMMARIES ═══
+            const sections = (profile.llmResult && profile.llmResult.sections) || profile.sections || [];
+            const PICK = [
+                { key: 'persona',             label: '07', title: 'PERSONA' },
+                { key: 'cognitive_topology',  label: '08', title: 'COGNITIVE TOPOLOGY' },
+                { key: 'defense_system',      label: '09', title: 'DEFENSE SYSTEM' },
+                { key: 'risk_model',          label: '10', title: 'RISK MODEL' },
+                { key: 'growth_direction',    label: '11', title: 'GROWTH DIRECTION' }
+            ];
+            for (const p of PICK) {
+                const sec = sections.find(s => s && (s.key === p.key || (s.title || '').indexOf(_koLabel(p.key)) >= 0));
+                if (!sec || !sec.summary) continue;
+                y = _drawSectionLabel(ctx, W, y, AC, MUTE, p.label, p.title);
+                y = _drawPosterSummary(ctx, W, y, sec.summary, TEXT, DIM) + 36;
+            }
+
+            // ═══ 15 FOOTER ═══
+            y = _drawPosterFooter(ctx, W, y, shareCode, AC, TEXT, MUTE) + 40;
+
+            // ═══ 최종 크롭 — 실제 사용된 높이만큼 잘라 새 캔버스 생성 ═══
+            const finalH = Math.min(y, H_MAX);
+            const finalCanvas = createCard(W, finalH);
+            const fctx = finalCanvas.getContext('2d');
+            fctx.drawImage(canvas, 0, 0, W, finalH, 0, 0, W, finalH);
+
+            return new Promise(res => finalCanvas.toBlob(res, 'image/png', 0.95));
+        }
+
+        // ── Longform helpers ──
+        function _drawSectionLabel(ctx, W, y, AC, MUTE, num, label) {
+            ctx.textAlign = 'center';
+            // decorative line
+            const lineY = y + 8;
+            const grd = ctx.createLinearGradient(80, 0, W - 80, 0);
+            grd.addColorStop(0, 'rgba(245,166,35,0)');
+            grd.addColorStop(0.5, 'rgba(245,166,35,0.25)');
+            grd.addColorStop(1, 'rgba(245,166,35,0)');
+            ctx.strokeStyle = grd; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(80, lineY); ctx.lineTo(W - 80, lineY); ctx.stroke();
+            // label
+            ctx.fillStyle = BG_FILL_FOR_LABEL;
+            const text = `${num} · ${label}`;
+            ctx.font = '600 12px "JetBrains Mono", monospace';
+            const textW = ctx.measureText(text).width + 20;
+            // bg to block the line
+            ctx.fillStyle = '#08080D';
+            ctx.fillRect((W - textW) / 2, y - 2, textW, 24);
+            ctx.fillStyle = AC;
+            ctx.fillText(text, W / 2, y + 14);
+            return y + 36;
+        }
+        var BG_FILL_FOR_LABEL = '#08080D';
+
+        function _drawCard(ctx, x, y, w, h, fillCol, borderCol) {
+            roundRect(ctx, x, y, w, h, 12);
+            ctx.fillStyle = fillCol; ctx.fill();
+            ctx.strokeStyle = borderCol; ctx.lineWidth = 1;
+            roundRect(ctx, x, y, w, h, 12); ctx.stroke();
+        }
+
+        function _wrapText(ctx, text, x, y, maxW, lineH, align) {
+            if (!text) return y;
+            const words = String(text).split(/(\s+)/);
+            let line = '', out = [];
+            for (const w of words) {
+                const test = line + w;
+                if (ctx.measureText(test).width > maxW && line) {
+                    out.push(line.trim());
+                    line = w.trimStart();
+                } else {
+                    line = test;
+                }
+            }
+            if (line.trim()) out.push(line.trim());
+            ctx.textAlign = align || 'left';
+            out.forEach((l, i) => ctx.fillText(l, x, y + i * lineH));
+            return y + out.length * lineH;
+        }
+
+        function _extractScores(profile) {
+            // 핵심 3 수치 — prism + axes 종합. 없으면 기본값.
+            const p = profile.prism || {};
+            const vocabScore = (p.vocabulary?.refinement != null ? Math.round(p.vocabulary.refinement * 100) : null);
+            const depthScore = (p.depth?.overall != null ? Math.round(p.depth.overall * 100) : null);
+            const curiosityScore = (p.curiosity?.breadth != null ? Math.round(p.curiosity.breadth * 100) : null);
+            return [
+                { label: '언어 정제', sub: 'VOCAB', val: vocabScore != null ? vocabScore : '—', color: '#F5A623' },
+                { label: '사유 깊이', sub: 'DEPTH', val: depthScore != null ? depthScore : '—', color: '#60A5FA' },
+                { label: '호기심 폭', sub: 'CURIOSITY', val: curiosityScore != null ? curiosityScore : '—', color: '#4ADE80' }
+            ];
+        }
+
+        function _drawPosterRadar(ctx, W, y, profile, AC) {
+            const cx = W / 2, cy = y + 200;
+            const R = 170;
+            const AX = [
+                { name: '정서', key: 'A1' },
+                { name: '동력', key: 'A2' },
+                { name: '인지', key: 'A3' },
+                { name: '경계', key: 'A4' },
+                { name: '회복', key: 'A5' }
+            ];
+            const ints = profile.axes && profile.axes.intensity || {};
+            const vals = AX.map(a => {
+                let v = 0.5;
+                if (Array.isArray(ints)) {
+                    const idx = parseInt(a.key.replace('A','')) - 1;
+                    v = ints[idx] != null ? ints[idx] : 0.5;
+                } else {
+                    v = ints[a.key] != null ? ints[a.key] : 0.5;
+                }
+                if (v > 1) v = v / 100;
+                return v;
+            });
+            // grid rings
+            [0.33, 0.66, 1.0].forEach(r => {
+                ctx.beginPath();
+                AX.forEach((a, i) => {
+                    const angle = -Math.PI / 2 + (Math.PI * 2 / 5) * i;
+                    const x = cx + Math.cos(angle) * R * r;
+                    const yy = cy + Math.sin(angle) * R * r;
+                    if (i === 0) ctx.moveTo(x, yy); else ctx.lineTo(x, yy);
+                });
+                ctx.closePath();
+                ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
+                ctx.stroke();
+            });
+            // axis spokes
+            AX.forEach((a, i) => {
+                const angle = -Math.PI / 2 + (Math.PI * 2 / 5) * i;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(angle) * R, cy + Math.sin(angle) * R);
+                ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.stroke();
+            });
+            // fill polygon
+            ctx.beginPath();
+            AX.forEach((a, i) => {
+                const angle = -Math.PI / 2 + (Math.PI * 2 / 5) * i;
+                const x = cx + Math.cos(angle) * R * vals[i];
+                const yy = cy + Math.sin(angle) * R * vals[i];
+                if (i === 0) ctx.moveTo(x, yy); else ctx.lineTo(x, yy);
+            });
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(245,166,35,0.22)'; ctx.fill();
+            ctx.strokeStyle = AC; ctx.lineWidth = 2; ctx.stroke();
+            // labels
+            ctx.fillStyle = 'rgba(255,255,255,0.55)';
+            ctx.font = '500 13px "JetBrains Mono", monospace';
+            ctx.textAlign = 'center';
+            AX.forEach((a, i) => {
+                const angle = -Math.PI / 2 + (Math.PI * 2 / 5) * i;
+                const lx = cx + Math.cos(angle) * (R + 28);
+                const ly = cy + Math.sin(angle) * (R + 28) + 5;
+                ctx.fillText(a.name, lx, ly);
+            });
+            return cy + R + 60;
+        }
+
+        function _drawPosterAxes(ctx, W, y, profile, AC, TEXT, DIM, MUTE) {
+            const AXES = [
+                { id: 'A1', name: '정서 강도' },
+                { id: 'A2', name: '정서 안정' },
+                { id: 'A3', name: '감정 표현' },
+                { id: 'A4', name: '자기 확신' },
+                { id: 'A5', name: '사회적 주도' },
+                { id: 'A6', name: '권위 수용' },
+                { id: 'A9', name: '감정 조절' },
+                { id: 'A12', name: '친밀 수용' }
+            ];
+            const ints = profile.axes && profile.axes.intensity || {};
+            const getVal = (key) => {
+                let v = 0.5;
+                if (Array.isArray(ints)) {
+                    const idx = parseInt(key.replace('A','')) - 1;
+                    v = ints[idx] != null ? ints[idx] : 0.5;
+                } else {
+                    v = ints[key] != null ? ints[key] : 0.5;
+                }
+                if (v > 1) v = v / 100;
+                return v;
+            };
+            const colW = (W - 120 - 16) / 2;
+            const colH = 64;
+            AXES.forEach((a, i) => {
+                const col = i % 2;
+                const row = Math.floor(i / 2);
+                const x = 60 + col * (colW + 16);
+                const yy = y + row * (colH + 10);
+                _drawCard(ctx, x, yy, colW, colH, 'rgba(0,0,0,0.25)', 'rgba(255,255,255,0.08)');
+                const v = getVal(a.id);
+                // header
+                ctx.fillStyle = MUTE; ctx.textAlign = 'left';
+                ctx.font = '500 10px "JetBrains Mono", monospace';
+                ctx.fillText(a.id + ' · ' + a.name, x + 14, yy + 20);
+                // value
+                ctx.fillStyle = TEXT;
+                ctx.font = '600 22px "JetBrains Mono", monospace';
+                ctx.fillText(v.toFixed(2), x + 14, yy + 48);
+                // bar
+                const barX = x + 86, barY = yy + 36, barW = colW - 100, barH = 8;
+                ctx.fillStyle = 'rgba(0,0,0,0.35)';
+                roundRect(ctx, barX, barY, barW, barH, 3); ctx.fill();
+                ctx.fillStyle = AC;
+                roundRect(ctx, barX, barY, barW * v, barH, 3); ctx.fill();
+            });
+            const rows = Math.ceil(AXES.length / 2);
+            return y + rows * (colH + 10);
+        }
+
+        function _extractTopics(profile) {
+            const p = profile.prism || {};
+            if (Array.isArray(p.topics)) return p.topics.slice(0, 16);
+            if (p.topic_distribution && typeof p.topic_distribution === 'object') {
+                return Object.entries(p.topic_distribution).sort((a,b) => b[1]-a[1]).slice(0, 16).map(([k]) => k);
+            }
+            return [];
+        }
+
+        function _drawPosterTopics(ctx, W, y, topics, AC, MUTE) {
+            // tag chips, wrap rows
+            const padX = 60, maxW = W - 120;
+            let cx = padX, cy = y;
+            const tagH = 32, gap = 6;
+            ctx.font = '500 13px "JetBrains Mono", monospace';
+            topics.forEach(t => {
+                const text = String(t);
+                const tw = ctx.measureText(text).width + 24;
+                if (cx + tw > padX + maxW) { cx = padX; cy += tagH + gap; }
+                ctx.fillStyle = 'rgba(245,166,35,0.1)';
+                roundRect(ctx, cx, cy, tw, tagH, 16); ctx.fill();
+                ctx.strokeStyle = 'rgba(245,166,35,0.25)'; ctx.lineWidth = 1;
+                roundRect(ctx, cx, cy, tw, tagH, 16); ctx.stroke();
+                ctx.fillStyle = AC; ctx.textAlign = 'left';
+                ctx.fillText(text, cx + 12, cy + 21);
+                cx += tw + gap;
+            });
+            return cy + tagH;
+        }
+
+        function _extractVoice(profile) {
+            // signature line: persona section summary first sentence, or identity.tagline extended
+            const sec = (profile.llmResult && profile.llmResult.sections) || profile.sections || [];
+            const persona = sec.find(s => s && (s.key === 'persona' || (s.title || '').includes('페르소나')));
+            if (persona && persona.summary) return persona.summary.split(/(?<=[.。!?])\s+/)[0] || persona.summary;
+            return null;
+        }
+
+        function _drawPosterVoice(ctx, W, y, voice, AC, TEXT, MUTE) {
+            const padX = 60;
+            const boxW = W - 120;
+            // left quote bar
+            ctx.fillStyle = AC;
+            ctx.fillRect(padX, y, 3, 100);
+            ctx.fillStyle = 'rgba(245,166,35,0.04)';
+            ctx.fillRect(padX + 3, y, boxW - 3, 100);
+            ctx.fillStyle = TEXT;
+            ctx.font = 'italic 500 19px -apple-system, BlinkMacSystemFont, serif';
+            ctx.textAlign = 'left';
+            const endY = _wrapText(ctx, voice, padX + 22, y + 36, boxW - 44, 32, 'left');
+            ctx.fillStyle = AC; ctx.font = '600 11px "JetBrains Mono", monospace';
+            ctx.fillText('— SIGNATURE', padX + 22, endY + 18);
+            return Math.max(y + 100, endY + 36);
+        }
+
+        function _extractStructural(profile) {
+            const s = profile.axes && profile.axes.structural;
+            if (!s || typeof s !== 'object') return [];
+            const LABEL_MAP = {
+                A7: '상호작용', A8: '갈등', A9: '감정조절', A10: '친밀감',
+                A11: '호혜성', A13: '인정욕구', A14: '변화수용', A15: '관계투자', A16: '신뢰', A17: '지속성'
+            };
+            return Object.entries(s).slice(0, 6).map(([key, v]) => ({
+                name: LABEL_MAP[key] || key,
+                primary: v && (v.primary || v.label) || '—',
+                key
+            }));
+        }
+
+        function _drawPosterStructBars(ctx, W, y, rows, AC, TEXT, DIM) {
+            const padX = 60, rowH = 40, gap = 4;
+            rows.forEach((r, i) => {
+                const yy = y + i * (rowH + gap);
+                // axis name (좌)
+                ctx.fillStyle = DIM; ctx.textAlign = 'left';
+                ctx.font = '500 12px "JetBrains Mono", monospace';
+                ctx.fillText(r.name, padX, yy + 24);
+                // primary chip (중앙)
+                const chipText = String(r.primary).toUpperCase();
+                ctx.font = '600 12px "JetBrains Mono", monospace';
+                const chipTW = ctx.measureText(chipText).width + 24;
+                const chipX = padX + 140, chipY = yy + 10, chipH = 22;
+                ctx.fillStyle = 'rgba(245,166,35,0.12)';
+                roundRect(ctx, chipX, chipY, chipTW, chipH, 11); ctx.fill();
+                ctx.strokeStyle = 'rgba(245,166,35,0.3)'; ctx.lineWidth = 1;
+                roundRect(ctx, chipX, chipY, chipTW, chipH, 11); ctx.stroke();
+                ctx.fillStyle = AC; ctx.textAlign = 'center';
+                ctx.fillText(chipText, chipX + chipTW / 2, chipY + 15);
+                // secondary dist 바 (있으면) — 우측
+                const barX = chipX + chipTW + 20, barY = yy + 16, barW = W - padX - barX, barH = 8;
+                ctx.fillStyle = 'rgba(0,0,0,0.35)';
+                roundRect(ctx, barX, barY, barW, barH, 3); ctx.fill();
+                // primary 비중 추정: raw 있으면 사용, 없으면 0.6~0.85 랜덤 아닌 결정적 값
+                const primPct = (r.score != null ? r.score
+                              : (r.distribution && r.primary ? (r.distribution[r.primary] || 0.6)
+                              : 0.65));
+                ctx.fillStyle = AC;
+                roundRect(ctx, barX, barY, barW * Math.min(1, Math.max(0.3, primPct)), barH, 3); ctx.fill();
+            });
+            return y + rows.length * (rowH + gap);
+        }
+
+        function _koLabel(key) {
+            return ({
+                persona: '페르소나',
+                cognitive_topology: '사유의 지형',
+                control_system: '통제 체계',
+                emotional_energy: '정서 에너지',
+                defense_system: '방어 체계',
+                behavioral_trajectory: '행동 궤적',
+                risk_model: '위험 모델',
+                growth_direction: '성장 지향점',
+                unconscious: '무의식'
+            })[key] || key;
+        }
+
+        function _drawPosterSummary(ctx, W, y, text, TEXT, DIM) {
+            ctx.fillStyle = TEXT;
+            ctx.font = '400 16px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'left';
+            return _wrapText(ctx, text, 60, y + 22, W - 120, 28, 'left');
+        }
+
+        function _drawPosterFooter(ctx, W, y, shareCode, AC, TEXT, MUTE) {
+            // divider
+            const grd = ctx.createLinearGradient(80, 0, W - 80, 0);
+            grd.addColorStop(0, 'rgba(245,166,35,0)');
+            grd.addColorStop(0.5, 'rgba(245,166,35,0.3)');
+            grd.addColorStop(1, 'rgba(245,166,35,0)');
+            ctx.strokeStyle = grd; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(80, y); ctx.lineTo(W - 80, y); ctx.stroke();
+            y += 34;
+
+            const qrSize = 140;
+            const qrX = 80, qrY = y;
+            // 실제 QR 생성 (qrcodejs)
+            const shareUrl = `https://knot-ai.pages.dev/share/${shareCode || ''}`;
+            let qrDrawn = false;
+            try {
+                if (typeof QRCode !== 'undefined') {
+                    const qrDiv = document.createElement('div');
+                    qrDiv.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+                    document.body.appendChild(qrDiv);
+                    new QRCode(qrDiv, {
+                        text: shareUrl, width: qrSize, height: qrSize,
+                        colorDark: '#000', colorLight: '#fff',
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                    const qrCanvas = qrDiv.querySelector('canvas');
+                    const qrImg = qrDiv.querySelector('img');
+                    // 흰 배경 박스
+                    ctx.fillStyle = '#fff';
+                    roundRect(ctx, qrX - 6, qrY - 6, qrSize + 12, qrSize + 12, 8); ctx.fill();
+                    if (qrCanvas) {
+                        ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+                        qrDrawn = true;
+                    } else if (qrImg && qrImg.complete && qrImg.naturalWidth) {
+                        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+                        qrDrawn = true;
+                    }
+                    qrDiv.remove();
+                }
+            } catch (e) { console.warn('[QR gen]', e); }
+            if (!qrDrawn) {
+                // fallback: 빈 흰 박스 + URL 텍스트
+                ctx.fillStyle = '#fff';
+                roundRect(ctx, qrX, qrY, qrSize, qrSize, 8); ctx.fill();
+                ctx.fillStyle = '#000'; ctx.font = '600 11px monospace'; ctx.textAlign = 'center';
+                ctx.fillText('QR', qrX + qrSize/2, qrY + qrSize/2);
+            }
+            // text right of QR
+            const tx = qrX + qrSize + 24;
+            ctx.fillStyle = AC; ctx.textAlign = 'left';
+            ctx.font = '500 13px "JetBrains Mono", monospace';
+            const urlText = `knot-ai.pages.dev/share/${shareCode || 'xxxxxxxx'}`;
+            ctx.fillText(urlText, tx, qrY + 36);
+            ctx.fillStyle = MUTE; ctx.font = '400 12px "JetBrains Mono", monospace';
+            ctx.fillText('QR 또는 링크로 원본 분석 열람', tx, qrY + 56);
+            ctx.fillStyle = AC; ctx.font = '800 28px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillText('KNOT_', tx, qrY + 110);
+            return qrY + qrSize;
+        }
+
         async function generateMultiShareCards() {
             if (!currentProfile) return;
             const container = document.getElementById('shareCardsContainer');
