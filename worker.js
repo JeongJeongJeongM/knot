@@ -1060,7 +1060,7 @@ const PRISM_KNOWLEDGE_GRAPH = [
 
   // ─────── 프로이트·정신분석 핵심 ───────
   { id: 'psa_unconscious', labels: { ko: ['무의식'], en: ['unconscious'], orig: ['das Unbewusste'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.5},{domain:'art_design',weight:0.3}], depth: 3, parents: ['field_psychoanalysis'], related: ['psa_id', 'psa_repression'] },
-  { id: 'psa_id', labels: { ko: ['이드(정신분석)', '원본능'], en: ['id'], orig: ['Es'] }, domains: [{domain:'psychology',weight:1}], depth: 4, parents: ['p_freud'], related: ['psa_ego', 'psa_superego'] },
+  { id: 'psa_id', labels: { ko: ['이드(정신분석)', '원본능'], en: ['id (psychoanalysis)', 'Freudian id'], orig: ['Es'] }, domains: [{domain:'psychology',weight:1}], depth: 4, parents: ['p_freud'], related: ['psa_ego', 'psa_superego'] },
   { id: 'psa_ego', labels: { ko: ['자아(정신분석)'], en: ['ego'], orig: ['Ich'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.4}], depth: 3, parents: ['p_freud'] },
   { id: 'psa_superego', labels: { ko: ['초자아', '초자아'], en: ['superego'], orig: ['Über-Ich'] }, domains: [{domain:'psychology',weight:1}], depth: 4, parents: ['p_freud'] },
   { id: 'psa_oedipus', labels: { ko: ['오이디푸스', '오이디푸스콤플렉스', '오이디푸스 콤플렉스', '외디푸스'], en: ['Oedipus complex', 'Oedipus'], orig: ['Ödipuskomplex'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.7},{domain:'art_design',weight:0.5}], depth: 4, parents: ['p_freud'], introduced_by: 'p_freud', reframed_by: ['p_lacan', 'p_deleuze'], related: ['psa_castration', 'lac_name_of_father', 'dg_anti_oedipus'] },
@@ -1595,7 +1595,7 @@ const PRISM_KNOWLEDGE_GRAPH = [
   { id: 'p_yulgok', labels: { ko: ['율곡', '이이'], en: ['Yulgok', 'Yi I'] }, domains: [{domain:'philosophy',weight:1}], depth: 3, parents: ['field_neoconfucianism'] },
   { id: 'p_dasan', labels: { ko: ['다산', '정약용'], en: ['Jeong Yak-yong'] }, domains: [{domain:'philosophy',weight:1}], depth: 3 },
   { id: 'con_ren', labels: { ko: ['인(유학)', '인의예지'], en: ['ren', 'benevolence'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_confucius'] },
-  { id: 'con_li_rite', labels: { ko: ['예(유학)'], en: ['li', 'ritual'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_confucius'] },
+  { id: 'con_li_rite', labels: { ko: ['예(유학)'], en: ['li (Confucian)', 'Confucian ritual'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_confucius'] },
   { id: 'con_analects', labels: { ko: ['논어'], en: ['Analects'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_confucius'] },
   { id: 'men_innate_good', labels: { ko: ['성선설'], en: ['theory of innate goodness'] }, domains: [{domain:'philosophy',weight:1}], depth: 4, parents: ['p_mencius'], introduced_by: 'p_mencius' },
   { id: 'men_haoran', labels: { ko: ['호연지기'], en: ['haoran zhi qi'] }, domains: [{domain:'philosophy',weight:1}], depth: 5, parents: ['p_mencius'] },
@@ -1644,7 +1644,7 @@ const PRISM_KNOWLEDGE_GRAPH = [
   { id: 'field_mbsr', labels: { ko: ['마음챙김 기반 스트레스 완화', 'MBSR'], en: ['Mindfulness-Based Stress Reduction', 'MBSR'] }, domains: [{domain:'psychology',weight:1}], depth: 2 },
 
   // ─── 정신분석 고전·현대 인물 ───
-  { id: 'p_jung', labels: { ko: ['융', '칼 융', '카를 융'], en: ['Jung', 'Carl Jung'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.3}], depth: 3, parents: ['field_jungian'] },
+  { id: 'p_jung', labels: { ko: ['칼 융', '카를 융', '칼 구스타프 융'], en: ['Jung', 'Carl Jung'] }, domains: [{domain:'psychology',weight:1},{domain:'philosophy',weight:0.3}], depth: 3, parents: ['field_jungian'] },
   { id: 'p_adler', labels: { ko: ['아들러', '알프레드 아들러'], en: ['Alfred Adler'] }, domains: [{domain:'psychology',weight:1}], depth: 3 },
   { id: 'p_klein', labels: { ko: ['멜라니 클라인', '클라인'], en: ['Melanie Klein'] }, domains: [{domain:'psychology',weight:1}], depth: 3, parents: ['field_object_relations'] },
   { id: 'p_winnicott', labels: { ko: ['위니콧', '도널드 위니콧'], en: ['Donald Winnicott'] }, domains: [{domain:'psychology',weight:1}], depth: 3, parents: ['field_object_relations'] },
@@ -1783,7 +1783,7 @@ const PRISM_KNOWLEDGE_GRAPH = [
   { id: 'pol_ventral_vagal', labels: { ko: ['배쪽 미주'], en: ['ventral vagal'] }, domains: [{domain:'psychology',weight:1}], depth: 5, parents: ['pol_polyvagal'] },
   { id: 'pol_social_engagement', labels: { ko: ['사회참여 시스템'], en: ['social engagement system'] }, domains: [{domain:'psychology',weight:1}], depth: 5, parents: ['pol_polyvagal'] },
   { id: 'pol_neuroception', labels: { ko: ['신경지각', '뉴로셉션'], en: ['neuroception'] }, domains: [{domain:'psychology',weight:1}], depth: 5, parents: ['p_porges'], introduced_by: 'p_porges' },
-  { id: 'tra_somatic_experiencing', labels: { ko: ['소매틱 익스피리언싱', 'SE 치료'], en: ['Somatic Experiencing', 'SE'] }, domains: [{domain:'psychology',weight:1}], depth: 4, introduced_by: 'p_levine' },
+  { id: 'tra_somatic_experiencing', labels: { ko: ['소매틱 익스피리언싱', 'SE 치료'], en: ['Somatic Experiencing'] }, domains: [{domain:'psychology',weight:1}], depth: 4, introduced_by: 'p_levine' },
   { id: 'tra_emdr', labels: { ko: ['EMDR', '안구운동 민감소실'], en: ['EMDR'] }, domains: [{domain:'psychology',weight:1}], depth: 4, introduced_by: 'p_shapiro' },
   { id: 'tra_window_of_tolerance', labels: { ko: ['인내의 창'], en: ['window of tolerance'] }, domains: [{domain:'psychology',weight:1}], depth: 5 },
 
@@ -2189,11 +2189,11 @@ const PRISM_KNOWLEDGE_GRAPH = [
   // ══════════════════════════════════════════════════════════════
 
   // ─── 최상위·분과 ───
-  { id: 'd_ml_ai', labels: { ko: ['머신러닝', '기계학습'], en: ['machine learning', 'ML'] }, domains: [{domain:'ml_ai',weight:1}], depth: 1 },
+  { id: 'd_ml_ai', labels: { ko: ['머신러닝', '기계학습'], en: ['machine learning'] }, domains: [{domain:'ml_ai',weight:1}], depth: 1 },
   { id: 'd_ai', labels: { ko: ['인공지능', '에이아이'], en: ['artificial intelligence', 'AI'] }, domains: [{domain:'ml_ai',weight:1}], depth: 1 },
   { id: 'field_deep_learning', labels: { ko: ['딥러닝', '심층학습'], en: ['deep learning'] }, domains: [{domain:'ml_ai',weight:1}], depth: 2, parents: ['d_ml_ai'] },
   { id: 'field_nlp', labels: { ko: ['자연어처리', 'NLP'], en: ['natural language processing', 'NLP'] }, domains: [{domain:'ml_ai',weight:1}], depth: 2 },
-  { id: 'field_cv', labels: { ko: ['컴퓨터 비전', 'CV'], en: ['computer vision', 'CV'] }, domains: [{domain:'ml_ai',weight:1}], depth: 2 },
+  { id: 'field_cv', labels: { ko: ['컴퓨터 비전', '컴퓨터비전'], en: ['computer vision'] }, domains: [{domain:'ml_ai',weight:1}], depth: 2 },
   { id: 'field_rl', labels: { ko: ['강화학습'], en: ['reinforcement learning', 'RL'] }, domains: [{domain:'ml_ai',weight:1}], depth: 2 },
   { id: 'field_generative_model', labels: { ko: ['생성모델'], en: ['generative model'] }, domains: [{domain:'ml_ai',weight:1}], depth: 2 },
   { id: 'field_llm', labels: { ko: ['대형언어모델', 'LLM'], en: ['large language model', 'LLM'] }, domains: [{domain:'ml_ai',weight:1}], depth: 2, parents: ['field_nlp'] },
@@ -2309,7 +2309,7 @@ const PRISM_KNOWLEDGE_GRAPH = [
   { id: 'llm_grok', labels: { ko: ['Grok(xAI)'], en: ['Grok'] }, domains: [{domain:'ml_ai',weight:1}], depth: 4 },
   { id: 'llm_phi', labels: { ko: ['Phi(마이크로소프트)'], en: ['Phi'] }, domains: [{domain:'ml_ai',weight:1}], depth: 5 },
   { id: 'llm_bert', labels: { ko: ['BERT(언어모델)'], en: ['BERT'] }, domains: [{domain:'ml_ai',weight:1}], depth: 4 },
-  { id: 'llm_t5', labels: { ko: ['T5(언어모델)'], en: ['T5'] }, domains: [{domain:'ml_ai',weight:1}], depth: 5 },
+  { id: 'llm_t5', labels: { ko: ['T5(언어모델)'], en: ['T5 (language model)'] }, domains: [{domain:'ml_ai',weight:1}], depth: 5 },
   { id: 'llm_roberta', labels: { ko: ['RoBERTa'], en: ['RoBERTa'] }, domains: [{domain:'ml_ai',weight:1}], depth: 5 },
 
   // ─── 토큰화·임베딩 ───
@@ -2516,7 +2516,7 @@ const PRISM_KNOWLEDGE_GRAPH = [
   { id: 'lang_javascript', labels: { ko: ['자바스크립트', 'JavaScript'], en: ['JavaScript'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 3 },
   { id: 'lang_typescript', labels: { ko: ['타입스크립트', 'TypeScript'], en: ['TypeScript'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 3 },
   { id: 'lang_java', labels: { ko: ['자바(언어)', 'Java'], en: ['Java'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 3 },
-  { id: 'lang_go', labels: { ko: ['Go 언어', '고랭'], en: ['Go', 'Golang'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 3 },
+  { id: 'lang_go', labels: { ko: ['Go 언어', '고랭', 'Go 프로그래밍'], en: ['Golang', 'Go programming language'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 3 },
   { id: 'lang_rust', labels: { ko: ['러스트(언어)', 'Rust'], en: ['Rust'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 3 },
   { id: 'lang_kotlin', labels: { ko: ['코틀린', 'Kotlin'], en: ['Kotlin'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 3 },
   { id: 'lang_swift', labels: { ko: ['Swift(언어)'], en: ['Swift'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 3 },
@@ -3521,7 +3521,7 @@ const PRISM_KNOWLEDGE_GRAPH = [
   { id: 'tech_htmx', labels: { ko: ['htmx'], en: ['htmx'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 5 },
   { id: 'tech_server_actions', labels: { ko: ['서버 액션(Next)'], en: ['Server Actions'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 5 },
   { id: 'tech_turborepo', labels: { ko: ['Turborepo'], en: ['Turborepo'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 5 },
-  { id: 'tech_nx', labels: { ko: ['Nx 모노레포'], en: ['Nx'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 5 },
+  { id: 'tech_nx', labels: { ko: ['Nx 모노레포'], en: ['Nx monorepo', 'Nx build system'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 5 },
   { id: 'tech_pnpm', labels: { ko: ['pnpm'], en: ['pnpm'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 5 },
   { id: 'tech_biome', labels: { ko: ['Biome 린터'], en: ['Biome'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 5 },
   { id: 'tech_prisma', labels: { ko: ['Prisma ORM'], en: ['Prisma'] }, domains: [{domain:'tech_engineering',weight:1}], depth: 4 },
@@ -3617,10 +3617,17 @@ const PRISM_KG_BY_ID = Object.fromEntries(PRISM_KNOWLEDGE_GRAPH.map(t => [t.id, 
 // label 충돌 시 가장 긴 label 우선 + depth 높은 term 우선 (예: '현존재' > '존재')
 const PRISM_KG_LABEL_INDEX = (() => {
   const idx = [];
+  // v3.6.34 — 같은 termId 내에서 동일 label 중복 제거 (ko/en 양쪽에 같은 문자열 넣은 경우
+  // frequency 이중 카운트 방지). ko/en/orig 구분 없이 (termId, labelLower) 유일성 보장.
+  const seen = new Set();
   for (const term of PRISM_KNOWLEDGE_GRAPH) {
     for (const locale of ['ko', 'en', 'orig']) {
       for (const label of (term.labels[locale] || [])) {
-        idx.push({ label, labelLower: label.toLowerCase(), termId: term.id, depth: term.depth, len: label.length });
+        const labelLower = label.toLowerCase();
+        const key = term.id + '|' + labelLower;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        idx.push({ label, labelLower, termId: term.id, depth: term.depth, len: label.length });
       }
     }
   }
