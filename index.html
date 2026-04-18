@@ -12715,11 +12715,9 @@ function displayResult() {
                                      : p.quality >= 0.4 ? '#A78BFA'
                                      : p.quality >= 0.25 ? '#60A5FA'
                                      : 'rgba(255,255,255,0.35)';
-                        // 빈 깡통 후보 표시
-                        const emptyFlag = p.quality < 0.3 && p.frequency >= 3;
                         html += `<div style="margin-bottom:9px;">
                             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
-                                <span style="font-size:12px;color:rgba(255,255,255,0.82);">${label}${emptyFlag ? '<span style="margin-left:6px;font-size:9px;color:#F87171;">피상</span>' : ''}</span>
+                                <span style="font-size:12px;color:rgba(255,255,255,0.82);">${label}</span>
                                 <span style="display:flex;gap:8px;align-items:baseline;">
                                     <span style="font-family:JetBrains Mono,monospace;font-size:10px;color:rgba(255,255,255,0.35);">×${p.frequency}</span>
                                     <span style="font-family:JetBrains Mono,monospace;font-size:11px;color:${qColor};font-weight:600;">Q ${qPct}</span>
@@ -12735,19 +12733,6 @@ function displayResult() {
                             ${p.top_terms && p.top_terms.length ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;">${p.top_terms.slice(0, 4).map(t => `<span style="font-size:9px;padding:1px 5px;background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.5);border-radius:2px;font-family:JetBrains Mono,monospace;">${t}</span>`).join('')}</div>` : ''}
                         </div>`;
                     });
-                    // 해석 요약
-                    const interp = tq.interpretation || {};
-                    if (interp.high_quality_topics && interp.high_quality_topics.length > 0 ||
-                        interp.low_quality_topics && interp.low_quality_topics.length > 0) {
-                        html += '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(255,255,255,0.04);font-size:10px;line-height:1.5;color:rgba(255,255,255,0.45);font-family:JetBrains Mono,monospace;">';
-                        if (interp.high_quality_topics?.length) {
-                            html += `진짜 관심사: <span style="color:#EC4899;">${interp.high_quality_topics.map(t => TOPIC_LABEL[t.topic] || t.topic).join(' · ')}</span><br>`;
-                        }
-                        if (interp.low_quality_topics?.length) {
-                            html += `피상적 다룸: <span style="color:#F87171;">${interp.low_quality_topics.map(t => TOPIC_LABEL[t.topic] || t.topic).join(' · ')}</span>`;
-                        }
-                        html += '</div>';
-                    }
                     html += '</div>';
                 }
 
