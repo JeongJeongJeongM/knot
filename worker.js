@@ -7242,63 +7242,213 @@ function splitSessions(messages) {
   return [{ startIdx: 0, endIdx: messages.length - 1, source: 'single' }];
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// SITUATION CATALOG (v3.8) — 4상황 × 다층 시그널
+// ═══════════════════════════════════════════════════════════════════
+// 각 상황을 정의 기반으로 분해:
+//   stress:   요구 > 자원 인식
+//   conflict: 양립 불가 대립
+//   loss:     비가역 소멸
+//   intimacy: 심리적 거리 축소 · 취약성 상호 노출
+//
+// 각 상황은 subcategory 맵 — 카테고리 커버리지가 히트 수보다 강한 신호.
+// 게이트는 "정서 표현" 이 아니라 "카테고리 다양성" 으로 대체.
+// ═══════════════════════════════════════════════════════════════════
+
+const SITUATION_CATALOG = {
+  stress: {
+    problem_recognition: ['어떻게 해야','어떻게 풀지','풀리지 않','안 풀려','막혔','막혀','해결이 안','돌파구','실마리','방법이 없','길이 안 보여','앞이 안 보여','해법이 안','풀 수가 없','답이 안 나와','해결책이 없'],
+    search: ['모색','방법을 찾','찾아봐야','알아봐야','탐색','파헤쳐','들여다봐야','검토해봐야','살펴봐야','뒤져봐야','조사해야'],
+    alternatives: ['대안','대체','다른 방법','다른 방향','다른 길','차선','플랜 B','플랜 비','우회','돌아서','돌아갈','다른 경로','다른 방식','다른 접근','새로운 방법'],
+    judgment_defer: ['모르겠','확신이 안','애매','뭐가 맞는지','답이 없','갈피를 못','갈피가 안','판단이 안','분간이 안','감이 안 와','분별이 안','확실치 않','불명확','결정하기 어려','판단 유보','결론이 안'],
+    resource_scarcity: ['시간이 없','여유가 없','방법을 모르','손을 못 대','엄두가 안','엄두도 안','기력이 없','힘이 없','기운이 없','체력이 없','할 수 있는 게 없','여력이 없','여건이 안','여건이 부족'],
+    complexity: ['복잡','정리가 안','엉켰','얽혀','꼬였','너무 많아','감당 안','감당이 안','파악이 안','정리하기 어려','헷갈려','혼란스러','뒤죽박죽','엉망','뒤엉킨'],
+    priorities: ['뭐부터','우선순위','중요한 게','급한 것','먼저 할','순서가','어디서부터','어느 것부터','선후','비중'],
+    risk: ['위험','망할','실패하면','잘못되면','안 되면','문제가 생기면','큰일','염려','우려','두려움','리스크','피해','손해','틀어지면'],
+    time_pressure: ['급해','마감','늦어','시간 안에','시한','남은 시간','임박','코앞','촉박','다가오','얼마 안 남','시간이 모자'],
+    decision_paralysis: ['결정 못','선택이 안','어느 쪽','고르기 힘','망설','주저','머뭇','결정하기 어려','선택 장애','뭘 골라야','어떻게 결정'],
+    comparison: ['비교하면','어느 게 나은','더 나은 쪽','나으려나','낫겠지','비교해보면','비교해봐야'],
+    simulation: ['되면 어떻게','만약','만약에','만일','경우의 수','할 경우','가정하면','만약 그렇다면','그렇게 되면','그러면 어떻게'],
+    loss_of_control: ['어떻게 할 수가 없','내 손을 떠난','내가 할 수 있는 게','내 통제 밖','어찌할 바','속수무책','무력','휘둘리','끌려다','쫓기','따라가기 바쁘','벅차'],
+    perfectionism: ['더 잘해야','이 정도로는','부족해','아직 멀었','더 필요','미흡','모자라','충분치 않','완벽하지 않','아쉬워'],
+    avoidance_thought: ['그냥 포기','안 하고 싶','피하고 싶','도망','손 떼고','외면','모른 척','덮어두고','미뤄','내일로','다음에'],
+    accumulation: ['쌓여','계속','또','이번에도','여전히','반복되','끊이지 않','이어져','연달아','잇달아','연속'],
+    cognitive_overload: ['생각이 안','집중이 안','뇌가 멈','머리가 아파','생각이 많아','생각이 멈추지 않','두통','사고가 안 돌','머릿속이','터질 것 같'],
+    uncertainty: ['불확실','오리무중','안개','알 수 없','예측 불가','어떻게 될지','미지수','감 잡기 어려','예상 못'],
+    self_doubt: ['내가 할 수 있을까','가능할까','능력이 되는지','자신이 없','의심스러','해낼 수 있을','내 실력으로','내가 감당','부족한 건 아닌지'],
+    external_pressure: ['요구가','기대가','부담','의무','해야 할 게','해야만','강요','밀어붙여','몰아세워','쫓겨'],
+    emotional_self: ['나 힘들','내가 힘들','너무 힘들','지쳤어','지쳐','탈진','미치겠','돌아버리','짜증 나','화가 나','울고 싶','울었','무너지','버거워','버겁다','번아웃','기진맥진'],
+  },
+
+  conflict: {
+    explicit_disagree: ['동의 못','반대','아닌 것 같','틀렸','동의 안','그렇지 않','그건 아니지','그건 틀렸','나는 아니라고 봐','동의할 수 없','맞지 않','설득력이 없','납득이 안'],
+    reasoning: ['왜냐하면','이유는','때문에','그래서 아니','근거가','근거로는','이유로는','왜 그러냐면','이유를 대자면','본질적으로'],
+    critique: ['이 문제야','은 부족','에 오류','허점','약점','구멍','맹점','오점','결함','하자','흠결','치명적','결정적 문제','크리티컬'],
+    premise_attack: ['전제가 틀렸','애초에 아니','출발점이','기본부터','근본적으로 틀','가정 자체가','뿌리부터','바탕이','기초부터','첫 단추부터'],
+    counter_example: ['예를 들어 는','근데 경우는','반례가','예외가','는 그렇지 않','오히려 반대','와 상반되','경우엔','이런 경우에는','그 반대로','거꾸로'],
+    conditional_concede: ['그건 맞는데','그건 인정하는데','까진 동의','부분적으론','어느 정도는','일부는','맞는 말이긴','맞는 부분','일리는 있는데','동의는 하지만'],
+    position_assert: ['내 입장은','나는 라고 봐','내 생각에는','내가 보기엔','내가 판단하기엔','내 관점은','내 기준에서는','내가 볼 때','개인적으로는','내 입장에선'],
+    distinction: ['그거랑은 달라','구분해야','같은 게 아니야','별개야','혼동하면 안','섞어서는 안','구분하자','차원이 다른','성격이 다른','결이 다른'],
+    alternative_proposal: ['차라리','이렇게 하자','이러는 게','이 방향이 낫','오히려 하자','바꿔서','고쳐서','수정해서','조정해서','교체해서'],
+    binary_force: ['둘 중 하나','어느 쪽이냐','선택해야','양자택일','하나를','택일','골라야'],
+    contradiction: ['말이 안','앞뒤가','모순','논리가 안','충돌','상충','자기모순','양립 안','모순되','어긋나','일관성이 없'],
+    reconfirm_demand: ['맞아?','진짜?','정말?','확실해?','근거가 뭐야','근거를 대봐','증거는','출처는','어떻게 알아','뭘 보고'],
+    refusal: ['안 할래','못 받아들','수용 못','거절','거부','할 수 없','사양'],
+    non_yielding: ['양보 못','포기 못','물러설 수 없','타협 안','굽히지 않','꺾이지 않','물러나지 않','양보 안'],
+    blame: ['네가 잘못','네 탓','너 때문에','네가 그래서','네 실수','네 책임','네가 초래','네가 자초','네가 만든','네가 야기'],
+    distancing: ['너랑은 다른','나는 아니','내가 그런 사람','뭘 잘 모르','착각하지 마','오해하지 마','나랑 상관없','내 일 아닌'],
+    impatience: ['답답해','말이 안 통','이해를 못','설명을 못 알아들','왜 모르는지','왜 그렇게','말을 안 들어','알아듣지 못','먹히지 않','통하지 않'],
+    frustration: ['너무한다','말도 안 된다','어이없','황당','기가 막혀','한심','한숨','하 참'],
+    moral_judgment: ['잘못됐어','옳지 않','비윤리적','그러면 안 돼','사람이면','윤리','양심','도리','상식적으로'],
+    repeat_point: ['몇 번을 말했','아까도 말했','지난번에도','또 이런','매번','또 또','반복해서','계속 같은','매번 같은','또다시'],
+    rebut_marker: ['반박하면','이의 제기','반론하자면','토를 달자면','한 가지 걸리는 건','지적하자면','짚고 넘어갈','문제 삼자면','덧붙이자면','이견이'],
+    emotional_explicit: ['싸웠','빡쳐','서운','섭섭','짜증','화나','개같','지랄','씨발','개씨발','열받','빡침','분노','폭발'],
+  },
+
+  loss: {
+    past_absent: ['했었','였었','전에는','예전엔','그때는','옛날엔','이전에는','과거에는','한때는'],
+    absence_marking: ['이제 없어','더 이상 없','사라졌','없어진','빠져나간','떠나간','가버린','자리를 비운','빠진 자리','부재'],
+    irreversible: ['돌아오지 않','되돌릴 수 없','이미','물 건너','복구 불가','회복 불가','다시는','영영','영원히','되돌아갈 수 없'],
+    identity_loss: ['예전의 나','그때의 나','가 아닌 나','예전과 다르','나는 이제 아니','내가 누구인지','나를 잃어','자아가','정체성이','나 자신이'],
+    memory_recall: ['기억나','생각나','떠올라','잊히지 않','머릿속에','계속 생각','생생해','선명해','뇌리에','자꾸 떠오','눈에 선','아른거려'],
+    last_moment: ['마지막으로','마지막 말','마지막 본','그날 이후','그때 이후','그 날로부터','그 순간','마지막 얼굴','마지막 인사','마지막 통화'],
+    denial: ['믿기지 않','실감 안','받아들일 수 없','아직도 믿','꿈 같','현실감이 없','실감이 안 와','믿을 수 없','꿈이었으면','착각'],
+    meaning_seeking: ['왜 이런 일이','어떻게 이럴 수','무슨 의미','이유를 모르','왜 나한테','왜 하필','왜 지금','의미가 있는 건지','왜 이래야','뭘 위해','무엇 때문에','이유가 뭔지'],
+    counterfactual: ['그때 했다면','만약 내가','그랬어야','했어야 했는데','했더라면','그러지 않았으면','다르게 했으면','알았더라면','그랬었다면','돌아갈 수 있다면'],
+    identity_reconstruct: ['이제 나는 누구','어떻게 살아야','내가 뭔지','방향을 잃','어디로 가야','어떻게 지내야','앞으로 어떻게','살아갈지','이제 뭐','무엇으로'],
+    irreplaceable: ['같은 사람 없','대신할 수 없','그런 다시 없','유일했','다시는 없을','대체 불가','채울 수 없','바꿀 수 없'],
+    void: ['빈자리','빈 공간','허전','텅 비','공허','어딘가 빠진','구멍','움푹','뻥 뚫린'],
+    time_stopped: ['그때에 멈춰','그 순간부터','그날 이후로 시간이','멈춘 것 같','시계가 멈','그 시간에 갇혀','그 순간에 박혀'],
+    residual_trace: ['흔적이','남아있','여전히','그림자','잔상','흔적만','자취','유품','추억이','남긴 것'],
+    avoid_replace: ['다른 사람 만날 수 없','새로 시작 못','그냥 비워둘','채울 수 없','대신 못','다른 건 의미가'],
+    resentment_self_blame: ['왜 그랬을까','내 탓','내가 뭘 잘못','그러지 말걸','그러지 말았어야','내가 그때','원망','후회해','한이','자책','책망'],
+    longing: ['그리워','보고 싶','다시 봤으면','옆에 있었으면','함께했으면','다시 만나고 싶','목소리가','냄새가','손길이','체온이'],
+    closure_ritual: ['장례','추모','제사','기일','추도','애도','묵념','이별식','작별','보내드'],
+    role_loss: ['전 직장','전 회사','옛 동료','전 연인','전 남편','전 아내','예전 친구','없어진 직업','사라진 역할','잃은 자리'],
+    finality: ['끝났어','끝이야','종지부','막을 내려','막이 내려','최후','마침표','피날레'],
+    emotional_grief: ['슬퍼','슬프','외로워','외로움','공허','허전해'],
+  },
+
+  intimacy: {
+    self_disclosure: ['사실 나는','솔직히','아무한테도 말 안','처음 얘기','너한테만','너한테는 말할 수','안 보여줬던','나 원래','본 모습','진짜 모습','숨겨왔던'],
+    weakness_admit: ['나 잘 못해','자신 없','두려워','무서워','부끄러워','창피해','민망해','숨기고 싶었','감추고 싶','초라한','비참한','못난'],
+    secret_share: ['이건 우리만','너한테만 하는','아무도 몰라','비밀인데','말하면 안 되는데','가족한테도','친구한테도','아무에게도','입 밖에','처음 털어놔'],
+    inner_confession: ['나 정말','진짜 나는','깊이 생각하면','솔직한 마음은','속마음은','본심은','본색','진심','마음 깊이','속으론','겉으론 달라도'],
+    shame_admit: ['부끄럽지만','창피하지만','민망한데','낯부끄','자랑은 아닌데','자랑스럽지 않','쪽팔리지만','체면 상관없이','민망스럽지만','체면을 버리고'],
+    past_confession: ['사실 그때','예전에 나','아무도 모르는데','비밀인데','옛날에','한때','왕년에','지난날','전에는'],
+    emotion_naming: ['나 지금 한 기분','내 마음이','느낌이','뭔가 한 상태','묘한 기분','복잡한 감정','이상한 감정','뭐라 할지 모를','말로 못 할','설명하기 어려운','애매한 감정','혼란스러운 마음'],
+    uncertain_share: ['확실하진 않은데','애매한 감정','표현이 잘 안 되는데','뭐라고 해야 할지','말로 설명하기 어려','정확히는 모르겠지만','어쩌면','잘 모르겠지만'],
+    wound_expose: ['에 상처','때문에 아팠','맘에 남','마음 한구석','깊은 상처','오래된 상처','아직도 아프','낫지 않은','아물지 않은','덧나는','쓰라린'],
+    deficit_admit: ['나한테 부족한','내가 못 하는','미숙한','서툰','잘 못하는','약한 부분','허술한','모자란','빈 구석'],
+    apology: ['미안해','내가 잘못','용서해','후회해','사과할게','잘못했어','내 탓이었어','면목 없','용서받고 싶','속죄'],
+    support: ['그랬구나','힘들었겠다','이해해','그럴 수 있어','당연해','그럴 만해','네 말이 맞','네 생각 이해','알 것 같아'],
+    curious_attention: ['너는 어떻게 생각해','어떻게 느껴','어땠어','기분이 어때','마음이 어때','어떤 느낌','어떻게 지내','요즘 어때','힘들지 않아','편해?'],
+    space_holding: ['천천히','급할 거 없','다 들을게','준비되면','여기 있을게','기다릴게','서두르지 마','네 속도대로','내가 듣고 있어','괜찮을 때'],
+    acceptance: ['괜찮아','그대로','있는 그대로','네가 어떻든','어떤 모습이든','너니까','너라서','너여서','너 자체로','너 그대로'],
+    existence_affirm: ['네가 있어서','너 덕분에','너 때문에 바뀐','네 영향','네가 아니었으면','네가 있으니까','너랑 있을 때','네 옆에서','너와 함께'],
+    empathy_naming: ['한 기분이었겠네','어떤 느낌이었을지','그 감정 알 것 같','얼마나 힘들었','얼만큼','그 마음','그 기분','네가 느낀','네 감정'],
+    connection: ['우리','같이','함께','둘이서','서로','둘만','우리 사이','너와 나','네가 있어서'],
+    deep_curiosity: ['네 생각이 궁금','더 알고 싶','어떤 사람','네가 어떤','더 듣고 싶','네 이야기','네 생각 듣고 싶','네 얘기 더','네 과거','네 마음'],
+    reflection_share: ['요즘 생각해보니','돌아보면','요즘 느끼는 건','깨달았는데','최근에야','요새 들어','문득 든 생각','자주 드는 생각','요즘 든 감정','최근에 든 느낌'],
+    impact_acknowledge: ['너 때문에 되','네가 있어서 다르','너 없었으면','너 만나고','너 이후로','네가 오고 나서','너 안 만났으면','너 없이는','너 덕에','네 덕분에'],
+    shared_joy: ['같이 기뻐','나도 행복','나도 좋아','우리 잘','우리 행복','같이 즐거','같이 좋','같이 기쁜'],
+    shared_pain: ['같이 슬퍼','같이 아파','같이 울','네 아픔','네 슬픔','나도 슬','나도 아프','같이 버텨'],
+    physical_desire: ['손을 잡고 싶','안아주고 싶','기대고 싶','옆에 있고 싶','따뜻하게','포근하게','품','체온','가까이','곁에'],
+    forgiveness: ['용서해','다 지난 일','잊을게','아무렇지 않','마음에 안 담','상관없어'],
+    gratitude_presence: ['있어줘서','곁에 있어줘','같이 있어줘','떠나지 않아서','머물러줘서','함께해줘서','참아줘서','기다려줘서','이해해줘서'],
+    nostalgia: ['그때 우리','예전에 같이','그날','그 시절','그 시간','우리 때','처음 만난','처음 본'],
+    future_vulnerable: ['같이 하고 싶','함께 가고 싶','우리 언젠가','나중에 같이','영원히','평생','오래오래','쭉','앞으로도'],
+    casual_closeness: ['야 ','야,','야?','임마','자식아','놈아','니가','니 말이','니 생각','너 있잖아','야 근데','야 씨','야 진짜','너 왜','너 뭐','너네'],
+    playful_banter: ['장난','농담','웃기','웃겨','재밌','귀여워','재밌어','웃긴다','킥킥','ㅋㅋㅋㅋ','ㅎㅎㅎ'],
+    teasing_affection: ['바보','멍청이','놀려','놀릴','짜증나 ㅋ','뭐야 ㅋ','아 진짜 ㅋ','개웃겨','개귀여','겁나 귀여'],
+    familiar_reliance: ['너한테 물어보','너 말대로','네가 도와줘','너 덕분','너 아니면','너 없으면','너한테 털어'],
+  },
+};
+
+// 부정 수식어 검출 — "힘들지 않아", "문제 없어" 등은 해당 시그널 아님
+const NEGATION_PATTERNS = /(?:지\s*않|지\s*못|말고|없어|없다|아니|안\s|않\s)/;
+
+// 인용 제거 — '...', "..." 안은 본인 state 아님
+function _stripQuotes(text) {
+  return text.replace(/["'「『]([^"'」』]+)["'」』]/g, ' ');
+}
+
+// 메시지 하나에서 catalog 매치 — {카테고리: hit수}
+function _matchCatalog(msgText, catalog) {
+  const stripped = _stripQuotes(msgText);
+  const hits = {};
+  for (const [cat, keywords] of Object.entries(catalog)) {
+    for (const kw of keywords) {
+      const idx = stripped.indexOf(kw);
+      if (idx < 0) continue;
+      // 부정 수식어 근방 체크 — 키워드 뒤 ~10자 이내에 negation 있으면 스킵
+      const tail = stripped.substring(idx + kw.length, idx + kw.length + 10);
+      if (NEGATION_PATTERNS.test(tail)) continue;
+      hits[cat] = (hits[cat] || 0) + 1;
+      break; // 같은 카테고리 내 첫 매치만 (과포화 방지)
+    }
+  }
+  return hits;
+}
+
+// 슬라이스 전체에 대해 상황별 catalog 집계
+function _aggregateCatalogHits(slice, situation) {
+  const catalog = SITUATION_CATALOG[situation];
+  if (!catalog) return { coverage: 0, density: 0, totalHits: 0 };
+  const categoryCount = Object.keys(catalog).length;
+  const categoriesHit = new Set();
+  let totalHits = 0;
+  for (const msg of slice) {
+    const hits = _matchCatalog(msg.text || '', catalog);
+    for (const cat of Object.keys(hits)) {
+      categoriesHit.add(cat);
+      totalHits += hits[cat];
+    }
+  }
+  return {
+    coverage: categoriesHit.size / categoryCount,      // 0~1: 얼마나 다양한 카테고리가 활성화됐나
+    density: Math.min(1, totalHits / Math.max(1, slice.length)),  // 0~1: 메시지당 평균 히트
+    totalHits,
+    categoriesHit: categoriesHit.size
+  };
+}
+
 // _computeSliceScores — slice 하나로부터 {stress, conflict, intimacy, loss} score 계산.
-// v3.6.5: 세그먼트 피크 탐지와 전체 세션 스코어에서 동일 로직 재사용.
+// v3.8 (2026-04-19): SITUATION_CATALOG 3층 시그널 기반 재작성
+//   - coverage(카테고리 다양성) 0.6 + density(히트 밀도) 0.4
+//   - 부정/인용 필터는 _matchCatalog 에서 처리
+//   - 기존 flag 는 약한 보조 신호로만 사용 (catalog 가 주 신호)
 function _computeSliceScores(slice) {
   if (slice.length === 0) return { stress: 0, conflict: 0, intimacy: 0, loss: 0 };
-  const turnCount = slice.length;
-  const totalLen = _sumFeatureLen(slice);
-  const charUnits = Math.max(1, totalLen / 100);
 
+  const result = {};
+  for (const sit of ['stress', 'conflict', 'intimacy', 'loss']) {
+    const agg = _aggregateCatalogHits(slice, sit);
+    // 점수 공식: coverage 와 density 비교적 균형
+    // v3.8.1: 0.65/0.35 → 0.55/0.45 (히트 밀도도 더 반영)
+    const score = Math.min(1, agg.coverage * 0.55 + agg.density * 0.45);
+    result[sit] = score;
+  }
+
+  // 기존 flag 시그널은 약한 보조 가산 (catalog 가 못 잡는 엣지 케이스 완충)
+  const turnCount = slice.length;
   const stressSelfTurns   = slice.filter(p => p.selfStateCtx && p.anchorFlags.stressSelf).length;
   const conflictCtxTurns  = slice.filter(p => p.anchorFlags.conflictCtx).length;
   const secureTurns       = slice.filter(p => p.anchorFlags.secure).length;
-  const anxiousTurns      = slice.filter(p => p.anchorFlags.anxious).length;
-  const avoidantTurns     = slice.filter(p => p.anchorFlags.avoidant).length;
-
-  const emotionalDensity  = _sumFeatureCounts(slice, 'emotional') / charUnits;
-  const intimacyDensity   = _sumFeatureCounts(slice, 'intimacy') / charUnits;
-  const supportDensity    = _sumFeatureCounts(slice, 'support') / charUnits;
-  const lossDensity       = _sumFeatureCounts(slice, 'loss') / charUnits;
-  const negEmoDensity     = _sumFeatureCounts(slice, 'negEmo') / charUnits;
-
-  const workR    = slice.filter(p => p.counts.topic_work > 0).length / turnCount;
-  const relsR    = slice.filter(p => p.counts.topic_relationships > 0).length / turnCount;
-  const healthR  = slice.filter(p => p.counts.topic_health > 0).length / turnCount;
-  const financeR = slice.filter(p => p.counts.topic_finance > 0).length / turnCount;
-  const lossCtxR = slice.filter(p => p.counts.topic_loss_context > 0).length / turnCount;
   const lossNarrativeTurns = slice.filter(p => p.counts.lossNarrative > 0).length;
-  const lossNarrativeR     = lossNarrativeTurns / turnCount;
 
-  const emotionalGate = stressSelfTurns > 0 || emotionalDensity > 0.02 || negEmoDensity > 0.01;
-  const relationalGate = secureTurns > 0 || supportDensity > 0.005 || intimacyDensity > 0.005;
+  result.stress   = Math.min(1, result.stress   + (stressSelfTurns   / turnCount) * 0.15);
+  result.conflict = Math.min(1, result.conflict + (conflictCtxTurns  / turnCount) * 0.10);
+  result.intimacy = Math.min(1, result.intimacy + (secureTurns       / turnCount) * 0.10);
+  result.loss     = Math.min(1, result.loss     + (lossNarrativeTurns / turnCount) * 0.15);
 
-  return {
-    stress: Math.min(1,
-      (stressSelfTurns / turnCount) * 1.5 * 0.55 + Math.min(0.4, negEmoDensity * 0.6) * 0.55 +
-      Math.min(0.3, emotionalDensity * 0.4) * 0.55 +
-      ((workR * 0.5 + healthR * 0.4 + financeR * 0.3) * (emotionalGate ? 1.0 : 0.3) * 0.55
-        + Math.min(0.3, negEmoDensity) * 0.3) * 0.45
-    ),
-    conflict: Math.min(1,
-      (conflictCtxTurns / turnCount) * 1.5 * 0.55 + (anxiousTurns + avoidantTurns) / turnCount * 0.5 * 0.55 +
-      (relsR * 0.5 * (negEmoDensity > 0.01 || avoidantTurns > 0 ? 1.0 : 0.3)) * 0.45
-    ),
-    intimacy: Math.min(1,
-      (secureTurns / turnCount) * 0.8 * 0.55 + Math.min(0.5, intimacyDensity) * 0.55 + Math.min(0.4, supportDensity) * 0.55 +
-      (relsR * 0.45 * (relationalGate ? 1.0 : 0.3)) * 0.45
-    ),
-    loss: Math.min(1,
-      ((_sumFeatureCounts(slice, 'loss') >= 2 || stressSelfTurns >= 1 || lossNarrativeTurns >= 1)
-        ? Math.min(1, lossDensity * 1.2) * 0.55
-        : Math.min(0.25, lossDensity * 0.8) * 0.55) +
-      Math.min(0.5, lossNarrativeR * 1.5) * 0.55 +
-      (stressSelfTurns / turnCount) * 0.2 * 0.55 +
-      ((lossCtxR >= 0.15 || _sumFeatureCounts(slice, 'loss') >= 2 || lossNarrativeTurns >= 1)
-        ? (lossCtxR * 1.2 + (stressSelfTurns / turnCount) * 0.3) * 0.45
-        : (lossCtxR * 0.5) * 0.45)
-    ),
-  };
+  // LOSS 는 정서 동반 필수 (정의) → 정서 시그널 없으면 대폭 감쇄
+  const grief_categories_hit = _aggregateCatalogHits(slice, 'loss').categoriesHit;
+  if (grief_categories_hit < 2) {
+    result.loss *= 0.5;  // 단일 카테고리만 히트면 오분류 위험
+  }
+
+  return result;
 }
 
 // classifySessionSituation — 세션을 5개 상황 중 하나로 분류
@@ -7345,10 +7495,11 @@ function classifySessionSituation(session, features) {
   const maxOther = Math.max(rawScores.stress, rawScores.conflict, rawScores.intimacy, rawScores.loss);
   const scores = { ...rawScores, normal: Math.max(0.20, 1 - maxOther) };
 
-  // v3.6.11: 0.22 → 0.18. small sample 에서 conflict/loss 세션이 0개로 떨어지던 문제.
-  //   full dataset 에선 conflict 7.6% 였는데 1,500 msg cap 샘플에선 0개 classified.
-  //   threshold 0.04 하향으로 경계 케이스 흡수.
-  const THRESHOLD = 0.18;
+  // v3.8.1 (2026-04-19): 0.18 → 0.15
+  //   SITUATION_CATALOG 신규 신호 대거 추가로 coverage 기반 점수가 전반적으로
+  //   낮아지는 경향 → 임계치 하향 필요. catalog 자체가 노이즈 필터 내장이라
+  //   낮춰도 false positive 급증 위험 낮음.
+  const THRESHOLD = 0.15;
   let situation = 'normal';
   let maxScore = scores.normal;
   let bestNonNormal = null, bestNonNormalScore = 0;
