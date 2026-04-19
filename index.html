@@ -8179,7 +8179,10 @@ function buildProfileOverview(axes, profile) {
 
         function renderTrajectoryChart(simData) {
             _trajSimData = simData;
-            if (!simData) return;
+            if (!simData) {
+                _trajRenderFallback('시뮬레이션 데이터가 없습니다 — 이 분석은 궤적 엔진 업데이트 이전 결과일 수 있습니다');
+                return;
+            }
 
             // v3.6.15: 다축 종합 해석(renderTrajSynthesis) 제거 — RESPONSE PATTERN 카드가 대체.
             //   기존 흔적 남지 않도록 div 비움.
@@ -8367,11 +8370,63 @@ function buildProfileOverview(axes, profile) {
             }
         }
 
+        // 궤적 차트 fallback — 데이터 부족 시 캔버스에 이유 표시
+        function _trajRenderFallback(msg) {
+            const cv = document.getElementById('trajCanvas');
+            if (!cv) return;
+            const dpr = devicePixelRatio || 1;
+            cv.width = 1000 * dpr;
+            cv.height = 300 * dpr;
+            cv.style.width = '100%';
+            cv.style.height = '300px';
+            const ctx = cv.getContext('2d');
+            ctx.scale(dpr, dpr);
+            ctx.clearRect(0, 0, 1000, 300);
+            // 배경
+            ctx.fillStyle = 'rgba(255,255,255,0.02)';
+            ctx.fillRect(0, 0, 1000, 300);
+            // 점선 테두리
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.setLineDash([6, 6]);
+            ctx.strokeRect(20, 20, 960, 260);
+            ctx.setLineDash([]);
+            // 메시지
+            ctx.fillStyle = 'rgba(245,166,35,0.65)';
+            ctx.font = '600 16px "JetBrains Mono","Courier New",monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('◆ 궤적 차트 없음', 500, 130);
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.font = '400 12px -apple-system, BlinkMacSystemFont, sans-serif';
+            // 메시지가 길면 자동 줄바꿈
+            const maxW = 860;
+            const words = String(msg || '데이터 부족').split(/\s+/);
+            let line = '', y = 160;
+            words.forEach(w => {
+                const test = line + (line ? ' ' : '') + w;
+                if (ctx.measureText(test).width > maxW && line) {
+                    ctx.fillText(line, 500, y);
+                    y += 20;
+                    line = w;
+                } else {
+                    line = test;
+                }
+            });
+            if (line) ctx.fillText(line, 500, y);
+            console.warn('[trajectory]', msg);
+        }
+
         // ── Draw Line Chart (Canvas 2D — production exact, JetBrains Mono) ──
         function _trajDrawChart(sc) {
             const pts = sc.points;
             const cv = document.getElementById('trajCanvas');
-            if (!cv || !pts || pts.length < 2) return;
+            if (!cv) return;
+            if (!pts || pts.length < 2) {
+                const reason = !pts ? '측정 데이터 누락' :
+                    `세션이 1건뿐이라 궤적을 그릴 수 없습니다 (최소 2 포인트 필요)`;
+                _trajRenderFallback(reason);
+                return;
+            }
 
             const AK = ['E','C','T','O','X'];
             const colors = TRAJ_AXIS_COLORS;
