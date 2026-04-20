@@ -7527,6 +7527,12 @@
                 return;
             }
 
+            // v3.8.1: 이전 분석 상태 완전 리셋 — 새 분석이 실패해도 이전 도훈·타인 결과
+            //   가 화면에 남는 크로스-컨테미네이션 방지.
+            currentProfile = null;
+            window._trajSimData = null;
+            window._lastAnalyzeError = null;
+
             // ── 분석 시작 전 주간 제한 사전 체크 ──
             try {
                 const limitResp = await fetch(WORKER_URL + '/check-limit', {
@@ -7668,6 +7674,12 @@
                         .map(m => ({ ...m, text: m.text.length > 3000 ? m.text.slice(0, 3000) : m.text }));
                     const lensSummary = ''; // moved to server
                     const serverResult = await callWorkerAnalyze(rawMessages, lensSummary);
+
+                    // v3.8.1: 서버 분석 실패 시 명시적 에러 — 이전 분석 잔여값으로
+                    //   currentProfile 채우고 displayResult 호출하면 타인 결과 보일 수 있음.
+                    if (!serverResult) {
+                        throw new Error('서버 분석 실패: ' + (window._lastAnalyzeError || '알 수 없는 오류') + '. 잠시 후 다시 시도해주세요.');
+                    }
 
                     if (serverResult) {
                         // Override local axes/identity with server-computed (LLM) results
