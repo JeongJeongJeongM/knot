@@ -7691,8 +7691,12 @@ function aggregateBySituation(sessions, features, prism, anchor, defaultIdentity
     }
 
     try {
-      // 상황별 17축 계산 — 기존 precomputeAxes 재사용, subset features 전달
-      const sitAxes = precomputeAxes([], prism, anchor, subFeat);
+      // v3.8.4 (2026-04-19): 상황별 축 계산 시 anchor/prism 공통 booster 제외
+      //   이전: precomputeAxes(... prism, anchor ...) — 전체 기반 anchor.attachment,
+      //   prism.engagement 등이 모든 상황의 축에 동일 boost 로 작용 → 상황 간 변별력 저하
+      //   수정: null 로 넘겨 상황 subset 메시지 기반 순수 키워드 밀도만으로 계산
+      //   trade-off: 짧은 subset 개별 신뢰도 ↓ vs 상황 간 변별력 ↑ (후자 우선)
+      const sitAxes = precomputeAxes([], null, null, subFeat);
       if (!sitAxes) continue;
 
       // 상황별 6축 identity 매핑 — 기존 computeServerIdentity 재사용
