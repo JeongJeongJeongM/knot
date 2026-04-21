@@ -2793,6 +2793,71 @@
         .anchor-recovery-b { position:absolute; right:0; top:0; bottom:0; background:linear-gradient(-90deg,#60A5FA,rgba(96,165,250,0.15)); display:flex; align-items:center; justify-content:flex-end; padding-right:12px; font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#0A0A0F; font-weight:600; }
         @media (max-width:640px){ .anchor-grid { grid-template-columns:1fr; } }
 
+        /* ── v3.8.9 · PRISM 대조 (STEP 04.5) ── */
+        .prism-cross-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+        @media (max-width:720px){ .prism-cross-grid { grid-template-columns:1fr; } }
+        .prism-col { padding:16px 18px; background:rgba(0,0,0,0.28); border:1px solid var(--glass-border); border-radius:12px; }
+        .prism-col.a { border-left:2px solid var(--ac); }
+        .prism-col.b { border-left:2px solid #60A5FA; }
+        .prism-col-head { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; margin-bottom:10px; }
+        .prism-col.a .prism-col-head { color:var(--ac); }
+        .prism-col.b .prism-col-head { color:#60A5FA; }
+        .prism-topics { display:flex; flex-wrap:wrap; gap:5px; margin:6px 0 14px; }
+        .prism-topic { padding:4px 9px; border-radius:10px; font-size:10.5px; font-family:'JetBrains Mono',monospace; white-space:nowrap; }
+        .prism-col.a .prism-topic { background:rgba(245,166,35,0.1); color:var(--ac); }
+        .prism-col.b .prism-topic { background:rgba(96,165,250,0.1); color:#60A5FA; }
+        .prism-metric { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:12px; }
+        .prism-metric:last-child { border:none; }
+        .prism-metric .k { color:rgba(255,255,255,0.55); }
+        .prism-metric .v { font-family:'JetBrains Mono',monospace; color:rgba(255,255,255,0.92); font-size:11.5px; }
+        .prism-mono-label { font-family:'JetBrains Mono',monospace; font-size:9.5px; color:rgba(255,255,255,0.4); letter-spacing:1.5px; margin-bottom:4px; }
+        .depth-bar { display:flex; gap:2px; height:10px; margin:4px 0 10px; border-radius:3px; overflow:hidden; }
+        .depth-seg { flex:1; }
+        .depth-surface { background:rgba(255,255,255,0.1); }
+        .depth-medium { background:rgba(96,165,250,0.55); }
+        .depth-deep { background:rgba(167,139,250,0.78); }
+        .prism-asymmetry { padding:14px 16px; background:linear-gradient(135deg,rgba(245,166,35,0.04),rgba(96,165,250,0.04)); border:1px solid rgba(255,255,255,0.06); border-radius:10px; }
+        .prism-asymmetry .label { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--ac); margin-bottom:8px; }
+        .prism-asymmetry p { font-size:12.5px; color:rgba(255,255,255,0.65); line-height:1.75; }
+
+        /* ── v3.8.9 · ANCHOR 개별 시그니처 ── */
+        .anchor-individual-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        @media (max-width:720px){ .anchor-individual-grid { grid-template-columns:1fr; } }
+        .ind-card { padding:14px 16px; background:rgba(0,0,0,0.28); border:1px solid var(--glass-border); border-radius:12px; }
+        .ind-card.a { border-top:2px solid var(--ac); }
+        .ind-card.b { border-top:2px solid #60A5FA; }
+        .ind-head { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
+        .ind-card.a .ind-head { color:var(--ac); }
+        .ind-card.b .ind-head { color:#60A5FA; }
+        .ind-row { display:flex; align-items:flex-start; gap:10px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+        .ind-row:last-child { border:none; }
+        .ind-row-label { font-family:'JetBrains Mono',monospace; font-size:9.5px; color:rgba(255,255,255,0.4); letter-spacing:1px; width:72px; flex-shrink:0; padding-top:2px; }
+        .ind-row-value { font-size:12px; line-height:1.55; color:rgba(255,255,255,0.88); flex:1; }
+        .ind-row-value .emph { color:var(--ac); font-weight:500; display:block; }
+        .ind-card.b .ind-row-value .emph { color:#60A5FA; }
+        .ind-row-value .sub { display:block; font-size:10.5px; color:rgba(255,255,255,0.45); margin-top:2px; }
+
+        /* ── v3.8.9 · TRAJECTORY 개별 반응 ── */
+        .traj-individual-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        @media (max-width:720px){ .traj-individual-grid { grid-template-columns:1fr; } }
+        .ti-col { padding:14px 16px; background:rgba(0,0,0,0.28); border:1px solid var(--glass-border); border-radius:12px; }
+        .ti-col.a { border-right:2px solid var(--ac); }
+        .ti-col.b { border-right:2px solid #60A5FA; }
+        .ti-head { font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:2px; margin-bottom:12px; }
+        .ti-col.a .ti-head { color:var(--ac); }
+        .ti-col.b .ti-head { color:#60A5FA; }
+        .ti-chart { height:110px; position:relative; background:rgba(0,0,0,0.4); border-radius:6px; padding:8px; margin-bottom:10px; }
+        .ti-defense-row { padding:9px 11px; background:rgba(255,255,255,0.03); border-radius:8px; margin-bottom:8px; }
+        .ti-defense-row .label { font-family:'JetBrains Mono',monospace; font-size:9.5px; color:rgba(255,255,255,0.4); letter-spacing:1.5px; margin-bottom:3px; }
+        .ti-defense-row .val { font-size:12px; color:rgba(255,255,255,0.92); font-weight:500; }
+        .ti-defense-row .desc { font-size:10.5px; color:rgba(255,255,255,0.5); margin-top:4px; line-height:1.6; }
+        .ti-metric-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:10px; }
+        .ti-metric { padding:7px 8px; background:rgba(0,0,0,0.3); border-radius:6px; text-align:center; }
+        .ti-metric .k { font-family:'JetBrains Mono',monospace; font-size:8.5px; color:rgba(255,255,255,0.4); letter-spacing:1px; }
+        .ti-metric .v { font-family:'JetBrains Mono',monospace; font-size:14px; margin-top:2px; }
+        .ti-col.a .ti-metric .v { color:var(--ac); }
+        .ti-col.b .ti-metric .v { color:#60A5FA; }
+
         /* ── Lens Data Block (inline axis data per lens) ── */
         .lens-data-block {
             background: rgba(245,166,35,0.04);
@@ -4778,6 +4843,7 @@
         <div class="side-nav-item" data-section="Rarity"><span class="side-nav-label">RARITY</span><div class="side-nav-dot"></div></div>
         <div class="side-nav-item" data-section="1"><span class="side-nav-label">RADAR</span><div class="side-nav-dot"></div></div>
         <div class="side-nav-item" data-section="2"><span class="side-nav-label">DYNAMICS</span><div class="side-nav-dot"></div></div>
+        <div class="side-nav-item" data-section="Prism"><span class="side-nav-label">PRISM</span><div class="side-nav-dot"></div></div>
         <div class="side-nav-item" data-section="Trajectory"><span class="side-nav-label">TRAJECTORY</span><div class="side-nav-dot"></div></div>
         <div class="side-nav-item" data-section="Outlook"><span class="side-nav-label">OUTLOOK</span><div class="side-nav-dot"></div></div>
         <div class="side-nav-item" data-section="Anchor"><span class="side-nav-label">ANCHOR</span><div class="side-nav-dot"></div></div>
@@ -5081,11 +5147,7 @@
                             <div id="matchDefenseClashContent"></div>
                         </div>
 
-                        <!-- Topic Overlap Venn -->
-                        <div id="matchTopicOverlapBlock" style="display:none;margin-top:16px;">
-                            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:10px;">🗣 TOPIC OVERLAP — 대화 지형</div>
-                            <div id="matchTopicOverlapContent"></div>
-                        </div>
+                        <!-- v3.8.9: Topic Overlap Venn 은 STEP 04.5 PRISM 대조로 이관 (풍부한 형태로 확장) -->
 
                         <!-- 관계 구조 태그 — 목업 .struct-tags -->
                         <div id="matchStructTags" style="margin-bottom:24px;margin-top:20px;"></div>
@@ -5098,6 +5160,22 @@
 
                         <!-- 레거시 cross-sim 캐시 (숨김) -->
                         <div id="matchCrossSim" style="display:none;"></div>
+                    </div>
+                </section>
+
+                <!-- ═══ STEP 04.5: PRISM 대조 — v3.8.9 신설 ═══ -->
+                <section class="result-section" id="matchSectionPrism" style="display:none;">
+                    <div class="result-section-inner">
+                        <div class="step-indicator">STEP 04.5 — PRISM CROSS</div>
+                        <div class="section-heading-block">
+                            <h2>사유의 지형 대조</h2>
+                            <p>두 사람의 관심사 · 사유 깊이 · 호기심 스타일 · 어휘 정제도 개별 비교</p>
+                        </div>
+                        <div class="prism-cross-grid">
+                            <div class="prism-col a" id="matchPrismColA"></div>
+                            <div class="prism-col b" id="matchPrismColB"></div>
+                        </div>
+                        <div id="matchPrismAsymmetry" class="prism-asymmetry" style="display:none;"></div>
                     </div>
                 </section>
 
@@ -5127,6 +5205,15 @@
                                 <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:12px;">🌡 SCENARIO DRIFT — 상황별 축 이동</div>
                                 <div id="matchScenarioTabs" class="scenario-tabs"></div>
                                 <div id="matchScenarioPanel" class="scenario-panel"></div>
+                            </div>
+
+                            <!-- v3.8.9: 개별 자극-반응 구조 -->
+                            <div id="matchTrajIndividualBlock" style="display:none;margin-top:14px;background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:18px;">
+                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:12px;">◆ 개별 자극 반응</div>
+                                <div class="traj-individual-grid">
+                                    <div class="ti-col a" id="matchTrajColA"></div>
+                                    <div class="ti-col b" id="matchTrajColB"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -5182,6 +5269,15 @@
                                 <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1.5px;margin-bottom:10px;">RECOVERY RHYTHM — 회복 속도 격차</div>
                                 <div id="matchAnchorRecoveryBar"></div>
                                 <div id="matchAnchorRecoveryDesc" style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.7;margin-top:10px;"></div>
+                            </div>
+
+                            <!-- v3.8.9: 개별 ANCHOR 시그니처 -->
+                            <div id="matchAnchorIndividualBlock" style="display:none;margin-top:10px;">
+                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1.5px;margin-bottom:10px;border-top:1px dashed var(--glass-border);padding-top:14px;">◆ 개별 시그니처</div>
+                                <div class="anchor-individual-grid">
+                                    <div class="ind-card a" id="matchAnchorIndA"></div>
+                                    <div class="ind-card b" id="matchAnchorIndB"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -6600,7 +6696,8 @@
                     if (!pndPA.axes) pndPA.axes = pndAxesA;
                     if (!pndPB.identity) pndPB.identity = r.identityB;
                     if (!pndPB.axes) pndPB.axes = pndAxesB;
-                    renderMatchPhase2(pndPA, pndPB, matchId, sections, r.crossSituational || null, r.crossSim || null);
+                    renderMatchPhase2(pndPA, pndPB, matchId, sections, r.crossSituational || null, r.crossSim || null,
+                        r.prismA || null, r.prismB || null, r.anchorA || null, r.anchorB || null, r.simulationA || null, r.simulationB || null);
                 } catch(e) { console.error('[MatchPhase2 pnd]', e); }
                 if (r.crossSim && typeof buildCrossSimInsight === 'function') {
                     try {
@@ -6940,7 +7037,8 @@
                 if (!mPA.axes) mPA.axes = axesA;
                 if (!mPB.identity) mPB.identity = m.identityB;
                 if (!mPB.axes) mPB.axes = axesB;
-                renderMatchPhase2(mPA, mPB, mi, m.sections || null, m.crossSituational || null, m.crossSim || null);
+                renderMatchPhase2(mPA, mPB, mi, m.sections || null, m.crossSituational || null, m.crossSim || null,
+                    m.prismA || null, m.prismB || null, m.anchorA || null, m.anchorB || null, m.simulationA || null, m.simulationB || null);
             } catch(e) { console.log('[KNOT] MatchPhase2 error:', e.message); }
             // 레거시 캐시용
             if (m.crossSim && typeof buildCrossSimInsight === 'function') {
@@ -10197,13 +10295,253 @@ function displayResult() {
             container.innerHTML = html;
         }
 
-        // ─── v3.6.45 Phase 2 통합 헬퍼 (v3.7 R&D: crossSituational + crossSim 추가) ───
-        function renderMatchPhase2(pA, pB, matchIdentity, sections, crossSituational, crossSim) {
+        // ─── v3.6.45 Phase 2 통합 헬퍼 (v3.8.9: PRISM 대조 + 개별 ANCHOR/TRAJ 추가) ───
+        function renderMatchPhase2(pA, pB, matchIdentity, sections, crossSituational, crossSim, prismA, prismB, anchorA, anchorB, simulationA, simulationB) {
             try { renderMatchRarity(pA, pB); } catch (e) { console.error('[MatchPhase2 rarity]', e); }
             try { renderMatchDualTrajectory(pA, pB, sections); } catch (e) { console.error('[MatchPhase2 trajectory]', e); }
             try { renderMatchScenarioDrift(crossSituational); } catch (e) { console.error('[MatchPhase2 scenario]', e); }
             try { renderMatchOutlook(pA, pB, matchIdentity, sections); } catch (e) { console.error('[MatchPhase2 outlook]', e); }
             try { renderMatchAnchorCross(crossSim); } catch (e) { console.error('[MatchPhase2 anchorCross]', e); }
+            // v3.8.9
+            try { renderMatchPrismCross(prismA, prismB, crossSim); } catch (e) { console.error('[MatchPhase2 prismCross]', e); }
+            try { renderMatchAnchorIndividual(anchorA, anchorB); } catch (e) { console.error('[MatchPhase2 anchorIndividual]', e); }
+            try { renderMatchTrajIndividual(simulationA, simulationB); } catch (e) { console.error('[MatchPhase2 trajIndividual]', e); }
+        }
+
+        // ─── v3.8.9 · STEP 04.5 PRISM 대조 ───
+        function renderMatchPrismCross(prismA, prismB, crossSim) {
+            var sec = document.getElementById('matchSectionPrism');
+            if (!sec) return;
+            if (!prismA && !prismB) { sec.style.display = 'none'; return; }
+
+            const TOPIC_LABELS = {
+                'technology':'기술/개발', 'relationships':'관계/연애', 'daily_life':'일상',
+                'philosophy':'철학/사유', 'entertainment':'엔터', 'work':'직장/커리어',
+                'health':'건강', 'finance':'금융', 'art_culture':'예술/문화',
+                'sports':'스포츠', 'food':'음식', 'travel':'여행',
+                'education':'교육', 'politics_society':'정치/사회', 'nature_science':'자연과학',
+                'psychology':'심리학', 'humor':'유머', 'other':'기타'
+            };
+
+            function buildCol(prism, label) {
+                if (!prism) return '<div style="color:rgba(255,255,255,0.35);font-size:12px;padding:10px;">PRISM 데이터 없음</div>';
+                var topicsHTML = '';
+                var topicCount = 0;
+                var td = prism.topic_distribution;
+                if (td && typeof td === 'object') {
+                    var topics = td.topics || td;
+                    var entries = Object.entries(topics)
+                        .filter(function(e) { return e[1] && typeof e[1] === 'object' && typeof e[1].ratio === 'number'; })
+                        .sort(function(a, b) { return b[1].ratio - a[1].ratio; })
+                        .slice(0, 6);
+                    topicCount = entries.length;
+                    topicsHTML = entries.map(function(e) {
+                        return '<span class="prism-topic">' + sanitizeHTML(TOPIC_LABELS[e[0]] || e[0]) + ' ' + Math.round(e[1].ratio * 100) + '%</span>';
+                    }).join('');
+                }
+                var depth = prism.engagement && prism.engagement.overall_depth;
+                var depthMap = { surface:[3,1,0], medium:[1,3,1], deep:[1,1,3], variable:[2,2,2] };
+                var depthFlex = depthMap[depth] || [1,1,1];
+                var depthLabel = depth ? depth.toUpperCase() : '—';
+                var depthScore = prism.engagement && prism.engagement.depth_ratio
+                    ? (prism.engagement.depth_ratio.deep || 0).toFixed(2)
+                    : '—';
+                var vocabRefine = prism.vocabulary && prism.vocabulary.refinement_score != null
+                    ? prism.vocabulary.refinement_score.toFixed(2)
+                    : (prism.vocabulary && prism.vocabulary.lexical_diversity_raw != null
+                        ? prism.vocabulary.lexical_diversity_raw.toFixed(2)
+                        : '—');
+                var curiosity = prism.curiosity && prism.curiosity.prompt_intent || '—';
+                var questionRatio = prism.curiosity && prism.curiosity.question_ratio != null
+                    ? Math.round(prism.curiosity.question_ratio * 100) + '%'
+                    : '—';
+                var kg = prism.vocabulary && prism.vocabulary.knowledge_graph;
+                var kgMatches = kg && kg.total_matches != null ? kg.total_matches : '—';
+                var kgTerms = kg && kg.total_terms != null ? kg.total_terms : '—';
+
+                return (
+                    '<div class="prism-col-head">◆ ' + sanitizeHTML(label) + '</div>' +
+                    '<div class="prism-mono-label">TOP TOPICS (' + topicCount + ')</div>' +
+                    '<div class="prism-topics">' + (topicsHTML || '<span style="color:rgba(255,255,255,0.3);font-size:11px;">주제 분포 없음</span>') + '</div>' +
+                    '<div class="prism-metric"><span class="k">사유 깊이</span><span class="v">' + sanitizeHTML(depthScore) + ' · ' + sanitizeHTML(depthLabel) + '</span></div>' +
+                    '<div class="depth-bar"><div class="depth-seg depth-surface" style="flex:' + depthFlex[0] + '"></div><div class="depth-seg depth-medium" style="flex:' + depthFlex[1] + '"></div><div class="depth-seg depth-deep" style="flex:' + depthFlex[2] + '"></div></div>' +
+                    '<div class="prism-metric"><span class="k">어휘 정제도</span><span class="v">' + sanitizeHTML(vocabRefine) + '</span></div>' +
+                    '<div class="prism-metric"><span class="k">호기심 스타일</span><span class="v">' + sanitizeHTML(curiosity) + '</span></div>' +
+                    '<div class="prism-metric"><span class="k">질문율</span><span class="v">' + sanitizeHTML(questionRatio) + '</span></div>' +
+                    '<div class="prism-metric"><span class="k">KG 매칭 / 고유</span><span class="v">' + sanitizeHTML(String(kgMatches)) + ' / ' + sanitizeHTML(String(kgTerms)) + '</span></div>'
+                );
+            }
+
+            var nameA = '서현', nameB = '준호';
+            try {
+                if (window.currentProfile && window.currentProfile.identity) nameA = window.currentProfile.identity.archetype || window.currentProfile.identity.name || 'A';
+                if (window.matchProfile && window.matchProfile.identity) nameB = window.matchProfile.identity.archetype || window.matchProfile.identity.name || 'B';
+            } catch(e) {}
+
+            document.getElementById('matchPrismColA').innerHTML = buildCol(prismA, 'A · ' + nameA);
+            document.getElementById('matchPrismColB').innerHTML = buildCol(prismB, 'B · ' + nameB);
+
+            // Asymmetry — Jaccard + top topics 간략 서사
+            var asymEl = document.getElementById('matchPrismAsymmetry');
+            if (crossSim && crossSim.topicOverlap) {
+                var ov = crossSim.topicOverlap;
+                var jaccard = typeof ov.jaccard === 'number' ? ov.jaccard.toFixed(2) : null;
+                var sharedCount = Array.isArray(ov.shared) ? ov.shared.length : 0;
+                var uniqueACount = Array.isArray(ov.uniqueA) ? ov.uniqueA.length : 0;
+                var uniqueBCount = Array.isArray(ov.uniqueB) ? ov.uniqueB.length : 0;
+                var asymHTML = '<div class="label">∆ ASYMMETRY</div><p>';
+                if (jaccard) asymHTML += '주제 겹침 JACCARD <strong style="color:var(--ac)">' + jaccard + '</strong> · ';
+                asymHTML += '공유 ' + sharedCount + '개 · A 전용 ' + uniqueACount + '개 · B 전용 ' + uniqueBCount + '개. ';
+                if (ov.desc) asymHTML += sanitizeHTML(ov.desc);
+                asymHTML += '</p>';
+                asymEl.innerHTML = asymHTML;
+                asymEl.style.display = '';
+            } else {
+                asymEl.style.display = 'none';
+            }
+
+            sec.style.display = '';
+        }
+
+        // ─── v3.8.9 · ANCHOR 개별 시그니처 (STEP 06.5 내부) ───
+        function renderMatchAnchorIndividual(anchorA, anchorB) {
+            var block = document.getElementById('matchAnchorIndividualBlock');
+            var aEl = document.getElementById('matchAnchorIndA');
+            var bEl = document.getElementById('matchAnchorIndB');
+            if (!block || !aEl || !bEl) return;
+            if (!anchorA && !anchorB) { block.style.display = 'none'; return; }
+
+            const TEND_MAP = {
+                secure:'안정형', leans_secure:'안정 경향',
+                anxious:'불안형', leans_anxious:'불안 경향',
+                avoidant:'회피형', leans_avoidant:'회피 경향',
+                disorganized:'혼란형', leans_disorganized:'혼란 경향',
+                fearful_avoidant:'혼란 회피', unclear:'판정 불가'
+            };
+            const CONFLICT_MAP = {
+                direct_engagement:'직접 개입', diplomatic_approach:'외교적 접근',
+                strategic_withdrawal:'전략적 철수', avoidance:'회피',
+                escalation:'에스컬레이션'
+            };
+            const EA_MAP = {
+                empathic:'공감 중심', problem_solving:'문제 해결 중심',
+                dismissive:'경시', emotion_flooded:'감정 범람', balanced:'균형'
+            };
+            const GROWTH_MAP = {
+                active_growth:'능동적 성장', relational_growth:'관계적 성장',
+                passive:'수동적', unclear:'판정 불가'
+            };
+
+            function buildCard(anchor, label) {
+                if (!anchor) return '<div style="color:rgba(255,255,255,0.35);font-size:12px;padding:10px;">ANCHOR 데이터 없음</div>';
+                var att = anchor.attachment || {};
+                var primaryTend = att.primary_tendency || 'unclear';
+                var primaryScore = att.primary_score != null ? att.primary_score.toFixed(2)
+                    : (att.anxious_ratio != null ? att.anxious_ratio.toFixed(2) : '—');
+                var stressShift = att.stress_shift && att.stress_shift !== 'stable_under_pressure'
+                    ? sanitizeHTML(String(att.stress_shift).replace(/_/g, ' '))
+                    : '안정 유지';
+
+                var conf = anchor.conflict || {};
+                var confMode = conf.default_mode || 'diplomatic_approach';
+                var confFlex = conf.pattern_flexibility || 'medium';
+
+                var ea = anchor.emotional_availability || {};
+                var eaMode = ea.response_style || 'balanced';
+                var disclosure = ea.self_disclosure || '—';
+
+                var gr = anchor.growth || {};
+                var grOrient = gr.orientation || 'unclear';
+
+                return (
+                    '<div class="ind-head"><span>' + sanitizeHTML(label) + '</span><span style="color:rgba(255,255,255,0.3);font-size:9px;">ANCHOR</span></div>' +
+                    '<div class="ind-row"><div class="ind-row-label">애착</div><div class="ind-row-value"><span class="emph">' + sanitizeHTML(TEND_MAP[primaryTend] || primaryTend) + ' · ' + primaryScore + '</span><span class="sub">stress_shift: ' + stressShift + '</span></div></div>' +
+                    '<div class="ind-row"><div class="ind-row-label">갈등</div><div class="ind-row-value"><span class="emph">' + sanitizeHTML(CONFLICT_MAP[confMode] || confMode) + '</span><span class="sub">유연성: ' + sanitizeHTML(confFlex) + '</span></div></div>' +
+                    '<div class="ind-row"><div class="ind-row-label">정서 가용성</div><div class="ind-row-value"><span class="emph">' + sanitizeHTML(EA_MAP[eaMode] || eaMode) + '</span><span class="sub">자기 개방: ' + sanitizeHTML(disclosure) + '</span></div></div>' +
+                    '<div class="ind-row"><div class="ind-row-label">성장 지향</div><div class="ind-row-value"><span class="emph">' + sanitizeHTML(GROWTH_MAP[grOrient] || grOrient) + '</span></div></div>'
+                );
+            }
+
+            var nameA = 'A', nameB = 'B';
+            try {
+                if (window.currentProfile && window.currentProfile.identity) nameA = 'A · ' + (window.currentProfile.identity.archetype || window.currentProfile.identity.name || 'A');
+                if (window.matchProfile && window.matchProfile.identity) nameB = 'B · ' + (window.matchProfile.identity.archetype || window.matchProfile.identity.name || 'B');
+            } catch(e) {}
+
+            aEl.innerHTML = buildCard(anchorA, nameA);
+            bEl.innerHTML = buildCard(anchorB, nameB);
+            block.style.display = '';
+        }
+
+        // ─── v3.8.9 · TRAJECTORY 개별 자극 반응 (STEP 05 내부) ───
+        function renderMatchTrajIndividual(simA, simB) {
+            var block = document.getElementById('matchTrajIndividualBlock');
+            var aEl = document.getElementById('matchTrajColA');
+            var bEl = document.getElementById('matchTrajColB');
+            if (!block || !aEl || !bEl) return;
+            if (!simA && !simB) { block.style.display = 'none'; return; }
+
+            function buildCol(sim, label, color) {
+                if (!sim) return '<div style="color:rgba(255,255,255,0.35);font-size:12px;padding:10px;">시뮬레이션 데이터 없음</div>';
+
+                // Stimulus curve SVG (base → stress → peak → recov1 → recov2 → back)
+                var stim = sim.stimulus || {};
+                var baseE = sim.axes && sim.axes.emotion != null ? sim.axes.emotion : 0.5;
+                var stressE = stim.stress && stim.stress.shifted && stim.stress.shifted.E != null ? stim.stress.shifted.E : baseE;
+                var peakE = stim.stress && stim.stress.peak && stim.stress.peak.E != null ? stim.stress.peak.E : Math.min(1, stressE * 1.2);
+                var recov = stim.stress && stim.stress.recovery && Array.isArray(stim.stress.recovery.trajectory) ? stim.stress.recovery.trajectory : [];
+                var recov1 = recov[0] && recov[0].E != null ? recov[0].E : (peakE + baseE) / 2;
+                var recov2 = recov[1] && recov[1].E != null ? recov[1].E : (recov1 + baseE) / 2;
+                var backE = recov[recov.length - 1] && recov[recov.length - 1].E != null ? recov[recov.length - 1].E : baseE;
+                var pts = [baseE, stressE, peakE, recov1, recov2, backE];
+                // SVG path (300 wide, 100 tall; invert y because high E = up)
+                var xs = [0, 60, 120, 180, 240, 300];
+                var ys = pts.map(function(v) { return 90 - Math.max(0, Math.min(1, v)) * 80; });
+                var path = 'M ' + xs[0] + ' ' + ys[0];
+                for (var i = 1; i < xs.length; i++) path += ' L ' + xs[i] + ' ' + ys[i];
+                var circles = xs.map(function(x, i) { return '<circle cx="' + x + '" cy="' + ys[i] + '" r="3" fill="' + color + '"/>'; }).join('');
+                var svg = '<svg viewBox="0 0 300 100" preserveAspectRatio="none" style="width:100%;height:100%;">' +
+                    '<line x1="0" y1="50" x2="300" y2="50" stroke="rgba(255,255,255,0.08)" stroke-dasharray="2,3"/>' +
+                    '<path d="' + path + '" stroke="' + color + '" stroke-width="2" fill="none"/>' +
+                    circles +
+                    '<g fill="rgba(255,255,255,0.4)" font-family="JetBrains Mono" font-size="7">' +
+                    '<text x="0" y="98">base</text><text x="55" y="98">stress</text><text x="115" y="98">peak</text>' +
+                    '<text x="175" y="98">recov1</text><text x="235" y="98">recov2</text><text x="286" y="98">back</text>' +
+                    '</g></svg>';
+
+                var def = sim.defense || {};
+                var defName = def.name || def.code || '—';
+                var defDesc = def.desc || '';
+
+                var recovery = sim.risk && sim.risk.recovery_time || (stim.stress && stim.stress.recovery_time) || '—';
+                var volatility = sim.trajectory && sim.trajectory.volatility != null ? sim.trajectory.volatility.toFixed(2) : '—';
+                var peakEmoVal = Math.max(0, Math.min(1, peakE)).toFixed(2);
+                var riskLevel = sim.risk && sim.risk.level || (sim.risk && sim.risk.overall) || '—';
+                var riskDisplay = riskLevel === 'high' ? 'HIGH' : riskLevel === 'low' ? 'LOW' : riskLevel === 'medium' || riskLevel === 'moderate' ? 'MED' : String(riskLevel).toUpperCase();
+
+                return (
+                    '<div class="ti-head">' + sanitizeHTML(label) + ' · STIMULUS RESPONSE</div>' +
+                    '<div class="prism-mono-label">자극별 감정 반응 곡선</div>' +
+                    '<div class="ti-chart">' + svg + '</div>' +
+                    '<div class="ti-defense-row"><div class="label">PRIMARY DEFENSE</div><div class="val">' + sanitizeHTML(defName) + '</div>' + (defDesc ? '<div class="desc">' + sanitizeHTML(defDesc) + '</div>' : '') + '</div>' +
+                    '<div class="ti-metric-grid">' +
+                    '<div class="ti-metric"><div class="k">RECOVERY</div><div class="v">' + sanitizeHTML(String(recovery)) + '</div></div>' +
+                    '<div class="ti-metric"><div class="k">VOLATILITY</div><div class="v">' + sanitizeHTML(volatility) + '</div></div>' +
+                    '<div class="ti-metric"><div class="k">PEAK EMO</div><div class="v">' + peakEmoVal + '</div></div>' +
+                    '<div class="ti-metric"><div class="k">RISK</div><div class="v">' + sanitizeHTML(riskDisplay) + '</div></div>' +
+                    '</div>'
+                );
+            }
+
+            var nameA = 'A', nameB = 'B';
+            try {
+                if (window.currentProfile && window.currentProfile.identity) nameA = 'A · ' + (window.currentProfile.identity.archetype || window.currentProfile.identity.name || 'A');
+                if (window.matchProfile && window.matchProfile.identity) nameB = 'B · ' + (window.matchProfile.identity.archetype || window.matchProfile.identity.name || 'B');
+            } catch(e) {}
+
+            aEl.innerHTML = buildCol(simA, nameA, '#F5A623');
+            bEl.innerHTML = buildCol(simB, nameB, '#60A5FA');
+            block.style.display = '';
         }
 
         // ─── ANCHOR CROSS — 애착·갈등·회복 교차 ───
@@ -10991,7 +11329,13 @@ function displayResult() {
                 matchId,
                 llmMatch ? llmMatch.sections : null,
                 llmMatch ? (llmMatch.crossSituational || null) : null,
-                llmMatch ? (llmMatch.crossSimulation || null) : null
+                llmMatch ? (llmMatch.crossSimulation || null) : null,
+                llmMatch ? (llmMatch.prismA || null) : null,
+                llmMatch ? (llmMatch.prismB || null) : null,
+                llmMatch ? (llmMatch.anchorA || null) : null,
+                llmMatch ? (llmMatch.anchorB || null) : null,
+                llmMatch ? (llmMatch.simulationA || null) : null,
+                llmMatch ? (llmMatch.simulationB || null) : null
             );
 
             // Hide analyzing UI, show results
@@ -11703,7 +12047,8 @@ function displayResult() {
                         if (!sharePA.axes) sharePA.axes = axesA;
                         if (!sharePB.identity) sharePB.identity = idB;
                         if (!sharePB.axes) sharePB.axes = axesB;
-                        renderMatchPhase2(sharePA, sharePB, mi, profile.sections || null, profile.crossSituational || null, profile.crossSim || null);
+                        renderMatchPhase2(sharePA, sharePB, mi, profile.sections || null, profile.crossSituational || null, profile.crossSim || null,
+                            profile.prismA || null, profile.prismB || null, profile.anchorA || null, profile.anchorB || null, profile.simulationA || null, profile.simulationB || null);
                     } catch(e) { console.error('[MatchPhase2 share]', e); }
                     if (profile.crossSim && typeof buildCrossSimInsight === 'function') {
                         try {
