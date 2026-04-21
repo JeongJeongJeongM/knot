@@ -11872,7 +11872,7 @@ export default {
         }
         try {
           const rows = await db.prepare(
-            `SELECT id, name_a, name_b, compatibility, tension, growth, match_identity_json, sections_json, essay_text, profile_a_json, profile_b_json, cross_sim_json, cross_situational_json, compatibility_json, status, created_at
+            `SELECT id, name_a, name_b, compatibility, tension, growth, match_identity_json, sections_json, essay_text, profile_a_json, profile_b_json, cross_sim_json, cross_situational_json, prism_a_json, prism_b_json, anchor_a_json, anchor_b_json, simulation_a_json, simulation_b_json, compatibility_json, status, created_at
              FROM matches
              WHERE user_id = ? AND status = 'complete'
              ORDER BY created_at DESC
@@ -11898,6 +11898,13 @@ export default {
             try { crossSituational = r.cross_situational_json ? JSON.parse(r.cross_situational_json) : null; } catch {}
             let compatDetail = null;
             try { compatDetail = r.compatibility_json ? JSON.parse(r.compatibility_json) : null; } catch {}
+            // v3.8.8: 개별 PRISM/ANCHOR/simulation 복원
+            let prismA = null; try { prismA = r.prism_a_json ? JSON.parse(r.prism_a_json) : null; } catch {}
+            let prismB = null; try { prismB = r.prism_b_json ? JSON.parse(r.prism_b_json) : null; } catch {}
+            let anchorA = null; try { anchorA = r.anchor_a_json ? JSON.parse(r.anchor_a_json) : null; } catch {}
+            let anchorB = null; try { anchorB = r.anchor_b_json ? JSON.parse(r.anchor_b_json) : null; } catch {}
+            let simulationA = null; try { simulationA = r.simulation_a_json ? JSON.parse(r.simulation_a_json) : null; } catch {}
+            let simulationB = null; try { simulationB = r.simulation_b_json ? JSON.parse(r.simulation_b_json) : null; } catch {}
             return {
               id: r.id,
               name_a: r.name_a,
@@ -11912,6 +11919,7 @@ export default {
               crossSim,
               crossSituational,
               compatDetail,
+              prismA, prismB, anchorA, anchorB, simulationA, simulationB,
               essay_text: r.essay_text,
               created_at: r.created_at
             };
@@ -11941,6 +11949,36 @@ export default {
           results.push({ sql: 'ALTER TABLE matches ADD cross_situational_json', ok: already, skipped: already, error: already ? null : msg });
         }
         return jsonResponse({ migrated: 'matches.cross_situational_json', results }, 200, corsHeaders);
+      }
+
+      // ──── GET /migrate-match-profiles-detail ── v3.8.8: 개별 PRISM/ANCHOR/simulation 저장 ────
+      //   기존엔 profile_a_json / profile_b_json 에 axes+identity 만 저장됨.
+      //   각자의 prism (주제지형·호기심·사유깊이), anchor (애착·갈등·정서가용성),
+      //   simulation (trajectory·stimulus·defense·risk·situational) 전체를 별 컬럼으로 persist.
+      if (request.method === 'GET' && url.pathname === '/migrate-match-profiles-detail') {
+        const key = url.searchParams.get('key');
+        if (!env.ADMIN_KEY || !key || key !== env.ADMIN_KEY) {
+          return new Response('Unauthorized', { status: 401 });
+        }
+        const db = env.KNOT_DB;
+        if (!db) return new Response('DB not configured', { status: 500 });
+        const cols = [
+          'prism_a_json', 'prism_b_json',
+          'anchor_a_json', 'anchor_b_json',
+          'simulation_a_json', 'simulation_b_json',
+        ];
+        const results = [];
+        for (const col of cols) {
+          try {
+            await db.prepare(`ALTER TABLE matches ADD COLUMN ${col} TEXT`).run();
+            results.push({ sql: `ALTER TABLE matches ADD ${col}`, ok: true });
+          } catch (e) {
+            const msg = String(e.message || '');
+            const already = /duplicate column|already exists/i.test(msg);
+            results.push({ sql: `ALTER TABLE matches ADD ${col}`, ok: already, skipped: already, error: already ? null : msg });
+          }
+        }
+        return jsonResponse({ migrated: 'matches.profile_details', results }, 200, corsHeaders);
       }
 
       // ──── GET /migrate-vocab ── v3.6.31 비파괴 마이그레이션 (신규 테이블만) ────
@@ -12007,7 +12045,7 @@ export default {
           `CREATE INDEX idx_essays_analysis ON essays(analysis_id)`,
 
           // 5. matches
-          `CREATE TABLE matches (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), analysis_a_id TEXT REFERENCES analyses(id), analysis_b_id TEXT REFERENCES analyses(id), name_a TEXT, name_b TEXT, compatibility INTEGER, tension TEXT, growth TEXT, compatibility_json TEXT, cross_sim_json TEXT, cross_situational_json TEXT, match_identity_json TEXT, essay_text TEXT, sections_json TEXT, profile_a_json TEXT, profile_b_json TEXT, status TEXT DEFAULT 'processing', created_at TEXT DEFAULT (datetime('now')))`,
+          `CREATE TABLE matches (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), analysis_a_id TEXT REFERENCES analyses(id), analysis_b_id TEXT REFERENCES analyses(id), name_a TEXT, name_b TEXT, compatibility INTEGER, tension TEXT, growth TEXT, compatibility_json TEXT, cross_sim_json TEXT, cross_situational_json TEXT, match_identity_json TEXT, essay_text TEXT, sections_json TEXT, profile_a_json TEXT, profile_b_json TEXT, prism_a_json TEXT, prism_b_json TEXT, anchor_a_json TEXT, anchor_b_json TEXT, simulation_a_json TEXT, simulation_b_json TEXT, status TEXT DEFAULT 'processing', created_at TEXT DEFAULT (datetime('now')))`,
           `CREATE INDEX idx_matches_user ON matches(user_id)`,
           `CREATE INDEX idx_matches_date ON matches(created_at)`,
 
@@ -12441,7 +12479,7 @@ function switchTab(id, el) {
 
       try {
         const row = await env.KNOT_DB.prepare(
-          `SELECT id, name_a, name_b, compatibility, tension, growth, match_identity_json, essay_text, sections_json, profile_a_json, profile_b_json, cross_sim_json, cross_situational_json, compatibility_json, status, created_at
+          `SELECT id, name_a, name_b, compatibility, tension, growth, match_identity_json, essay_text, sections_json, profile_a_json, profile_b_json, cross_sim_json, cross_situational_json, prism_a_json, prism_b_json, anchor_a_json, anchor_b_json, simulation_a_json, simulation_b_json, compatibility_json, status, created_at
            FROM matches
            WHERE user_id = ? AND created_at >= datetime('now', '-7 days')
            ORDER BY created_at DESC LIMIT 1`
@@ -12456,6 +12494,7 @@ function switchTab(id, el) {
         }
 
         let matchIdentity = null, sections = null, profileA = null, profileB = null, crossSim = null, crossSituational = null, compatDetail = null;
+        let prismA = null, prismB = null, anchorA = null, anchorB = null, simulationA = null, simulationB = null;
         try { matchIdentity = row.match_identity_json ? JSON.parse(row.match_identity_json) : null; } catch {}
         try { sections = row.sections_json ? JSON.parse(row.sections_json) : null; } catch {}
         try { profileA = row.profile_a_json ? JSON.parse(row.profile_a_json) : null; } catch {}
@@ -12463,6 +12502,12 @@ function switchTab(id, el) {
         try { crossSim = row.cross_sim_json ? JSON.parse(row.cross_sim_json) : null; } catch {}
         try { crossSituational = row.cross_situational_json ? JSON.parse(row.cross_situational_json) : null; } catch {}
         try { compatDetail = row.compatibility_json ? JSON.parse(row.compatibility_json) : null; } catch {}
+        try { prismA = row.prism_a_json ? JSON.parse(row.prism_a_json) : null; } catch {}
+        try { prismB = row.prism_b_json ? JSON.parse(row.prism_b_json) : null; } catch {}
+        try { anchorA = row.anchor_a_json ? JSON.parse(row.anchor_a_json) : null; } catch {}
+        try { anchorB = row.anchor_b_json ? JSON.parse(row.anchor_b_json) : null; } catch {}
+        try { simulationA = row.simulation_a_json ? JSON.parse(row.simulation_a_json) : null; } catch {}
+        try { simulationB = row.simulation_b_json ? JSON.parse(row.simulation_b_json) : null; } catch {}
 
         // essay_text에서 sections 파싱 시도 (fallback)
         if (!sections && row.essay_text) {
@@ -12494,6 +12539,7 @@ function switchTab(id, el) {
             crossSim,
             crossSituational,
             compatDetail,
+            prismA, prismB, anchorA, anchorB, simulationA, simulationB,
           }
         }, 200, corsHeaders);
       } catch (e) {
@@ -13368,7 +13414,7 @@ function switchTab(id, el) {
                 }
 
                 await env.KNOT_DB.prepare(
-                  `INSERT INTO matches (id, user_id, name_a, name_b, compatibility, tension, growth, compatibility_json, cross_sim_json, cross_situational_json, match_identity_json, essay_text, sections_json, profile_a_json, profile_b_json, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'complete', datetime('now'))`
+                  `INSERT INTO matches (id, user_id, name_a, name_b, compatibility, tension, growth, compatibility_json, cross_sim_json, cross_situational_json, match_identity_json, essay_text, sections_json, profile_a_json, profile_b_json, prism_a_json, prism_b_json, anchor_a_json, anchor_b_json, simulation_a_json, simulation_b_json, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'complete', datetime('now'))`
                 ).bind(
                   matchDbId,
                   matchUserId,
@@ -13385,6 +13431,12 @@ function switchTab(id, el) {
                   sectionsJson,
                   JSON.stringify({ axes: profileA.axes || profileA }),
                   JSON.stringify({ axes: profileB.axes || profileB }),
+                  prismA ? JSON.stringify(prismA) : null,
+                  prismB ? JSON.stringify(prismB) : null,
+                  anchorA ? JSON.stringify(anchorA) : null,
+                  anchorB ? JSON.stringify(anchorB) : null,
+                  simA ? JSON.stringify(simA) : null,
+                  simB ? JSON.stringify(simB) : null,
                 ).run();
                 console.log(`[D1 Match] Saved match ${matchDbId}`);
               } catch (dbErr) {

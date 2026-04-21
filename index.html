@@ -6987,6 +6987,13 @@
                 crossSituational: m.crossSituational || null,  // v3.8.6
                 compatDetail: m.compatDetail || null,
                 sections: m.sections || [],
+                // v3.8.8: 개별 PRISM/ANCHOR/simulation
+                prismA: m.prismA || null,
+                prismB: m.prismB || null,
+                anchorA: m.anchorA || null,
+                anchorB: m.anchorB || null,
+                simulationA: m.simulationA || null,
+                simulationB: m.simulationB || null,
                 compatibility: m.compatibility != null ? m.compatibility : (mi.compatibility || 0),
                 timestamp: m.created_at || new Date().toISOString()
             };
@@ -11000,9 +11007,16 @@ function displayResult() {
                 profileA: { axes: currentProfile.axes, identity: idA, simulation: currentProfile.simulation || null },
                 profileB: { axes: matchProfile.axes, identity: idB, simulation: matchProfile.simulation || null },
                 crossSim: llmMatch ? llmMatch.crossSimulation : null,
-                crossSituational: llmMatch ? llmMatch.crossSituational : null,  // v3.8.6: Scenario Drift 복원용
+                crossSituational: llmMatch ? llmMatch.crossSituational : null,  // v3.8.6
                 compatDetail: llmMatch ? llmMatch.serverCompatibility : null,
                 sections: llmMatch ? llmMatch.sections : [],
+                // v3.8.8: 개별 PRISM/ANCHOR/simulation 보존 (공유·이전 매칭 복원용)
+                prismA: llmMatch ? llmMatch.prismA : null,
+                prismB: llmMatch ? llmMatch.prismB : null,
+                anchorA: llmMatch ? llmMatch.anchorA : null,
+                anchorB: llmMatch ? llmMatch.anchorB : null,
+                simulationA: llmMatch ? llmMatch.simulationA : null,
+                simulationB: llmMatch ? llmMatch.simulationB : null,
                 compatibility: matchId.compatibility || 0,
                 timestamp: new Date().toISOString()
             };
@@ -12123,9 +12137,16 @@ function displayResult() {
                     profileA: cached.profileA,
                     profileB: cached.profileB,
                     crossSim: cached.crossSim,
-                    crossSituational: cached.crossSituational,  // v3.8.6: Scenario Drift 복원용
+                    crossSituational: cached.crossSituational,  // v3.8.6
                     compatDetail: cached.compatDetail,
                     sections: cached.sections,
+                    // v3.8.8: 개별 PRISM/ANCHOR/simulation
+                    prismA: cached.prismA,
+                    prismB: cached.prismB,
+                    anchorA: cached.anchorA,
+                    anchorB: cached.anchorB,
+                    simulationA: cached.simulationA,
+                    simulationB: cached.simulationB,
                     compatibility: cached.compatibility,
                     timestamp: cached.timestamp
                 };
