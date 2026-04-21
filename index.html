@@ -10886,8 +10886,11 @@ function displayResult() {
 
             // LLM or fallback analysis
             let analysis;
+            // v3.8.5: llmMatch 를 블록 밖으로 올림 — 아래 renderMatchPhase2·_lastMatchResult 에서
+            //   참조하는데 const block-scoped 라 ReferenceError 났었음
+            let llmMatch = null;
             if (USE_LLM) {
-                const llmMatch = await callWorkerMatch(currentProfile, matchProfile, idA, idB, matchId);
+                llmMatch = await callWorkerMatch(currentProfile, matchProfile, idA, idB, matchId);
                 if (llmMatch && llmMatch.sections && Array.isArray(llmMatch.sections)) {
                     if (llmMatch.serverMatchIdentity) {
                         matchId = {
