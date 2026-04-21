@@ -6984,6 +6984,7 @@
                 profileA: { axes: axesA, identity: idA },
                 profileB: { axes: axesB, identity: idB },
                 crossSim: m.crossSim || null,
+                crossSituational: m.crossSituational || null,  // v3.8.6
                 compatDetail: m.compatDetail || null,
                 sections: m.sections || [],
                 compatibility: m.compatibility != null ? m.compatibility : (mi.compatibility || 0),
@@ -10999,6 +11000,7 @@ function displayResult() {
                 profileA: { axes: currentProfile.axes, identity: idA, simulation: currentProfile.simulation || null },
                 profileB: { axes: matchProfile.axes, identity: idB, simulation: matchProfile.simulation || null },
                 crossSim: llmMatch ? llmMatch.crossSimulation : null,
+                crossSituational: llmMatch ? llmMatch.crossSituational : null,  // v3.8.6: Scenario Drift 복원용
                 compatDetail: llmMatch ? llmMatch.serverCompatibility : null,
                 sections: llmMatch ? llmMatch.sections : [],
                 compatibility: matchId.compatibility || 0,
@@ -12121,6 +12123,7 @@ function displayResult() {
                     profileA: cached.profileA,
                     profileB: cached.profileB,
                     crossSim: cached.crossSim,
+                    crossSituational: cached.crossSituational,  // v3.8.6: Scenario Drift 복원용
                     compatDetail: cached.compatDetail,
                     sections: cached.sections,
                     compatibility: cached.compatibility,
