@@ -13413,6 +13413,16 @@ function switchTab(id, el) {
                   }
                 }
 
+                // v3.8.10: 자동 스키마 자가치유 — 기존 DB 에 새 컬럼 없어도 한 번만 시도 후 진행
+                //   글로벌 캐시 플래그로 반복 ALTER 방지 (Worker isolate 마다 1회)
+                if (!globalThis.__kg_matches_schema_ready) {
+                  const newCols = ['cross_situational_json', 'prism_a_json', 'prism_b_json', 'anchor_a_json', 'anchor_b_json', 'simulation_a_json', 'simulation_b_json'];
+                  for (const col of newCols) {
+                    try { await env.KNOT_DB.prepare(`ALTER TABLE matches ADD COLUMN ${col} TEXT`).run(); }
+                    catch (e) { /* 이미 있거나 다른 이유 — 조용히 무시 */ }
+                  }
+                  globalThis.__kg_matches_schema_ready = true;
+                }
                 await env.KNOT_DB.prepare(
                   `INSERT INTO matches (id, user_id, name_a, name_b, compatibility, tension, growth, compatibility_json, cross_sim_json, cross_situational_json, match_identity_json, essay_text, sections_json, profile_a_json, profile_b_json, prism_a_json, prism_b_json, anchor_a_json, anchor_b_json, simulation_a_json, simulation_b_json, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'complete', datetime('now'))`
                 ).bind(
