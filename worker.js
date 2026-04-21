@@ -11872,7 +11872,7 @@ export default {
         }
         try {
           const rows = await db.prepare(
-            `SELECT id, name_a, name_b, compatibility, tension, growth, match_identity_json, sections_json, essay_text, profile_a_json, profile_b_json, cross_sim_json, compatibility_json, status, created_at
+            `SELECT id, name_a, name_b, compatibility, tension, growth, match_identity_json, sections_json, essay_text, profile_a_json, profile_b_json, cross_sim_json, cross_situational_json, compatibility_json, status, created_at
              FROM matches
              WHERE user_id = ? AND status = 'complete'
              ORDER BY created_at DESC
@@ -11894,6 +11894,8 @@ export default {
             }
             let crossSim = null;
             try { crossSim = r.cross_sim_json ? JSON.parse(r.cross_sim_json) : null; } catch {}
+            let crossSituational = null;
+            try { crossSituational = r.cross_situational_json ? JSON.parse(r.cross_situational_json) : null; } catch {}
             let compatDetail = null;
             try { compatDetail = r.compatibility_json ? JSON.parse(r.compatibility_json) : null; } catch {}
             return {
@@ -11908,6 +11910,7 @@ export default {
               profileB,
               sections,
               crossSim,
+              crossSituational,
               compatDetail,
               essay_text: r.essay_text,
               created_at: r.created_at
@@ -11917,6 +11920,27 @@ export default {
         } catch (e) {
           return jsonResponse({ error: e.message }, 500, corsHeaders);
         }
+      }
+
+      // ──── GET /migrate-match-situational ── v3.8.6: matches.cross_situational_json 추가 ────
+      if (request.method === 'GET' && url.pathname === '/migrate-match-situational') {
+        const key = url.searchParams.get('key');
+        if (!env.ADMIN_KEY || !key || key !== env.ADMIN_KEY) {
+          return new Response('Unauthorized', { status: 401 });
+        }
+        const db = env.KNOT_DB;
+        if (!db) return new Response('DB not configured', { status: 500 });
+        // SQLite 는 ALTER TABLE ADD COLUMN IF NOT EXISTS 미지원 → try/catch 로 "이미 있음" 흡수
+        const results = [];
+        try {
+          await db.prepare(`ALTER TABLE matches ADD COLUMN cross_situational_json TEXT`).run();
+          results.push({ sql: 'ALTER TABLE matches ADD cross_situational_json', ok: true });
+        } catch (e) {
+          const msg = String(e.message || '');
+          const already = /duplicate column|already exists/i.test(msg);
+          results.push({ sql: 'ALTER TABLE matches ADD cross_situational_json', ok: already, skipped: already, error: already ? null : msg });
+        }
+        return jsonResponse({ migrated: 'matches.cross_situational_json', results }, 200, corsHeaders);
       }
 
       // ──── GET /migrate-vocab ── v3.6.31 비파괴 마이그레이션 (신규 테이블만) ────
@@ -11983,7 +12007,7 @@ export default {
           `CREATE INDEX idx_essays_analysis ON essays(analysis_id)`,
 
           // 5. matches
-          `CREATE TABLE matches (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), analysis_a_id TEXT REFERENCES analyses(id), analysis_b_id TEXT REFERENCES analyses(id), name_a TEXT, name_b TEXT, compatibility INTEGER, tension TEXT, growth TEXT, compatibility_json TEXT, cross_sim_json TEXT, match_identity_json TEXT, essay_text TEXT, sections_json TEXT, profile_a_json TEXT, profile_b_json TEXT, status TEXT DEFAULT 'processing', created_at TEXT DEFAULT (datetime('now')))`,
+          `CREATE TABLE matches (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), analysis_a_id TEXT REFERENCES analyses(id), analysis_b_id TEXT REFERENCES analyses(id), name_a TEXT, name_b TEXT, compatibility INTEGER, tension TEXT, growth TEXT, compatibility_json TEXT, cross_sim_json TEXT, cross_situational_json TEXT, match_identity_json TEXT, essay_text TEXT, sections_json TEXT, profile_a_json TEXT, profile_b_json TEXT, status TEXT DEFAULT 'processing', created_at TEXT DEFAULT (datetime('now')))`,
           `CREATE INDEX idx_matches_user ON matches(user_id)`,
           `CREATE INDEX idx_matches_date ON matches(created_at)`,
 
@@ -12417,7 +12441,7 @@ function switchTab(id, el) {
 
       try {
         const row = await env.KNOT_DB.prepare(
-          `SELECT id, name_a, name_b, compatibility, tension, growth, match_identity_json, essay_text, sections_json, profile_a_json, profile_b_json, cross_sim_json, compatibility_json, status, created_at
+          `SELECT id, name_a, name_b, compatibility, tension, growth, match_identity_json, essay_text, sections_json, profile_a_json, profile_b_json, cross_sim_json, cross_situational_json, compatibility_json, status, created_at
            FROM matches
            WHERE user_id = ? AND created_at >= datetime('now', '-7 days')
            ORDER BY created_at DESC LIMIT 1`
@@ -12431,12 +12455,13 @@ function switchTab(id, el) {
           return jsonResponse({ found: true, status: row.status, created_at: row.created_at }, 200, corsHeaders);
         }
 
-        let matchIdentity = null, sections = null, profileA = null, profileB = null, crossSim = null, compatDetail = null;
+        let matchIdentity = null, sections = null, profileA = null, profileB = null, crossSim = null, crossSituational = null, compatDetail = null;
         try { matchIdentity = row.match_identity_json ? JSON.parse(row.match_identity_json) : null; } catch {}
         try { sections = row.sections_json ? JSON.parse(row.sections_json) : null; } catch {}
         try { profileA = row.profile_a_json ? JSON.parse(row.profile_a_json) : null; } catch {}
         try { profileB = row.profile_b_json ? JSON.parse(row.profile_b_json) : null; } catch {}
         try { crossSim = row.cross_sim_json ? JSON.parse(row.cross_sim_json) : null; } catch {}
+        try { crossSituational = row.cross_situational_json ? JSON.parse(row.cross_situational_json) : null; } catch {}
         try { compatDetail = row.compatibility_json ? JSON.parse(row.compatibility_json) : null; } catch {}
 
         // essay_text에서 sections 파싱 시도 (fallback)
@@ -12467,6 +12492,7 @@ function switchTab(id, el) {
             profileA,
             profileB,
             crossSim,
+            crossSituational,
             compatDetail,
           }
         }, 200, corsHeaders);
@@ -13342,7 +13368,7 @@ function switchTab(id, el) {
                 }
 
                 await env.KNOT_DB.prepare(
-                  `INSERT INTO matches (id, user_id, name_a, name_b, compatibility, tension, growth, compatibility_json, cross_sim_json, match_identity_json, essay_text, sections_json, profile_a_json, profile_b_json, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'complete', datetime('now'))`
+                  `INSERT INTO matches (id, user_id, name_a, name_b, compatibility, tension, growth, compatibility_json, cross_sim_json, cross_situational_json, match_identity_json, essay_text, sections_json, profile_a_json, profile_b_json, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'complete', datetime('now'))`
                 ).bind(
                   matchDbId,
                   matchUserId,
@@ -13353,6 +13379,7 @@ function switchTab(id, el) {
                   effectiveMatchIdentity.growth || '보통',
                   serverCompatibility ? JSON.stringify(serverCompatibility) : null,
                   crossSim ? JSON.stringify(crossSim) : null,
+                  crossSituational ? JSON.stringify(crossSituational) : null,
                   JSON.stringify(effectiveMatchIdentity),
                   fullText,
                   sectionsJson,
