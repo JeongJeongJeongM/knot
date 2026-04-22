@@ -4328,6 +4328,156 @@
         #trajSplit{height:460px}
         #trajSplit .lens-panel{height:100%}
         #trajSplit::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);z-index:1}
+
+        /* ═══ v3.9.0 COUPLE REDESIGN ═══ */
+        .v39-section{max-width:780px;margin:0 auto;padding:64px 24px 48px;border-top:1px solid #1A1A2E}
+        .v39-section:first-of-type{border-top:none}
+        .v39-meta{display:flex;gap:10px;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:#4A4A60;letter-spacing:0.08em;margin-bottom:14px}
+        .v39-meta b{color:#F5A623;font-weight:600}
+        .v39-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;margin-bottom:4px;color:#E8E8F0}
+        .v39-subtitle{color:#7A7A92;font-size:14px;margin-bottom:28px}
+        .v39-tier1{font-size:16px;line-height:1.7;color:#E8E8F0;background:rgba(245,166,35,0.12);border-left:2px solid #F5A623;padding:14px 18px;border-radius:0 8px 8px 0;margin-bottom:24px}
+        .v39-tier1 b{color:#F5A623;font-weight:700}
+        .v39-bridge{margin:40px auto 0;max-width:560px;text-align:center;color:#4A4A60;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.15em}
+        .v39-bridge::before{content:'↓ ';color:#F5A623}
+
+        /* VERDICT */
+        .v39-verdict{max-width:780px;margin:0 auto;padding:96px 24px 64px;text-align:center}
+        .v39-verdict .rarity-line{font-family:'JetBrains Mono',monospace;font-size:11px;color:#4A4A60;letter-spacing:0.15em;margin-bottom:24px}
+        .v39-archetype{font-size:44px;font-weight:800;letter-spacing:-0.02em;line-height:1.15;margin-bottom:18px;color:#E8E8F0}
+        .v39-archetype .em{color:#F5A623}
+        .v39-verdict-sentence{font-size:18px;line-height:1.7;color:#7A7A92;max-width:560px;margin:0 auto 48px}
+        .v39-verdict-sentence b{color:#E8E8F0;font-weight:600}
+        .v39-dual-hero{display:grid;grid-template-columns:1fr auto 1fr;gap:32px;align-items:center;margin:0 auto 36px;max-width:560px}
+        .v39-pill{text-align:center}
+        .v39-pill .emoji{font-size:42px;line-height:1;margin-bottom:8px}
+        .v39-pill .name{font-size:15px;font-weight:600;color:#E8E8F0}
+        .v39-pill .code{font-family:'JetBrains Mono',monospace;font-size:10px;color:#4A4A60;margin-top:2px;letter-spacing:0.08em}
+        .v39-pill.a .emoji{filter:drop-shadow(0 0 16px rgba(96,165,250,0.3))}
+        .v39-pill.b .emoji{filter:drop-shadow(0 0 16px rgba(167,139,250,0.3))}
+        .v39-ring{position:relative;width:128px;height:128px}
+        .v39-ring svg{transform:rotate(-90deg)}
+        .v39-ring circle{fill:none;stroke-width:4}
+        .v39-ring .track{stroke:#252540}
+        .v39-ring .fill{stroke:#F5A623;stroke-linecap:round;transition:stroke-dashoffset 1.2s ease}
+        .v39-ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+        .v39-ring .num b{font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:700;color:#E8E8F0;line-height:1}
+        .v39-ring .num span{font-family:'JetBrains Mono',monospace;font-size:9px;color:#4A4A60;letter-spacing:0.2em;margin-top:4px}
+        .v39-chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+        .v39-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#11111E;border:1px solid #1A1A2E;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#7A7A92}
+        .v39-chip b{color:#F5A623}
+        .v39-chip.growth b{color:#34D399}
+        .v39-chip.tension b{color:#EF4444}
+
+        /* MAP tornado */
+        .v39-tornado{margin-bottom:48px}
+        .v39-thead{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#4A4A60;letter-spacing:0.15em;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #1A1A2E}
+        .v39-thead .l{text-align:right;color:#60A5FA}
+        .v39-thead .r{text-align:left;color:#A78BFA}
+        .v39-trow{display:grid;grid-template-columns:1fr 80px 1fr;align-items:center;gap:12px;padding:6px 0}
+        .v39-trow .axis-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:#7A7A92;text-align:center;letter-spacing:0.1em}
+        .v39-trow .bar-wrap{position:relative;height:18px;background:#11111E;border-radius:3px;overflow:hidden}
+        .v39-trow .bar-wrap.left{display:flex;justify-content:flex-end}
+        .v39-trow .bar-wrap.right{display:flex;justify-content:flex-start}
+        .v39-trow .bar{height:100%;background:linear-gradient(90deg,#60A5FA,#818cf8);border-radius:3px;position:relative}
+        .v39-trow .bar-wrap.right .bar{background:linear-gradient(90deg,#A78BFA,#c4b5fd)}
+        .v39-trow .val{font-family:'JetBrains Mono',monospace;font-size:10px;color:#E8E8F0;padding:0 8px;line-height:18px;font-weight:600}
+        .v39-trow.top .bar{box-shadow:0 0 12px rgba(96,165,250,0.3)}
+        .v39-trow.top .bar-wrap.right .bar{box-shadow:0 0 12px rgba(167,139,250,0.3)}
+        .v39-tcap{margin-top:14px;font-size:13px;color:#7A7A92;text-align:center}
+        .v39-tcap b{color:#F5A623}
+
+        /* Attachment plot */
+        .v39-attach-wrap{background:#0C0C16;border:1px solid #1A1A2E;border-radius:14px;padding:28px 24px}
+        .v39-attach-title{font-family:'JetBrains Mono',monospace;font-size:11px;color:#4A4A60;letter-spacing:0.15em;margin-bottom:20px;text-align:center}
+        .v39-plot{position:relative;width:280px;height:280px;margin:0 auto;background:linear-gradient(90deg,transparent 49.5%,#252540 49.5%,#252540 50.5%,transparent 50.5%),linear-gradient(0deg,transparent 49.5%,#252540 49.5%,#252540 50.5%,transparent 50.5%);border:1px solid #1A1A2E}
+        .v39-plot .quad{position:absolute;font-family:'JetBrains Mono',monospace;font-size:9px;color:#4A4A60;letter-spacing:0.1em}
+        .v39-plot .quad.tl{top:8px;left:8px} .v39-plot .quad.tr{top:8px;right:8px}
+        .v39-plot .quad.bl{bottom:8px;left:8px} .v39-plot .quad.br{bottom:8px;right:8px}
+        .v39-plot .dot{position:absolute;width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%);border:2px solid #07070C;box-shadow:0 0 16px currentColor}
+        .v39-plot .dot.a{background:#60A5FA;color:#60A5FA}
+        .v39-plot .dot.b{background:#A78BFA;color:#A78BFA}
+        .v39-plot .dot-label{position:absolute;transform:translate(-50%,10px);font-family:'JetBrains Mono',monospace;font-size:10px;white-space:nowrap}
+        .v39-plot .dot-label.a{color:#60A5FA} .v39-plot .dot-label.b{color:#A78BFA}
+        .v39-attach-cap{margin-top:20px;text-align:center;font-size:13px;color:#7A7A92}
+        .v39-attach-cap b{color:#F5A623;font-family:'JetBrains Mono',monospace}
+
+        /* PATTERN */
+        .v39-pattern-name{font-size:26px;font-weight:700;letter-spacing:-0.01em;margin-bottom:10px;color:#E8E8F0}
+        .v39-pattern-name .em{color:#F5A623}
+        .v39-pattern-sub{color:#7A7A92;font-size:14px;margin-bottom:32px}
+        .v39-insights{display:flex;flex-direction:column;gap:14px;margin-bottom:36px}
+        .v39-insight{background:#0C0C16;border:1px solid #1A1A2E;border-left:3px solid #60A5FA;border-radius:0 10px 10px 0;padding:16px 20px}
+        .v39-insight.b{border-left-color:#A78BFA}
+        .v39-insight.both{border-left-color:#F5A623;background:linear-gradient(90deg,rgba(245,166,35,0.12),transparent 40%)}
+        .v39-insight .tag{font-family:'JetBrains Mono',monospace;font-size:10px;color:#4A4A60;letter-spacing:0.12em;margin-bottom:6px}
+        .v39-insight .tag .a{color:#60A5FA} .v39-insight .tag .b{color:#A78BFA}
+        .v39-insight p{font-size:15px;line-height:1.7;color:#E8E8F0;margin:0}
+        .v39-insight p b{color:#F5A623;font-weight:600}
+        .v39-loopwrap{background:#0C0C16;border:1px solid #1A1A2E;border-radius:14px;padding:28px 24px}
+        .v39-loop-title{font-family:'JetBrains Mono',monospace;font-size:11px;color:#4A4A60;letter-spacing:0.15em;margin-bottom:6px}
+        .v39-loop-label{font-size:16px;font-weight:600;margin-bottom:22px;color:#E8E8F0}
+        .v39-loop{display:flex;align-items:stretch;justify-content:center;gap:0;flex-wrap:wrap}
+        .v39-loop-node{flex:1;min-width:140px;background:#11111E;border:1px solid #1A1A2E;padding:14px 12px;border-radius:10px;text-align:center}
+        .v39-loop-node .who{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.15em;margin-bottom:6px}
+        .v39-loop-node.a .who{color:#60A5FA} .v39-loop-node.b .who{color:#A78BFA}
+        .v39-loop-node .act{font-size:13px;line-height:1.5;color:#E8E8F0}
+        .v39-loop-arrow{align-self:center;padding:0 10px;color:#4A4A60;font-size:16px}
+        @media(max-width:600px){.v39-loop{flex-direction:column}.v39-loop-arrow{padding:6px 0;transform:rotate(90deg)}}
+        .v39-loop-cap{margin-top:18px;font-size:13px;color:#7A7A92;text-align:center}
+        .v39-loop-cap b{color:#EF4444;font-weight:600}
+
+        /* ARC */
+        .v39-arc-chart{background:#0C0C16;border:1px solid #1A1A2E;border-radius:14px;padding:24px 20px 18px;margin-bottom:28px}
+        .v39-arc-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#4A4A60;letter-spacing:0.1em}
+        .v39-arc-head .legend{display:flex;gap:14px}
+        .v39-arc-head .legend span{display:inline-flex;align-items:center;gap:6px}
+        .v39-arc-head .legend i{display:inline-block;width:10px;height:2px;border-radius:1px}
+        .v39-arc-head .legend .a i{background:#60A5FA}
+        .v39-arc-head .legend .b i{background:#A78BFA}
+        .v39-arc-chart svg{display:block;width:100%;height:auto}
+        .v39-ra-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        @media(max-width:600px){.v39-ra-pair{grid-template-columns:1fr}}
+        .v39-ra{background:#0C0C16;border:1px solid #1A1A2E;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column}
+        .v39-ra.risk{border-top:2px solid #EF4444}
+        .v39-ra.growth{border-top:2px solid #34D399}
+        .v39-ra .ra-head{display:flex;justify-content:space-between;align-items:baseline;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.15em;margin-bottom:10px}
+        .v39-ra.risk .ra-head b{color:#EF4444}
+        .v39-ra.growth .ra-head b{color:#34D399}
+        .v39-ra .ra-head .at{color:#4A4A60}
+        .v39-ra .ra-title{font-size:16px;font-weight:700;margin-bottom:10px;color:#E8E8F0}
+        .v39-ra .ra-body{font-size:14px;line-height:1.7;color:#7A7A92;margin-bottom:14px;flex:1}
+        .v39-ra .ra-body b{color:#E8E8F0;font-weight:600}
+        .v39-ra .ra-anti{border-top:1px dashed #1A1A2E;padding-top:12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#4A4A60;letter-spacing:0.1em;margin-bottom:6px}
+        .v39-ra.risk .ra-anti b{color:#EF4444}
+        .v39-ra.growth .ra-anti b{color:#34D399}
+        .v39-ra .ra-action{font-size:14px;line-height:1.6;color:#E8E8F0}
+
+        /* DEEP DIVE */
+        .v39-dd{background:#0C0C16;border:1px solid #1A1A2E;border-radius:14px;overflow:hidden}
+        .v39-dd-nav{display:flex;overflow-x:auto;border-bottom:1px solid #1A1A2E;scrollbar-width:none}
+        .v39-dd-nav::-webkit-scrollbar{display:none}
+        .v39-dd-nav button{flex-shrink:0;background:none;border:none;color:#4A4A60;padding:16px 20px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.12em;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s}
+        .v39-dd-nav button.active{color:#F5A623;border-bottom-color:#F5A623;background:rgba(245,166,35,0.12)}
+        .v39-dd-nav button:hover:not(.active){color:#E8E8F0}
+        .v39-dd-body{padding:28px 24px;min-height:300px}
+        .v39-dd-body h3{font-size:17px;font-weight:700;margin-bottom:14px;color:#E8E8F0}
+        .v39-dd-body p{font-size:14px;line-height:1.8;color:#7A7A92;margin-bottom:14px}
+        .v39-dd-body p b{color:#E8E8F0;font-weight:600}
+        .v39-dd-panel{display:none}
+        .v39-dd-panel.active{display:block}
+        .v39-dd-empty{color:#4A4A60;font-style:italic;font-size:13px;text-align:center;padding:40px 0}
+
+        /* Sticky share */
+        .v39-sticky{position:fixed;bottom:0;left:0;right:0;background:rgba(7,7,12,0.94);backdrop-filter:blur(16px);border-top:1px solid #1A1A2E;padding:12px 16px;z-index:100;display:none;align-items:center;gap:12px}
+        .v39-sticky.visible{display:flex}
+        .v39-sticky .msg{flex:1;font-size:12px;color:#7A7A92;padding-left:4px}
+        .v39-sticky .msg b{color:#F5A623}
+        @media(max-width:500px){.v39-sticky .msg{display:none}}
+        .v39-sticky button{background:#F5A623;color:#000;border:none;padding:11px 18px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;transition:transform 0.1s}
+        .v39-sticky button:hover{transform:translateY(-1px)}
+        .v39-sticky button.secondary{background:transparent;color:#7A7A92;border:1px solid #252540;font-weight:500}
+        .screen.match{padding-bottom:90px}
     </style>
 </head>
 <body>
@@ -4839,16 +4989,11 @@
 
     <!-- Match Side Navigation (screen 바깥 — position:fixed가 transform에 영향 안 받도록) -->
     <nav class="side-nav" id="matchSideNav">
-        <div class="side-nav-item active" data-section="0"><span class="side-nav-label">IDENTITY</span><div class="side-nav-dot"></div></div>
-        <div class="side-nav-item" data-section="Rarity"><span class="side-nav-label">RARITY</span><div class="side-nav-dot"></div></div>
-        <div class="side-nav-item" data-section="1"><span class="side-nav-label">RADAR</span><div class="side-nav-dot"></div></div>
-        <div class="side-nav-item" data-section="2"><span class="side-nav-label">DYNAMICS</span><div class="side-nav-dot"></div></div>
-        <div class="side-nav-item" data-section="Prism"><span class="side-nav-label">PRISM</span><div class="side-nav-dot"></div></div>
-        <div class="side-nav-item" data-section="Trajectory"><span class="side-nav-label">TRAJECTORY</span><div class="side-nav-dot"></div></div>
-        <div class="side-nav-item" data-section="Outlook"><span class="side-nav-label">OUTLOOK</span><div class="side-nav-dot"></div></div>
-        <div class="side-nav-item" data-section="Anchor"><span class="side-nav-label">ANCHOR</span><div class="side-nav-dot"></div></div>
-        <div class="side-nav-item" data-section="3"><span class="side-nav-label">ANALYSIS</span><div class="side-nav-dot"></div></div>
-        <div class="side-nav-item" data-section="4"><span class="side-nav-label">SHARE</span><div class="side-nav-dot"></div></div>
+        <div class="side-nav-item active" data-section="Verdict"><span class="side-nav-label">VERDICT</span><div class="side-nav-dot"></div></div>
+        <div class="side-nav-item" data-section="Map"><span class="side-nav-label">MAP</span><div class="side-nav-dot"></div></div>
+        <div class="side-nav-item" data-section="Pattern"><span class="side-nav-label">PATTERN</span><div class="side-nav-dot"></div></div>
+        <div class="side-nav-item" data-section="Arc"><span class="side-nav-label">ARC</span><div class="side-nav-dot"></div></div>
+        <div class="side-nav-item" data-section="DeepDive"><span class="side-nav-label">DEEP DIVE</span><div class="side-nav-dot"></div></div>
     </nav>
     <div class="scroll-progress" id="matchScrollProgress"></div>
 
@@ -4968,386 +5113,134 @@
 
             <div id="matchResultsContainer" class="hidden">
 
-                <!-- ═══ STEP 01: IDENTITY — 목업 구조 ═══ -->
-                <section class="result-section" id="matchSection0">
-                    <div class="result-section-inner">
-                        <div class="step-indicator">STEP 01 — IDENTITY</div>
+                <!-- ═══ v3.9.0 · 5-SECTION COUPLE REDESIGN ═══ -->
 
-                        <!-- 관계 아키타입 이름 -->
-                        <div class="match-rel-header">
-                            <h2 id="matchRelName">매칭 분석</h2>
-                            <p id="matchRelTagline"></p>
+                <!-- 01 · VERDICT -->
+                <section class="result-section v39-verdict" id="matchSectionVerdict">
+                    <div class="rarity-line" id="v39RarityLine">01 · VERDICT</div>
+                    <h1 class="v39-archetype" id="v39Archetype">매칭 분석</h1>
+                    <p class="v39-verdict-sentence" id="v39Sentence"></p>
+                    <div class="v39-dual-hero">
+                        <div class="v39-pill a">
+                            <div class="emoji" id="v39EmojiA">🔮</div>
+                            <div class="name" id="v39NameA">-</div>
+                            <div class="code" id="v39CodeA">-</div>
                         </div>
-
-                        <!-- 듀얼 히어로 -->
-                        <div class="match-hero">
-                            <div class="profile-card a-card">
-                                <div class="profile-emoji" id="matchEmojiA">🔮</div>
-                                <div class="profile-name" id="matchNameA">-</div>
-                                <div class="profile-code a" id="matchCodeA">-</div>
-                                <div class="profile-tagline" id="matchTaglineA"></div>
-                            </div>
-
-                            <div class="match-center">
-                                <div class="match-score-ring">
-                                    <svg width="100" height="100" viewBox="0 0 100 100">
-                                        <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
-                                        <circle id="matchScoreArc" cx="50" cy="50" r="44" fill="none" stroke="url(#matchScoreGrad)" stroke-width="4"
-                                                stroke-dasharray="276.5" stroke-dashoffset="276.5"
-                                                stroke-linecap="round" transform="rotate(-90 50 50)"/>
-                                        <defs>
-                                            <linearGradient id="matchScoreGrad" x1="0" y1="0" x2="1" y2="1">
-                                                <stop offset="0%" stop-color="#F5A623"/>
-                                                <stop offset="100%" stop-color="#60A5FA"/>
-                                            </linearGradient>
-                                        </defs>
-                                    </svg>
-                                    <div class="match-score-number" id="matchScoreNum">-</div>
-                                </div>
-                                <div class="match-score-label">COMPATIBILITY</div>
-                            </div>
-
-                            <div class="profile-card b-card">
-                                <div class="profile-emoji" id="matchEmojiB">🔮</div>
-                                <div class="profile-name" id="matchNameB">-</div>
-                                <div class="profile-code b" id="matchCodeB">-</div>
-                                <div class="profile-tagline" id="matchTaglineB"></div>
-                            </div>
+                        <div class="v39-ring">
+                            <svg width="128" height="128">
+                                <circle class="track" cx="64" cy="64" r="56"></circle>
+                                <circle class="fill" id="v39RingFill" cx="64" cy="64" r="56" stroke-dasharray="351.86" stroke-dashoffset="351.86"></circle>
+                            </svg>
+                            <div class="num"><b id="v39RingNum">-</b><span>COMPAT</span></div>
                         </div>
-
-                        <!-- 긴장/성장 뱃지 -->
-                        <div id="matchTensionGrowth" style="display:flex;gap:12px;justify-content:center;margin-bottom:24px;"></div>
-
-                        <!-- 핵심 점수 3개 -->
-                        <div class="score-grid" id="matchScoreGrid">
-                            <div class="score-card">
-                                <div class="score-value" id="matchSubScore1" style="color:#4ADE80;">–</div>
-                                <div class="score-label">소통 호환도</div>
-                                <div class="score-sub">Comm. Sync</div>
-                                <div class="score-card-desc" id="matchScoreDesc1">언어 패턴과 표현 방식의 유사도</div>
-                            </div>
-                            <div class="score-card">
-                                <div class="score-value" id="matchSubScore2" style="color:var(--ac);">–</div>
-                                <div class="score-label">감정 균형</div>
-                                <div class="score-sub">Emo. Balance</div>
-                                <div class="score-card-desc" id="matchScoreDesc2">감정 강도와 반응 패턴의 조화</div>
-                            </div>
-                            <div class="score-card">
-                                <div class="score-value" id="matchSubScore3" style="color:#60A5FA;">–</div>
-                                <div class="score-label">구조적 안정성</div>
-                                <div class="score-sub">Structural Fit</div>
-                                <div class="score-card-desc" id="matchScoreDesc3">관계 구조와 역할 분배의 안정성</div>
-                            </div>
+                        <div class="v39-pill b">
+                            <div class="emoji" id="v39EmojiB">🔮</div>
+                            <div class="name" id="v39NameB">-</div>
+                            <div class="code" id="v39CodeB">-</div>
                         </div>
-
-                        <!-- hidden legacy -->
-                        <div id="matchDashboard" style="display:none;"></div>
-                        <div id="matchTypeComparison" style="display:none;"></div>
-                        <div id="matchCompatScore" style="display:none;"></div>
-                        <div id="matchEmojiPair" style="display:none;"></div>
                     </div>
+                    <div class="v39-chips" id="v39Chips"></div>
                 </section>
 
-                <!-- ═══ STEP 02: RARITY — 신규 (Phase 1 껍데기) ═══ -->
-                <section class="result-section" id="matchSectionRarity">
-                    <div class="result-section-inner">
-                        <div class="step-indicator">STEP 02 — RARITY</div>
-                        <div class="section-heading-block">
-                            <h2>희소성</h2>
-                            <p>이 관계 조합과 두 사람의 개인 희소성</p>
+                <!-- 02 · THE MAP -->
+                <section class="result-section v39-section" id="matchSectionMap">
+                    <div class="v39-meta"><b>02</b> · THE MAP</div>
+                    <h2 class="v39-title">두 사람이 그리는 지형</h2>
+                    <p class="v39-subtitle">축별 격차를 큰 순서로 정렬. 중앙선에서 멀수록 두 사람의 방향이 다릅니다.</p>
+                    <div class="v39-tier1" id="v39MapTier1">축 데이터 로딩 중…</div>
+                    <div class="v39-tornado">
+                        <div class="v39-thead">
+                            <div class="l" id="v39MapHeadA">◀ A</div>
+                            <div class="c">AXIS</div>
+                            <div class="r" id="v39MapHeadB">B ▶</div>
                         </div>
-                        <div id="matchRarityContent" style="display:flex;flex-direction:column;gap:18px;">
-                            <!-- 관계 조합 희귀도 -->
-                            <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:24px;text-align:center;">
-                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:10px;">RELATIONSHIP COMBO</div>
-                                <div id="matchRarityComboValue" style="font-size:38px;font-weight:300;color:var(--ac);font-family:'JetBrains Mono',monospace;letter-spacing:-1px;">–</div>
-                                <div id="matchRarityComboLabel" style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:6px;">조합 희귀도 산정 대기</div>
-                            </div>
-                            <!-- 개별 희소성 병치 -->
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                                <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:18px;">
-                                    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(245,166,35,0.6);letter-spacing:2px;margin-bottom:6px;">PROFILE A</div>
-                                    <div id="matchRarityAValue" style="font-size:22px;font-weight:300;color:#F5A623;font-family:'JetBrains Mono',monospace;">–</div>
-                                    <div id="matchRarityAName" style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;">–</div>
-                                </div>
-                                <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:18px;">
-                                    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(96,165,250,0.6);letter-spacing:2px;margin-bottom:6px;">PROFILE B</div>
-                                    <div id="matchRarityBValue" style="font-size:22px;font-weight:300;color:#60A5FA;font-family:'JetBrains Mono',monospace;">–</div>
-                                    <div id="matchRarityBName" style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;">–</div>
-                                </div>
-                            </div>
+                        <div id="v39TornadoRows"></div>
+                        <div class="v39-tcap" id="v39TornadoCap"></div>
+                    </div>
+                    <div class="v39-attach-wrap" id="v39AttachWrap">
+                        <div class="v39-attach-title">◇ ATTACHMENT MAP ◇</div>
+                        <div class="v39-plot" id="v39AttachPlot">
+                            <span class="quad tl">회피형</span>
+                            <span class="quad tr">두려움형</span>
+                            <span class="quad bl">안정형</span>
+                            <span class="quad br">불안형</span>
+                        </div>
+                        <div class="v39-attach-cap" id="v39AttachCap"></div>
+                    </div>
+                    <div class="v39-bridge">이 지형에서 반복되는 패턴을 보세요</div>
+                </section>
+
+                <!-- 03 · THE PATTERN -->
+                <section class="result-section v39-section" id="matchSectionPattern">
+                    <div class="v39-meta"><b>03</b> · THE PATTERN</div>
+                    <h2 class="v39-pattern-name" id="v39PatternName">패턴 분석</h2>
+                    <p class="v39-pattern-sub" id="v39PatternSub"></p>
+                    <div class="v39-tier1" id="v39PatternTier1"></div>
+                    <div class="v39-insights" id="v39InsightStack"></div>
+                    <div class="v39-loopwrap" id="v39LoopWrap" style="display:none;">
+                        <div class="v39-loop-title">◇ 핵심 반복 루프</div>
+                        <div class="v39-loop-label" id="v39LoopLabel"></div>
+                        <div class="v39-loop" id="v39LoopChain"></div>
+                        <div class="v39-loop-cap" id="v39LoopCap"></div>
+                    </div>
+                    <div class="v39-bridge">이 패턴이 3개월 · 1년 뒤 어디로 향할지 보세요</div>
+                </section>
+
+                <!-- 04 · THE ARC -->
+                <section class="result-section v39-section" id="matchSectionArc">
+                    <div class="v39-meta"><b>04</b> · THE ARC</div>
+                    <h2 class="v39-title">지금 · 3개월 후 · 1년 후</h2>
+                    <p class="v39-subtitle">현재 궤적이 유지될 때 예상되는 수렴/발산. 점선은 투사, 실선은 측정.</p>
+                    <div class="v39-tier1" id="v39ArcTier1"></div>
+                    <div class="v39-arc-chart">
+                        <div class="v39-arc-head">
+                            <span>정서 축 (E)</span>
+                            <span class="legend">
+                                <span class="a"><i></i> <span id="v39ArcLegA">A</span></span>
+                                <span class="b"><i></i> <span id="v39ArcLegB">B</span></span>
+                            </span>
+                        </div>
+                        <svg id="v39ArcSvg" viewBox="0 0 600 220" preserveAspectRatio="xMidYMid meet"></svg>
+                    </div>
+                    <div class="v39-ra-pair" id="v39RaPair"></div>
+                    <div class="v39-bridge">더 깊이 읽고 싶으면 아래 렌즈를 선택하세요</div>
+                </section>
+
+                <!-- 05 · DEEP DIVE -->
+                <section class="result-section v39-section" id="matchSectionDeepDive">
+                    <div class="v39-meta"><b>05</b> · DEEP DIVE · <span style="color:#4A4A60">OPTIONAL</span></div>
+                    <h2 class="v39-title">렌즈별 상세</h2>
+                    <p class="v39-subtitle">탭을 선택하면 해당 주제의 서술형 분석이 열립니다. 읽지 않아도 괜찮습니다.</p>
+                    <div class="v39-dd">
+                        <div class="v39-dd-nav" id="v39DdNav"></div>
+                        <div class="v39-dd-body" id="v39DdBody">
+                            <div class="v39-dd-empty">분석 항목을 선택하세요</div>
                         </div>
                     </div>
                 </section>
 
-                <!-- ═══ STEP 03: RADAR — 목업 구조 그대로 ═══ -->
-                <section class="result-section" id="matchSection1">
-                    <div class="result-section-inner">
-                        <div class="step-indicator">STEP 03 — RADAR</div>
-
-                        <!-- 5D 레이더 — 목업 .radar-section -->
-                        <div class="radar-section">
-                            <div class="radar-title">5D META-DIMENSION COMPARISON</div>
-                            <div class="radar-container">
-                                <canvas id="matchRadarCanvas" width="400" height="400" style="max-width:100%;display:block;margin:0 auto;"></canvas>
-                            </div>
-                            <div id="matchRadarLegend" class="radar-legend"></div>
-                        </div>
-
-                        <!-- 축별 비교 — 목업 .axis-compare -->
-                        <div class="axis-compare" id="matchAxisCompare">
-                            <div class="axis-compare-title">축별 비교</div>
-                            <div class="axis-legend">
-                                <div class="axis-legend-item"><div class="axis-legend-dot me"></div> 나</div>
-                                <div class="axis-legend-item"><div class="axis-legend-dot them"></div> 상대</div>
-                            </div>
-                            <div id="matchAxisRows"></div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ═══ STEP 04: DYNAMICS — 목업 구조 그대로 ═══ -->
-                <section class="result-section" id="matchSection2">
-                    <div class="result-section-inner">
-                        <div class="step-indicator">STEP 04 — DYNAMICS</div>
-
-                        <!-- 인사이트 카드 4장 — 목업 .insight-cards -->
-                        <div class="insight-cards" id="matchInsightCards">
-                            <div class="insight-card chemistry">
-                                <div class="insight-icon">⚗️</div>
-                                <div class="insight-label">CHEMISTRY</div>
-                                <div class="insight-text" id="matchChemText">–</div>
-                            </div>
-                            <div class="insight-card friction">
-                                <div class="insight-icon">⚡</div>
-                                <div class="insight-label">FRICTION</div>
-                                <div class="insight-text" id="matchFricText">–</div>
-                            </div>
-                            <div class="insight-card growth">
-                                <div class="insight-icon">🌱</div>
-                                <div class="insight-label">GROWTH</div>
-                                <div class="insight-text" id="matchGrowthText">–</div>
-                            </div>
-                            <div class="insight-card risk">
-                                <div class="insight-icon">🔥</div>
-                                <div class="insight-label">RISK</div>
-                                <div class="insight-text" id="matchRiskText">–</div>
-                            </div>
-                        </div>
-
-                        <!-- Trigger Loops 카드 리스트 -->
-                        <div id="matchTriggerLoopsBlock" style="display:none;margin-top:20px;">
-                            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:10px;">⚡ TRIGGER LOOPS — 반복되는 충돌 체인</div>
-                            <div id="matchTriggerLoopsList"></div>
-                        </div>
-
-                        <!-- Defense Clash 다이어그램 -->
-                        <div id="matchDefenseClashBlock" style="display:none;margin-top:16px;">
-                            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:10px;">⚔ DEFENSE CLASH — 방어 체계 충돌</div>
-                            <div id="matchDefenseClashContent"></div>
-                        </div>
-
-                        <!-- v3.8.9: Topic Overlap Venn 은 STEP 04.5 PRISM 대조로 이관 (풍부한 형태로 확장) -->
-
-                        <!-- 관계 구조 태그 — 목업 .struct-tags -->
-                        <div id="matchStructTags" style="margin-bottom:24px;margin-top:20px;"></div>
-
-                        <!-- 관계 타임라인 — 목업 .timeline -->
-                        <div class="timeline" id="matchTimeline">
-                            <div class="timeline-title">RELATIONSHIP TRAJECTORY</div>
-                            <div id="matchTimelineRows"></div>
-                        </div>
-
-                        <!-- 레거시 cross-sim 캐시 (숨김) -->
-                        <div id="matchCrossSim" style="display:none;"></div>
-                    </div>
-                </section>
-
-                <!-- ═══ STEP 04.5: PRISM 대조 — v3.8.9 신설 ═══ -->
-                <section class="result-section" id="matchSectionPrism" style="display:none;">
-                    <div class="result-section-inner">
-                        <div class="step-indicator">STEP 04.5 — PRISM CROSS</div>
-                        <div class="section-heading-block">
-                            <h2>사유의 지형 대조</h2>
-                            <p>두 사람의 관심사 · 사유 깊이 · 호기심 스타일 · 어휘 정제도 개별 비교</p>
-                        </div>
-                        <div class="prism-cross-grid">
-                            <div class="prism-col a" id="matchPrismColA"></div>
-                            <div class="prism-col b" id="matchPrismColB"></div>
-                        </div>
-                        <div id="matchPrismAsymmetry" class="prism-asymmetry" style="display:none;"></div>
-                    </div>
-                </section>
-
-                <!-- ═══ STEP 05: TRAJECTORY — 신규 (Phase 1 껍데기) ═══ -->
-                <section class="result-section" id="matchSectionTrajectory">
-                    <div class="result-section-inner">
-                        <div class="step-indicator">STEP 05 — TRAJECTORY</div>
-                        <div class="section-heading-block">
-                            <h2>관계 궤적</h2>
-                            <p>시간에 따른 두 사람의 축 변화 — 동기화와 엇갈림</p>
-                        </div>
-                        <div id="matchTrajectoryContent">
-                            <!-- Dual trajectory chart (양쪽 profile.simulation 병치) -->
-                            <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:20px;">
-                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:12px;">AXIS DRIFT — A vs B</div>
-                                <canvas id="matchDualTrajectoryCanvas" width="800" height="320" style="width:100%;height:auto;display:block;"></canvas>
-                                <div id="matchTrajLegend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:10px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.55);"></div>
-                            </div>
-                            <!-- Sync / async 패턴 -->
-                            <div style="margin-top:14px;background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:18px;">
-                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:10px;">SYNC PATTERNS</div>
-                                <div id="matchSyncPatterns" style="font-size:12px;line-height:1.6;color:rgba(255,255,255,0.65);">궤적 데이터 산정 대기</div>
-                            </div>
-
-                            <!-- Scenario Drift — 상황별 축 이동 (crossSituational) -->
-                            <div id="matchScenarioDriftBlock" style="display:none;margin-top:14px;background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:18px;">
-                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:12px;">🌡 SCENARIO DRIFT — 상황별 축 이동</div>
-                                <div id="matchScenarioTabs" class="scenario-tabs"></div>
-                                <div id="matchScenarioPanel" class="scenario-panel"></div>
-                            </div>
-
-                            <!-- v3.8.9: 개별 자극-반응 구조 -->
-                            <div id="matchTrajIndividualBlock" style="display:none;margin-top:14px;background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:18px;">
-                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:12px;">◆ 개별 자극 반응</div>
-                                <div class="traj-individual-grid">
-                                    <div class="ti-col a" id="matchTrajColA"></div>
-                                    <div class="ti-col b" id="matchTrajColB"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ═══ STEP 06: OUTLOOK — 신규 (Phase 1 껍데기) ═══ -->
-                <section class="result-section" id="matchSectionOutlook">
-                    <div class="result-section-inner">
-                        <div class="step-indicator">STEP 06 — OUTLOOK</div>
-                        <div class="section-heading-block">
-                            <h2>관계 전망</h2>
-                            <p>위험, 성장, 그리고 서로에게 비추는 그림자</p>
-                        </div>
-                        <div style="display:flex;flex-direction:column;gap:14px;">
-                            <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:20px;border-left:3px solid #F87171;">
-                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#F87171;letter-spacing:2px;margin-bottom:10px;">RISK — 폭발 지점</div>
-                                <div id="matchOutlookRisk" style="font-size:13px;line-height:1.75;color:rgba(255,255,255,0.75);">관계 위험 분석 대기</div>
-                            </div>
-                            <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:20px;border-left:3px solid #4ADE80;">
-                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#4ADE80;letter-spacing:2px;margin-bottom:10px;">GROWTH — 보완·확장</div>
-                                <div id="matchOutlookGrowth" style="font-size:13px;line-height:1.75;color:rgba(255,255,255,0.75);">관계 성장 방향 분석 대기</div>
-                            </div>
-                            <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:20px;border-left:3px solid #A78BFA;">
-                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#A78BFA;letter-spacing:2px;margin-bottom:10px;">SHADOW — 서로에게 비추는 거울</div>
-                                <div id="matchOutlookShadow" style="font-size:13px;line-height:1.75;color:rgba(255,255,255,0.75);">무의식적 투영 분석 대기</div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ═══ STEP 06.5: ANCHOR CROSS — 애착·갈등·회복 교차 (신설) ═══ -->
-                <section class="result-section" id="matchSectionAnchor" style="display:none;">
-                    <div class="result-section-inner">
-                        <div class="step-indicator">STEP 06.5 — ANCHOR CROSS</div>
-                        <div class="section-heading-block">
-                            <h2>애착 · 회복 교차</h2>
-                            <p>두 사람의 애착 페어, 갈등 스타일, 회복 리듬이 어떻게 맞물리는지</p>
-                        </div>
-                        <div id="matchAnchorCrossContent" style="display:flex;flex-direction:column;gap:14px;">
-                            <div class="anchor-grid">
-                                <div class="anchor-card">
-                                    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1.5px;margin-bottom:8px;">ATTACHMENT PAIR</div>
-                                    <div id="matchAnchorAttachPair"></div>
-                                    <div id="matchAnchorAttachDesc" style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.7;margin-top:10px;"></div>
-                                </div>
-                                <div class="anchor-card">
-                                    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1.5px;margin-bottom:8px;">CONFLICT STYLE CROSS</div>
-                                    <div id="matchAnchorConflictPair"></div>
-                                    <div id="matchAnchorConflictDesc" style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.7;margin-top:10px;"></div>
-                                </div>
-                            </div>
-                            <div class="anchor-card">
-                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1.5px;margin-bottom:10px;">RECOVERY RHYTHM — 회복 속도 격차</div>
-                                <div id="matchAnchorRecoveryBar"></div>
-                                <div id="matchAnchorRecoveryDesc" style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.7;margin-top:10px;"></div>
-                            </div>
-
-                            <!-- v3.8.9: 개별 ANCHOR 시그니처 -->
-                            <div id="matchAnchorIndividualBlock" style="display:none;margin-top:10px;">
-                                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1.5px;margin-bottom:10px;border-top:1px dashed var(--glass-border);padding-top:14px;">◆ 개별 시그니처</div>
-                                <div class="anchor-individual-grid">
-                                    <div class="ind-card a" id="matchAnchorIndA"></div>
-                                    <div class="ind-card b" id="matchAnchorIndB"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ═══ STEP 07: DEEP ANALYSIS (lens-split) ═══ -->
-                <section class="result-section" id="matchSection3">
-                    <div class="result-section-inner">
-                        <div class="step-indicator">STEP 07 — ANALYSIS</div>
-                        <div class="section-heading-block">
-                            <h2>심층 분석</h2>
-                            <p>다양한 관점에서 두 사람의 관계를 해석합니다</p>
-                        </div>
-                        <div id="matchEssaySection">
-                            <div class="lens-split" id="matchLensSplit">
-                                <div class="lens-nav" id="matchLensNav"></div>
-                                <div class="lens-panel" id="matchLensPanel">
-                                    <div class="lens-panel-content" id="matchLensPanelContent">
-                                        <div style="color:var(--text-dim);padding:40px 0;text-align:center;">분석 항목을 선택하세요</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="matchFallbackAnalysis" style="display:none;">
-                            <div style="display:flex;flex-direction:column;gap:16px;">
-                                <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:20px;">
-                                    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:12px;">강점</div>
-                                    <ul id="matchStrengths" style="font-size:13px;line-height:1.85;color:rgba(255,255,255,0.75);list-style:none;padding:0;margin:0;"></ul>
-                                </div>
-                                <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:20px;">
-                                    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#F87171;letter-spacing:2px;margin-bottom:12px;">위험 요소</div>
-                                    <ul id="matchRisks" style="font-size:13px;line-height:1.85;color:rgba(255,255,255,0.75);list-style:none;padding:0;margin:0;"></ul>
-                                </div>
-                                <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:20px;">
-                                    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#4ADE80;letter-spacing:2px;margin-bottom:12px;">성장 방향</div>
-                                    <p id="matchGrowth" style="font-size:13px;line-height:1.85;color:rgba(255,255,255,0.75);margin:0;"></p>
-                                </div>
-                                <div style="background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:14px;padding:20px;">
-                                    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#60A5FA;letter-spacing:2px;margin-bottom:12px;">장기 전망</div>
-                                    <p id="matchOutlook" style="font-size:13px;line-height:1.85;color:rgba(255,255,255,0.75);margin:0;"></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ═══ STEP 08: SHARE ═══ -->
-                <section class="result-section" id="matchSection4">
-                    <div class="result-section-inner" style="text-align:center;">
-                        <div class="step-indicator" style="justify-content:center;">STEP 08 — SHARE</div>
-                        <div class="section-heading-block" style="text-align:center;">
-                            <h2>공유</h2>
-                            <p>매칭 결과를 공유하세요</p>
-                        </div>
-                        <div style="margin-top:20px;">
-                            <button class="share-url-btn" id="matchShareBtn" onclick="generateMatchShareURL()" style="margin-bottom:12px;padding:12px 32px;background:linear-gradient(135deg,var(--ac),#60A5FA);color:#000;border:none;border-radius:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;box-shadow:0 0 20px rgba(245,166,35,0.2);">공유 링크 만들기</button>
-                            <div id="matchShareUrlResult" style="display:none;margin-top:16px;">
-                                <div style="display:flex;gap:8px;align-items:center;justify-content:center;">
-                                    <input id="matchShareUrlInput" readonly style="flex:1;max-width:320px;padding:10px 14px;background:rgba(0,0,0,0.3);border:1px solid var(--glass-border);border-radius:8px;color:var(--ac);font-size:11px;font-family:'JetBrains Mono',monospace;" />
-                                    <button onclick="copyMatchShareURL()" style="font-size:11px;padding:8px 16px;background:var(--ac);color:#000;border:none;border-radius:8px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-weight:600;">복사</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="margin-top:24px;">
-                            <button onclick="goToLanding()" style="padding:10px 20px;background:transparent;border:1px solid var(--glass-border);color:var(--text-dim);border-radius:8px;cursor:pointer;font-size:11px;font-family:'JetBrains Mono',monospace;">새 분석</button>
-                        </div>
-                    </div>
-                </section>
+                <!-- Legacy placeholders (hidden; for backward-compat with legacy render functions & share-url logic) -->
+                <div style="display:none;">
+                    <div id="matchRelName"></div><div id="matchRelTagline"></div>
+                    <div id="matchEmojiA"></div><div id="matchNameA"></div><div id="matchCodeA"></div><div id="matchTaglineA"></div>
+                    <div id="matchEmojiB"></div><div id="matchNameB"></div><div id="matchCodeB"></div><div id="matchTaglineB"></div>
+                    <div id="matchScoreNum"></div><div id="matchCompatScore"></div><div id="matchEmojiPair"></div>
+                    <div id="matchTensionGrowth"></div>
+                    <svg><circle id="matchScoreArc"/></svg>
+                    <div id="matchDashboard"></div><div id="matchTypeComparison"></div>
+                    <input id="matchShareUrlInput"/>
+                    <div id="matchShareUrlResult"></div>
+                    <button id="matchShareBtn"></button>
+                </div>
             </div>
         </div>
+    </div>
+
+    <!-- v3.9.0 · Sticky share footer for match screen -->
+    <div class="v39-sticky" id="v39Sticky">
+        <span class="msg">이 분석을 <b>함께 읽어보세요</b></span>
+        <button class="secondary" onclick="window.print()">PDF 저장</button>
+        <button onclick="(function(){try{generateMatchShareURL();}catch(e){alert('공유 링크 생성 오류: '+e.message);}})();">파트너에게 보내기</button>
     </div>
 
     <script>
@@ -11338,8 +11231,586 @@ function displayResult() {
             const shareBtn = document.getElementById('matchShareBtn');
             if (shareBtn) { shareBtn.textContent = '공유 링크 만들기'; shareBtn.disabled = false; }
 
+            // ═══ v3.9.0 · 5-SECTION COUPLE REDESIGN — 새 렌더러 호출 ═══
+            try {
+                renderV39All({
+                    idA: idA,
+                    idB: idB,
+                    matchIdentity: matchId,
+                    axesA: currentProfile.axes,
+                    axesB: matchProfile.axes,
+                    compatDetail: llmMatch ? llmMatch.serverCompatibility : null,
+                    crossSim: llmMatch ? llmMatch.crossSimulation : null,
+                    crossSituational: llmMatch ? llmMatch.crossSituational : null,
+                    prismA: llmMatch ? llmMatch.prismA : null,
+                    prismB: llmMatch ? llmMatch.prismB : null,
+                    anchorA: llmMatch ? llmMatch.anchorA : null,
+                    anchorB: llmMatch ? llmMatch.anchorB : null,
+                    simulationA: _simA,
+                    simulationB: _simB,
+                    sections: llmMatch ? llmMatch.sections : [],
+                    profileA: { axes: currentProfile.axes, identity: idA },
+                    profileB: { axes: matchProfile.axes, identity: idB }
+                });
+            } catch (e) { console.error('[v39 render]', e); }
+
+            // Show sticky footer
+            try {
+                var _sticky = document.getElementById('v39Sticky');
+                if (_sticky) _sticky.classList.add('visible');
+            } catch(e){}
+
             showScreen('match');
             initMatchScrollAnimations();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // v3.9.0 · COUPLE REDESIGN RENDERERS (5 sections)
+        // ═══════════════════════════════════════════════════════════
+        function _v39Safe(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+        function _v39Num(v, fb){ return (typeof v === 'number' && isFinite(v)) ? v : (fb!=null?fb:0); }
+        function _v39Norm01(v){ // accept 0-1 or 0-100
+            var n = _v39Num(v, 0.5);
+            if (n > 1) n = n / 100;
+            if (n < 0) n = 0; if (n > 1) n = 1;
+            return n;
+        }
+
+        function renderV39All(ctx){
+            try { renderV39Verdict(ctx); } catch(e){ console.error('[v39 verdict]', e); }
+            try { renderV39Map(ctx); } catch(e){ console.error('[v39 map]', e); }
+            try { renderV39Pattern(ctx); } catch(e){ console.error('[v39 pattern]', e); }
+            try { renderV39Arc(ctx); } catch(e){ console.error('[v39 arc]', e); }
+            try { renderV39DeepDive(ctx); } catch(e){ console.error('[v39 dd]', e); }
+        }
+
+        // ── 01 · VERDICT ──
+        function renderV39Verdict(ctx){
+            var mi = ctx.matchIdentity || {};
+            var idA = ctx.idA || {}, idB = ctx.idB || {};
+            var compat = _v39Num(mi.compatibility, 0);
+
+            // Rarity line — reuse existing rarity computation if available
+            var rarityTxt = '01 · VERDICT';
+            try {
+                if (typeof computeDistinctiveness === 'function') {
+                    var axRA = (idA.axisResults) || [];
+                    var axRB = (idB.axisResults) || [];
+                    var dA = computeDistinctiveness(axRA);
+                    var dB = computeDistinctiveness(axRB);
+                    if (dA && dB && dA.typePercent!=null && dB.typePercent!=null) {
+                        var combo = (dA.typePercent * dB.typePercent) / 100;
+                        if (combo > 0 && isFinite(combo)) {
+                            var oneIn = Math.round(100 / combo);
+                            if (oneIn >= 100) rarityTxt = '01 · VERDICT · 1 IN ' + oneIn.toLocaleString() + ' COUPLES';
+                            else rarityTxt = '01 · VERDICT · 상위 ' + combo.toFixed(2) + '%';
+                        }
+                    }
+                }
+            } catch(e){}
+            var rLine = document.getElementById('v39RarityLine');
+            if (rLine) rLine.textContent = rarityTxt;
+
+            // Archetype name — highlight first word if two tokens
+            var arch = document.getElementById('v39Archetype');
+            if (arch) {
+                var nm = mi.name || '관계 분석';
+                var parts = nm.split(/\s+/);
+                if (parts.length >= 2) {
+                    arch.innerHTML = '<span class="em">' + _v39Safe(parts[0]) + '</span> ' + _v39Safe(parts.slice(1).join(' '));
+                } else {
+                    arch.innerHTML = '<span class="em">' + _v39Safe(nm) + '</span>';
+                }
+            }
+
+            // Sentence — tagline
+            var sent = document.getElementById('v39Sentence');
+            if (sent) {
+                var tag = mi.tagline || '';
+                if (tag) {
+                    sent.innerHTML = _v39Safe(tag);
+                } else {
+                    sent.innerHTML = '두 사람의 관계 지형을 다섯 개의 렌즈로 읽습니다.';
+                }
+            }
+
+            // Dual pills
+            var eA = document.getElementById('v39EmojiA'); if (eA) eA.textContent = idA.emoji || '🔮';
+            var nA = document.getElementById('v39NameA'); if (nA) nA.textContent = idA.name || '프로필 A';
+            var cA = document.getElementById('v39CodeA'); if (cA) cA.textContent = idA.code || '—';
+            var eB = document.getElementById('v39EmojiB'); if (eB) eB.textContent = idB.emoji || '🔮';
+            var nB = document.getElementById('v39NameB'); if (nB) nB.textContent = idB.name || '프로필 B';
+            var cB = document.getElementById('v39CodeB'); if (cB) cB.textContent = idB.code || '—';
+
+            // Ring
+            var ringNum = document.getElementById('v39RingNum');
+            if (ringNum) ringNum.textContent = Math.round(compat);
+            var ringFill = document.getElementById('v39RingFill');
+            if (ringFill) {
+                var circ = 2 * Math.PI * 56;
+                ringFill.setAttribute('stroke-dasharray', String(circ));
+                ringFill.setAttribute('stroke-dashoffset', String(circ * (1 - compat/100)));
+            }
+
+            // Chips
+            var chipsEl = document.getElementById('v39Chips');
+            if (chipsEl) {
+                var chips = '';
+                if (mi.tension) chips += '<span class="v39-chip tension">긴장 <b>' + _v39Safe(mi.tension) + '</b></span>';
+                if (mi.growth) chips += '<span class="v39-chip growth">성장 <b>' + _v39Safe(mi.growth) + '</b></span>';
+                var conv = ctx.crossSim && ctx.crossSim.convergence;
+                if (conv) {
+                    var convLabel = {convergent:'수렴', parallel:'평행', divergent:'발산'}[conv] || conv;
+                    chips += '<span class="v39-chip">궤적 <b>' + _v39Safe(convLabel) + '</b></span>';
+                }
+                chipsEl.innerHTML = chips;
+            }
+        }
+
+        // ── 02 · THE MAP ──
+        // Axis intensity keys A1..A6 → label pairs
+        var _V39_AXES = [
+            { key:'A1', left:'B', right:'C', lbl:'B / C', sub:'정서' },   // emotion
+            { key:'A2', left:'L', right:'S', lbl:'L / S', sub:'주도' },
+            { key:'A3', left:'A', right:'E', lbl:'A / E', sub:'판단' },
+            { key:'A4', left:'O', right:'G', lbl:'O / G', sub:'경계' },
+            { key:'A5', left:'D', right:'R', lbl:'D / R', sub:'회복' },
+            { key:'A6', left:'P', right:'I', lbl:'P / I', sub:'대처' }
+        ];
+        function renderV39Map(ctx){
+            var axA = (ctx.axesA && ctx.axesA.intensity) || {};
+            var axB = (ctx.axesB && ctx.axesB.intensity) || {};
+            var idA = ctx.idA || {}, idB = ctx.idB || {};
+
+            var hA = document.getElementById('v39MapHeadA'); if (hA) hA.textContent = '◀ ' + (idA.name || 'A');
+            var hB = document.getElementById('v39MapHeadB'); if (hB) hB.textContent = (idB.name || 'B') + ' ▶';
+
+            // Compute rows with gap
+            var rows = _V39_AXES.map(function(ax){
+                var va = _v39Norm01(axA[ax.key]);
+                var vb = _v39Norm01(axB[ax.key]);
+                var gap = Math.abs(va - vb);
+                // which pole per side
+                var aPole = va >= 0.5 ? ax.right : ax.left;
+                var bPole = vb >= 0.5 ? ax.right : ax.left;
+                return { ax:ax, va:va, vb:vb, gap:gap, aPole:aPole, bPole:bPole };
+            });
+            rows.sort(function(a,b){ return b.gap - a.gap; });
+
+            var tbody = document.getElementById('v39TornadoRows');
+            if (tbody) {
+                var html = '';
+                rows.forEach(function(r, idx){
+                    var topCls = idx === 0 ? ' top' : '';
+                    var wa = Math.round(r.va * 100);
+                    var wb = Math.round(r.vb * 100);
+                    html += '<div class="v39-trow' + topCls + '">' +
+                        '<div class="bar-wrap left"><div class="bar" style="width:' + wa + '%"><span class="val">' + _v39Safe(r.aPole) + ' ' + r.va.toFixed(2) + '</span></div></div>' +
+                        '<div class="axis-label">' + _v39Safe(r.ax.lbl) + '<br><span style="color:#4A4A60;font-size:9px">' + _v39Safe(r.ax.sub) + '</span></div>' +
+                        '<div class="bar-wrap right"><div class="bar" style="width:' + wb + '%"><span class="val">' + _v39Safe(r.bPole) + ' ' + r.vb.toFixed(2) + '</span></div></div>' +
+                    '</div>';
+                });
+                tbody.innerHTML = html;
+            }
+
+            // Tier-1 insight + caption
+            var top = rows[0];
+            var totalGap = rows.reduce(function(s,r){ return s + r.gap; }, 0);
+            var t1 = document.getElementById('v39MapTier1');
+            if (t1 && top) {
+                t1.innerHTML = '격차가 가장 큰 축은 <b>' + _v39Safe(top.ax.sub) + ' (' + _v39Safe(top.ax.lbl) + ')</b>. ' +
+                    _v39Safe(idA.name || 'A') + '는 ' + _v39Safe(top.aPole) + ' 쪽, ' +
+                    _v39Safe(idB.name || 'B') + '는 ' + _v39Safe(top.bPole) + ' 쪽 — 방향이 다르게 흐릅니다.';
+            }
+            var cap = document.getElementById('v39TornadoCap');
+            if (cap) {
+                var twoCore = rows.slice(0,2).map(function(r){ return r.ax.sub; }).join(' + ');
+                cap.innerHTML = '총 격차 <b>' + totalGap.toFixed(2) + '</b> · 핵심 충돌축은 <b>' + _v39Safe(twoCore) + '</b>.';
+            }
+
+            // Attachment plot
+            renderV39AttachPlot(ctx);
+        }
+
+        // Tendency → (anxiety 0..1, avoidance 0..1)
+        function _v39AttachCoords(anchor){
+            if (!anchor || !anchor.attachment) return null;
+            var att = anchor.attachment;
+            var tend = att.primary_tendency || '';
+            // base quadrant
+            var base = {
+                secure:         { ax:0.25, av:0.25 },
+                leans_secure:   { ax:0.30, av:0.30 },
+                anxious:        { ax:0.80, av:0.30 },
+                leans_anxious:  { ax:0.70, av:0.35 },
+                avoidant:       { ax:0.25, av:0.80 },
+                leans_avoidant: { ax:0.30, av:0.70 },
+                disorganized:   { ax:0.75, av:0.75 },
+                fearful_avoidant:{ax:0.75, av:0.75 }
+            }[tend] || { ax:0.50, av:0.50 };
+            // refine with numeric ratios if present
+            if (typeof att.anxious_ratio === 'number') base.ax = Math.max(0.05, Math.min(0.95, att.anxious_ratio));
+            if (typeof att.avoidant_ratio === 'number') base.av = Math.max(0.05, Math.min(0.95, att.avoidant_ratio));
+            return base;
+        }
+        function renderV39AttachPlot(ctx){
+            var plot = document.getElementById('v39AttachPlot');
+            var wrap = document.getElementById('v39AttachWrap');
+            var cap = document.getElementById('v39AttachCap');
+            if (!plot || !wrap) return;
+            var coA = _v39AttachCoords(ctx.anchorA);
+            var coB = _v39AttachCoords(ctx.anchorB);
+            if (!coA && !coB) {
+                wrap.style.display = 'none';
+                return;
+            }
+            wrap.style.display = '';
+            // clear previously drawn dots/labels but keep quad labels
+            Array.from(plot.querySelectorAll('.dot, .dot-label')).forEach(function(n){ n.remove(); });
+            function addDot(coord, cls, label){
+                if (!coord) return;
+                // axis: x = anxious (0..1 maps 0%→100% left→right); y = avoidant (0 bottom → 1 top)
+                var leftPct = (coord.ax * 100).toFixed(1);
+                var topPct = ((1 - coord.av) * 100).toFixed(1);
+                // Actually mockup: top = avoidance high, so invert: top% = (1-avoidance)*100 means bottom=low avoidance... use av direct as top offset from top:
+                // simpler: top = (1 - av) * 100 → av=1 puts dot at top=0% (top). Good.
+                var dot = document.createElement('div');
+                dot.className = 'dot ' + cls;
+                dot.style.top = ((1 - coord.av) * 100).toFixed(1) + '%';
+                dot.style.left = (coord.ax * 100).toFixed(1) + '%';
+                plot.appendChild(dot);
+                var dl = document.createElement('div');
+                dl.className = 'dot-label ' + cls;
+                dl.textContent = label;
+                dl.style.top = ((1 - coord.av) * 100).toFixed(1) + '%';
+                dl.style.left = (coord.ax * 100).toFixed(1) + '%';
+                plot.appendChild(dl);
+            }
+            addDot(coA, 'a', (ctx.idA && ctx.idA.name) || 'A');
+            addDot(coB, 'b', (ctx.idB && ctx.idB.name) || 'B');
+            if (cap) {
+                if (coA && coB) {
+                    var dx = coA.ax - coB.ax, dy = coA.av - coB.av;
+                    var dist = Math.sqrt(dx*dx + dy*dy);
+                    var interp = dist < 0.25 ? '같은 분면 — 유사한 애착 양상' :
+                                 dist < 0.55 ? '인접 분면 — 부분적 비대칭' :
+                                               '대각선 분면 — 회피·추적 쌍의 전형';
+                    cap.innerHTML = '애착 거리 <b>' + dist.toFixed(2) + '</b> · ' + _v39Safe(interp);
+                } else {
+                    cap.textContent = '한쪽 애착 데이터만 확보됨.';
+                }
+            }
+        }
+
+        // ── 03 · THE PATTERN ──
+        function renderV39Pattern(ctx){
+            var cross = ctx.crossSim || {};
+            var mi = ctx.matchIdentity || {};
+            var idA = ctx.idA || {}, idB = ctx.idB || {};
+
+            // pattern name: prefer conflict/attachment type → readable label
+            var pName = '패턴 분석';
+            var pSub = '';
+            if (cross.conflictCross && cross.conflictCross.type) {
+                var cmap = {
+                    pursue_withdraw: '추적 - 회피', withdraw_pursue: '회피 - 추적',
+                    mutual_escalation: '상호 격화', mutual_withdrawal: '상호 철수',
+                    balanced: '균형 대화', uncommon: '비정형'
+                };
+                pName = cmap[cross.conflictCross.type] || cross.conflictCross.type;
+                pSub = cross.conflictCross.desc || '';
+            } else if (cross.attachmentCross && cross.attachmentCross.type) {
+                var amap = {
+                    stable_pair:'안정 페어', pursuit_withdrawal:'추적 - 회피', mutual_spiral:'상호 나선',
+                    anxious_pursuit:'불안 추적', avoidant_parallel:'회피 병행', uncommon:'비정형'
+                };
+                pName = amap[cross.attachmentCross.type] || cross.attachmentCross.type;
+                pSub = cross.attachmentCross.desc || '';
+            } else if (mi.name) {
+                pName = mi.name + ' 패턴';
+            }
+            var pEl = document.getElementById('v39PatternName');
+            if (pEl) {
+                var toks = pName.split(/\s+/);
+                if (toks.length >= 2) pEl.innerHTML = '<span class="em">' + _v39Safe(toks[0]) + '</span> ' + _v39Safe(toks.slice(1).join(' '));
+                else pEl.innerHTML = '<span class="em">' + _v39Safe(pName) + '</span>';
+            }
+            var pSubEl = document.getElementById('v39PatternSub');
+            if (pSubEl) pSubEl.textContent = pSub || '두 사람의 상호작용에서 반복되는 구조를 읽어냅니다.';
+
+            // Tier-1: shadow-like summary or trigger summary
+            var t1 = document.getElementById('v39PatternTier1');
+            if (t1) {
+                var t1Text = '';
+                if (cross.triggerLoops && cross.triggerLoops.length) {
+                    t1Text = '이 패턴은 <b>' + cross.triggerLoops.length + '개 반복 루프</b>로 나타납니다. 끊어내는 책임은 먼저 "이름 붙이는" 쪽이 집니다.';
+                } else {
+                    // shadow from outlook (attraction_structure)
+                    var shadow = _findMatchSectionSummary(ctx.sections, 'attraction_structure');
+                    if (shadow) t1Text = _v39Safe(shadow.slice(0, 180)) + (shadow.length > 180 ? '…' : '');
+                    else t1Text = '두 사람의 상호작용에는 반복되는 구조가 있습니다. 알아차리는 순간 루프는 약해집니다.';
+                }
+                t1.innerHTML = t1Text;
+            }
+
+            // Insight stack — 3 cards: BOTH / A→B / B→A
+            var stack = document.getElementById('v39InsightStack');
+            if (stack) {
+                var chemDesc = '', fricDesc = '', riskDesc = '';
+                if (cross.chemistry && cross.chemistry.desc) chemDesc = cross.chemistry.desc;
+                if (cross.defenseClash && cross.defenseClash.desc) fricDesc = cross.defenseClash.desc;
+                if (cross.riskAmplification && cross.riskAmplification.desc) riskDesc = cross.riskAmplification.desc;
+                var convergenceDesc = {
+                    convergent: '두 사람의 궤적이 서로 <b>가까워지는</b> 방향입니다. 시간이 흐를수록 이해의 깊이가 누적됩니다.',
+                    parallel: '서로 다른 궤적을 따르지만 <b>같은 방향</b>을 봅니다. 각자의 영역을 존중하면서도 교집합이 자연스럽게 생깁니다.',
+                    divergent: '관계 궤적이 <b>다른 방향</b>으로 움직입니다. 의식적인 접점을 만들지 않으면 거리감이 커집니다.'
+                }[cross.convergence] || '두 사람의 궤적은 아직 결정되지 않았습니다. 초기 선택이 미래를 만듭니다.';
+
+                var aName = _v39Safe(idA.name || 'A');
+                var bName = _v39Safe(idB.name || 'B');
+                var bothText = chemDesc
+                    ? _v39Safe(chemDesc)
+                    : convergenceDesc;
+                var aText = fricDesc
+                    ? _v39Safe(fricDesc)
+                    : '<b>' + aName + '</b>의 반응 방식이 <b>' + bName + '</b>에게 다르게 번역됩니다. 의도와 해석 사이에 틈이 있습니다.';
+                var bText = riskDesc
+                    ? _v39Safe(riskDesc)
+                    : '<b>' + bName + '</b>의 표현이 <b>' + aName + '</b>에게 의외의 무게로 도착할 때가 있어요. 의도된 온도와 측정된 온도가 다릅니다.';
+
+                stack.innerHTML =
+                    '<div class="v39-insight both"><div class="tag">◇ BOTH</div><p>' + bothText + '</p></div>' +
+                    '<div class="v39-insight"><div class="tag"><span class="a">A · ' + aName + '</span> → B</div><p>' + aText + '</p></div>' +
+                    '<div class="v39-insight b"><div class="tag"><span class="b">B · ' + bName + '</span> → A</div><p>' + bText + '</p></div>';
+            }
+
+            // Single trigger loop (first one if available)
+            var loopWrap = document.getElementById('v39LoopWrap');
+            if (loopWrap) {
+                var loops = (cross.triggerLoops && Array.isArray(cross.triggerLoops)) ? cross.triggerLoops : [];
+                if (loops.length) {
+                    var loop = loops[0];
+                    var label = document.getElementById('v39LoopLabel');
+                    if (label) label.textContent = loop.label || loop.type || '반복 루프';
+                    var chainEl = document.getElementById('v39LoopChain');
+                    if (chainEl) {
+                        var chain = Array.isArray(loop.chain) ? loop.chain : null;
+                        var chainHTML = '';
+                        if (chain && chain.length) {
+                            chain.forEach(function(step, i){
+                                var isA = /^a[\s\.·:→]|^a\b/i.test(String(step));
+                                var cls = isA ? 'a' : 'b';
+                                var who = isA ? 'A · ' + (idA.name || '') : 'B · ' + (idB.name || '');
+                                chainHTML += '<div class="v39-loop-node ' + cls + '"><div class="who">' + _v39Safe(who) + '</div><div class="act">' + _v39Safe(step) + '</div></div>';
+                                if (i < chain.length - 1) chainHTML += '<div class="v39-loop-arrow">→</div>';
+                            });
+                        } else {
+                            // synthesize 4-node A→B→B→A
+                            var pairs = [
+                                { cls:'b', who:'B · ' + (idB.name||''), act:'"별일 없지?" 안부·확인' },
+                                { cls:'a', who:'A · ' + (idA.name||''), act:'단답·뒤로 미룸' },
+                                { cls:'b', who:'B · ' + (idB.name||''), act:'거절로 해석·재확인' },
+                                { cls:'a', who:'A · ' + (idA.name||''), act:'압박으로 해석·대화 종료' }
+                            ];
+                            pairs.forEach(function(p, i){
+                                chainHTML += '<div class="v39-loop-node ' + p.cls + '"><div class="who">' + _v39Safe(p.who) + '</div><div class="act">' + _v39Safe(p.act) + '</div></div>';
+                                if (i < pairs.length - 1) chainHTML += '<div class="v39-loop-arrow">→</div>';
+                            });
+                        }
+                        chainEl.innerHTML = chainHTML;
+                    }
+                    var capEl = document.getElementById('v39LoopCap');
+                    if (capEl) capEl.innerHTML = loop.desc ? _v39Safe(loop.desc) : '감지 시 바로 끊어야 하는 구간입니다.';
+                    loopWrap.style.display = '';
+                } else {
+                    loopWrap.style.display = 'none';
+                }
+            }
+        }
+
+        // ── 04 · THE ARC ──
+        function renderV39Arc(ctx){
+            var simA = ctx.simulationA, simB = ctx.simulationB;
+            var idA = ctx.idA || {}, idB = ctx.idB || {};
+
+            var lA = document.getElementById('v39ArcLegA'); if (lA) lA.textContent = idA.name || 'A';
+            var lB = document.getElementById('v39ArcLegB'); if (lB) lB.textContent = idB.name || 'B';
+
+            // Extract NOW emotion values 0..1
+            function _nowEmo(sim){
+                if (!sim) return 0.5;
+                if (sim.axes && typeof sim.axes.emotion === 'number') return _v39Norm01(sim.axes.emotion);
+                if (sim.now && typeof sim.now.emotion === 'number') return _v39Norm01(sim.now.emotion);
+                return 0.5;
+            }
+            var eA = _nowEmo(simA), eB = _nowEmo(simB);
+            // linear projection using crossSituational delta or simple drift
+            var cross = ctx.crossSim || {};
+            var drift = 0;
+            if (cross.convergence === 'divergent') drift = 0.15;
+            else if (cross.convergence === 'convergent') drift = -0.12;
+            else drift = 0.05;
+            // A drifts down (risk), B drifts up (growth) when divergent; reverse for convergent
+            var eA_3m = Math.max(0, Math.min(1, eA - drift * 0.5));
+            var eA_1y = Math.max(0, Math.min(1, eA - drift * 1.2));
+            var eB_3m = Math.max(0, Math.min(1, eB + drift * 0.5));
+            var eB_1y = Math.max(0, Math.min(1, eB + drift * 1.2));
+
+            // Tier-1
+            var t1 = document.getElementById('v39ArcTier1');
+            if (t1) {
+                var convMap = {
+                    convergent: '현재 두 사람은 <b>수렴 궤도</b>. 3개월 내에도 계속 가까워질 가능성이 높습니다.',
+                    parallel: '현재 두 사람은 <b>평행 궤도</b>. 3개월 내 개입 없으면 <b>서서히 발산</b>하고, 한쪽의 "이름 붙이기" 가 생기면 <b>안정 수렴</b> 으로 꺾입니다.',
+                    divergent: '현재 두 사람은 <b>발산 궤도</b>. 의식적인 개입이 없으면 1년 뒤 거리감이 눈에 띄게 커집니다.'
+                };
+                t1.innerHTML = convMap[cross.convergence] || '현재 궤적은 결정적이지 않습니다. 지금 내리는 선택이 방향을 만듭니다.';
+            }
+
+            // SVG
+            function y(v){ return Math.round(180 - v * 140); }  // 0→180 (bottom), 1→40 (top)
+            var svg = document.getElementById('v39ArcSvg');
+            if (svg) {
+                var parts = [];
+                parts.push('<line x1="0" y1="40" x2="600" y2="40" stroke="#1A1A2E" stroke-dasharray="2,4"/>');
+                parts.push('<line x1="0" y1="110" x2="600" y2="110" stroke="#252540"/>');
+                parts.push('<line x1="0" y1="180" x2="600" y2="180" stroke="#1A1A2E" stroke-dasharray="2,4"/>');
+                parts.push('<line x1="150" y1="0" x2="150" y2="210" stroke="#1A1A2E" stroke-dasharray="1,3"/>');
+                parts.push('<line x1="350" y1="0" x2="350" y2="210" stroke="#1A1A2E" stroke-dasharray="1,3"/>');
+                parts.push('<line x1="550" y1="0" x2="550" y2="210" stroke="#1A1A2E" stroke-dasharray="1,3"/>');
+                parts.push('<text x="150" y="210" fill="#4A4A60" font-size="9" font-family="JetBrains Mono" text-anchor="middle">NOW</text>');
+                parts.push('<text x="350" y="210" fill="#4A4A60" font-size="9" font-family="JetBrains Mono" text-anchor="middle">+3M</text>');
+                parts.push('<text x="550" y="210" fill="#4A4A60" font-size="9" font-family="JetBrains Mono" text-anchor="middle">+1Y</text>');
+                parts.push('<text x="5" y="44" fill="#4A4A60" font-size="9" font-family="JetBrains Mono">1.0</text>');
+                parts.push('<text x="5" y="114" fill="#4A4A60" font-size="9" font-family="JetBrains Mono">0.5</text>');
+                parts.push('<text x="5" y="184" fill="#4A4A60" font-size="9" font-family="JetBrains Mono">0.0</text>');
+                var yA = y(eA), yA3 = y(eA_3m), yA1 = y(eA_1y);
+                var yB = y(eB), yB3 = y(eB_3m), yB1 = y(eB_1y);
+                parts.push('<path d="M 20 ' + (yA+4) + ' L 80 ' + (yA+2) + ' L 150 ' + yA + '" stroke="#60A5FA" stroke-width="2" fill="none"/>');
+                parts.push('<path d="M 150 ' + yA + ' L 350 ' + yA3 + ' L 550 ' + yA1 + '" stroke="#60A5FA" stroke-width="2" stroke-dasharray="4,4" fill="none"/>');
+                parts.push('<path d="M 20 ' + (yB-4) + ' L 80 ' + (yB-2) + ' L 150 ' + yB + '" stroke="#A78BFA" stroke-width="2" fill="none"/>');
+                parts.push('<path d="M 150 ' + yB + ' L 350 ' + yB3 + ' L 550 ' + yB1 + '" stroke="#A78BFA" stroke-width="2" stroke-dasharray="4,4" fill="none"/>');
+                parts.push('<circle cx="150" cy="' + yA + '" r="4" fill="#60A5FA"/>');
+                parts.push('<circle cx="150" cy="' + yB + '" r="4" fill="#A78BFA"/>');
+                // divergence highlight
+                if (cross.convergence !== 'convergent') {
+                    var topY = Math.min(yA1, yB1), botY = Math.max(yA1, yB1);
+                    var topY3 = Math.min(yA3, yB3), botY3 = Math.max(yA3, yB3);
+                    parts.push('<path d="M 350 ' + topY3 + ' L 550 ' + topY + ' L 550 ' + botY + ' L 350 ' + botY3 + ' Z" fill="#EF4444" fill-opacity="0.06" stroke="none"/>');
+                    parts.push('<text x="450" y="105" fill="#EF4444" font-size="10" font-family="JetBrains Mono" text-anchor="middle" opacity="0.8">발산 영역</text>');
+                }
+                svg.innerHTML = parts.join('');
+            }
+
+            // RA pair: risk + growth cards
+            var raPair = document.getElementById('v39RaPair');
+            if (raPair) {
+                var riskSummary = _findMatchSectionSummary(ctx.sections, 'risk_map') || '';
+                var growthSummary = _findMatchSectionSummary(ctx.sections, 'possibility') || '';
+                var riskTitle = '누적된 오해가 한 번에 터짐';
+                var riskBody = riskSummary ? _v39Safe(riskSummary.slice(0, 220)) : '축 간 격차가 한 번에 터질 수 있는 지점이 있습니다. 작게 자주 드러내는 쪽이 안전합니다.';
+                var growthTitle = '서로의 언어 사전이 생김';
+                var growthBody = growthSummary ? _v39Safe(growthSummary.slice(0, 220)) : '둘만의 해석 규칙이 누적되면 오독 빈도가 급감합니다. 차이는 문제가 아니라 자원이 됩니다.';
+                var raHTML = '' +
+                    '<div class="v39-ra risk">' +
+                        '<div class="ra-head"><b>RISK</b> <span class="at">3개월 · 폭발 지점</span></div>' +
+                        '<div class="ra-title">' + _v39Safe(riskTitle) + '</div>' +
+                        '<div class="ra-body">' + riskBody + '</div>' +
+                        '<div class="ra-anti">◇ ANTIDOTE — <b>이름 붙이기</b></div>' +
+                        '<div class="ra-action">한 문장 라벨링. "나 지금 ___ 상태, ___ 아님" — 30자면 루프가 끊깁니다.</div>' +
+                    '</div>' +
+                    '<div class="v39-ra growth">' +
+                        '<div class="ra-head"><b>GROWTH</b> <span class="at">1년 · 안정 수렴</span></div>' +
+                        '<div class="ra-title">' + _v39Safe(growthTitle) + '</div>' +
+                        '<div class="ra-body">' + growthBody + '</div>' +
+                        '<div class="ra-anti">◇ ACTION — <b>일주일에 한 번</b></div>' +
+                        '<div class="ra-action">"이번 주 내가 이렇게 행동했을 때 사실 ___ 의미였어" 를 한 문장씩 교환.</div>' +
+                    '</div>';
+                raPair.innerHTML = raHTML;
+            }
+        }
+
+        // ── 05 · DEEP DIVE ──
+        var _V39_LENS_MAP = [
+            { code:'persona',   label:'PERSONA',        ko:'페르소나' },
+            { code:'comm',      label:'COMMUNICATION',  ko:'소통' },
+            { code:'defense',   label:'DEFENSE',        ko:'방어' },
+            { code:'shadow',    label:'SHADOW',         ko:'그림자' },
+            { code:'ritual',    label:'RITUAL',         ko:'의식' },
+            { code:'thinking',  label:'THINKING',       ko:'사유의 지형' },
+            { code:'anchor',    label:'ANCHOR',         ko:'애착' }
+        ];
+        // Korean section name → lens key
+        var _V39_SECTION_KO_MAP = {
+            '페르소나': 'persona', 'persona':'persona',
+            '소통': 'comm', 'communication':'comm', '의사소통':'comm',
+            '방어': 'defense', '방어 체계':'defense',
+            '그림자': 'shadow', 'shadow':'shadow', '매력 구조':'shadow', 'attraction_structure':'shadow',
+            '의식': 'ritual', '의식화':'ritual', 'ritual':'ritual',
+            '사유의 지형': 'thinking', 'thinking':'thinking',
+            '애착': 'anchor', 'anchor':'anchor'
+        };
+
+        function renderV39DeepDive(ctx){
+            var sections = ctx.sections || [];
+            var navEl = document.getElementById('v39DdNav');
+            var bodyEl = document.getElementById('v39DdBody');
+            if (!navEl || !bodyEl) return;
+
+            // Normalize sections: may be array of {title, summary, body} or keyed object
+            var arr = [];
+            if (Array.isArray(sections)) {
+                arr = sections.map(function(s){ return { title: s.title || s.name || s.key || '', body: s.body || s.summary || s.text || '' }; });
+            } else if (sections && typeof sections === 'object') {
+                arr = Object.keys(sections).map(function(k){
+                    var s = sections[k]; if (typeof s === 'string') return { title:k, body:s };
+                    return { title: s.title||k, body: s.body||s.summary||s.text||'' };
+                });
+            }
+            // Map to lens codes
+            var byCode = {};
+            arr.forEach(function(s){
+                var code = _V39_SECTION_KO_MAP[s.title] || _V39_SECTION_KO_MAP[(s.title||'').toLowerCase()] || null;
+                if (code) byCode[code] = s;
+            });
+            // Build available lenses
+            var available = _V39_LENS_MAP.filter(function(l){ return byCode[l.code]; });
+            if (!available.length) {
+                // fallback: show all sections as-is
+                if (arr.length) {
+                    navEl.innerHTML = arr.map(function(s, i){
+                        return '<button class="' + (i===0?'active':'') + '" data-v39lens="_fb' + i + '">' + _v39Safe((s.title||'').toUpperCase()) + '</button>';
+                    }).join('');
+                    bodyEl.innerHTML = arr.map(function(s, i){
+                        return '<div class="v39-dd-panel' + (i===0?' active':'') + '" data-v39panel="_fb' + i + '"><h3>' + _v39Safe(s.title||'') + '</h3><p>' + _v39Safe(s.body||'').replace(/\n+/g,'</p><p>') + '</p></div>';
+                    }).join('');
+                } else {
+                    navEl.innerHTML = '';
+                    bodyEl.innerHTML = '<div class="v39-dd-empty">심층 분석 데이터가 준비되지 않았습니다.</div>';
+                }
+            } else {
+                navEl.innerHTML = available.map(function(l, i){
+                    return '<button class="' + (i===0?'active':'') + '" data-v39lens="' + l.code + '">' + l.label + '</button>';
+                }).join('');
+                bodyEl.innerHTML = available.map(function(l, i){
+                    var s = byCode[l.code];
+                    return '<div class="v39-dd-panel' + (i===0?' active':'') + '" data-v39panel="' + l.code + '">' +
+                        '<h3>' + _v39Safe(s.title || l.ko) + '</h3>' +
+                        '<p>' + _v39Safe(s.body || '').replace(/\n+/g,'</p><p>') + '</p>' +
+                    '</div>';
+                }).join('');
+            }
+            // Wire tabs
+            navEl.querySelectorAll('button').forEach(function(btn){
+                btn.addEventListener('click', function(){
+                    var tgt = btn.getAttribute('data-v39lens');
+                    navEl.querySelectorAll('button').forEach(function(b){ b.classList.remove('active'); });
+                    bodyEl.querySelectorAll('.v39-dd-panel').forEach(function(p){ p.classList.remove('active'); });
+                    btn.classList.add('active');
+                    var panel = bodyEl.querySelector('[data-v39panel="' + tgt + '"]');
+                    if (panel) panel.classList.add('active');
+                });
+            });
         }
 
         async function loadMatchFile(file) {
@@ -11450,6 +11921,10 @@ function displayResult() {
             // Toggle side-nav visibility for match screen
             const matchSideNav = document.getElementById('matchSideNav');
             if (matchSideNav) matchSideNav.classList.toggle('visible', name === 'match');
+
+            // v3.9.0: sticky footer — match 스크린 외 화면에서 숨김
+            const v39Sticky = document.getElementById('v39Sticky');
+            if (v39Sticky) v39Sticky.classList.toggle('visible', name === 'match');
             const matchProgressBar = document.getElementById('matchScrollProgress');
             if (matchProgressBar) matchProgressBar.style.display = (name === 'match') ? 'block' : 'none';
         }
@@ -12442,9 +12917,9 @@ function displayResult() {
         async function generateMatchShareURL() {
             const cached = window._lastMatchResult;
             if (!cached) { alert('매칭 결과가 없습니다'); return; }
+            // v3.9.0: 기존 matchShareBtn 이 hidden legacy block 에 있음 → 없으면 스킵
             const btn = document.getElementById('matchShareBtn');
-            btn.disabled = true;
-            btn.textContent = '⏳ 생성 중...';
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ 생성 중...'; }
             try {
                 const shareData = {
                     type: 'match',
@@ -12477,14 +12952,21 @@ function displayResult() {
                 });
                 if (!resp.ok) throw new Error('서버 오류');
                 const result = await resp.json();
-                document.getElementById('matchShareUrlInput').value = result.shareUrl;
-                document.getElementById('matchShareUrlResult').style.display = 'block';
-                btn.textContent = '✅ 링크 생성 완료';
-                setTimeout(() => { btn.textContent = '공유 링크 만들기'; btn.disabled = false; }, 3000);
+                // v3.9.0: legacy hidden input 채우고 + 클립보드 복사 + prompt 로 URL 노출
+                const legacyInput = document.getElementById('matchShareUrlInput');
+                const legacyResult = document.getElementById('matchShareUrlResult');
+                if (legacyInput) legacyInput.value = result.shareUrl;
+                if (legacyResult) legacyResult.style.display = 'block';
+                try { await navigator.clipboard.writeText(result.shareUrl); } catch {}
+                // prompt 로 URL 노출 (복사 실패해도 유저가 수동 선택 가능)
+                window.prompt('공유 링크가 클립보드에 복사되었습니다. 파트너에게 보내세요:', result.shareUrl);
+                if (btn) {
+                    btn.textContent = '✅ 링크 복사됨';
+                    setTimeout(() => { btn.textContent = '공유 링크 만들기'; btn.disabled = false; }, 3000);
+                }
             } catch (e) {
                 alert('공유 링크 생성 실패: ' + e.message);
-                btn.textContent = '공유 링크 만들기';
-                btn.disabled = false;
+                if (btn) { btn.textContent = '공유 링크 만들기'; btn.disabled = false; }
             }
         }
 
