@@ -6500,9 +6500,9 @@
                 pndIdA = pndIdA || {};
                 pndIdB = pndIdB || {};
 
-                // 글로벌 프로필 세팅
-                currentProfile = { axes: pndAxesA, identity: pndIdA, _restored: true };
-                matchProfile = { axes: pndAxesB, identity: pndIdB, _restored: true };
+                // 글로벌 프로필 세팅 — v3.8.17: sim/prism/anchor 도 enrich (기존엔 drop → 재공유/재렌더 시 누락)
+                currentProfile = { axes: pndAxesA, identity: pndIdA, simulation: r.simulationA || null, prism: r.prismA || null, anchor: r.anchorA || null, _restored: true };
+                matchProfile = { axes: pndAxesB, identity: pndIdB, simulation: r.simulationB || null, prism: r.prismB || null, anchor: r.anchorB || null, _restored: true };
 
                 // 새 구조 렌더 — Identity
                 document.getElementById('matchRelName').textContent = matchId.name || '-';
@@ -6815,9 +6815,9 @@
             idA = idA || {};
             idB = idB || {};
 
-            // 글로벌 프로필 세팅 (renderMatchStructTags 등에서 참조)
-            currentProfile = { axes: axesA, identity: idA, _restored: true };
-            matchProfile = { axes: axesB, identity: idB, _restored: true };
+            // 글로벌 프로필 세팅 — v3.8.17: sim/prism/anchor enrich (renderMatchStructTags / 재공유 참조)
+            currentProfile = { axes: axesA, identity: idA, simulation: m.simulationA || null, prism: m.prismA || null, anchor: m.anchorA || null, _restored: true };
+            matchProfile = { axes: axesB, identity: idB, simulation: m.simulationB || null, prism: m.prismB || null, anchor: m.anchorB || null, _restored: true };
 
             // ═══ STEP 01: IDENTITY ═══
             const name = mi.name || '호환성 분석';
@@ -7318,12 +7318,16 @@
                     const result = {};
 
                     // Stage 1: axes, identity, prism, anchor, simulation from server
+                    // v3.8.17: diagnostics/used_fallback/friction 도 캡처 — 기존엔 전부 drop.
                     if (scores) {
                         result.axes = scores.axes || null;
                         result.identity = scores.identity || null;
                         result.prism = scores.prism || null;
                         result.anchor = scores.anchor || null;
                         result.simulation = scores.simulation || null;
+                        result.friction = scores.friction || null;
+                        result.diagnostics = scores.diagnostics || null;
+                        result.used_fallback = scores.used_fallback === true;
                         result.analysis_id = scores.analysis_id || analysisId;
                     }
 
@@ -7465,7 +7469,12 @@
                         if (meta.crossSituational) parsed.crossSituational = meta.crossSituational;  // 상황별 쌍별 매칭
                         // 서버 계산 matchIdentity (crossSim 기반 호환성 포함)
                         if (meta.matchIdentity) parsed.serverMatchIdentity = meta.matchIdentity;
-                        if (meta.compatibility) parsed.serverCompatibility = meta.compatibility;
+                        // v3.8.17: compatibility 는 object. serverCompatibility + numeric top-level 둘 다 둔다.
+                        if (meta.compatibility) {
+                            parsed.serverCompatibility = meta.compatibility;
+                            const c = meta.compatibility;
+                            parsed.compatibility = (c && typeof c === 'object') ? (c.total_compatibility ?? c.score ?? c.compatibility ?? null) : c;
+                        }
                     }
                     return parsed;
                 } else {
@@ -9269,6 +9278,19 @@ function displayResult() {
     const axes = profile.axes;
     const identity = profile.identity;
 
+    // v3.8.17: fallback 배너 — LLM 실패로 L1/neutral default 사용 시 사용자 고지
+    if (profile.used_fallback) {
+        const existing = document.getElementById('fallbackBanner');
+        if (!existing) {
+            const banner = document.createElement('div');
+            banner.id = 'fallbackBanner';
+            banner.style.cssText = 'background:#78350F;border:1px solid #F59E0B;color:#FEF3C7;padding:12px 16px;margin:16px 0;border-radius:8px;font-size:13px;line-height:1.5;';
+            banner.innerHTML = '⚠ <strong>부분 분석</strong> — AI 심층 분석이 실패해 백업 규칙(keyword-based)으로 점수가 계산되었습니다. 결과의 정밀도가 낮을 수 있으니 재분석을 권장합니다.';
+            const resultScreen = document.querySelector('.screen.result') || document.body;
+            resultScreen.insertBefore(banner, resultScreen.firstChild);
+        }
+    }
+
     // Section 0: IDENTITY — archetype glass + 6축 bars + narrative
     document.getElementById('typeEmoji').textContent = identity.emoji;
     document.getElementById('typeCode').textContent = sanitizeHTML(identity.code);
@@ -9887,22 +9909,32 @@ function displayResult() {
 
         function renderMatchScoreGrid(compatDetail) {
             if (!compatDetail) return;
-            var commSync = Math.round((1 - (compatDetail.lsm_friction || 0)) * 100);
-            var emoBal = Math.round((1 - (compatDetail.intensity_friction || 0)) * 100);
-            var structFit = Math.round((1 - (compatDetail.structural_friction || 0)) * 100);
+            // v3.8.17: `|| 0` 로 누락값을 "마찰 0 = 100% 호환" 으로 잘못 표시하던 버그.
+            // null/undefined 면 "—" 표기, 숫자면 계산.
+            function pct(frictionVal) {
+                if (frictionVal == null || !Number.isFinite(frictionVal)) return null;
+                return Math.round((1 - frictionVal) * 100);
+            }
+            function fmtPctOrDash(v) {
+                return v == null ? '—' : v + '<span style="font-size:16px;">%</span>';
+            }
+            var commSync = pct(compatDetail.lsm_friction);
+            var emoBal   = pct(compatDetail.intensity_friction);
+            var structFit = pct(compatDetail.structural_friction);
             var el1 = document.getElementById('matchSubScore1');
             var el2 = document.getElementById('matchSubScore2');
             var el3 = document.getElementById('matchSubScore3');
-            if (el1) el1.innerHTML = commSync + '<span style="font-size:16px;">%</span>';
-            if (el2) el2.innerHTML = emoBal + '<span style="font-size:16px;">%</span>';
-            if (el3) el3.innerHTML = structFit + '<span style="font-size:16px;">%</span>';
+            if (el1) el1.innerHTML = fmtPctOrDash(commSync);
+            if (el2) el2.innerHTML = fmtPctOrDash(emoBal);
+            if (el3) el3.innerHTML = fmtPctOrDash(structFit);
             // 동적 설명 텍스트
             var d1 = document.getElementById('matchScoreDesc1');
             var d2 = document.getElementById('matchScoreDesc2');
             var d3 = document.getElementById('matchScoreDesc3');
-            if (d1) d1.textContent = commSync >= 80 ? '대화 리듬과 표현 방식이 잘 맞습니다' : commSync >= 60 ? '소통 스타일에 약간의 차이가 있습니다' : '소통 방식의 조율이 필요합니다';
-            if (d2) d2.textContent = emoBal >= 80 ? '감정 반응의 강도와 방향이 조화롭습니다' : emoBal >= 60 ? '감정 표현의 온도차가 다소 있습니다' : '감정 강도 차이로 인한 마찰 가능성이 있습니다';
-            if (d3) d3.textContent = structFit >= 80 ? '관계 구조와 역할 분배가 안정적입니다' : structFit >= 60 ? '구조적으로 대체로 안정적이나 일부 조율 필요' : '역할 분배와 경계 설정에 주의가 필요합니다';
+            function descForScore(v, high, mid, low) { return v == null ? '측정 데이터 없음' : v >= 80 ? high : v >= 60 ? mid : low; }
+            if (d1) d1.textContent = descForScore(commSync, '대화 리듬과 표현 방식이 잘 맞습니다', '소통 스타일에 약간의 차이가 있습니다', '소통 방식의 조율이 필요합니다');
+            if (d2) d2.textContent = descForScore(emoBal, '감정 반응의 강도와 방향이 조화롭습니다', '정서 표현의 온도차가 다소 있습니다', '정서 강도 차이로 인한 마찰 가능성이 있습니다');
+            if (d3) d3.textContent = descForScore(structFit, '관계 구조와 역할 분배가 안정적입니다', '구조적으로 대체로 안정적이나 일부 조율 필요', '역할 분배와 경계 설정에 주의가 필요합니다');
         }
 
         // ─── 인사이트 카드 렌더링 (STEP 03 — 목업 4카드) ───
@@ -10329,11 +10361,18 @@ function displayResult() {
             function buildCol(sim, label, color) {
                 if (!sim) return '<div style="color:rgba(255,255,255,0.35);font-size:12px;padding:10px;">시뮬레이션 데이터 없음</div>';
 
-                // Stimulus curve SVG (base → stress → peak → recov1 → recov2 → back)
+                // v3.8.17: sim.axes 나 stim 데이터가 전혀 없으면 가짜 직선 합성하지 말고 empty state.
+                // 기존엔 base=0.5 고정 + stress=0.6 합성 → 실측처럼 보이는 가짜 곡선.
                 var stim = sim.stimulus || {};
-                var baseE = sim.axes && sim.axes.emotion != null ? sim.axes.emotion : 0.5;
+                var hasRealBase = sim.axes && sim.axes.emotion != null;
+                var hasRealStress = stim.stress && ((stim.stress.shifted && stim.stress.shifted.E != null) || (stim.stress.peak && stim.stress.peak.E != null));
+                if (!hasRealBase && !hasRealStress) {
+                    return '<div style="color:rgba(255,255,255,0.35);font-size:12px;padding:10px;">자극 반응 데이터 없음</div>';
+                }
+                // Stimulus curve SVG (base → stress → peak → recov1 → recov2 → back)
+                var baseE = hasRealBase ? sim.axes.emotion : 0.5;
                 var stressE = stim.stress && stim.stress.shifted && stim.stress.shifted.E != null ? stim.stress.shifted.E : baseE;
-                var peakE = stim.stress && stim.stress.peak && stim.stress.peak.E != null ? stim.stress.peak.E : Math.min(1, stressE * 1.2);
+                var peakE = stim.stress && stim.stress.peak && stim.stress.peak.E != null ? stim.stress.peak.E : stressE;
                 var recov = stim.stress && stim.stress.recovery && Array.isArray(stim.stress.recovery.trajectory) ? stim.stress.recovery.trajectory : [];
                 var recov1 = recov[0] && recov[0].E != null ? recov[0].E : (peakE + baseE) / 2;
                 var recov2 = recov[1] && recov[1].E != null ? recov[1].E : (recov1 + baseE) / 2;
@@ -11910,7 +11949,7 @@ function displayResult() {
                             var dimsA = computeMetaDimensions(axesA);
                             var dimsB = computeMetaDimensions(axesB);
                             drawDualMetaRadar('matchRadarCanvas', dimsA, dimsB, 400);
-                            renderMatchRadarLegend(idA.name || 'A', idB.name || 'B');
+                            renderMatchRadarLegend('matchRadarLegend', dimsA, dimsB, idA.name || 'A', idB.name || 'B'); // v3.8.17: 시그니처 수정
                         } catch(e) {}
                         try { renderMatchAxisCompare(axesA, axesB); } catch(e) {}
                     }

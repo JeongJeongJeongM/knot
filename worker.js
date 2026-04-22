@@ -8624,11 +8624,22 @@ function computeCompatibility(identity) {
 function extractSimAxes(axes) {
   const flat = serverFlattenProfile(axes);
   const result = {};
+  const failures = [];
+  // v3.8.17: 이전엔 catch { 0.5 } 로 조용히 대체 → 모든 축 neutral 이면 '균형 잡힌' 가짜 차트.
+  // 실패 축을 failures 에 기록해서 호출 측이 partial flag 설정 가능하도록.
   for (const ax of SERVER_TYPE_AXES) {
     try { result[ax.id] = Math.max(0, Math.min(1, ax.calc(flat))); }
-    catch { result[ax.id] = 0.5; }
+    catch (e) {
+      failures.push({ id: ax.id, err: e && e.message });
+      result[ax.id] = 0.5;
+    }
   }
-  return result; // { emotion, drive, cognition, boundary, resilience, defense }
+  if (failures.length > 0) {
+    console.warn('[extractSimAxes] partial — failures:', failures);
+    result._partial = true;
+    result._failures = failures;
+  }
+  return result;
 }
 
 /**
@@ -12836,8 +12847,19 @@ function switchTab(id, el) {
                   try { await env.SHARE_STORE.put(`ratelimit:${authUser.sub}`, Date.now().toString(), { expirationTtl: 60 * 60 * 24 * 7 }); } catch {}
                 }
 
+                // v3.8.17: legacy DB 에 simulation_json 없을 수 있음 — isolate 1회 ALTER 시도
+                if (!globalThis.__kg_analyses_schema_ready) {
+                  try { await env.KNOT_DB.prepare(`ALTER TABLE analyses ADD COLUMN simulation_json TEXT`).run(); }
+                  catch (e) {
+                    const msg = (e && e.message) || '';
+                    if (!/duplicate column|already exists/i.test(msg)) console.error('[D1 ALTER analyses.simulation_json]', msg);
+                  }
+                  globalThis.__kg_analyses_schema_ready = true;
+                }
+
+                // v3.8.17: simulation_json 컬럼 포함 — 기존엔 INSERT 에서 drop → 리로드 시 시뮬 유실
                 await env.KNOT_DB.prepare(
-                  `INSERT INTO analyses (id, user_id, type_code, type_name, tagline, axis_fs, axis_ah, axis_tr, axis_ow, axis_xv, axis_ei, axes_json, prism_json, anchor_json, identity_json, message_count, input_format, original_count, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scoring', datetime('now'))`
+                  `INSERT INTO analyses (id, user_id, type_code, type_name, tagline, axis_fs, axis_ah, axis_tr, axis_ow, axis_xv, axis_ei, axes_json, prism_json, anchor_json, identity_json, simulation_json, message_count, input_format, original_count, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scoring', datetime('now'))`
                 ).bind(
                   analysisId,
                   userId,
@@ -12854,6 +12876,7 @@ function switchTab(id, el) {
                   prism ? JSON.stringify(prism) : null,
                   anchor ? JSON.stringify(anchor) : null,
                   JSON.stringify(identity),
+                  simulation ? JSON.stringify(simulation) : null,
                   rawMessages.length,
                   preprocessed.format || null,
                   preprocessed.originalCount || null
@@ -13417,11 +13440,19 @@ function switchTab(id, el) {
 
                 // v3.8.10: 자동 스키마 자가치유 — 기존 DB 에 새 컬럼 없어도 한 번만 시도 후 진행
                 //   글로벌 캐시 플래그로 반복 ALTER 방지 (Worker isolate 마다 1회)
+                // v3.8.17: "duplicate column" 만 조용히 무시, 다른 실패는 로그
                 if (!globalThis.__kg_matches_schema_ready) {
                   const newCols = ['cross_situational_json', 'prism_a_json', 'prism_b_json', 'anchor_a_json', 'anchor_b_json', 'simulation_a_json', 'simulation_b_json'];
                   for (const col of newCols) {
                     try { await env.KNOT_DB.prepare(`ALTER TABLE matches ADD COLUMN ${col} TEXT`).run(); }
-                    catch (e) { /* 이미 있거나 다른 이유 — 조용히 무시 */ }
+                    catch (e) {
+                      const msg = (e && e.message) || '';
+                      if (/duplicate column|already exists/i.test(msg)) continue; // 정상: 이미 있음
+                      console.error(`[D1 ALTER matches.${col}] UNEXPECTED failure:`, msg);
+                      // 다른 실패 (perms, lock 등): schema_ready 를 false 로 유지해서 다음 isolate 에서 재시도
+                      globalThis.__kg_matches_schema_ready = false;
+                      throw new Error(`schema ALTER failed for ${col}: ${msg}`);
+                    }
                   }
                   globalThis.__kg_matches_schema_ready = true;
                 }
