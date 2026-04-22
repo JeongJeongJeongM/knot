@@ -6696,6 +6696,9 @@
                     if (!pndPA.axes) pndPA.axes = pndAxesA;
                     if (!pndPB.identity) pndPB.identity = r.identityB;
                     if (!pndPB.axes) pndPB.axes = pndAxesB;
+                    // v3.8.13: simulation enrich
+                    if (!pndPA.simulation) pndPA.simulation = r.simulationA || null;
+                    if (!pndPB.simulation) pndPB.simulation = r.simulationB || null;
                     renderMatchPhase2(pndPA, pndPB, matchId, sections, r.crossSituational || null, r.crossSim || null,
                         r.prismA || null, r.prismB || null, r.anchorA || null, r.anchorB || null, r.simulationA || null, r.simulationB || null);
                 } catch(e) { console.error('[MatchPhase2 pnd]', e); }
@@ -7037,6 +7040,9 @@
                 if (!mPA.axes) mPA.axes = axesA;
                 if (!mPB.identity) mPB.identity = m.identityB;
                 if (!mPB.axes) mPB.axes = axesB;
+                // v3.8.13: simulation 누락 시 DB 복원 simulationA/B 로 enrich
+                if (!mPA.simulation) mPA.simulation = m.simulationA || null;
+                if (!mPB.simulation) mPB.simulation = m.simulationB || null;
                 renderMatchPhase2(mPA, mPB, mi, m.sections || null, m.crossSituational || null, m.crossSim || null,
                     m.prismA || null, m.prismB || null, m.anchorA || null, m.anchorB || null, m.simulationA || null, m.simulationB || null);
             } catch(e) { console.log('[KNOT] MatchPhase2 error:', e.message); }
@@ -11345,9 +11351,12 @@ function displayResult() {
             }
 
             // v3.6.46 Phase 2+3: 신규 커플 섹션 렌더 (RARITY / TRAJECTORY / OUTLOOK + LLM narrative)
+            // v3.8.13: simulation 우선순위 — 매칭 응답의 최신 sim > 개인 분석 캐시 sim
+            const _simA = (llmMatch && llmMatch.simulationA) || currentProfile.simulation || null;
+            const _simB = (llmMatch && llmMatch.simulationB) || matchProfile.simulation || null;
             renderMatchPhase2(
-                { identity: idA, axes: currentProfile.axes, simulation: currentProfile.simulation || null },
-                { identity: idB, axes: matchProfile.axes, simulation: matchProfile.simulation || null },
+                { identity: idA, axes: currentProfile.axes, simulation: _simA },
+                { identity: idB, axes: matchProfile.axes, simulation: _simB },
                 matchId,
                 llmMatch ? llmMatch.sections : null,
                 llmMatch ? (llmMatch.crossSituational || null) : null,
@@ -11356,8 +11365,8 @@ function displayResult() {
                 llmMatch ? (llmMatch.prismB || null) : null,
                 llmMatch ? (llmMatch.anchorA || null) : null,
                 llmMatch ? (llmMatch.anchorB || null) : null,
-                llmMatch ? (llmMatch.simulationA || null) : null,
-                llmMatch ? (llmMatch.simulationB || null) : null
+                _simA,
+                _simB
             );
 
             // Hide analyzing UI, show results
@@ -12069,6 +12078,9 @@ function displayResult() {
                         if (!sharePA.axes) sharePA.axes = axesA;
                         if (!sharePB.identity) sharePB.identity = idB;
                         if (!sharePB.axes) sharePB.axes = axesB;
+                        // v3.8.13: simulation 누락 시 공유 payload simulationA/B 로 enrich
+                        if (!sharePA.simulation) sharePA.simulation = profile.simulationA || null;
+                        if (!sharePB.simulation) sharePB.simulation = profile.simulationB || null;
                         renderMatchPhase2(sharePA, sharePB, mi, profile.sections || null, profile.crossSituational || null, profile.crossSim || null,
                             profile.prismA || null, profile.prismB || null, profile.anchorA || null, profile.anchorB || null, profile.simulationA || null, profile.simulationB || null);
                     } catch(e) { console.error('[MatchPhase2 share]', e); }
