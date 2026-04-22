@@ -4492,6 +4492,10 @@
         .v39-dd-body h3{font-size:20px;font-weight:700;margin-bottom:20px;color:#fff;display:flex;align-items:center;gap:10px}
         .v39-dd-body p{font-size:14px;line-height:1.85;color:rgba(255,255,255,0.75);margin-bottom:14px}
         .v39-dd-body p b{color:#fff;font-weight:600}
+        /* v3.9.11: 서버 summary + subsections 구조 렌더링 */
+        .v39-dd-sum{background:rgba(245,166,35,0.06);border-left:3px solid #F5A623;padding:14px 18px;margin-bottom:24px;border-radius:0 8px 8px 0;font-size:14px;line-height:1.85;color:rgba(255,255,255,0.85)}
+        .v39-dd-subtitle{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#F5A623;letter-spacing:2px;text-transform:uppercase;margin:24px 0 10px}
+        .v39-dd-subtitle:first-child{margin-top:0}
         .v39-dd-panel{display:none}
         .v39-dd-panel.active{display:block;animation:v39LensFadeIn 0.3s ease}
         @keyframes v39LensFadeIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
@@ -11914,34 +11918,29 @@ function displayResult() {
             var bodyEl = document.getElementById('v39DdBody');
             if (!navEl || !bodyEl) return;
 
-            // v3.9.10: 서버 sections schema 는 {key, title, summary, subsections}.
-            //   key 와 title 둘 다 매핑 대상으로. summary 가 최상위 body 텍스트.
-            //   subsections 가 있으면 본문에 펼쳐서 붙임.
+            // v3.9.11: flatten 없앰 — 이전에 body 에 <strong> 박고 render 에서 재-escape 돼서
+            //   <strong> 태그가 사용자에게 글자로 노출 + apostrophe double-encode 로 &#39; 리터럴 표시.
+            //   대신 section 원본 보존 후 renderer 에서 summary/subsections 구조대로 HTML 빌드.
             var arr = [];
-            function _flattenSubsections(subs){
-                if (!Array.isArray(subs)) return '';
-                return subs.map(function(sub){
-                    if (!sub) return '';
-                    var t = sub.title || sub.key || '';
-                    var c = sub.content || sub.text || sub.body || '';
-                    if (!c) return '';
-                    return (t ? '<strong>' + _v39Safe(t) + '</strong>\n' : '') + _v39Safe(c);
-                }).filter(Boolean).join('\n\n');
-            }
             if (Array.isArray(sections)) {
                 arr = sections.map(function(s){
-                    var body = s.body || s.summary || s.text || '';
-                    var subBody = _flattenSubsections(s.subsections);
-                    if (subBody) body = (body ? body + '\n\n' : '') + subBody;
-                    return { key: s.key || '', title: s.title || s.name || s.key || '', body: body };
+                    return {
+                        key: s.key || '',
+                        title: s.title || s.name || s.key || '',
+                        summary: s.summary || s.body || s.text || '',
+                        subsections: Array.isArray(s.subsections) ? s.subsections : []
+                    };
                 });
             } else if (sections && typeof sections === 'object') {
                 arr = Object.keys(sections).map(function(k){
-                    var s = sections[k]; if (typeof s === 'string') return { key:k, title:k, body:s };
-                    var body = s.body || s.summary || s.text || '';
-                    var subBody = _flattenSubsections(s.subsections);
-                    if (subBody) body = (body ? body + '\n\n' : '') + subBody;
-                    return { key: s.key || k, title: s.title || k, body: body };
+                    var s = sections[k];
+                    if (typeof s === 'string') return { key:k, title:k, summary:s, subsections:[] };
+                    return {
+                        key: s.key || k,
+                        title: s.title || k,
+                        summary: s.summary || s.body || s.text || '',
+                        subsections: Array.isArray(s.subsections) ? s.subsections : []
+                    };
                 });
             }
             // Map to lens codes — key 우선, 없으면 title
@@ -11953,10 +11952,27 @@ function displayResult() {
                            null;
                 if (code && !byCode[code]) byCode[code] = s;
             });
+            // Build lens body HTML (single escape per field)
+            function _buildLensBody(sec){
+                var html = '';
+                if (sec.summary) {
+                    html += '<div class="v39-dd-sum">' + _v39Safe(sec.summary).replace(/\n+/g, '<br>') + '</div>';
+                }
+                sec.subsections.forEach(function(sub){
+                    if (!sub) return;
+                    var t = sub.title || sub.key || '';
+                    var c = sub.content || sub.text || sub.body || '';
+                    if (!c) return;
+                    html += (t ? '<h4 class="v39-dd-subtitle">' + _v39Safe(t) + '</h4>' : '');
+                    html += '<p>' + _v39Safe(c).replace(/\n+/g, '</p><p>') + '</p>';
+                });
+                if (!html) html = '<p class="v39-dd-empty">내용 없음</p>';
+                return html;
+            }
             // Build available lenses
             var available = _V39_LENS_MAP.filter(function(l){ return byCode[l.code]; });
-            // v3.9.9: 탭 1개뿐이면 nav 숨기고 panel 만 노출 (중복 헤더 + 빈 탭바 제거)
-            // 또한 탭 label 과 body h3 가 같으면 h3 생략.
+            // v3.9.11: body 는 _buildLensBody(sec) 가 summary + subsections 을 구조 그대로 HTML 생성.
+            //   더 이상 body 필드 사전 flatten 안 함 → double-escape 제거.
             function _renderSingleOrTabs(items){
                 if (!items.length) {
                     navEl.style.display = 'none';
@@ -11968,7 +11984,7 @@ function displayResult() {
                     navEl.style.display = 'none';
                     bodyEl.innerHTML = '<div class="v39-dd-panel active">' +
                         (s.navLabel ? '<h3>' + _v39Safe(s.navLabel) + '</h3>' : '') +
-                        '<p>' + _v39Safe(s.body || '').replace(/\n+/g,'</p><p>') + '</p>' +
+                        _buildLensBody(s.sec) +
                     '</div>';
                     return;
                 }
@@ -11977,21 +11993,20 @@ function displayResult() {
                     return '<button class="' + (i===0?'active':'') + '" data-v39lens="' + it.key + '">' + _v39Safe(it.navLabel) + '</button>';
                 }).join('');
                 bodyEl.innerHTML = items.map(function(it, i){
-                    // body h3 가 tab label 과 같으면 h3 생략 (중복 방지)
                     var h3 = (it.h3 && it.h3 !== it.navLabel) ? '<h3>' + _v39Safe(it.h3) + '</h3>' : '';
                     return '<div class="v39-dd-panel' + (i===0?' active':'') + '" data-v39panel="' + it.key + '">' +
-                        h3 + '<p>' + _v39Safe(it.body||'').replace(/\n+/g,'</p><p>') + '</p>' +
+                        h3 + _buildLensBody(it.sec) +
                     '</div>';
                 }).join('');
             }
             if (!available.length) {
                 _renderSingleOrTabs(arr.map(function(s, i){
-                    return { key:'_fb'+i, navLabel:s.title||'SECTION '+(i+1), h3:s.title||'', body:s.body||'' };
+                    return { key:'_fb'+i, navLabel:s.title||'SECTION '+(i+1), h3:s.title||'', sec:s };
                 }));
             } else {
                 _renderSingleOrTabs(available.map(function(l, i){
                     var s = byCode[l.code];
-                    return { key:l.code, navLabel:l.label, h3:s.title||l.ko, body:s.body||'' };
+                    return { key:l.code, navLabel:l.label, h3:s.title||l.ko, sec:s };
                 }));
             }
             // Wire tabs
