@@ -10811,9 +10811,25 @@ function displayResult() {
             const distA = computeDistinctiveness(axRA);
             const distB = computeDistinctiveness(axRB);
 
+            // v3.8.11: 극소수점 보존 + 0.00% 반올림 버그 수정
             function fmtPct(p) {
                 if (typeof p !== 'number' || !isFinite(p)) return '–';
-                return p < 0.1 ? p.toFixed(2) + '%' : p.toFixed(1) + '%';
+                if (p === 0) return '0%';
+                if (p < 0.001)  return p.toExponential(1) + '%';    // 예: 5.0e-4%
+                if (p < 0.01)   return p.toFixed(4) + '%';          // 예: 0.0020%
+                if (p < 0.1)    return p.toFixed(3) + '%';          // 예: 0.020%
+                if (p < 1)      return p.toFixed(2) + '%';
+                return p.toFixed(1) + '%';
+            }
+            // 1 in N 표기 — 희귀도 직관 향상 (예: 0.002% → "5만 쌍 중 1쌍")
+            function fmtOneIn(p) {
+                if (typeof p !== 'number' || !isFinite(p) || p <= 0) return null;
+                const oneIn = Math.round(100 / p);
+                if (oneIn >= 1000000) return Math.round(oneIn / 100000) / 10 + '백만 쌍 중 1';
+                if (oneIn >= 10000)   return Math.round(oneIn / 1000) / 10 + '만 쌍 중 1';
+                if (oneIn >= 1000)    return Math.round(oneIn / 100) / 10 + '천 쌍 중 1';
+                if (oneIn >= 100)     return oneIn + '쌍 중 1';
+                return null;
             }
 
             const typeA = distA ? distA.typePercent : null;
@@ -10828,14 +10844,20 @@ function displayResult() {
                 bNameEl.textContent = (idB.name || idB.code || '—') + ' · 상위 ' + fmtPct(typeB);
             }
 
-            // 조합 희귀도 heuristic: 두 유형이 독립 사건이면 곱의 규모.
-            // 개별 %가 비율이므로 (pA/100) × (pB/100) × 100 = 조합 상대빈도 근사.
-            // 실제 조합 통계가 백엔드에 쌓이면 대체. Phase 2 에선 추정치.
+            // 조합 희귀도 heuristic: 두 유형 독립 사건 가정 → 곱의 규모.
             if (typeA != null && typeB != null) {
                 const combo = (typeA * typeB) / 100;
                 comboValueEl.textContent = fmtPct(combo);
-                const rank = combo < 0.01 ? '극희소' : combo < 0.1 ? '매우 희귀' : combo < 1 ? '희귀' : combo < 5 ? '드문' : '흔한';
-                comboLabelEl.textContent = rank + ' 조합 · 전체 중 ' + fmtPct(combo) + ' (추정)';
+                const rank = combo < 0.001 ? '극희소'
+                           : combo < 0.01  ? '매우 희귀'
+                           : combo < 0.1   ? '희귀'
+                           : combo < 1     ? '드문'
+                           : combo < 5     ? '보통'
+                           : '흔한';
+                const oneIn = fmtOneIn(combo);
+                comboLabelEl.textContent = oneIn
+                    ? (rank + ' 조합 · 약 ' + oneIn)
+                    : (rank + ' 조합 · 전체 중 ' + fmtPct(combo) + ' (추정)');
             } else {
                 comboValueEl.textContent = '–';
                 comboLabelEl.textContent = '개인 분석 데이터 부족 — 희소성 산정 불가';
