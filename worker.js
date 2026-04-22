@@ -6365,7 +6365,9 @@ const MAX_SIZE_MATCH = 10 * 1024 * 1024;   // 10MB
 const MAX_SIZE_FEEDBACK = 10 * 1024;
 const MAX_SIZE_SHARE = 200 * 1024;  // v3.6.41: profile+essay sections 여유 공간 (KV 자체 한도 25MB)
 const ADMIN_EMAILS = ['ashirmallo@gmail.com', 'nakkdoor@gmail.com', 'zion062214@gmail.com', 'merrysj92@gmail.com'];
-const WEEKLY_ANALYSIS_LIMIT = 1;
+// v3.8.16: 기존 1 — 유저가 2회째 분석(= 매칭 플로우에 필요한 B-측) 불가 → 매칭 자체 블락됨.
+// 매칭 한 쌍 완성에 필요한 최소 2회 + 재시도 여유 → 5회/주.
+const WEEKLY_ANALYSIS_LIMIT = 5;
 
 const ALLOWED_ORIGINS = [
   'https://jeongjeongjeongm.github.io',

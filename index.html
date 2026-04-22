@@ -5390,41 +5390,11 @@
         // CONFLICT_MATRIX: server-side only (worker.js)
 
         // ============ LSM (Language Style Matching) ============
-    const KOREAN_FUNC_WORDS = {
-        particles: ['은','는','이','가','을','를','에','에서','의','로','으로','와','과','도','만','까지','부터','마다','조차','라도','이나','나','든지','이든지'],
-        pronouns: ['나','너','저','우리','너희','그','그녀','이것','저것','그것','여기','저기','거기','누구','뭐','무엇','어디','언제'],
-        conjunctions: ['그리고','그런데','그래서','하지만','그러나','또','또는','그래도','그러면','왜냐하면','즉','만약','비록','때문에'],
-        adverbs: ['좀','너무','매우','정말','진짜','아주','조금','많이','잘','못','안','다','또','이미','아직','바로','꼭','항상','자주','가끔'],
-        negations: ['안','못','없','아니','절대','전혀','별로','싫','말'],
-        quantifiers: ['모든','각','여러','몇','많은','적은','조금','약간','대부분','전부','다','좀','꽤','상당히'],
-        fillers: ['음','어','그','뭐','아','네','예','응','글쎄','뭐랄까','그냥','일단','아마','혹시']
-    };
-    function computeFunctionWordProfile(messages) {
-        if (!messages || messages.length === 0) return null;
-        const allText = messages.map(m => typeof m === 'string' ? m : (m.text || m.content || '')).join(' ');
-        const totalChars = allText.length || 1;
-        const profile = {};
-        for (const [cat, words] of Object.entries(KOREAN_FUNC_WORDS)) {
-            let count = 0;
-            for (const w of words) {
-                let idx = 0;
-                while ((idx = allText.indexOf(w, idx)) !== -1) { count++; idx += w.length; }
-            }
-            profile[cat] = +(count / (totalChars / 100)).toFixed(4);
-        }
-        return profile;
-    }
-    function computeLSMSimilarity(fwpA, fwpB) {
-        if (!fwpA || !fwpB) return 0.5;
-        const cats = Object.keys(KOREAN_FUNC_WORDS);
-        let totalLSM = 0;
-        for (const cat of cats) {
-            const a = fwpA[cat] || 0;
-            const b = fwpB[cat] || 0;
-            totalLSM += 1 - Math.abs(a - b) / (a + b + 0.0001);
-        }
-        return totalLSM / cats.length;
-    }
+    // v3.8.16: KOREAN_FUNC_WORDS / computeFunctionWordProfile / computeLSMSimilarity
+    // → 서버 전용. worker.js 의 동일 로직 + v3.6 zero-count 보정이 단일 진실 소스.
+    // FE 는 raw_messages 만 보내고 서버가 fwp/LSM 계산.
+    function computeFunctionWordProfile() { return null; } // deprecated — server computes
+    function computeLSMSimilarity() { return null; } // deprecated — server computes
 
     // ============ V3 IDENTITY SYSTEM (server-only) ============
         // v3.8.15: 엔진 로직·아키타입 맵 전부 서버로 이관.
@@ -7579,44 +7549,27 @@
                 T.addLine('<span class="prompt">$</span> compute-rates --axes=11', 400);
                 T.addLine('<span class="dim">[rate]</span> 11개 행동축 측정 시작...', 300);
 
-                updateProgress('행동 패턴을 11 Behavioral Axes으로 측정하고 있습니다');
-                const rates = computeRates(messages);
-
-                // Show some interesting rate findings
-                const rateKeys = Object.keys(rates).filter(k => typeof rates[k] === 'number' && !['totalMsgs','totalChars','totalTokens','confidence','volatility'].includes(k));
-                const topRate = rateKeys.reduce((a, b) => rates[a] > rates[b] ? a : b);
-                T.addLine('<span class="dim">[rate]</span> <span class="info">최고 수치 → ' + sanitizeHTML(topRate) + ': ' + (rates[topRate] * 100).toFixed(1) + '%</span>', 250);
+                // v3.8.16: 로컬 computeRates/computeAxes/computeIdentity 는 스텁(0.5 반환).
+                // 사용자에게 가짜 숫자·식별 불가 라벨 보여주느니 서버 응답 대기 메시지만 출력.
+                updateProgress('행동 패턴을 서버 엔진으로 측정하고 있습니다');
+                T.addLine('<span class="dim">[rate]</span> <span class="info">11개 행동축 측정 요청 전송</span>', 250);
                 T.setProgress(30, '축 좌표 계산 중...');
 
                 await wait(150);
-                T.addLine('<span class="prompt">$</span> compute-axes --model=6D', 400);
-
-                // 6축 로컬 계산 → 즉시 게이지 애니메이션
-                updateProgress('6개 행동축의 좌표를 계산하고 있습니다');
-                let axes = computeAxes(rates);
                 T.addLine('<span class="prompt">$</span> compute-axes --model=6D --await-server', 400);
 
-                // 로컬 축 점수로 게이지 순차 채우기 (보는 재미)
-                {
-                    const localAx = axes.intensity || {};
-                    const axOrder = [
-                        { id: 'A1', name: '관심도', val: localAx.A1 || 0 },
-                        { id: 'A2', name: '공감력', val: localAx.A2 || 0 },
-                        { id: 'A3', name: '주장성', val: localAx.A3 || 0 },
-                        { id: 'A4', name: '감정 개방', val: localAx.A4 || 0 },
-                        { id: 'A5', name: '지지력', val: localAx.A5 || 0 },
-                        { id: 'A6', name: '일관성', val: localAx.A6 || 0 }
-                    ];
-                    for (const a of axOrder) {
-                        T.activateGauge(a.id);
-                        await wait(200);
-                        T.fillGauge(a.id, a.val);
-                        T.completeGauge(a.id);
-                        const display = (a.val >= 0 ? '+' : '') + a.val.toFixed(2);
-                        T.addLine('<span class="dim">[axis]</span> ' + a.id + ' → ' + display + ' <span class="dim">(로컬)</span>', 80);
-                    }
+                updateProgress('6개 행동축의 좌표를 계산하고 있습니다');
+                let axes = null; // 서버 응답이 들어올 때까지 null
+                const axOrder = [
+                    { id: 'A1', name: '관심도' }, { id: 'A2', name: '공감력' }, { id: 'A3', name: '주장성' },
+                    { id: 'A4', name: '감정 개방' }, { id: 'A5', name: '지지력' }, { id: 'A6', name: '일관성' }
+                ];
+                for (const a of axOrder) {
+                    T.activateGauge(a.id);
+                    await wait(80);
+                    T.addLine('<span class="dim">[axis]</span> ' + a.id + ' <span class="dim">→ 서버 응답 대기</span>', 60);
                 }
-                T.addLine('<span class="dim">[axis]</span> <span class="info">서버에서 정밀 점수 보정 대기 중...</span>', 200);
+                T.addLine('<span class="dim">[axis]</span> <span class="info">서버에서 정밀 점수 계산 중...</span>', 200);
                 T.setProgress(35);
 
                 await wait(200);
@@ -7624,9 +7577,8 @@
                 T.addLine('<span class="prompt">$</span> initializing identity engine v3', 300);
                 T.addLine('<span class="prompt">$</span> syncing conversation data', 300);
                 T.addLine('<span class="prompt">$</span> running deep pattern analysis', 300);
-                // Local identity (for animation only — will be overridden by server)
-                let identity = computeIdentity(axes);
-                T.addLine('<span class="dim">[identity]</span> <span class="warn">로컬 분석 완료: ' + sanitizeHTML(identity.emoji) + ' ' + sanitizeHTML(identity.code) + ' - ' + sanitizeHTML(identity.name) + '</span>', 200);
+                let identity = null; // 서버 응답 오면 덮어씀
+                T.addLine('<span class="dim">[identity]</span> <span class="info">서버 심층 분석 진행 중...</span>', 200);
                 T.setProgress(70, 'AI 심층 분석 진행 중...');
 
                 // 2-Stage 서버 분석 (Stage 1: LLM 점수 매기기 → Stage 2: 에세이 작성)
@@ -7733,7 +7685,7 @@
                     llmResult,
                     simulation: simulationResult,
                     messages,
-                    functionWordProfile: computeFunctionWordProfile(messages),
+                    functionWordProfile: null, // v3.8.16: 서버가 /match 요청 시 raw messages 에서 재계산
                     prism: prismResult,
                     anchor: anchorResult,
                     analysisId: analysisId,
@@ -7962,21 +7914,15 @@ function buildProfileOverview(axes, profile) {
         ];
         const TRAJ_AXIS_NAMES = { E: '정서', C: '추진', T: '인지', O: '개방', X: '회복' };
         const TRAJ_AXIS_COLORS = { E: '#EF4444', C: '#22D3EE', T: '#60A5FA', O: '#A78BFA', X: '#34D399' };
+        // v3.8.16: delta/axes 에 있던 FE 로컬 델타값 (예: +0.25) 은 backend STIMULUS_PROFILES 와 drift.
+        // → 로컬 수치 전부 제거. 서버가 `simData.stimulus[key]` 에 desc/axes 를 내려주면 그 값을 사용.
+        // 서버 미제공 시 축 방향/설명은 표시하지 않고 label/icon/color 만 UI 에 쓴다.
         const TRAJ_STIM = {
-            default:{label:'기본 상태',icon:'◆',delta:{E:0,C:0,T:0,O:0,X:0},color:'#F5A623',
-                desc:'외부 자극이 없는 평상시 상태. 이 형태가 당신의 <strong>기저선(baseline)</strong>이다.',axes:[]},
-            stress:{label:'스트레스',icon:'⚡',delta:{E:.25,C:-.15,T:-.05,O:-.10,X:-.15},color:'#FF6B6B',
-                desc:'업무 과부하, 마감 압박, 예상치 못한 위기. 정서가 <strong>급등</strong>하면서 통제력과 회복 탄성이 동시에 <strong>무너진다</strong>. 경계가 수축하며 타인을 밀어내는 방향으로 이동.',
-                axes:[{k:'E',c:'#FF6B6B',t:'정서 폭등 +0.25'},{k:'C',c:'#4ECDC4',t:'통제력 상실 −0.15'},{k:'X',c:'#FFEAA7',t:'회복력 침식 −0.15'}]},
-            intimacy:{label:'친밀감',icon:'♥',delta:{E:.10,C:-.08,T:0,O:.20,X:.05},color:'#96CEB4',
-                desc:'깊은 신뢰 관계, 정서적 안전감이 확보된 환경. 경계가 크게 <strong>개방</strong>되며 정서 표현이 활성화된다. 회복 탄성은 소폭 상승.',
-                axes:[{k:'O',c:'#96CEB4',t:'경계 대폭 개방 +0.20'},{k:'E',c:'#FF6B6B',t:'정서 활성화 +0.10'},{k:'C',c:'#4ECDC4',t:'통제 이완 −0.08'}]},
-            conflict:{label:'갈등',icon:'🔥',delta:{E:.20,C:.12,T:.05,O:-.18,X:-.10},color:'#F5A623',
-                desc:'가까운 사람과의 충돌, 비난, 거부 경험. 정서와 통제가 동시에 <strong>상승</strong>하면서 경계가 급격히 닫힌다. <strong>전투 모드</strong> 진입.',
-                axes:[{k:'E',c:'#FF6B6B',t:'정서 격화 +0.20'},{k:'O',c:'#96CEB4',t:'경계 폐쇄 −0.18'},{k:'C',c:'#4ECDC4',t:'통제 강화 +0.12'}]},
-            loss:{label:'상실',icon:'◇',delta:{E:.30,C:-.12,T:-.08,O:-.15,X:-.22},color:'#45B7D1',
-                desc:'관계 단절, 실패, 기대의 붕괴. 정서가 <strong>최대치</strong>로 폭등하면서 다른 모든 축이 하락한다. <strong>가장 취약한 시나리오</strong>.',
-                axes:[{k:'E',c:'#FF6B6B',t:'정서 최대 폭등 +0.30'},{k:'X',c:'#FFEAA7',t:'회복력 붕괴 −0.22'},{k:'O',c:'#96CEB4',t:'경계 수축 −0.15'}]}
+            default:  { label:'기본 상태', icon:'◆', color:'#F5A623', desc:'외부 자극이 없는 평상시 상태. 이 형태가 당신의 <strong>기저선(baseline)</strong>이다.' },
+            stress:   { label:'스트레스',   icon:'⚡', color:'#FF6B6B', desc:'업무 과부하·마감 압박·예상치 못한 위기 상황에서의 반응 패턴.' },
+            intimacy: { label:'친밀감',     icon:'♥', color:'#96CEB4', desc:'신뢰가 확보된 가까운 관계 안에서의 반응 패턴.' },
+            conflict: { label:'갈등',       icon:'🔥', color:'#F5A623', desc:'가까운 사람과의 충돌·비난·거부 경험 시의 반응 패턴.' },
+            loss:     { label:'상실',       icon:'◇', color:'#45B7D1', desc:'관계 단절·실패·기대 붕괴 시의 반응 패턴.' },
         };
         let trajCurStim = 'default';
         let _trajSimData = null;
@@ -8310,19 +8256,15 @@ function buildProfileOverview(axes, profile) {
                 sessions = 0; trajectories = 0; points = []; drift = {};
             }
 
-            // Build desc from TRAJ_STIM (existing production data) or situational
+            // v3.8.16: TRAJ_STIM 에서 label/icon/color/desc 만 가져옴 (delta/axes 는 서버 소스)
             const stimInfo = TRAJ_STIM[key === 'normal' ? 'default' : key];
-            if (stimInfo) {
-                desc = stimInfo.desc;
-                if (stimInfo.axes && stimInfo.axes.length) {
-                    axisPatterns = stimInfo.axes.map(a => ({
-                        axis: a.k, delta: a.t, desc: ''
-                    }));
+            if (stimInfo) desc = stimInfo.desc;
+            // 서버가 stimulus 상세를 내려주면 덮어씀
+            if (simData.stimulus && simData.stimulus[key]) {
+                if (simData.stimulus[key].desc) desc = simData.stimulus[key].desc;
+                if (Array.isArray(simData.stimulus[key].axes) && simData.stimulus[key].axes.length) {
+                    axisPatterns = simData.stimulus[key].axes.map(a => ({ axis: a.k, delta: a.t, desc: '' }));
                 }
-            }
-            // Override desc with richer text if stimulus data has it
-            if (simData.stimulus && simData.stimulus[key] && simData.stimulus[key].desc) {
-                desc = simData.stimulus[key].desc;
             }
 
             // Generate axis pattern descriptions from drift
@@ -10360,8 +10302,15 @@ function displayResult() {
 
             var nameA = 'A', nameB = 'B';
             try {
-                if (window.currentProfile && window.currentProfile.identity) nameA = 'A · ' + (window.currentProfile.identity.archetype || window.currentProfile.identity.name || 'A');
-                if (window.matchProfile && window.matchProfile.identity) nameB = 'B · ' + (window.matchProfile.identity.archetype || window.matchProfile.identity.name || 'B');
+                // v3.8.16: archetype/name 둘 다 없을 때 'A · A' 렌더되던 mock leak 방지
+                if (window.currentProfile && window.currentProfile.identity) {
+                    const aName = window.currentProfile.identity.archetype || window.currentProfile.identity.name;
+                    nameA = aName ? 'A · ' + aName : 'PROFILE A';
+                }
+                if (window.matchProfile && window.matchProfile.identity) {
+                    const bName = window.matchProfile.identity.archetype || window.matchProfile.identity.name;
+                    nameB = bName ? 'B · ' + bName : 'PROFILE B';
+                }
             } catch(e) {}
 
             aEl.innerHTML = buildCard(anchorA, nameA);
@@ -10431,8 +10380,15 @@ function displayResult() {
 
             var nameA = 'A', nameB = 'B';
             try {
-                if (window.currentProfile && window.currentProfile.identity) nameA = 'A · ' + (window.currentProfile.identity.archetype || window.currentProfile.identity.name || 'A');
-                if (window.matchProfile && window.matchProfile.identity) nameB = 'B · ' + (window.matchProfile.identity.archetype || window.matchProfile.identity.name || 'B');
+                // v3.8.16: archetype/name 둘 다 없을 때 'A · A' 렌더되던 mock leak 방지
+                if (window.currentProfile && window.currentProfile.identity) {
+                    const aName = window.currentProfile.identity.archetype || window.currentProfile.identity.name;
+                    nameA = aName ? 'A · ' + aName : 'PROFILE A';
+                }
+                if (window.matchProfile && window.matchProfile.identity) {
+                    const bName = window.matchProfile.identity.archetype || window.matchProfile.identity.name;
+                    nameB = bName ? 'B · ' + bName : 'PROFILE B';
+                }
             } catch(e) {}
 
             aEl.innerHTML = buildCol(simA, nameA, '#F5A623');
@@ -11058,13 +11014,16 @@ function displayResult() {
             const container = document.getElementById('matchStructTags');
             if (!container) return;
 
-            function getCode(axes) {
-                if (!axes || !axes.intensity) return 'BLAODP';
-                const id = typeof computeIdentity === 'function' ? computeIdentity(axes) : null;
-                return id && id.code ? id.code : 'BLAODP';
+            // v3.8.16: BLAODP 하드코드 fallback 제거. 서버 identity.code 가 없으면 렌더 스킵.
+            function getCode(identity) {
+                return identity && identity.code && identity.code !== 'UNKNOWN' ? identity.code : null;
             }
-            var codeA = (currentProfile.identity && currentProfile.identity.code) || getCode(axesA);
-            var codeB = (matchProfile.identity && matchProfile.identity.code) || getCode(axesB);
+            var codeA = getCode(currentProfile && currentProfile.identity);
+            var codeB = getCode(matchProfile && matchProfile.identity);
+            if (!codeA || !codeB) {
+                container.innerHTML = '<div class="dim" style="padding:16px;text-align:center;font-size:12px;">구조 태그 데이터 없음</div>';
+                return;
+            }
 
             // Structural mapping (same logic as worker.js codeToStructural)
             function toStructural(code) {
@@ -11305,16 +11264,13 @@ function displayResult() {
                     messages = await parseFile(file);
                 }
 
-                const rates = computeRates(messages);
-                const axes = computeAxes(rates);
-                const identity = computeIdentity(axes);
-
+                // v3.8.16: 로컬 스텁 호출 제거. 서버가 /match 요청 시 axes/identity/fwp 모두 재계산.
                 matchProfile = {
-                    rates,
-                    axes,
-                    identity,
+                    rates: null,
+                    axes: null,
+                    identity: null,
                     messages,
-                    functionWordProfile: computeFunctionWordProfile(messages),
+                    functionWordProfile: null,
                     timestamp: new Date().toISOString()
                 };
 
@@ -11360,14 +11316,19 @@ function displayResult() {
                         growth: as.gr || null
                     };
                 }
+                // v3.8.16: identity 는 decoded 값만 사용 (로컬 computeIdentity 스텁 제거).
+                // decoded.identity 없으면 서버가 재계산하도록 null. messages 는 share code 에 없으므로
+                // decoded.simulation (있으면) 을 전달해서 서버가 raw_messages_b=null 상황에서도 사용 가능.
                 matchProfile = {
                     axes: loadedAxes,
-                    identity: decoded.identity || computeIdentity(loadedAxes),
+                    identity: decoded.identity || null,
                     prism: prismData,
                     anchor: anchorData,
+                    simulation: decoded.simulation || decoded.sim || null,
                     functionWordProfile: decoded.fwp || null,
                     essaySummary: decoded.es || null,
                     ratesMeta: decoded.rm || null,
+                    messages: decoded.messages || [],
                     timestamp: decoded.timestamp
                 };
                 if (btn) { btn.textContent = '분석 중... (최대 30초)'; }
