@@ -10372,14 +10372,14 @@ function displayResult() {
                 );
             }
 
-            var nameA = '서현', nameB = '준호';
+            var nameA = '', nameB = '';
             try {
-                if (window.currentProfile && window.currentProfile.identity) nameA = window.currentProfile.identity.archetype || window.currentProfile.identity.name || 'A';
-                if (window.matchProfile && window.matchProfile.identity) nameB = window.matchProfile.identity.archetype || window.matchProfile.identity.name || 'B';
+                if (window.currentProfile && window.currentProfile.identity) nameA = window.currentProfile.identity.archetype || window.currentProfile.identity.name || window.currentProfile.identity.code || '';
+                if (window.matchProfile && window.matchProfile.identity) nameB = window.matchProfile.identity.archetype || window.matchProfile.identity.name || window.matchProfile.identity.code || '';
             } catch(e) {}
 
-            document.getElementById('matchPrismColA').innerHTML = buildCol(prismA, 'A · ' + nameA);
-            document.getElementById('matchPrismColB').innerHTML = buildCol(prismB, 'B · ' + nameB);
+            document.getElementById('matchPrismColA').innerHTML = buildCol(prismA, nameA ? 'A · ' + nameA : 'PROFILE A');
+            document.getElementById('matchPrismColB').innerHTML = buildCol(prismB, nameB ? 'B · ' + nameB : 'PROFILE B');
 
             // Asymmetry — Jaccard + top topics 간략 서사
             var asymEl = document.getElementById('matchPrismAsymmetry');
