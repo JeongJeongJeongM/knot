@@ -4384,16 +4384,20 @@
         .v39-thead{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:2px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.04);text-transform:uppercase}
         .v39-thead .l{text-align:right;color:#60A5FA}
         .v39-thead .r{text-align:left;color:#A78BFA}
-        .v39-trow{display:grid;grid-template-columns:1fr 80px 1fr;align-items:center;gap:12px;padding:4px 0}
-        .v39-trow .axis-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.5);text-align:center;letter-spacing:0.1em}
-        .v39-trow .bar-wrap{position:relative;height:12px;background:rgba(255,255,255,0.03);border-radius:6px;overflow:hidden}
+        /* v3.9.9: 5-column grid (val-a | bar-a | axis | bar-b | val-b). val 텍스트 바깥. bar 두꺼워짐(14px). */
+        .v39-trow{display:grid;grid-template-columns:48px 1fr 80px 1fr 48px;align-items:center;gap:10px;padding:5px 0}
+        .v39-trow .axis-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.55);text-align:center;letter-spacing:0.1em;line-height:1.3}
+        .v39-trow .v-label{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.05em}
+        .v39-trow .v-label.a{color:#60A5FA;text-align:right}
+        .v39-trow .v-label.b{color:#A78BFA;text-align:left}
+        .v39-trow .bar-wrap{position:relative;height:14px;background:rgba(255,255,255,0.03);border-radius:7px;overflow:hidden}
         .v39-trow .bar-wrap.left{display:flex;justify-content:flex-end}
         .v39-trow .bar-wrap.right{display:flex;justify-content:flex-start}
-        .v39-trow .bar{height:100%;background:linear-gradient(90deg,#60A5FA,#818cf8);border-radius:6px;position:relative;transition:width 1.2s cubic-bezier(0.16,1,0.3,1)}
-        .v39-trow .bar-wrap.right .bar{background:linear-gradient(90deg,#A78BFA,#c4b5fd)}
-        .v39-trow .val{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.85);padding:0 8px;line-height:12px;font-weight:600}
-        .v39-trow.top .bar{box-shadow:0 0 12px rgba(96,165,250,0.25)}
-        .v39-trow.top .bar-wrap.right .bar{box-shadow:0 0 12px rgba(167,139,250,0.25)}
+        .v39-trow .bar{height:100%;background:linear-gradient(90deg,#60A5FA,#818cf8);border-radius:7px;position:relative;transition:width 1.2s cubic-bezier(0.16,1,0.3,1);min-width:2px}
+        .v39-trow .bar-wrap.right .bar{background:linear-gradient(270deg,#A78BFA,#c4b5fd)}
+        .v39-trow.top .bar{box-shadow:0 0 14px rgba(96,165,250,0.45)}
+        .v39-trow.top .bar-wrap.right .bar{box-shadow:0 0 14px rgba(167,139,250,0.45)}
+        @media(max-width:500px){.v39-trow{grid-template-columns:42px 1fr 64px 1fr 42px;gap:6px}}
         .v39-tcap{margin-top:14px;font-size:13px;color:rgba(255,255,255,0.5);text-align:center;line-height:1.7}
         .v39-tcap b{color:#F5A623;font-weight:600}
 
@@ -4484,7 +4488,7 @@
         .v39-dd-nav button:hover:not(.active){color:#fff;background:rgba(245,166,35,0.04)}
         .v39-dd-nav button.active{color:#fff;background:rgba(245,166,35,0.08);font-weight:600}
         .v39-dd-nav button.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#F5A623;border-radius:0 3px 3px 0}
-        .v39-dd-body{padding:36px 36px 48px;min-height:300px}
+        .v39-dd-body{padding:36px 36px 48px}
         .v39-dd-body h3{font-size:20px;font-weight:700;margin-bottom:20px;color:#fff;display:flex;align-items:center;gap:10px}
         .v39-dd-body p{font-size:14px;line-height:1.85;color:rgba(255,255,255,0.75);margin-bottom:14px}
         .v39-dd-body p b{color:#fff;font-weight:600}
@@ -4494,12 +4498,13 @@
         .v39-dd-empty{color:rgba(255,255,255,0.3);font-style:italic;font-size:13px;text-align:center;padding:40px 0}
 
         /* Sticky share */
-        .v39-sticky{position:fixed;bottom:0;left:0;right:0;background:rgba(6,6,11,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,0.06);padding:12px 16px;z-index:100;display:none;align-items:center;gap:12px}
+        .v39-sticky{position:fixed;bottom:0;left:0;right:0;background:rgba(6,6,11,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,0.06);padding:12px 16px;z-index:100;display:none;align-items:center;gap:12px;width:100%;box-sizing:border-box}
         .v39-sticky.visible{display:flex}
-        .v39-sticky .msg{flex:1;font-size:12px;color:rgba(255,255,255,0.5);padding-left:4px;line-height:1.5}
+        /* v3.9.9: min-width:0 — Korean flex child 가 min-content(한 글자) 로 shrink 되면서 세로 박살 → 0 으로 명시 */
+        .v39-sticky .msg{flex:1 1 0;min-width:0;font-size:12px;color:rgba(255,255,255,0.5);padding-left:4px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .v39-sticky .msg b{color:#F5A623;font-weight:600}
         @media(max-width:500px){.v39-sticky .msg{display:none}}
-        .v39-sticky button{background:#F5A623;color:#000;border:none;padding:11px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;transition:transform 0.1s}
+        .v39-sticky button{flex:0 0 auto;background:#F5A623;color:#000;border:none;padding:11px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;transition:transform 0.1s}
         .v39-sticky button:hover{transform:translateY(-1px)}
         .v39-sticky button.secondary{background:transparent;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.06);font-weight:500}
         .v39-sticky button.secondary:hover{color:#fff;border-color:rgba(255,255,255,0.15)}
@@ -11476,15 +11481,20 @@ function displayResult() {
 
             var tbody = document.getElementById('v39TornadoRows');
             if (tbody) {
+                // v3.9.9: bar width = deviation from center (|val - 0.5| × 200).
+                //   raw value 쓰면 0.4~0.5 범위에서 A·B 바 길이 비슷 → 격차 안 보임.
+                //   val 텍스트는 bar 바깥 (5-column grid: val-a bar-a axis bar-b val-b).
                 var html = '';
                 rows.forEach(function(r, idx){
                     var topCls = idx === 0 ? ' top' : '';
-                    var wa = Math.round(r.va * 100);
-                    var wb = Math.round(r.vb * 100);
+                    var wa = Math.round(Math.abs(r.va - 0.5) * 200);
+                    var wb = Math.round(Math.abs(r.vb - 0.5) * 200);
                     html += '<div class="v39-trow' + topCls + '">' +
-                        '<div class="bar-wrap left"><div class="bar" style="width:' + wa + '%"><span class="val">' + _v39Safe(r.aPole) + ' ' + r.va.toFixed(2) + '</span></div></div>' +
-                        '<div class="axis-label">' + _v39Safe(r.ax.lbl) + '<br><span style="color:#4A4A60;font-size:9px">' + _v39Safe(r.ax.sub) + '</span></div>' +
-                        '<div class="bar-wrap right"><div class="bar" style="width:' + wb + '%"><span class="val">' + _v39Safe(r.bPole) + ' ' + r.vb.toFixed(2) + '</span></div></div>' +
+                        '<span class="v-label a">' + _v39Safe(r.aPole) + ' ' + r.va.toFixed(2) + '</span>' +
+                        '<div class="bar-wrap left"><div class="bar" style="width:' + wa + '%"></div></div>' +
+                        '<div class="axis-label">' + _v39Safe(r.ax.lbl) + '<br><span style="color:rgba(255,255,255,0.3);font-size:9px">' + _v39Safe(r.ax.sub) + '</span></div>' +
+                        '<div class="bar-wrap right"><div class="bar" style="width:' + wb + '%"></div></div>' +
+                        '<span class="v-label b">' + _v39Safe(r.bPole) + ' ' + r.vb.toFixed(2) + '</span>' +
                     '</div>';
                 });
                 tbody.innerHTML = html;
@@ -11591,20 +11601,24 @@ function displayResult() {
             // pattern name: prefer conflict/attachment type → readable label
             var pName = '패턴 분석';
             var pSub = '';
+            // v3.9.9: backend 실제 type 키 (CONFLICT_CROSS L9410, ATTACHMENT_CROSS L9376) 기반 Korean 매핑
             if (cross.conflictCross && cross.conflictCross.type) {
                 var cmap = {
-                    pursue_withdraw: '추적 - 회피', withdraw_pursue: '회피 - 추적',
-                    mutual_escalation: '상호 격화', mutual_withdrawal: '상호 철수',
-                    balanced: '균형 대화', uncommon: '비정형'
+                    head_on: '정면 충돌', speed_gap: '속도 격차', chase_retreat: '추적 - 후퇴',
+                    wall_punch: '벽치기', polite_loop: '정중한 루프', gentle_fade: '천천한 소멸',
+                    soft_wall: '부드러운 벽', mutual_retreat: '상호 철수', double_exit: '이중 탈출',
+                    frozen_conflict: '동결된 갈등', unknown: '갈등 데이터 부족', uncommon: '비정형 조합'
                 };
-                pName = cmap[cross.conflictCross.type] || cross.conflictCross.type;
+                pName = cmap[cross.conflictCross.type] || '갈등 패턴';
                 pSub = cross.conflictCross.desc || '';
             } else if (cross.attachmentCross && cross.attachmentCross.type) {
                 var amap = {
-                    stable_pair:'안정 페어', pursuit_withdrawal:'추적 - 회피', mutual_spiral:'상호 나선',
-                    anxious_pursuit:'불안 추적', avoidant_parallel:'회피 병행', uncommon:'비정형'
+                    stable_pair: '안정 페어', anchor_seeker: '닻 찾기', patience_test: '인내 시험',
+                    ground_wire: '접지선', mutual_spiral: '상호 나선', pursuit_withdrawal: '추적 - 회피',
+                    chaos_amplifier: '혼돈 증폭', parallel_isolation: '평행 고립', ghost_dance: '유령 춤',
+                    double_chaos: '이중 혼돈', unknown: '애착 데이터 부족'
                 };
-                pName = amap[cross.attachmentCross.type] || cross.attachmentCross.type;
+                pName = amap[cross.attachmentCross.type] || '애착 패턴';
                 pSub = cross.attachmentCross.desc || '';
             } else if (mi.name) {
                 pName = mi.name + ' 패턴';
@@ -11740,13 +11754,18 @@ function displayResult() {
                 { key:'loss',     label:'상실' }
             ];
             function sitMean(sim, key){
+                // v3.9.9: backend result[sit].mean 은 step 인덱스 배열 [{step, E, C, T, O, X}, ...].
+                //   배열 전체의 E 평균을 내서 situational 반응값으로 사용. sessionCount === 0 이면 null.
                 if (!sim) return null;
-                // situational[key].mean.E 또는 .emotion 등 backend shape 대응
                 if (sim.situational && sim.situational[key]) {
                     var s = sim.situational[key];
-                    if (s.mean) {
-                        if (typeof s.mean.E === 'number') return _v39Norm01(s.mean.E);
-                        if (typeof s.mean.emotion === 'number') return _v39Norm01(s.mean.emotion);
+                    if ((s.sessionCount || 0) > 0 && Array.isArray(s.mean) && s.mean.length) {
+                        var sum = 0, n = 0;
+                        for (var i = 0; i < s.mean.length; i++) {
+                            var pt = s.mean[i];
+                            if (pt && typeof pt.E === 'number') { sum += pt.E; n++; }
+                        }
+                        if (n > 0) return _v39Norm01(sum / n);
                     }
                 }
                 // normal (baseline) 은 sim.axes.emotion 으로 fallback
@@ -11872,15 +11891,19 @@ function displayResult() {
             { code:'thinking',  label:'THINKING',       ko:'사유의 지형' },
             { code:'anchor',    label:'ANCHOR',         ko:'애착' }
         ];
-        // Korean section name → lens key
+        // Korean section name → lens key (v3.9.9: 서버 실제 title 다수 추가)
         var _V39_SECTION_KO_MAP = {
-            '페르소나': 'persona', 'persona':'persona',
-            '소통': 'comm', 'communication':'comm', '의사소통':'comm',
-            '방어': 'defense', '방어 체계':'defense',
+            '페르소나': 'persona', 'persona':'persona', '첫 인상':'persona', '첫인상':'persona',
+              '관계 페르소나':'persona', '정체성':'persona',
+            '소통': 'comm', 'communication':'comm', '의사소통':'comm', '대화':'comm', '커뮤니케이션':'comm',
+            '방어': 'defense', '방어 체계':'defense', '갈등':'defense', '갈등 처리':'defense',
+              '위기':'defense', '위기 반응':'defense', 'risk_map':'defense',
             '그림자': 'shadow', 'shadow':'shadow', '매력 구조':'shadow', 'attraction_structure':'shadow',
-            '의식': 'ritual', '의식화':'ritual', 'ritual':'ritual',
-            '사유의 지형': 'thinking', 'thinking':'thinking',
-            '애착': 'anchor', 'anchor':'anchor'
+              '무의식':'shadow', '거울':'shadow',
+            '의식': 'ritual', '의식화':'ritual', 'ritual':'ritual', '미래':'ritual',
+              '성장':'ritual', 'possibility':'ritual', '가능성':'ritual', '루틴':'ritual',
+            '사유의 지형': 'thinking', 'thinking':'thinking', '사고':'thinking', '판단':'thinking',
+            '애착': 'anchor', 'anchor':'anchor', '애착 양식':'anchor'
         };
 
         function renderV39DeepDive(ctx){
@@ -11907,30 +11930,44 @@ function displayResult() {
             });
             // Build available lenses
             var available = _V39_LENS_MAP.filter(function(l){ return byCode[l.code]; });
-            if (!available.length) {
-                // fallback: show all sections as-is
-                if (arr.length) {
-                    navEl.innerHTML = arr.map(function(s, i){
-                        return '<button class="' + (i===0?'active':'') + '" data-v39lens="_fb' + i + '">' + _v39Safe((s.title||'').toUpperCase()) + '</button>';
-                    }).join('');
-                    bodyEl.innerHTML = arr.map(function(s, i){
-                        return '<div class="v39-dd-panel' + (i===0?' active':'') + '" data-v39panel="_fb' + i + '"><h3>' + _v39Safe(s.title||'') + '</h3><p>' + _v39Safe(s.body||'').replace(/\n+/g,'</p><p>') + '</p></div>';
-                    }).join('');
-                } else {
-                    navEl.innerHTML = '';
+            // v3.9.9: 탭 1개뿐이면 nav 숨기고 panel 만 노출 (중복 헤더 + 빈 탭바 제거)
+            // 또한 탭 label 과 body h3 가 같으면 h3 생략.
+            function _renderSingleOrTabs(items){
+                if (!items.length) {
+                    navEl.style.display = 'none';
                     bodyEl.innerHTML = '<div class="v39-dd-empty">심층 분석 데이터가 준비되지 않았습니다.</div>';
+                    return;
                 }
-            } else {
-                navEl.innerHTML = available.map(function(l, i){
-                    return '<button class="' + (i===0?'active':'') + '" data-v39lens="' + l.code + '">' + l.label + '</button>';
-                }).join('');
-                bodyEl.innerHTML = available.map(function(l, i){
-                    var s = byCode[l.code];
-                    return '<div class="v39-dd-panel' + (i===0?' active':'') + '" data-v39panel="' + l.code + '">' +
-                        '<h3>' + _v39Safe(s.title || l.ko) + '</h3>' +
+                if (items.length === 1) {
+                    var s = items[0];
+                    navEl.style.display = 'none';
+                    bodyEl.innerHTML = '<div class="v39-dd-panel active">' +
+                        (s.navLabel ? '<h3>' + _v39Safe(s.navLabel) + '</h3>' : '') +
                         '<p>' + _v39Safe(s.body || '').replace(/\n+/g,'</p><p>') + '</p>' +
                     '</div>';
+                    return;
+                }
+                navEl.style.display = '';
+                navEl.innerHTML = items.map(function(it, i){
+                    return '<button class="' + (i===0?'active':'') + '" data-v39lens="' + it.key + '">' + _v39Safe(it.navLabel) + '</button>';
                 }).join('');
+                bodyEl.innerHTML = items.map(function(it, i){
+                    // body h3 가 tab label 과 같으면 h3 생략 (중복 방지)
+                    var h3 = (it.h3 && it.h3 !== it.navLabel) ? '<h3>' + _v39Safe(it.h3) + '</h3>' : '';
+                    return '<div class="v39-dd-panel' + (i===0?' active':'') + '" data-v39panel="' + it.key + '">' +
+                        h3 + '<p>' + _v39Safe(it.body||'').replace(/\n+/g,'</p><p>') + '</p>' +
+                    '</div>';
+                }).join('');
+            }
+            if (!available.length) {
+                _renderSingleOrTabs(arr.map(function(s, i){
+                    return { key:'_fb'+i, navLabel:s.title||'SECTION '+(i+1), h3:s.title||'', body:s.body||'' };
+                }));
+            } else {
+                _renderSingleOrTabs(available.map(function(l, i){
+                    var s = byCode[l.code];
+                    return { key:l.code, navLabel:l.label, h3:s.title||l.ko, body:s.body||'' };
+                }));
             }
             // Wire tabs
             navEl.querySelectorAll('button').forEach(function(btn){
