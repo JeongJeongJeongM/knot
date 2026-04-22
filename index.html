@@ -5426,147 +5426,18 @@
         return totalLSM / cats.length;
     }
 
-    // ============ V3 IDENTITY SYSTEM ============
-        // ═══ 6축 타입 코드 시스템 ═══
-        // B/C (Blaze/Calm) - 정서 강도
-        // L/S (Lead/Sync) - 사회적 주도
-        // A/E (Analyze/Empathy) - 판단 방식
-        // O/G (Open/Guard) - 경계 방식
-        // D/R (Dynamic/Rigid) - 적응성
-        // P/I (Project/Inward) - 방어 방향
-        // v3.8.14: 기존 calc: () => 0.5 스텁 → 백엔드 SERVER_TYPE_AXES 와 동일 로직 이식
-        // 스텁이었기 때문에 프론트 computeIdentity() 는 항상 'BLAODP' 만 반환 = '폭풍의 지휘자'
-        // 백엔드가 '완벽주의 추진자' 로 계산한 사용자도 매칭 화면에선 덮어써짐
-        const TYPE_AXES = [
-            { id: 'emotion', name: '정서 강도',
-              high: { letter: 'B', label: 'Blaze', desc: '감정을 강하게 느끼고 적극적으로 표현한다' },
-              low:  { letter: 'C', label: 'Calm', desc: '감정을 내면에서 처리하고 절제된 방식으로 표현한다' },
-              calc: (d) => ((d.A1 || 0.5) * 0.6 + (d.A3 || 0.5) * 0.4) },
-            { id: 'drive', name: '사회적 주도',
-              high: { letter: 'L', label: 'Lead', desc: '상황을 주도하고 방향을 설정한다' },
-              low:  { letter: 'S', label: 'Sync', desc: '상황을 관찰하고 흐름에 맞춰 움직인다' },
-              calc: (d) => {
-                  const base = ((d.A4 || 0.5) * 0.4 + (d.A5 || 0.5) * 0.4);
-                  const sp = d._structural && d._structural.A7 && d._structural.A7.primary;
-                  const struct = sp === 'initiator' ? 0.2 : sp === 'responder' ? 0 : 0.1;
-                  return base + struct;
-              } },
-            { id: 'cognition', name: '판단 방식',
-              high: { letter: 'A', label: 'Analyze', desc: '논리와 분석을 기반으로 판단한다' },
-              low:  { letter: 'E', label: 'Empathy', desc: '감정과 관계를 중심으로 판단한다' },
-              calc: (d) => {
-                  const a16 = d._structural && d._structural.A16;
-                  const a9  = d._structural && d._structural.A9;
-                  const a16w = (a16 && a16.styles && a16.styles.analytical) != null ? a16.styles.analytical : (a16 && a16.primary === 'analytical' ? 0.5 : 0.2);
-                  const a9w  = (a9 && a9.styles && a9.styles.analytical) != null ? a9.styles.analytical : (a9 && a9.primary === 'analytical' ? 0.4 : 0.15);
-                  const a3 = d.A3 || 0.5;
-                  return Math.max(0, Math.min(1, a16w * 0.55 + a9w * 0.20 + (1 - a3) * 0.25));
-              } },
-            { id: 'boundary', name: '경계 방식',
-              high: { letter: 'O', label: 'Open', desc: '경계를 열어두고 변화를 수용한다' },
-              low:  { letter: 'G', label: 'Guard', desc: '경계를 세우고 안전한 영역을 지킨다' },
-              calc: (d) => {
-                  const openScore = ((d.A12 || 0.5) * 0.35 + (d.A14 || 0.5) * 0.35 + (d.A4 || 0.5) * 0.3);
-                  const a10p = d._structural && d._structural.A10 && d._structural.A10.primary;
-                  const depthBonus = a10p === 'fast_opener' ? 0.12 : a10p === 'depth_seeker' ? 0.06 : a10p === 'surface_locked' ? -0.1 : 0;
-                  return Math.max(0, Math.min(1, openScore + depthBonus));
-              } },
-            { id: 'resilience', name: '회복 탄성',
-              high: { letter: 'D', label: 'Dynamic', desc: '스트레스에 유연하게 적응한다' },
-              low:  { letter: 'R', label: 'Rigid', desc: '스트레스에 기존 패턴을 고수한다' },
-              calc: (d) => {
-                  const a2 = d.A2 || 0.5;
-                  const flex = d._structural && d._structural.A8 && d._structural.A8.flexibility;
-                  const flexBonus = flex === 'flexible' ? 0.15 : flex === 'medium' ? 0.08 : flex === 'rigid' ? -0.15 : 0;
-                  return Math.max(0, Math.min(1, a2 * 0.8 + 0.12 + flexBonus));
-              } },
-            { id: 'defense', name: '대처 방향',
-              high: { letter: 'P', label: 'Project', desc: '위협을 외부로 투사하고 환경을 통제하려 한다' },
-              low:  { letter: 'I', label: 'Inward', desc: '위협을 내면에 흡수하고 자기를 재조정하려 한다' },
-              calc: (d) => {
-                  const assertiveness = (d.A4 || 0.5) * 0.5 + (d.A5 || 0.5) * 0.5;
-                  const internalTendency = (d.A2 || 0.5) * 0.5 + (d.A6 || 0.5) * 0.5;
-                  const expressionDirect = (d.A3 || 0.5);
-                  const a8p = d._structural && d._structural.A8 && d._structural.A8.primary;
-                  const conflictBonus = a8p === 'confrontational' ? 0.15 : a8p === 'repair' ? 0 : a8p === 'avoidant' ? -0.15 : a8p === 'boundary' ? -0.10 : 0;
-                  return Math.max(0, Math.min(1, assertiveness * 0.35 + expressionDirect * 0.2 + (1 - internalTendency) * 0.3 + 0.05 + conflictBonus));
-              } }
+    // ============ V3 IDENTITY SYSTEM (server-only) ============
+        // v3.8.15: 엔진 로직·아키타입 맵 전부 서버로 이관.
+        // - 기존 TYPE_AXES.calc (6축 수식), ARCHETYPE_MAP (64 엔트리), computeIdentity/_flattenProfile
+        //   모두 제거. 클라이언트에 노출되면 엔진 역설계 위험 + 백엔드와 drift 발생 (v3.8.14 BLAODP 사례).
+        // - 모든 identity 는 /analyze·/match 서버 응답에 포함된 { code, name, emoji, tagline, axisResults }
+        //   를 그대로 사용. 아래 스텁은 호출 지점이 누락된 경우에만 쓰이는 placeholder.
+        const TYPE_AXES = [ /* server-only — see worker.js SERVER_TYPE_AXES */
         ];
 
-        // 64 아키타입 맵 (6축 코드 → 이름/이모지/태그라인) — 백엔드 ARCHETYPE_MAP 와 동기화 (v3.8.14)
-        const ARCHETYPE_MAP = {
-            // ═══ B+L (Blaze + Lead): 열정적 주도자들 ═══
-            'BLAODP': { name: '전장의 전략가',       emoji: '⚡', tagline: '강한 감정을 전략적 판단력으로 전환하고, 위기 상황에서 주도적으로 돌파구를 찾는 사람' },
-            'BLAODI': { name: '침묵의 사령관',       emoji: '🌩️', tagline: '내면에 강한 에너지와 분석력을 가졌지만, 위기의 순간 혼자 짊어지고 소화하려는 사람' },
-            'BLAORP': { name: '완벽주의 추진자',     emoji: '🔥', tagline: '목표를 세우면 강하게 밀어붙이고, 실패하면 더 세게 밀어붙이는 사람. 멈추는 걸 못 견딤' },
-            'BLAORI': { name: '과열된 엔진',         emoji: '🫀', tagline: '완벽을 향한 열정이 강하지만, 변수 앞에서 스스로를 소진시키며 안에서 과부하되는 사람' },
-            'BLAGDP': { name: '영역의 설계자',       emoji: '🏰', tagline: '자기 영역을 논리적으로 구축하고, 침범당하면 감정과 분석을 동원해 반격하는 사람' },
-            'BLAGDI': { name: '단독 작전형',         emoji: '🖤', tagline: '강한 추진력과 분석력을 갖췄지만, 벽 안에서 모든 걸 혼자 처리하려는 사람' },
-            'BLAGRP': { name: '통제된 폭발형',       emoji: '🌋', tagline: '평소엔 차갑게 통제하다가, 임계점을 넘으면 한 번에 터뜨리는 사람. 폭발력이 크다' },
-            'BLAGRI': { name: '억눌린 압력형',       emoji: '🪨', tagline: '강한 에너지를 안에 가두고 분출구를 찾지 못하는 사람. 겉은 단단하지만 내부 압력이 높다' },
-            'BLEODP': { name: '돌파형 리더',         emoji: '🎆', tagline: '공감력과 추진력을 동시에 가지고, 갈등 상황에서도 정면 돌파로 방향을 제시하는 사람' },
-            'BLEODI': { name: '자기희생형 공감자',    emoji: '☀️', tagline: '타인의 고통을 깊이 느끼고 해결하려 하지만, 그 과정에서 자기가 소진되는 사람' },
-            'BLEORP': { name: '열정적 돌격형',       emoji: '👑', tagline: '사람을 끌어당기는 에너지로 앞장서지만, 예상 밖의 상황에서 유연하게 대처하기 어려운 사람' },
-            'BLEORI': { name: '내면 수선형',         emoji: '💎', tagline: '밖으로는 카리스마가 있지만, 안에서는 끊임없이 자기 균열을 수선하느라 바쁜 사람' },
-            'BLEGDP': { name: '선별적 보호자',       emoji: '🛡️', tagline: '가까운 사람을 위해서는 어떤 위협도 정면으로 맞서지만, 경계 밖에는 관심이 적은 사람' },
-            'BLEGDI': { name: '조용한 헌신형',       emoji: '🕯️', tagline: '깊은 감정과 헌신을 가졌지만 밖으로 드러내지 않고, 조용히 곁에서 지키는 사람' },
-            'BLEGRP': { name: '공격적 방어형',       emoji: '⚔️', tagline: '감정이 풍부하지만 표현 대신 행동으로 보여주고, 위협에는 공격으로 자기를 지키는 사람' },
-            'BLEGRI': { name: '삼키는 헌신형',       emoji: '🗡️', tagline: '풍부한 감정을 표현하지 못한 채 안에 쌓아두고, 결국 자기를 갉아먹히는 사람' },
-
-            // ═══ B+S (Blaze + Sync): 예민한 수용자들 ═══
-            'BSAODP': { name: '예민한 분석가',       emoji: '📡', tagline: '감정이 예민하면서도 분석적 거리를 유지하는 사람. 위협에는 논리로 반박한다' },
-            'BSAODI': { name: '조용한 과부하형',     emoji: '📻', tagline: '모든 걸 느끼고 분석하지만, 그 처리를 전부 내면에서만 하려다 조용히 소진되는 사람' },
-            'BSAORP': { name: '민감한 경보형',       emoji: '🚨', tagline: '문제를 예민하게 감지하고 밖으로 경고하지만, 정작 자기 회복에는 유연하지 못한 사람' },
-            'BSAORI': { name: '내면 과부하형',       emoji: '🌈', tagline: '많이 느끼고 많이 분석하지만, 그 에너지가 자기에게 돌아올 때 감당하기 어려운 사람' },
-            'BSAGDP': { name: '내밀한 전술가',       emoji: '⚗️', tagline: '감정과 분석을 자기만의 공간에서 정리하고, 위협이 오면 정밀하게 대응하는 사람' },
-            'BSAGDI': { name: '폐쇄형 처리자',       emoji: '🧪', tagline: '감정과 사고를 전부 내면에서만 처리하며, 그 결과를 밖으로 거의 내보내지 않는 사람' },
-            'BSAGRP': { name: '지연 폭발형',         emoji: '❄️', tagline: '겉은 조용하지만 안에서 감정과 분석이 쌓이다가, 임계점에서 한 번에 터지는 사람' },
-            'BSAGRI': { name: '무음 진동형',         emoji: '🌀', tagline: '밖에서는 아무 일 없어 보이지만, 내면에서 감정이 계속 돌아가고 있는 사람' },
-            'BSEODP': { name: '안정적 공감형',       emoji: '⚓', tagline: '누구에게나 열려 있고 공감력이 높으면서도, 압박 상황에서 흔들리지 않는 사람' },
-            'BSEODI': { name: '경계 없는 수용형',    emoji: '🌫️', tagline: '타인의 감정을 너무 깊이 흡수해서, 자기와 상대의 경계가 흐려지는 사람' },
-            'BSEORP': { name: '과수용형',            emoji: '🌸', tagline: '감정을 다 받아주려 하지만 자기 회복이 따라가지 못하고, 그 피로가 밖으로 드러나는 사람' },
-            'BSEORI': { name: '자기방치형 공감자',    emoji: '🥀', tagline: '타인을 돌보는 데 에너지를 다 써서, 정작 자기 내면은 돌보지 못하는 사람' },
-            'BSEGDP': { name: '은밀한 돌봄형',       emoji: '🌿', tagline: '깊이 느끼고 조용히 돌보는 사람. 평소엔 부드럽지만 위협에는 단호하게 선을 긋는다' },
-            'BSEGDI': { name: '조용한 흡수형',       emoji: '🍀', tagline: '감정을 깊이 느끼면서 자기만의 속도로 소화하는 사람. 겉으로는 잘 드러나지 않는다' },
-            'BSEGRP': { name: '불규칙 분출형',       emoji: '🌹', tagline: '풍부한 감정이 표현 경로를 찾지 못해, 예상치 못한 형태로 튀어나오는 사람' },
-            'BSEGRI': { name: '응축된 감정형',       emoji: '🔒', tagline: '감정이 풍부하지만 표현도 해소도 안 되면서, 내면에서 점점 굳어가는 사람' },
-
-            // ═══ C+L (Calm + Lead): 냉정한 주도자들 ═══
-            'CLAODP': { name: '냉철한 설계자',       emoji: '🧭', tagline: '감정에 흔들리지 않고 상황을 분석해 방향을 잡는 사람. 위기에 더 냉정해진다' },
-            'CLAODI': { name: '고립된 조율자',       emoji: '🗼', tagline: '전체를 조망하고 조율하지만, 자기 상태는 밖으로 알리지 않는 사람' },
-            'CLAORP': { name: '체계적 완벽주의자',    emoji: '⚙️', tagline: '논리적 시스템을 세우고 밀어붙이는 사람. 변수가 생기면 시스템을 다시 짜서라도 관철한다' },
-            'CLAORI': { name: '경직된 설계자',       emoji: '💻', tagline: '논리적으로 완벽한 체계를 추구하지만, 예외 상황 앞에서 내부적으로 멈추는 사람' },
-            'CLAGDP': { name: '배후 조율형',         emoji: '🎭', tagline: '드러나지 않게 상황을 조율하다가, 필요한 순간에만 개입해서 판을 뒤집는 사람' },
-            'CLAGDI': { name: '고독한 통제형',       emoji: '❆', tagline: '모든 걸 혼자 통제하고 관리하지만, 그 무게도 혼자 감당하는 사람' },
-            'CLAGRP': { name: '난공불락형',          emoji: '🗿', tagline: '완전한 통제를 추구하며, 도전이 오면 벽을 더 높이 쌓아서 응답하는 사람' },
-            'CLAGRI': { name: '자기밀봉형',          emoji: '♟️', tagline: '통제와 고립이 동시에 작동하면서, 안에서도 밖에서도 움직이기 어려운 상태의 사람' },
-            'CLEODP': { name: '절제된 배려형',       emoji: '🏮', tagline: '감정 표현은 적지만 공감력은 높고, 필요할 때 정확히 개입해서 돕는 사람' },
-            'CLEODI': { name: '속 깊은 관찰형',      emoji: '🪣', tagline: '타인을 잘 이해하고 돕지만, 자기 속 깊이는 아무에게도 보여주지 않는 사람' },
-            'CLEORP': { name: '긴장된 균형형',       emoji: '⚖️', tagline: '공감력과 추진력을 갖췄지만, 스트레스 앞에서 균형이 무너지면 날카로워지는 사람' },
-            'CLEORI': { name: '무게를 짊어진 형',     emoji: '⛓️', tagline: '책임감이 강하고 타인을 생각하지만, 그 무게를 혼자 지면서 내부가 눌리는 사람' },
-            'CLEGDP': { name: '정밀 관계형',         emoji: '🎯', tagline: '가까운 사람에게는 깊은 돌봄을 주고, 그 외의 관계는 효율적으로 정리하는 사람' },
-            'CLEGDI': { name: '선별적 신뢰형',       emoji: '📕', tagline: '깊은 이해력이 있지만, 그걸 보여줄 사람을 매우 신중하게 고르는 사람' },
-            'CLEGRP': { name: '경계 수호형',         emoji: '🚪', tagline: '가까운 사람을 지키되 새로운 사람은 잘 들이지 않고, 위협에는 정면으로 차단하는 사람' },
-            'CLEGRI': { name: '과잠금형',            emoji: '🔐', tagline: '소중한 것을 지키려 경계를 세웠지만, 너무 단단해서 자기도 밖으로 나가기 어려운 사람' },
-
-            // ═══ C+S (Calm + Sync): 고요한 관찰자들 ═══
-            'CSAODP': { name: '유연한 관찰형',       emoji: '🌊', tagline: '감정 소모 없이 넓게 받아들이고 분석하는 사람. 변화에 유연하게 적응한다' },
-            'CSAODI': { name: '고요한 심층형',       emoji: '🐋', tagline: '겉은 고요하지만, 안에서 깊은 사고가 계속 돌아가고 있는 사람' },
-            'CSAORP': { name: '관찰형 비평가',       emoji: '🔍', tagline: '분석적으로 세상을 관찰하지만, 변화를 받아들이는 데 시간이 오래 걸리는 사람' },
-            'CSAORI': { name: '단절된 관찰형',       emoji: '🛰️', tagline: '모든 걸 관찰하고 분석하지만, 실제 참여나 연결로 이어지지 않는 사람' },
-            'CSAGDP': { name: '최소개입 사유형',     emoji: '🌑', tagline: '세상을 깊이 읽되 직접 참여하지 않는 사람. 필요할 때만 조용히 거리를 조절한다' },
-            'CSAGDI': { name: '자기소거형',          emoji: '🌌', tagline: '존재감을 의도적으로 줄이며, 환경에 맞춰 자기를 계속 조정하는 사람' },
-            'CSAGRP': { name: '정밀 대기형',         emoji: '🕰️', tagline: '겉으로는 멈춰 있어 보이지만 안에서 정밀하게 판단하고 있고, 때가 되면 움직이는 사람' },
-            'CSAGRI': { name: '후퇴형 관찰자',       emoji: '🫥', tagline: '존재감을 최소화하면서 내면의 경직으로 점점 더 뒤로 물러나는 사람' },
-            'CSEODP': { name: '수용형 조력자',       emoji: '🪞', tagline: '상대를 있는 그대로 받아들이고, 필요할 때 조용히 도움을 주는 사람' },
-            'CSEODI': { name: '과흡수형',            emoji: '💧', tagline: '타인을 수용하는 능력이 높지만, 자기와 상대의 경계가 흐려져 자기를 잃기 쉬운 사람' },
-            'CSEORP': { name: '불안정 수용형',       emoji: '🫧', tagline: '수용적이지만 내면이 불안정해서, 흔들림이 관계에도 영향을 미치는 사람' },
-            'CSEORI': { name: '경화된 수용형',       emoji: '🪸', tagline: '조용히 세상을 받아들이지만, 내면이 점점 굳어져서 유연성을 잃어가는 사람' },
-            'CSEGDP': { name: '자족형 은둔자',       emoji: '🐚', tagline: '자기만의 세계에서 만족하며 조용히 적응하되, 위협이 오면 문을 닫는 사람' },
-            'CSEGDI': { name: '깊은 은둔형',         emoji: '🦪', tagline: '고요하게 자기 안에 머물며, 모든 걸 내면에서 천천히 처리하는 사람' },
-            'CSEGRP': { name: '임계점 은둔형',       emoji: '🪹', tagline: '가장 깊이 닫혀 있지만, 압력이 한계를 넘으면 한 번에 무너지는 사람' },
-            'CSEGRI': { name: '심층 고립형',         emoji: '🕳️', tagline: '가장 깊이 닫혀 있고, 외부 변화가 가장 늦게 도달하는 사람' },
-        };
+        // 64 아키타입 맵 — 서버로 이관 (v3.8.15). 이름·태그라인은 서버 응답의
+        // identity.{name,emoji,tagline,code} 를 그대로 사용. 클라이언트 노출 0.
+        const ARCHETYPE_MAP = {}; // server-only — see worker.js ARCHETYPE_MAP
 
         // ═══ 추정 모집단 분포 모델 (Continuous Score Distribution) ═══
         // 목적: 실제 유저 데이터가 충분하지 않은 단계에서의 이론적 분포 추정
@@ -5866,65 +5737,34 @@
         // Match archetypes for pair analysis
         const MATCH_ARCHETYPES = [{ match: () => true, name: '교차하는 궤도', tagline: '복합적 역학의 관계', tension: '보통', growth: '보통' }];
 
+        // ─── 서버 위임 스텁 (v3.8.15) ───
+        // 모든 identity 계산은 백엔드(computeServerIdentity)에서 수행. 아래는 호출
+        // 지점에서 서버 응답 identity 가 누락된 경우의 fallback placeholder.
         function _flattenProfile(axes) {
             const flat = {};
-            if (axes.intensity) {
-                for (const [k, v] of Object.entries(axes.intensity)) {
-                    flat[k] = typeof v === 'number' ? v : 0.5;
-                }
-            }
-            flat._structural = axes.structural || {};
+            if (axes && axes.intensity) for (const [k, v] of Object.entries(axes.intensity)) flat[k] = typeof v === "number" ? v : 0.5;
+            flat._structural = (axes && axes.structural) || {};
             return flat;
         }
 
+        const _IDENTITY_PLACEHOLDER = { name: "식별 불가", emoji: "❓", code: "UNKNOWN", tagline: "서버 응답에서 identity 가 누락되었습니다", desc: "서버 재분석 필요", axisResults: [] };
+
+        // 호출 측은 가능하면 server 응답의 identity 를 직접 사용하세요.
+        // 이 함수는 legacy 호환용 fallback: axes.identity 가 있으면 그대로 반환, 없으면 placeholder.
         function computeIdentity(axes) {
-            const flat = _flattenProfile(axes);
-
-            // 6축 코드 계산
-            const axisResults = [];
-            let code = '';
-            for (const axis of TYPE_AXES) {
-                const score = axis.calc(flat);
-                const isHigh = score >= 0.5;
-                const letter = isHigh ? axis.high.letter : axis.low.letter;
-                code += letter;
-                axisResults.push({ ...axis, score, letter, isHigh });
-            }
-
-            // 64 아키타입 직접 룩업
-            const archetype = ARCHETYPE_MAP[code] || { name: '미지의 윤곽', emoji: '🔮', tagline: '하나의 유형에 담기지 않는, 복합적인 존재' };
-
-            return {
-                name: archetype.name,
-                emoji: archetype.emoji,
-                code: code,
-                tagline: archetype.tagline,
-                desc: archetype.tagline,
-                axisResults: axisResults
-            };
+            if (axes && axes.identity && axes.identity.code) return axes.identity;
+            if (axes && axes.code && axes.name) return axes;  // already an identity object
+            if (typeof console !== "undefined") console.warn("[identity] server identity missing — placeholder used", axes);
+            return { ..._IDENTITY_PLACEHOLDER };
         }
 
         function computeMatchIdentity(axesA, axesB, identityA, identityB) {
-            const flatA = _flattenProfile(axesA);
-            const flatB = _flattenProfile(axesB);
-            for (const arch of MATCH_ARCHETYPES) {
-                try {
-                    if (arch.match(flatA, flatB)) {
-                        const compat = 50; // Server calculates real compatibility
-                        return {
-                            name: arch.name, tagline: arch.tagline,
-                            emoji_a: identityA?.emoji || '🔮', emoji_b: identityB?.emoji || '🔮',
-                            code: (identityA?.code || '?') + ' × ' + (identityB?.code || '?'),
-                            compatibility: compat, tension: arch.tension, growth: arch.growth
-                        };
-                    }
-                } catch { continue; }
-            }
+            // 매칭 조합 이름·태그라인은 서버 /match 응답이 제공. 여기는 fallback.
             return {
-                name: '교차하는 궤도', tagline: '복합적 역학의 관계',
-                emoji_a: identityA?.emoji || '🔮', emoji_b: identityB?.emoji || '🔮',
-                code: (identityA?.code || '?') + ' × ' + (identityB?.code || '?'),
-                compatibility: 50, tension: '보통', growth: '보통'
+                name: "교차하는 궤도", tagline: "복합적 역학의 관계",
+                emoji_a: (identityA && identityA.emoji) || "❓", emoji_b: (identityB && identityB.emoji) || "❓",
+                code: ((identityA && identityA.code) || "?") + " × " + ((identityB && identityB.code) || "?"),
+                compatibility: 50, tension: "보통", growth: "보통"
             };
         }
 
