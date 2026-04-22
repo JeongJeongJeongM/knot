@@ -11891,19 +11891,21 @@ function displayResult() {
             { code:'thinking',  label:'THINKING',       ko:'사유의 지형' },
             { code:'anchor',    label:'ANCHOR',         ko:'애착' }
         ];
-        // Korean section name → lens key (v3.9.9: 서버 실제 title 다수 추가)
+        // Korean section name → lens key (v3.9.10: 서버 실제 schema {key, title} 양쪽 매칭)
+        //   backend worker.js L10418+ 기준: persona/attraction_structure/trajectory_forecast/risk_map/possibility
         var _V39_SECTION_KO_MAP = {
-            '페르소나': 'persona', 'persona':'persona', '첫 인상':'persona', '첫인상':'persona',
-              '관계 페르소나':'persona', '정체성':'persona',
-            '소통': 'comm', 'communication':'comm', '의사소통':'comm', '대화':'comm', '커뮤니케이션':'comm',
-            '방어': 'defense', '방어 체계':'defense', '갈등':'defense', '갈등 처리':'defense',
-              '위기':'defense', '위기 반응':'defense', 'risk_map':'defense',
-            '그림자': 'shadow', 'shadow':'shadow', '매력 구조':'shadow', 'attraction_structure':'shadow',
-              '무의식':'shadow', '거울':'shadow',
-            '의식': 'ritual', '의식화':'ritual', 'ritual':'ritual', '미래':'ritual',
-              '성장':'ritual', 'possibility':'ritual', '가능성':'ritual', '루틴':'ritual',
-            '사유의 지형': 'thinking', 'thinking':'thinking', '사고':'thinking', '판단':'thinking',
-            '애착': 'anchor', 'anchor':'anchor', '애착 양식':'anchor'
+            // keys (영문)
+            'persona':'persona', 'attraction_structure':'shadow', 'trajectory_forecast':'thinking',
+            'risk_map':'defense', 'possibility':'ritual', 'communication':'comm', 'anchor':'anchor',
+            'shadow':'shadow', 'ritual':'ritual', 'thinking':'thinking', 'defense':'defense', 'comm':'comm',
+            // titles (한글 실제)
+            '페르소나': 'persona', '첫 인상':'persona', '첫인상':'persona', '관계 페르소나':'persona', '정체성':'persona',
+            '끌림의 구조': 'shadow', '매력 구조':'shadow', '그림자':'shadow', '무의식':'shadow', '거울':'shadow',
+            '궤적 전망': 'thinking', '사유의 지형':'thinking', '사고':'thinking', '판단':'thinking',
+            '관계 위험 맵':'defense', '방어':'defense', '방어 체계':'defense', '갈등':'defense', '갈등 처리':'defense', '위기':'defense', '위기 반응':'defense',
+            '이 관계의 가능성':'ritual', '가능성':'ritual', '의식':'ritual', '의식화':'ritual', '미래':'ritual', '성장':'ritual', '루틴':'ritual',
+            '소통':'comm', '의사소통':'comm', '대화':'comm', '커뮤니케이션':'comm',
+            '애착':'anchor', '애착 양식':'anchor'
         };
 
         function renderV39DeepDive(ctx){
@@ -11912,21 +11914,44 @@ function displayResult() {
             var bodyEl = document.getElementById('v39DdBody');
             if (!navEl || !bodyEl) return;
 
-            // Normalize sections: may be array of {title, summary, body} or keyed object
+            // v3.9.10: 서버 sections schema 는 {key, title, summary, subsections}.
+            //   key 와 title 둘 다 매핑 대상으로. summary 가 최상위 body 텍스트.
+            //   subsections 가 있으면 본문에 펼쳐서 붙임.
             var arr = [];
+            function _flattenSubsections(subs){
+                if (!Array.isArray(subs)) return '';
+                return subs.map(function(sub){
+                    if (!sub) return '';
+                    var t = sub.title || sub.key || '';
+                    var c = sub.content || sub.text || sub.body || '';
+                    if (!c) return '';
+                    return (t ? '<strong>' + _v39Safe(t) + '</strong>\n' : '') + _v39Safe(c);
+                }).filter(Boolean).join('\n\n');
+            }
             if (Array.isArray(sections)) {
-                arr = sections.map(function(s){ return { title: s.title || s.name || s.key || '', body: s.body || s.summary || s.text || '' }; });
+                arr = sections.map(function(s){
+                    var body = s.body || s.summary || s.text || '';
+                    var subBody = _flattenSubsections(s.subsections);
+                    if (subBody) body = (body ? body + '\n\n' : '') + subBody;
+                    return { key: s.key || '', title: s.title || s.name || s.key || '', body: body };
+                });
             } else if (sections && typeof sections === 'object') {
                 arr = Object.keys(sections).map(function(k){
-                    var s = sections[k]; if (typeof s === 'string') return { title:k, body:s };
-                    return { title: s.title||k, body: s.body||s.summary||s.text||'' };
+                    var s = sections[k]; if (typeof s === 'string') return { key:k, title:k, body:s };
+                    var body = s.body || s.summary || s.text || '';
+                    var subBody = _flattenSubsections(s.subsections);
+                    if (subBody) body = (body ? body + '\n\n' : '') + subBody;
+                    return { key: s.key || k, title: s.title || k, body: body };
                 });
             }
-            // Map to lens codes
+            // Map to lens codes — key 우선, 없으면 title
             var byCode = {};
             arr.forEach(function(s){
-                var code = _V39_SECTION_KO_MAP[s.title] || _V39_SECTION_KO_MAP[(s.title||'').toLowerCase()] || null;
-                if (code) byCode[code] = s;
+                var code = _V39_SECTION_KO_MAP[s.key] ||
+                           _V39_SECTION_KO_MAP[s.title] ||
+                           _V39_SECTION_KO_MAP[(s.title||'').toLowerCase()] ||
+                           null;
+                if (code && !byCode[code]) byCode[code] = s;
             });
             // Build available lenses
             var available = _V39_LENS_MAP.filter(function(l){ return byCode[l.code]; });
