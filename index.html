@@ -7450,7 +7450,18 @@
                         raw_messages_b: profileB.messages || null
                     })
                 });
-                if (!response.ok) throw new Error(`Worker error: ${response.status}`);
+                if (!response.ok) {
+                    // v3.8.19: /match 429 (WEEKLY_MATCH_LIMIT 등) 한글 surface
+                    const errBody = await response.text().catch(() => '');
+                    let errMsg = null, errCode = null;
+                    try { const j = JSON.parse(errBody); errMsg = j.error || null; errCode = j.code || null; } catch {}
+                    if (errCode === 'WEEKLY_MATCH_LIMIT') {
+                        const err = new Error(errMsg || '주간 매칭 횟수를 초과했습니다.');
+                        err.code = 'WEEKLY_MATCH_LIMIT';
+                        throw err;
+                    }
+                    throw new Error(errMsg || `매칭 서버 오류 (${response.status})`);
+                }
 
                 const contentType = response.headers.get('Content-Type') || '';
                 if (contentType.includes('text/event-stream')) {
@@ -11129,6 +11140,20 @@ function displayResult() {
         }
 
         async function displayMatch() {
+            // v3.8.19: 매칭 주간 제한 사전 체크 (개인 분석 카운터와 별개)
+            try {
+                const limitResp = await fetch(WORKER_URL + '/check-limit?kind=match', {
+                    headers: getAuthToken() ? { 'Authorization': 'Bearer ' + getAuthToken() } : {}
+                });
+                if (limitResp.ok) {
+                    const limitData = await limitResp.json();
+                    if (!limitData.allowed) {
+                        alert('주간 매칭 횟수(' + limitData.limit + '회)를 모두 사용했습니다. 다음 주에 다시 시도해주세요.');
+                        return;
+                    }
+                }
+            } catch (e) { console.log('[KNOT] match check-limit failed, proceeding:', e.message); }
+
             const result = computeCompatibility(currentProfile, matchProfile);
 
             const idA = currentProfile.identity || { emoji: '🔮', code: '-', name: '-' };

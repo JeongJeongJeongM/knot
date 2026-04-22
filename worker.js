@@ -6365,9 +6365,10 @@ const MAX_SIZE_MATCH = 10 * 1024 * 1024;   // 10MB
 const MAX_SIZE_FEEDBACK = 10 * 1024;
 const MAX_SIZE_SHARE = 200 * 1024;  // v3.6.41: profile+essay sections 여유 공간 (KV 자체 한도 25MB)
 const ADMIN_EMAILS = ['ashirmallo@gmail.com', 'nakkdoor@gmail.com', 'zion062214@gmail.com', 'merrysj92@gmail.com'];
-// v3.8.16: 기존 1 — 유저가 2회째 분석(= 매칭 플로우에 필요한 B-측) 불가 → 매칭 자체 블락됨.
-// 매칭 한 쌍 완성에 필요한 최소 2회 + 재시도 여유 → 5회/주.
-const WEEKLY_ANALYSIS_LIMIT = 5;
+// v3.8.19: 개인/매칭 카운터 분리. 기존 통합 5회는 땜빵. 구조적으로 개인 분석과
+// 커플 매칭은 별개 자원이므로 각각 제한.
+const WEEKLY_ANALYSIS_LIMIT = 1;  // /analyze (개인 분석)
+const WEEKLY_MATCH_LIMIT = 1;     // /match (커플 매칭)
 
 const ALLOWED_ORIGINS = [
   'https://jeongjeongjeongm.github.io',
@@ -12569,20 +12570,26 @@ function switchTab(id, el) {
       if (auth.error) return jsonResponse({ error: auth.error }, auth.status, corsHeaders);
       const authUser = auth.user;
       const isAdmin = authUser?.email && ADMIN_EMAILS.includes(authUser.email);
+      // v3.8.19: kind=analyze|match 파라미터로 어느 카운터 확인할지 지정. 기본 analyze.
+      //   미지정/analyze → analyses 테이블 7일. match → matches 테이블 7일.
+      const kind = (url.searchParams.get('kind') || 'analyze').toLowerCase();
+      const isMatch = kind === 'match';
+      const limit = isMatch ? WEEKLY_MATCH_LIMIT : WEEKLY_ANALYSIS_LIMIT;
       if (isAdmin) {
-        return jsonResponse({ allowed: true, remaining: 999, limit: WEEKLY_ANALYSIS_LIMIT, is_admin: true }, 200, corsHeaders);
+        return jsonResponse({ allowed: true, remaining: 999, limit, used: 0, kind, is_admin: true }, 200, corsHeaders);
       }
       let used = 0;
       try {
         if (env.KNOT_DB) {
-          const row = await env.KNOT_DB.prepare(
-            `SELECT COUNT(*) as cnt FROM analyses WHERE user_id = ? AND created_at >= datetime('now', '-7 days')`
-          ).bind(authUser.sub).first();
+          const sql = isMatch
+            ? `SELECT COUNT(*) as cnt FROM matches WHERE user_id = ? AND created_at >= datetime('now', '-7 days')`
+            : `SELECT COUNT(*) as cnt FROM analyses WHERE user_id = ? AND created_at >= datetime('now', '-7 days')`;
+          const row = await env.KNOT_DB.prepare(sql).bind(authUser.sub).first();
           used = row?.cnt || 0;
         }
-      } catch (e) { console.error('[check-limit]', e.message); }
-      const remaining = Math.max(0, WEEKLY_ANALYSIS_LIMIT - used);
-      return jsonResponse({ allowed: remaining > 0, remaining, limit: WEEKLY_ANALYSIS_LIMIT, used }, 200, corsHeaders);
+      } catch (e) { console.error('[check-limit]', kind, e.message); }
+      const remaining = Math.max(0, limit - used);
+      return jsonResponse({ allowed: remaining > 0, remaining, limit, used, kind }, 200, corsHeaders);
     }
 
     // ══════════════════════════════════════════════════════
@@ -13191,6 +13198,24 @@ function switchTab(id, el) {
         return jsonResponse({ error: auth.error }, auth.status, corsHeaders);
       }
       const authUser = auth.user;
+
+      // v3.8.19: 매칭 주간 제한 (개인 분석과 별개 카운터). admin 면제.
+      const matchIsAdmin = authUser?.email && ADMIN_EMAILS.includes(authUser.email);
+      if (!matchIsAdmin && env.KNOT_DB) {
+        try {
+          const row = await env.KNOT_DB.prepare(
+            `SELECT COUNT(*) as cnt FROM matches WHERE user_id = ? AND created_at >= datetime('now', '-7 days')`
+          ).bind(authUser.sub).first();
+          if (row && row.cnt >= WEEKLY_MATCH_LIMIT) {
+            return jsonResponse({
+              error: `주간 매칭 횟수(${WEEKLY_MATCH_LIMIT}회)를 모두 사용했습니다. 다음 주에 다시 시도해주세요.`,
+              code: 'WEEKLY_MATCH_LIMIT',
+              used: row.cnt,
+              limit: WEEKLY_MATCH_LIMIT
+            }, 429, corsHeaders);
+          }
+        } catch (e) { console.error('[/match rate-limit]', e.message); }
+      }
 
       const contentLength = parseInt(request.headers.get('Content-Length') || '0');
       if (contentLength > MAX_SIZE_MATCH) {
