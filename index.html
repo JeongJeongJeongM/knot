@@ -4401,15 +4401,22 @@
         .v39-attach-wrap{position:relative;background:rgba(12,12,20,0.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px 24px;overflow:hidden}
         .v39-attach-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,166,35,0.2),transparent)}
         .v39-attach-title{font-family:'JetBrains Mono',monospace;font-size:11px;color:#F5A623;letter-spacing:2px;margin-bottom:20px;text-align:center;font-weight:600;text-transform:uppercase}
-        .v39-plot{position:relative;width:280px;height:280px;margin:0 auto;background:linear-gradient(90deg,transparent 49.5%,rgba(255,255,255,0.08) 49.5%,rgba(255,255,255,0.08) 50.5%,transparent 50.5%),linear-gradient(0deg,transparent 49.5%,rgba(255,255,255,0.08) 49.5%,rgba(255,255,255,0.08) 50.5%,transparent 50.5%);border:1px solid rgba(255,255,255,0.04);border-radius:4px}
-        .v39-plot .quad{position:absolute;font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:0.1em}
-        .v39-plot .quad.tl{top:8px;left:8px} .v39-plot .quad.tr{top:8px;right:8px}
-        .v39-plot .quad.bl{bottom:8px;left:8px} .v39-plot .quad.br{bottom:8px;right:8px}
-        .v39-plot .dot{position:absolute;width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%);border:2px solid #06060B;box-shadow:0 0 16px currentColor}
-        .v39-plot .dot.a{background:#60A5FA;color:#60A5FA}
-        .v39-plot .dot.b{background:#A78BFA;color:#A78BFA}
-        .v39-plot .dot-label{position:absolute;transform:translate(-50%,10px);font-family:'JetBrains Mono',monospace;font-size:10px;white-space:nowrap;letter-spacing:0.05em}
-        .v39-plot .dot-label.a{color:#60A5FA} .v39-plot .dot-label.b{color:#A78BFA}
+        /* v3.9.8: 2D plot → dbar 비교 바 (개인 .dbar-* 패턴 복제) */
+        .v39-att-row{margin-bottom:20px}
+        .v39-att-row:last-child{margin-bottom:0}
+        .v39-att-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,0.45);letter-spacing:1.5px;margin-bottom:10px;text-transform:uppercase;font-weight:600}
+        .v39-att-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+        @media(max-width:500px){.v39-att-pair{grid-template-columns:1fr}}
+        .v39-att-side{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px}
+        .v39-att-name{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;min-width:40px;text-transform:uppercase;font-weight:600}
+        .v39-att-name.a{color:#60A5FA}
+        .v39-att-name.b{color:#A78BFA}
+        .v39-att-track{position:relative;height:8px;background:rgba(255,255,255,0.04);border-radius:4px;overflow:hidden}
+        .v39-att-fill{position:absolute;top:0;left:0;height:100%;width:0;border-radius:4px;transition:width 1.2s cubic-bezier(0.16,1,0.3,1)}
+        .v39-att-fill.a{background:linear-gradient(90deg,#60A5FA,#818cf8);box-shadow:0 0 10px rgba(96,165,250,0.25)}
+        .v39-att-fill.b{background:linear-gradient(90deg,#A78BFA,#c4b5fd);box-shadow:0 0 10px rgba(167,139,250,0.25)}
+        .v39-att-pct{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.75);font-weight:600;min-width:38px;text-align:right}
+        .v39-att-poles{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:0.1em;margin-top:6px}
         .v39-attach-cap{margin-top:20px;text-align:center;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.7}
         .v39-attach-cap b{color:#F5A623;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em}
 
@@ -5136,6 +5143,7 @@
 
                 <!-- 01 · VERDICT -->
                 <section class="result-section v39-verdict" id="matchSectionVerdict">
+                  <div class="result-section-inner">
                     <div class="rarity-line" id="v39RarityLine">01 · VERDICT</div>
                     <h1 class="v39-archetype" id="v39Archetype">매칭 분석</h1>
                     <p class="v39-verdict-sentence" id="v39Sentence"></p>
@@ -5159,10 +5167,12 @@
                         </div>
                     </div>
                     <div class="v39-chips" id="v39Chips"></div>
+                  </div>
                 </section>
 
                 <!-- 02 · THE MAP -->
                 <section class="result-section v39-section" id="matchSectionMap">
+                  <div class="result-section-inner">
                     <div class="v39-meta"><b>02</b> · THE MAP</div>
                     <h2 class="v39-title">두 사람이 그리는 지형</h2>
                     <p class="v39-subtitle">축별 격차를 큰 순서로 정렬. 중앙선에서 멀수록 두 사람의 방향이 다릅니다.</p>
@@ -5177,20 +5187,17 @@
                         <div class="v39-tcap" id="v39TornadoCap"></div>
                     </div>
                     <div class="v39-attach-wrap" id="v39AttachWrap">
-                        <div class="v39-attach-title">◇ ATTACHMENT MAP ◇</div>
-                        <div class="v39-plot" id="v39AttachPlot">
-                            <span class="quad tl">회피형</span>
-                            <span class="quad tr">두려움형</span>
-                            <span class="quad bl">안정형</span>
-                            <span class="quad br">불안형</span>
-                        </div>
+                        <div class="v39-attach-title">◇ ATTACHMENT ◇</div>
+                        <div id="v39AttachBars"></div>
                         <div class="v39-attach-cap" id="v39AttachCap"></div>
                     </div>
                     <div class="v39-bridge">이 지형에서 반복되는 패턴을 보세요</div>
+                  </div>
                 </section>
 
                 <!-- 03 · THE PATTERN -->
                 <section class="result-section v39-section" id="matchSectionPattern">
+                  <div class="result-section-inner">
                     <div class="v39-meta"><b>03</b> · THE PATTERN</div>
                     <h2 class="v39-pattern-name" id="v39PatternName">패턴 분석</h2>
                     <p class="v39-pattern-sub" id="v39PatternSub"></p>
@@ -5203,13 +5210,15 @@
                         <div class="v39-loop-cap" id="v39LoopCap"></div>
                     </div>
                     <div class="v39-bridge">이 패턴이 3개월 · 1년 뒤 어디로 향할지 보세요</div>
+                  </div>
                 </section>
 
                 <!-- 04 · THE ARC -->
                 <section class="result-section v39-section" id="matchSectionArc">
+                  <div class="result-section-inner">
                     <div class="v39-meta"><b>04</b> · THE ARC</div>
-                    <h2 class="v39-title">지금 · 3개월 후 · 1년 후</h2>
-                    <p class="v39-subtitle">현재 궤적이 유지될 때 예상되는 수렴/발산. 점선은 투사, 실선은 측정.</p>
+                    <h2 class="v39-title">상황별 반응 궤적</h2>
+                    <p class="v39-subtitle">다섯 가지 상황(일반·친밀·스트레스·갈등·상실)에서 두 사람의 정서 반응 평균. 선이 붙어 있으면 같은 방향, 벌어지면 다른 방향.</p>
                     <div class="v39-tier1" id="v39ArcTier1"></div>
                     <div class="v39-arc-chart">
                         <div class="v39-arc-head">
@@ -5219,14 +5228,16 @@
                                 <span class="b"><i></i> <span id="v39ArcLegB">B</span></span>
                             </span>
                         </div>
-                        <svg id="v39ArcSvg" viewBox="0 0 600 220" preserveAspectRatio="xMidYMid meet"></svg>
+                        <canvas id="v39ArcCanvas" style="width:100%;height:220px;display:block;"></canvas>
                     </div>
                     <div class="v39-ra-pair" id="v39RaPair"></div>
                     <div class="v39-bridge">더 깊이 읽고 싶으면 아래 렌즈를 선택하세요</div>
+                  </div>
                 </section>
 
                 <!-- 05 · DEEP DIVE -->
                 <section class="result-section v39-section" id="matchSectionDeepDive">
+                  <div class="result-section-inner">
                     <div class="v39-meta"><b>05</b> · DEEP DIVE · <span style="color:#4A4A60">OPTIONAL</span></div>
                     <h2 class="v39-title">렌즈별 상세</h2>
                     <p class="v39-subtitle">탭을 선택하면 해당 주제의 서술형 분석이 열립니다. 읽지 않아도 괜찮습니다.</p>
@@ -5236,6 +5247,7 @@
                             <div class="v39-dd-empty">분석 항목을 선택하세요</div>
                         </div>
                     </div>
+                  </div>
                 </section>
 
                 <!-- Legacy placeholders (hidden; v3.9.4 — 레거시 render fn 이 getElementById 로
@@ -11518,48 +11530,51 @@ function displayResult() {
             if (typeof att.avoidant_ratio === 'number') base.av = Math.max(0.05, Math.min(0.95, att.avoidant_ratio));
             return base;
         }
+        // v3.9.8: 2D plot → dbar 비교 막대 2개 (불안/회피). 개인 페이지 .dbar-* 패턴 복제.
         function renderV39AttachPlot(ctx){
-            var plot = document.getElementById('v39AttachPlot');
+            var bars = document.getElementById('v39AttachBars');
             var wrap = document.getElementById('v39AttachWrap');
             var cap = document.getElementById('v39AttachCap');
-            if (!plot || !wrap) return;
+            if (!bars || !wrap) return;
             var coA = _v39AttachCoords(ctx.anchorA);
             var coB = _v39AttachCoords(ctx.anchorB);
-            if (!coA && !coB) {
-                wrap.style.display = 'none';
-                return;
-            }
+            if (!coA && !coB) { wrap.style.display = 'none'; return; }
             wrap.style.display = '';
-            // clear previously drawn dots/labels but keep quad labels
-            Array.from(plot.querySelectorAll('.dot, .dot-label')).forEach(function(n){ n.remove(); });
-            function addDot(coord, cls, label){
-                if (!coord) return;
-                // axis: x = anxious (0..1 maps 0%→100% left→right); y = avoidant (0 bottom → 1 top)
-                var leftPct = (coord.ax * 100).toFixed(1);
-                var topPct = ((1 - coord.av) * 100).toFixed(1);
-                // Actually mockup: top = avoidance high, so invert: top% = (1-avoidance)*100 means bottom=low avoidance... use av direct as top offset from top:
-                // simpler: top = (1 - av) * 100 → av=1 puts dot at top=0% (top). Good.
-                var dot = document.createElement('div');
-                dot.className = 'dot ' + cls;
-                dot.style.top = ((1 - coord.av) * 100).toFixed(1) + '%';
-                dot.style.left = (coord.ax * 100).toFixed(1) + '%';
-                plot.appendChild(dot);
-                var dl = document.createElement('div');
-                dl.className = 'dot-label ' + cls;
-                dl.textContent = label;
-                dl.style.top = ((1 - coord.av) * 100).toFixed(1) + '%';
-                dl.style.left = (coord.ax * 100).toFixed(1) + '%';
-                plot.appendChild(dl);
+            var nameA = (ctx.idA && ctx.idA.name) || 'A';
+            var nameB = (ctx.idB && ctx.idB.name) || 'B';
+            function pair(label, valA, valB, lo, hi){
+                var a = (valA == null) ? null : Math.max(0, Math.min(1, valA));
+                var b = (valB == null) ? null : Math.max(0, Math.min(1, valB));
+                var aPct = a == null ? 0 : Math.round(a * 100);
+                var bPct = b == null ? 0 : Math.round(b * 100);
+                return '<div class="v39-att-row">' +
+                  '<div class="v39-att-label">' + _v39Safe(label) + '</div>' +
+                  '<div class="v39-att-pair">' +
+                    '<div class="v39-att-side"><div class="v39-att-name a">' + _v39Safe(nameA) + '</div><div class="v39-att-track"><div class="v39-att-fill a" data-target="' + aPct + '"></div></div><div class="v39-att-pct">' + (a==null?'—':aPct+'%') + '</div></div>' +
+                    '<div class="v39-att-side"><div class="v39-att-name b">' + _v39Safe(nameB) + '</div><div class="v39-att-track"><div class="v39-att-fill b" data-target="' + bPct + '"></div></div><div class="v39-att-pct">' + (b==null?'—':bPct+'%') + '</div></div>' +
+                  '</div>' +
+                  '<div class="v39-att-poles"><span>' + _v39Safe(lo) + '</span><span>' + _v39Safe(hi) + '</span></div>' +
+                '</div>';
             }
-            addDot(coA, 'a', (ctx.idA && ctx.idA.name) || 'A');
-            addDot(coB, 'b', (ctx.idB && ctx.idB.name) || 'B');
+            bars.innerHTML =
+              pair('불안 애착', coA ? coA.ax : null, coB ? coB.ax : null, '낮음 · 안정', '높음 · 불안') +
+              pair('회피 애착', coA ? coA.av : null, coB ? coB.av : null, '낮음 · 가까움', '높음 · 거리감');
+
+            // Animate fill on next frame
+            setTimeout(function(){
+                bars.querySelectorAll('.v39-att-fill').forEach(function(el){
+                    var t = parseFloat(el.getAttribute('data-target')) || 0;
+                    el.style.width = t + '%';
+                });
+            }, 120);
+
             if (cap) {
                 if (coA && coB) {
                     var dx = coA.ax - coB.ax, dy = coA.av - coB.av;
                     var dist = Math.sqrt(dx*dx + dy*dy);
-                    var interp = dist < 0.25 ? '같은 분면 — 유사한 애착 양상' :
-                                 dist < 0.55 ? '인접 분면 — 부분적 비대칭' :
-                                               '대각선 분면 — 회피·추적 쌍의 전형';
+                    var interp = dist < 0.15 ? '유사한 애착 양상 — 서로 예측 가능한 리듬' :
+                                 dist < 0.40 ? '부분적 비대칭 — 조율 여지 있음' :
+                                               '대각선 — 회피·추적 쌍 전형';
                     cap.innerHTML = '애착 거리 <b>' + dist.toFixed(2) + '</b> · ' + _v39Safe(interp);
                 } else {
                     cap.textContent = '한쪽 애착 데이터만 확보됨.';
@@ -11693,7 +11708,10 @@ function displayResult() {
             }
         }
 
-        // ── 04 · THE ARC ──
+        // ── 04 · THE ARC — 상황별 반응 측정값 (개인 trajectory canvas 패턴) ──
+        // v3.9.8: 기존 SVG + 가짜 projection (drift 상수 0.15/0.12/0.05) 전부 제거.
+        //   대신 simulation.situational 의 실제 측정 평균값을 5개 상황 (normal/stress/intimacy/conflict/loss) 별로
+        //   canvas 에 두 선 (A·B) 으로 그림. 개인 renderTrajectoryChart (L8146) 의 DPR·pad·grid 패턴 동일.
         function renderV39Arc(ctx){
             var simA = ctx.simulationA, simB = ctx.simulationB;
             var idA = ctx.idA || {}, idB = ctx.idB || {};
@@ -11701,70 +11719,119 @@ function displayResult() {
             var lA = document.getElementById('v39ArcLegA'); if (lA) lA.textContent = idA.name || 'A';
             var lB = document.getElementById('v39ArcLegB'); if (lB) lB.textContent = idB.name || 'B';
 
-            // Extract NOW emotion values 0..1
-            function _nowEmo(sim){
-                if (!sim) return 0.5;
-                if (sim.axes && typeof sim.axes.emotion === 'number') return _v39Norm01(sim.axes.emotion);
-                if (sim.now && typeof sim.now.emotion === 'number') return _v39Norm01(sim.now.emotion);
-                return 0.5;
-            }
-            var eA = _nowEmo(simA), eB = _nowEmo(simB);
-            // linear projection using crossSituational delta or simple drift
+            // Tier-1 (cross convergence 기반 · 서버 제공 값)
             var cross = ctx.crossSim || {};
-            var drift = 0;
-            if (cross.convergence === 'divergent') drift = 0.15;
-            else if (cross.convergence === 'convergent') drift = -0.12;
-            else drift = 0.05;
-            // A drifts down (risk), B drifts up (growth) when divergent; reverse for convergent
-            var eA_3m = Math.max(0, Math.min(1, eA - drift * 0.5));
-            var eA_1y = Math.max(0, Math.min(1, eA - drift * 1.2));
-            var eB_3m = Math.max(0, Math.min(1, eB + drift * 0.5));
-            var eB_1y = Math.max(0, Math.min(1, eB + drift * 1.2));
-
-            // Tier-1
             var t1 = document.getElementById('v39ArcTier1');
             if (t1) {
                 var convMap = {
-                    convergent: '현재 두 사람은 <b>수렴 궤도</b>. 3개월 내에도 계속 가까워질 가능성이 높습니다.',
-                    parallel: '현재 두 사람은 <b>평행 궤도</b>. 3개월 내 개입 없으면 <b>서서히 발산</b>하고, 한쪽의 "이름 붙이기" 가 생기면 <b>안정 수렴</b> 으로 꺾입니다.',
-                    divergent: '현재 두 사람은 <b>발산 궤도</b>. 의식적인 개입이 없으면 1년 뒤 거리감이 눈에 띄게 커집니다.'
+                    convergent: '상황이 바뀌어도 두 사람은 <b>비슷한 방향</b>으로 흐릅니다. 공통 리듬이 안정된 커플.',
+                    parallel: '두 사람 반응 궤적이 <b>평행</b>. 각자 리듬을 유지하며 부딪히지 않는 편.',
+                    divergent: '상황 스트레스가 커질수록 두 사람이 <b>다른 방향</b>으로 이동. 교착 위험 구간 있음.'
                 };
-                t1.innerHTML = convMap[cross.convergence] || '현재 궤적은 결정적이지 않습니다. 지금 내리는 선택이 방향을 만듭니다.';
+                t1.innerHTML = convMap[cross.convergence] || '상황별 반응 패턴을 비교합니다.';
             }
 
-            // SVG
-            function y(v){ return Math.round(180 - v * 140); }  // 0→180 (bottom), 1→40 (top)
-            var svg = document.getElementById('v39ArcSvg');
-            if (svg) {
-                var parts = [];
-                parts.push('<line x1="0" y1="40" x2="600" y2="40" stroke="#1A1A2E" stroke-dasharray="2,4"/>');
-                parts.push('<line x1="0" y1="110" x2="600" y2="110" stroke="#252540"/>');
-                parts.push('<line x1="0" y1="180" x2="600" y2="180" stroke="#1A1A2E" stroke-dasharray="2,4"/>');
-                parts.push('<line x1="150" y1="0" x2="150" y2="210" stroke="#1A1A2E" stroke-dasharray="1,3"/>');
-                parts.push('<line x1="350" y1="0" x2="350" y2="210" stroke="#1A1A2E" stroke-dasharray="1,3"/>');
-                parts.push('<line x1="550" y1="0" x2="550" y2="210" stroke="#1A1A2E" stroke-dasharray="1,3"/>');
-                parts.push('<text x="150" y="210" fill="#4A4A60" font-size="9" font-family="JetBrains Mono" text-anchor="middle">NOW</text>');
-                parts.push('<text x="350" y="210" fill="#4A4A60" font-size="9" font-family="JetBrains Mono" text-anchor="middle">+3M</text>');
-                parts.push('<text x="550" y="210" fill="#4A4A60" font-size="9" font-family="JetBrains Mono" text-anchor="middle">+1Y</text>');
-                parts.push('<text x="5" y="44" fill="#4A4A60" font-size="9" font-family="JetBrains Mono">1.0</text>');
-                parts.push('<text x="5" y="114" fill="#4A4A60" font-size="9" font-family="JetBrains Mono">0.5</text>');
-                parts.push('<text x="5" y="184" fill="#4A4A60" font-size="9" font-family="JetBrains Mono">0.0</text>');
-                var yA = y(eA), yA3 = y(eA_3m), yA1 = y(eA_1y);
-                var yB = y(eB), yB3 = y(eB_3m), yB1 = y(eB_1y);
-                parts.push('<path d="M 20 ' + (yA+4) + ' L 80 ' + (yA+2) + ' L 150 ' + yA + '" stroke="#60A5FA" stroke-width="2" fill="none"/>');
-                parts.push('<path d="M 150 ' + yA + ' L 350 ' + yA3 + ' L 550 ' + yA1 + '" stroke="#60A5FA" stroke-width="2" stroke-dasharray="4,4" fill="none"/>');
-                parts.push('<path d="M 20 ' + (yB-4) + ' L 80 ' + (yB-2) + ' L 150 ' + yB + '" stroke="#A78BFA" stroke-width="2" fill="none"/>');
-                parts.push('<path d="M 150 ' + yB + ' L 350 ' + yB3 + ' L 550 ' + yB1 + '" stroke="#A78BFA" stroke-width="2" stroke-dasharray="4,4" fill="none"/>');
-                parts.push('<circle cx="150" cy="' + yA + '" r="4" fill="#60A5FA"/>');
-                parts.push('<circle cx="150" cy="' + yB + '" r="4" fill="#A78BFA"/>');
-                // divergence highlight
-                if (cross.convergence !== 'convergent') {
-                    var topY = Math.min(yA1, yB1), botY = Math.max(yA1, yB1);
-                    var topY3 = Math.min(yA3, yB3), botY3 = Math.max(yA3, yB3);
-                    parts.push('<path d="M 350 ' + topY3 + ' L 550 ' + topY + ' L 550 ' + botY + ' L 350 ' + botY3 + ' Z" fill="#EF4444" fill-opacity="0.06" stroke="none"/>');
-                    parts.push('<text x="450" y="105" fill="#EF4444" font-size="10" font-family="JetBrains Mono" text-anchor="middle" opacity="0.8">발산 영역</text>');
+            // 상황별 평균 emotion 추출 (situational 데이터 기반)
+            var SITS = [
+                { key:'normal',   label:'일반' },
+                { key:'intimacy', label:'친밀' },
+                { key:'stress',   label:'스트레스' },
+                { key:'conflict', label:'갈등' },
+                { key:'loss',     label:'상실' }
+            ];
+            function sitMean(sim, key){
+                if (!sim) return null;
+                // situational[key].mean.E 또는 .emotion 등 backend shape 대응
+                if (sim.situational && sim.situational[key]) {
+                    var s = sim.situational[key];
+                    if (s.mean) {
+                        if (typeof s.mean.E === 'number') return _v39Norm01(s.mean.E);
+                        if (typeof s.mean.emotion === 'number') return _v39Norm01(s.mean.emotion);
+                    }
                 }
-                svg.innerHTML = parts.join('');
+                // normal (baseline) 은 sim.axes.emotion 으로 fallback
+                if (key === 'normal') {
+                    if (sim.axes && typeof sim.axes.emotion === 'number') return _v39Norm01(sim.axes.emotion);
+                    if (sim.now && typeof sim.now.emotion === 'number') return _v39Norm01(sim.now.emotion);
+                }
+                return null;
+            }
+            var ptsA = SITS.map(function(s){ return sitMean(simA, s.key); });
+            var ptsB = SITS.map(function(s){ return sitMean(simB, s.key); });
+            var hasA = ptsA.some(function(v){ return v != null; });
+            var hasB = ptsB.some(function(v){ return v != null; });
+
+            // Canvas 드로잉 (개인 trajectory 패턴: DPR scale + logical coords)
+            var cv = document.getElementById('v39ArcCanvas');
+            if (cv) {
+                var dpr = window.devicePixelRatio || 1;
+                var cssW = cv.clientWidth || 600;
+                var H = 220;
+                cv.width = cssW * dpr;
+                cv.height = H * dpr;
+                cv.style.height = H + 'px';
+                var cx = cv.getContext('2d');
+                cx.setTransform(1, 0, 0, 1, 0, 0);
+                cx.scale(dpr, dpr);
+                cx.clearRect(0, 0, cssW, H);
+
+                if (!hasA && !hasB) {
+                    cx.fillStyle = 'rgba(255,255,255,0.3)';
+                    cx.font = '600 12px "JetBrains Mono",monospace';
+                    cx.textAlign = 'center';
+                    cx.textBaseline = 'middle';
+                    cx.fillText('상황별 반응 데이터 없음', cssW/2, H/2);
+                } else {
+                    var pad = { t:20, r:16, b:32, l:40 };
+                    var W = cssW, plotW = W - pad.l - pad.r, plotH = H - pad.t - pad.b;
+
+                    // grid (0, 0.5, 1)
+                    cx.strokeStyle = 'rgba(255,255,255,0.05)';
+                    cx.lineWidth = 1;
+                    [0, 0.5, 1].forEach(function(v){
+                        var y = pad.t + (1-v) * plotH;
+                        cx.beginPath(); cx.moveTo(pad.l, y); cx.lineTo(W - pad.r, y); cx.stroke();
+                    });
+
+                    // Y-axis labels
+                    cx.fillStyle = 'rgba(255,255,255,0.3)';
+                    cx.font = '600 9px "JetBrains Mono",monospace';
+                    cx.textAlign = 'right'; cx.textBaseline = 'middle';
+                    ['0.0','0.5','1.0'].forEach(function(lbl, i){
+                        var v = [0, 0.5, 1][i];
+                        cx.fillText(lbl, pad.l - 6, pad.t + (1-v) * plotH);
+                    });
+
+                    // X-axis labels (situations)
+                    cx.textAlign = 'center'; cx.textBaseline = 'top';
+                    SITS.forEach(function(s, i){
+                        var x = pad.l + (SITS.length === 1 ? plotW/2 : (i / (SITS.length - 1)) * plotW);
+                        cx.fillText(s.label, x, H - pad.b + 8);
+                    });
+
+                    // Draw line (skip nulls — connect only consecutive defined points)
+                    function drawLine(pts, color){
+                        cx.strokeStyle = color; cx.lineWidth = 2; cx.lineJoin = 'round'; cx.lineCap = 'round';
+                        var moved = false;
+                        pts.forEach(function(v, i){
+                            if (v == null) { moved = false; return; }
+                            var x = pad.l + (i / (pts.length - 1)) * plotW;
+                            var y = pad.t + (1 - v) * plotH;
+                            if (!moved) { cx.beginPath(); cx.moveTo(x, y); moved = true; }
+                            else cx.lineTo(x, y);
+                        });
+                        if (moved) cx.stroke();
+                        // dots on measured points
+                        pts.forEach(function(v, i){
+                            if (v == null) return;
+                            var x = pad.l + (i / (pts.length - 1)) * plotW;
+                            var y = pad.t + (1 - v) * plotH;
+                            cx.fillStyle = color; cx.beginPath(); cx.arc(x, y, 3.5, 0, Math.PI * 2); cx.fill();
+                        });
+                    }
+                    if (hasA) drawLine(ptsA, '#60A5FA');
+                    if (hasB) drawLine(ptsB, '#A78BFA');
+                }
             }
 
             // RA pair: risk + growth cards
@@ -11778,14 +11845,14 @@ function displayResult() {
                 var growthBody = growthSummary ? _v39Safe(growthSummary.slice(0, 220)) : '둘만의 해석 규칙이 누적되면 오독 빈도가 급감합니다. 차이는 문제가 아니라 자원이 됩니다.';
                 var raHTML = '' +
                     '<div class="v39-ra risk">' +
-                        '<div class="ra-head"><b>RISK</b> <span class="at">3개월 · 폭발 지점</span></div>' +
+                        '<div class="ra-head"><b>RISK</b> <span class="at">주의 구간</span></div>' +
                         '<div class="ra-title">' + _v39Safe(riskTitle) + '</div>' +
                         '<div class="ra-body">' + riskBody + '</div>' +
                         '<div class="ra-anti">◇ ANTIDOTE — <b>이름 붙이기</b></div>' +
                         '<div class="ra-action">한 문장 라벨링. "나 지금 ___ 상태, ___ 아님" — 30자면 루프가 끊깁니다.</div>' +
                     '</div>' +
                     '<div class="v39-ra growth">' +
-                        '<div class="ra-head"><b>GROWTH</b> <span class="at">1년 · 안정 수렴</span></div>' +
+                        '<div class="ra-head"><b>GROWTH</b> <span class="at">성장 방향</span></div>' +
                         '<div class="ra-title">' + _v39Safe(growthTitle) + '</div>' +
                         '<div class="ra-body">' + growthBody + '</div>' +
                         '<div class="ra-anti">◇ ACTION — <b>일주일에 한 번</b></div>' +
