@@ -11074,6 +11074,12 @@ function displayResult() {
             // Collapse upload panel + show analyzing UI
             var uploadWrap = document.getElementById('matchUploadWrap');
             if (uploadWrap) uploadWrap.classList.add('collapsed');
+            // v3.9.3: 분석 시작 시점에 커플 결과 UI (sideNav + sticky) 강제 숨김 —
+            //   분석 대기화면에 결과용 UI 가 새어나오지 않도록
+            var _preHideSideNav = document.getElementById('matchSideNav');
+            if (_preHideSideNav) _preHideSideNav.classList.remove('visible');
+            var _preHideSticky = document.getElementById('v39Sticky');
+            if (_preHideSticky) _preHideSticky.classList.remove('visible');
             matchAnalyzingEngine.start(idA, idB, currentProfile.axes, matchProfile.axes);
 
             let matchId = computeMatchIdentity(currentProfile.axes, matchProfile.axes, idA, idB);
@@ -11273,10 +11279,12 @@ function displayResult() {
                 });
             } catch (e) { console.error('[v39 render]', e); }
 
-            // Show sticky footer
+            // v3.9.3: 결과 렌더 완료 후에만 sideNav + sticky 표시
             try {
                 var _sticky = document.getElementById('v39Sticky');
                 if (_sticky) _sticky.classList.add('visible');
+                var _sideNav = document.getElementById('matchSideNav');
+                if (_sideNav) _sideNav.classList.add('visible');
             } catch(e){}
 
             showScreen('match');
@@ -11937,13 +11945,14 @@ function displayResult() {
                 scrollProgress.style.display = name === 'result' ? 'block' : 'none';
             }
 
-            // Toggle side-nav visibility for match screen
+            // v3.9.3: match 가 아닌 화면으로 **나갈 때만** sideNav + sticky 숨김.
+            //   match 로 진입 시엔 기존 상태 유지 — displayMatch 가 렌더 완료 후
+            //   .visible 을 명시적으로 붙임. (분석 대기화면에 새 5섹션 nav /
+            //   파트너 보내기 버튼이 새어나오던 버그 방지.)
             const matchSideNav = document.getElementById('matchSideNav');
-            if (matchSideNav) matchSideNav.classList.toggle('visible', name === 'match');
-
-            // v3.9.0: sticky footer — match 스크린 외 화면에서 숨김
+            if (matchSideNav && name !== 'match') matchSideNav.classList.remove('visible');
             const v39Sticky = document.getElementById('v39Sticky');
-            if (v39Sticky) v39Sticky.classList.toggle('visible', name === 'match');
+            if (v39Sticky && name !== 'match') v39Sticky.classList.remove('visible');
             const matchProgressBar = document.getElementById('matchScrollProgress');
             if (matchProgressBar) matchProgressBar.style.display = (name === 'match') ? 'block' : 'none';
         }
