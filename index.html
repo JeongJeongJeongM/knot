@@ -4579,7 +4579,7 @@
                 <div class="gauges-panel">
                     <div class="gauge-item" id="gaugeA1">
                         <div class="gauge-label">
-                            <span class="gauge-name">관심도 (A1)</span>
+                            <span class="gauge-name">정서 강도 (A1)</span>
                             <span class="gauge-value" id="gaugeA1Val">+0.00</span>
                         </div>
                         <div class="gauge-track"><div class="gauge-fill" id="gaugeA1Fill" style="background:var(--a1)"></div></div>
@@ -4587,7 +4587,7 @@
                     </div>
                     <div class="gauge-item" id="gaugeA2">
                         <div class="gauge-label">
-                            <span class="gauge-name">공감력 (A2)</span>
+                            <span class="gauge-name">정서 안정성 (A2)</span>
                             <span class="gauge-value" id="gaugeA2Val">+0.00</span>
                         </div>
                         <div class="gauge-track"><div class="gauge-fill" id="gaugeA2Fill" style="background:var(--a2)"></div></div>
@@ -4595,7 +4595,7 @@
                     </div>
                     <div class="gauge-item" id="gaugeA3">
                         <div class="gauge-label">
-                            <span class="gauge-name">주장성 (A3)</span>
+                            <span class="gauge-name">감정 표현 (A3)</span>
                             <span class="gauge-value" id="gaugeA3Val">+0.00</span>
                         </div>
                         <div class="gauge-track"><div class="gauge-fill" id="gaugeA3Fill" style="background:var(--a3)"></div></div>
@@ -4603,7 +4603,7 @@
                     </div>
                     <div class="gauge-item" id="gaugeA4">
                         <div class="gauge-label">
-                            <span class="gauge-name">감정 개방 (A4)</span>
+                            <span class="gauge-name">자기 확신 (A4)</span>
                             <span class="gauge-value" id="gaugeA4Val">+0.00</span>
                         </div>
                         <div class="gauge-track"><div class="gauge-fill" id="gaugeA4Fill" style="background:var(--a4)"></div></div>
@@ -4611,7 +4611,7 @@
                     </div>
                     <div class="gauge-item" id="gaugeA5">
                         <div class="gauge-label">
-                            <span class="gauge-name">지지력 (A5)</span>
+                            <span class="gauge-name">사회적 주도성 (A5)</span>
                             <span class="gauge-value" id="gaugeA5Val">+0.00</span>
                         </div>
                         <div class="gauge-track"><div class="gauge-fill" id="gaugeA5Fill" style="background:var(--a5)"></div></div>
@@ -4619,7 +4619,7 @@
                     </div>
                     <div class="gauge-item" id="gaugeA6">
                         <div class="gauge-label">
-                            <span class="gauge-name">일관성 (A6)</span>
+                            <span class="gauge-name">권위 수용 (A6)</span>
                             <span class="gauge-value" id="gaugeA6Val">+0.00</span>
                         </div>
                         <div class="gauge-track"><div class="gauge-fill" id="gaugeA6Fill" style="background:var(--a6)"></div></div>
@@ -5382,7 +5382,8 @@
         };
 
         const AXIS_LABELS = {
-            A1: '관심도', A2: '공감력', A3: '주장성', A4: '감정 개방', A5: '지지력', A6: '일관성',
+            // v3.8.18: 축 라벨 2벌 공존 문제 → AXIS_DISPLAY_NAMES (7784) 와 통일
+            A1: '정서 강도', A2: '정서 안정성', A3: '감정 표현', A4: '자기 확신', A5: '사회적 주도성', A6: '권위 수용',
             A7: '대화 주도', A8: '갈등 대응', A9: '감정 조절', A10: '거리 조절', A11: '상호성',
             A12: '친밀 수용도', A13: '피드백 반응', A14: '변화 수용성', A15: '관계 투자', A16: '인지 방식', A17: '유머 활용'
         };
@@ -5685,7 +5686,10 @@
             ctx.fillText('YOU', userX, pad.top - 8);
 
             // 퍼센트 라벨 (도트 옆)
-            const pctLabel = Math.max(0.1, distinctiveness.topPercent).toFixed(1) + '%';
+            // v3.8.18: Math.max(0.1,…) 은 작은 실제값을 0.1% 로 내림 은닉 → 그래서 유저 "상위 0.1%" 대거 발생.
+            // 0.01 미만이면 "<0.01%", 그 외 toFixed(2).
+            const tp = distinctiveness.topPercent;
+            const pctLabel = tp == null || !Number.isFinite(tp) ? '—' : (tp < 0.01 ? '<0.01%' : tp.toFixed(2) + '%');
             const labelX = userX + (userX > w * 0.7 ? -50 : 12);
             const labelAlign = userX > w * 0.7 ? 'right' : 'left';
             ctx.fillStyle = 'rgba(245,166,35,0.9)';
@@ -7293,20 +7297,30 @@
 
                 if (!response.ok) {
                     const errBody = await response.text().catch(() => '');
-                    // WEEKLY_LIMIT 전용 에러 처리
-                    if (response.status === 429) {
-                        try {
-                            const errJson = JSON.parse(errBody);
-                            if (errJson.code === 'WEEKLY_LIMIT') {
-                                const err = new Error(errJson.error || '주간 분석 횟수를 초과했습니다.');
-                                err.code = 'WEEKLY_LIMIT';
-                                throw err;
-                            }
-                        } catch (parseErr) {
-                            if (parseErr.code === 'WEEKLY_LIMIT') throw parseErr;
-                        }
+                    // v3.8.18: 서버 에러 JSON 을 raw 로 노출하지 않고 errJson.error 를 파싱해서 한글 메시지로
+                    let errMsg = null, errCode = null;
+                    try {
+                        const errJson = JSON.parse(errBody);
+                        errMsg = errJson.error || errJson.message || null;
+                        errCode = errJson.code || null;
+                    } catch {}
+                    if (response.status === 429 && errCode === 'WEEKLY_LIMIT') {
+                        const err = new Error(errMsg || '주간 분석 횟수를 초과했습니다.');
+                        err.code = 'WEEKLY_LIMIT';
+                        throw err;
                     }
-                    throw new Error(`Worker ${response.status}: ${errBody.slice(0, 200)}`);
+                    // 상태별 한글 메시지 (errMsg 우선)
+                    const byStatus = {
+                        400: '요청 형식이 잘못되었습니다',
+                        401: '로그인이 필요합니다',
+                        403: '접근 권한이 없습니다',
+                        413: '업로드 크기 제한을 초과했습니다 (10MB)',
+                        429: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요',
+                        500: '서버 내부 오류 — 잠시 후 다시 시도해주세요',
+                        503: '서버가 일시적으로 응답할 수 없습니다',
+                    };
+                    const base = byStatus[response.status] || `서버 오류 (${response.status})`;
+                    throw new Error(errMsg ? `${base}: ${errMsg}` : base);
                 }
 
                 const contentType = response.headers.get('Content-Type') || '';
@@ -7508,6 +7522,13 @@
                 return;
             }
 
+            // v3.8.18: 더블클릭/이중 실행 가드 — 기존엔 파일 선택 두 번 → race 로 두 분석 병행 + late response 로 덮어쓰기
+            if (window.__analyzing) {
+                console.warn('[KNOT] Analyze already in progress — ignoring duplicate call');
+                return;
+            }
+            window.__analyzing = true;
+
             // v3.8.1: 이전 분석 상태 완전 리셋 — 새 분석이 실패해도 이전 도훈·타인 결과
             //   가 화면에 남는 크로스-컨테미네이션 방지.
             currentProfile = null;
@@ -7570,8 +7591,8 @@
                 updateProgress('6개 행동축의 좌표를 계산하고 있습니다');
                 let axes = null; // 서버 응답이 들어올 때까지 null
                 const axOrder = [
-                    { id: 'A1', name: '관심도' }, { id: 'A2', name: '공감력' }, { id: 'A3', name: '주장성' },
-                    { id: 'A4', name: '감정 개방' }, { id: 'A5', name: '지지력' }, { id: 'A6', name: '일관성' }
+                    { id: 'A1', name: '정서 강도' }, { id: 'A2', name: '정서 안정성' }, { id: 'A3', name: '감정 표현' },
+                    { id: 'A4', name: '자기 확신' }, { id: 'A5', name: '사회적 주도성' }, { id: 'A6', name: '권위 수용' }
                 ];
                 for (const a of axOrder) {
                     T.activateGauge(a.id);
@@ -7652,12 +7673,12 @@
                             // 서버 실제 값으로 게이지 보정 (로컬→서버 전환)
                             const realAx = axes.intensity;
                             const axisAnim = [
-                                { id: 'A1', name: '관심도', val: realAx.A1 },
-                                { id: 'A2', name: '공감력', val: realAx.A2 },
-                                { id: 'A3', name: '주장성', val: realAx.A3 },
-                                { id: 'A4', name: '감정 개방', val: realAx.A4 },
-                                { id: 'A5', name: '지지력', val: realAx.A5 },
-                                { id: 'A6', name: '일관성', val: realAx.A6 }
+                                { id: 'A1', name: '정서 강도', val: realAx.A1 },
+                                { id: 'A2', name: '정서 안정성', val: realAx.A2 },
+                                { id: 'A3', name: '감정 표현', val: realAx.A3 },
+                                { id: 'A4', name: '자기 확신', val: realAx.A4 },
+                                { id: 'A5', name: '사회적 주도성', val: realAx.A5 },
+                                { id: 'A6', name: '권위 수용', val: realAx.A6 }
                             ];
                             for (const a of axisAnim) {
                                 T.fillGauge(a.id, a.val);
@@ -7716,6 +7737,8 @@
                     alert('분석 실패: ' + error.message);
                 }
                 goToLanding();
+            } finally {
+                window.__analyzing = false; // v3.8.18: 가드 해제
             }
         }
 
