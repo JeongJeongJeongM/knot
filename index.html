@@ -5238,15 +5238,56 @@
                     </div>
                 </section>
 
-                <!-- Legacy placeholders (hidden; for backward-compat with legacy render functions & share-url logic) -->
-                <div style="display:none;">
+                <!-- Legacy placeholders (hidden; v3.9.4 — 레거시 render fn 이 getElementById 로
+                     touch 하는 모든 ID 포함. 누락 시 null.innerHTML 에러 → loadProfileFromCode
+                     및 여타 매칭 flow 가 alert 로 터짐. 전부 display:none 으로 숨김 -->
+                <div style="display:none;" aria-hidden="true">
+                    <!-- hero / identity -->
                     <div id="matchRelName"></div><div id="matchRelTagline"></div>
                     <div id="matchEmojiA"></div><div id="matchNameA"></div><div id="matchCodeA"></div><div id="matchTaglineA"></div>
                     <div id="matchEmojiB"></div><div id="matchNameB"></div><div id="matchCodeB"></div><div id="matchTaglineB"></div>
                     <div id="matchScoreNum"></div><div id="matchCompatScore"></div><div id="matchEmojiPair"></div>
-                    <div id="matchTensionGrowth"></div>
+                    <div id="matchTensionGrowth"></div><div id="matchCrossSim"></div>
                     <svg><circle id="matchScoreArc"/></svg>
+                    <!-- dashboard/grids -->
                     <div id="matchDashboard"></div><div id="matchTypeComparison"></div>
+                    <div id="matchAxisRows"></div><div id="matchStructTags"></div>
+                    <div id="matchSubScore1"></div><div id="matchSubScore2"></div><div id="matchSubScore3"></div>
+                    <div id="matchScoreDesc1"></div><div id="matchScoreDesc2"></div><div id="matchScoreDesc3"></div>
+                    <!-- rarity -->
+                    <div id="matchRarityAName"></div><div id="matchRarityAValue"></div>
+                    <div id="matchRarityBName"></div><div id="matchRarityBValue"></div>
+                    <div id="matchRarityComboLabel"></div><div id="matchRarityComboValue"></div>
+                    <!-- dynamics insight cards -->
+                    <div id="matchChemText"></div><div id="matchFricText"></div>
+                    <div id="matchGrowthText"></div><div id="matchRiskText"></div>
+                    <div id="matchTimeline"></div><div id="matchTimelineRows"></div>
+                    <div id="matchTriggerLoopsBlock"></div><div id="matchTriggerLoopsList"></div>
+                    <div id="matchDefenseClashBlock"></div><div id="matchDefenseClashContent"></div>
+                    <div id="matchTopicOverlapBlock"></div><div id="matchTopicOverlapContent"></div>
+                    <!-- prism -->
+                    <div id="matchPrismColA"></div><div id="matchPrismColB"></div>
+                    <div id="matchPrismAsymmetry"></div>
+                    <!-- trajectory -->
+                    <canvas id="matchDualTrajectoryCanvas"></canvas>
+                    <div id="matchTrajLegend"></div><div id="matchSyncPatterns"></div>
+                    <div id="matchTrajColA"></div><div id="matchTrajColB"></div>
+                    <div id="matchTrajIndividualBlock"></div>
+                    <div id="matchScenarioDriftBlock"></div><div id="matchScenarioPanel"></div><div id="matchScenarioTabs"></div>
+                    <!-- outlook -->
+                    <div id="matchOutlook"></div><div id="matchOutlookRisk"></div><div id="matchOutlookGrowth"></div><div id="matchOutlookShadow"></div>
+                    <!-- anchor cross -->
+                    <div id="matchAnchorAttachDesc"></div><div id="matchAnchorAttachPair"></div>
+                    <div id="matchAnchorConflictDesc"></div><div id="matchAnchorConflictPair"></div>
+                    <div id="matchAnchorRecoveryBar"></div><div id="matchAnchorRecoveryDesc"></div>
+                    <div id="matchAnchorIndA"></div><div id="matchAnchorIndB"></div>
+                    <div id="matchAnchorIndividualBlock"></div>
+                    <!-- analysis / lens -->
+                    <div id="matchStrengths"></div><div id="matchRisks"></div>
+                    <div id="matchGrowth"></div>
+                    <div id="matchLensNav"></div><div id="matchLensPanelContent"></div>
+                    <div id="matchEssaySection"></div><div id="matchFallbackAnalysis"></div>
+                    <!-- share -->
                     <input id="matchShareUrlInput"/>
                     <div id="matchShareUrlResult"></div>
                     <button id="matchShareBtn"></button>
