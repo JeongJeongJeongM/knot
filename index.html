@@ -11125,33 +11125,34 @@ function displayResult() {
 
             let matchId = computeMatchIdentity(currentProfile.axes, matchProfile.axes, idA, idB);
 
-            // ═══ STEP 01: IDENTITY ═══
-            document.getElementById('matchRelName').textContent = matchId.name || '호환성 분석';
-            document.getElementById('matchRelTagline').textContent = matchId.tagline || '';
+            // v3.9.5: 레거시 DOM 쓰기 safety wrapper — ID 하나 빠져도 전체 flow 안 죽이게
+            function _safeSetText(id, val){ try{ var el=document.getElementById(id); if(el) el.textContent=val; }catch(e){console.warn('[displayMatch setText]',id,e.message);} }
+            function _safeSetHTML(id, val){ try{ var el=document.getElementById(id); if(el) el.innerHTML=val; }catch(e){console.warn('[displayMatch setHTML]',id,e.message);} }
+            function _safeSetAttr(id, k, v){ try{ var el=document.getElementById(id); if(el) el.setAttribute(k,v); }catch(e){console.warn('[displayMatch setAttr]',id,e.message);} }
+            function _safeStyle(id, prop, val){ try{ var el=document.getElementById(id); if(el) el.style[prop]=val; }catch(e){console.warn('[displayMatch style]',id,e.message);} }
+
+            // ═══ STEP 01: IDENTITY ═══ (레거시 — v39-verdict 섹션과 병행 유지)
+            _safeSetText('matchRelName', matchId.name || '호환성 분석');
+            _safeSetText('matchRelTagline', matchId.tagline || '');
 
             // 듀얼 히어로
-            document.getElementById('matchEmojiA').textContent = idA.emoji || '🔮';
-            document.getElementById('matchNameA').textContent = idA.name || '-';
-            document.getElementById('matchCodeA').textContent = idA.code || '-';
-            document.getElementById('matchTaglineA').textContent = idA.tagline || '';
-            document.getElementById('matchEmojiB').textContent = idB.emoji || '🔮';
-            document.getElementById('matchNameB').textContent = idB.name || '-';
-            document.getElementById('matchCodeB').textContent = idB.code || '-';
-            document.getElementById('matchTaglineB').textContent = idB.tagline || '';
-            // Legacy compat
-            document.getElementById('matchEmojiPair').textContent = (idA.emoji || '🔮') + ' × ' + (idB.emoji || '🔮');
+            _safeSetText('matchEmojiA', idA.emoji || '🔮');
+            _safeSetText('matchNameA', idA.name || '-');
+            _safeSetText('matchCodeA', idA.code || '-');
+            _safeSetText('matchTaglineA', idA.tagline || '');
+            _safeSetText('matchEmojiB', idB.emoji || '🔮');
+            _safeSetText('matchNameB', idB.name || '-');
+            _safeSetText('matchCodeB', idB.code || '-');
+            _safeSetText('matchTaglineB', idB.tagline || '');
+            _safeSetText('matchEmojiPair', (idA.emoji || '🔮') + ' × ' + (idB.emoji || '🔮'));
 
             // ═══ STEP 02: RADAR + 축별 비교 ═══
             const dimsA = computeMetaDimensions(currentProfile.axes);
             const dimsB = computeMetaDimensions(matchProfile.axes);
-            drawDualMetaRadar('matchRadarCanvas', dimsA, dimsB, 400);
-            renderMatchRadarLegend('matchRadarLegend', dimsA, dimsB, idA.name || '나', idB.name || '상대');
-
-            // 축별 비교 스펙트럼
-            renderMatchAxisCompare(currentProfile.axes, matchProfile.axes);
-
-            // 관계 구조 태그
-            renderMatchStructTags(currentProfile.axes, matchProfile.axes);
+            try { drawDualMetaRadar('matchRadarCanvas', dimsA, dimsB, 400); } catch(e){ console.warn('[displayMatch radar]', e); }
+            try { renderMatchRadarLegend('matchRadarLegend', dimsA, dimsB, idA.name || '나', idB.name || '상대'); } catch(e){ console.warn('[displayMatch radarLegend]', e); }
+            try { renderMatchAxisCompare(currentProfile.axes, matchProfile.axes); } catch(e){ console.warn('[displayMatch axisCompare]', e); }
+            try { renderMatchStructTags(currentProfile.axes, matchProfile.axes); } catch(e){ console.warn('[displayMatch structTags]', e); }
 
             // LLM or fallback analysis
             let analysis;
@@ -11170,40 +11171,35 @@ function displayResult() {
                             name: llmMatch.serverMatchIdentity.name || matchId.name,
                             tagline: llmMatch.serverMatchIdentity.tagline || matchId.tagline,
                         };
-                        document.getElementById('matchRelName').textContent = matchId.name || '-';
-                        document.getElementById('matchRelTagline').textContent = matchId.tagline || '';
+                        _safeSetText('matchRelName', matchId.name || '-');
+                        _safeSetText('matchRelTagline', matchId.tagline || '');
                     }
 
                     // Score ring
                     var compat = matchId.compatibility ?? 0;
-                    animateScoreNumber('matchScoreNum', compat, 1200);
+                    try { animateScoreNumber('matchScoreNum', compat, 1200); } catch(e){}
                     var circumference = 2 * Math.PI * 44;
-                    document.getElementById('matchScoreArc').setAttribute('stroke-dashoffset', String(circumference * (1 - compat / 100)));
-                    document.getElementById('matchCompatScore').innerHTML = '호환도 ' + compat + '/100';
+                    _safeSetAttr('matchScoreArc', 'stroke-dashoffset', String(circumference * (1 - compat / 100)));
+                    _safeSetHTML('matchCompatScore', '호환도 ' + compat + '/100');
 
                     // Tension & Growth badges
                     var tgHTML = '';
                     if (matchId.tension) tgHTML += '<div style="padding:5px 14px;background:rgba(236,72,153,0.1);border:1px solid rgba(236,72,153,0.3);border-radius:12px;font-size:11px;color:#EC4899;font-family:\'JetBrains Mono\',monospace;">긴장: ' + sanitizeHTML(matchId.tension) + '</div>';
                     if (matchId.growth) tgHTML += '<div style="padding:5px 14px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.3);border-radius:12px;font-size:11px;color:#4ADE80;font-family:\'JetBrains Mono\',monospace;">성장: ' + sanitizeHTML(matchId.growth) + '</div>';
-                    document.getElementById('matchTensionGrowth').innerHTML = tgHTML;
+                    _safeSetHTML('matchTensionGrowth', tgHTML);
 
-                    // Cross-sim → DYNAMICS (목업 구조: 인사이트 카드 + 타임라인)
-                    renderMatchInsightCards(llmMatch.crossSimulation, currentProfile.axes, matchProfile.axes);
-                    renderMatchTimeline(llmMatch.crossSimulation, currentProfile.axes, matchProfile.axes);
-                    // 레거시 캐시용
-                    const identityHTML = buildCrossSimInsight(llmMatch.crossSimulation, matchId, llmMatch.crossSituational);
-                    document.getElementById('matchCrossSim').innerHTML = identityHTML;
+                    try { renderMatchInsightCards(llmMatch.crossSimulation, currentProfile.axes, matchProfile.axes); } catch(e){ console.warn('[insightCards]', e); }
+                    try { renderMatchTimeline(llmMatch.crossSimulation, currentProfile.axes, matchProfile.axes); } catch(e){ console.warn('[timeline]', e); }
+                    try { _safeSetHTML('matchCrossSim', buildCrossSimInsight(llmMatch.crossSimulation, matchId, llmMatch.crossSituational)); } catch(e){ console.warn('[crossSim]', e); }
 
-                    // 점수 그리드 (sub-scores)
                     if (llmMatch.serverCompatibility) {
-                        renderMatchScoreGrid(llmMatch.serverCompatibility);
+                        try { renderMatchScoreGrid(llmMatch.serverCompatibility); } catch(e){ console.warn('[scoreGrid]', e); }
                     }
 
-                    // Essay sections → lens-split 포맷
-                    renderMatchLensSplit(llmMatch.sections);
-                    document.getElementById('matchEssaySection').style.display = '';
-                    document.getElementById('matchFallbackAnalysis').style.display = 'none';
-                    document.getElementById('matchTypeComparison').innerHTML = '';
+                    try { renderMatchLensSplit(llmMatch.sections); } catch(e){ console.warn('[lensSplit]', e); }
+                    _safeStyle('matchEssaySection', 'display', '');
+                    _safeStyle('matchFallbackAnalysis', 'display', 'none');
+                    _safeSetHTML('matchTypeComparison', '');
 
                     analysis = null;
                 } else if (llmMatch && llmMatch.strengths) {
@@ -11215,34 +11211,35 @@ function displayResult() {
                 analysis = generateEnhancedAnalysis(currentProfile, matchProfile, result);
             }
 
-            // Fallback analysis
+            // Fallback analysis (LLM 실패 시 로컬 분석 결과 렌더)
             if (analysis) {
                 var compat = matchId.compatibility ?? 0;
-                animateScoreNumber('matchScoreNum', compat, 1200);
+                try { animateScoreNumber('matchScoreNum', compat, 1200); } catch(e){}
                 var circumference = 2 * Math.PI * 44;
-                document.getElementById('matchScoreArc').setAttribute('stroke-dashoffset', String(circumference * (1 - compat / 100)));
-                document.getElementById('matchCompatScore').innerHTML = '호환도 ' + compat + '/100';
+                _safeSetAttr('matchScoreArc', 'stroke-dashoffset', String(circumference * (1 - compat / 100)));
+                _safeSetHTML('matchCompatScore', '호환도 ' + compat + '/100');
 
                 var tgHTML = '';
                 if (matchId.tension) tgHTML += '<div style="padding:5px 14px;background:rgba(236,72,153,0.1);border:1px solid rgba(236,72,153,0.3);border-radius:12px;font-size:11px;color:#EC4899;font-family:\'JetBrains Mono\',monospace;">긴장: ' + sanitizeHTML(matchId.tension) + '</div>';
                 if (matchId.growth) tgHTML += '<div style="padding:5px 14px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.3);border-radius:12px;font-size:11px;color:#4ADE80;font-family:\'JetBrains Mono\',monospace;">성장: ' + sanitizeHTML(matchId.growth) + '</div>';
-                document.getElementById('matchTensionGrowth').innerHTML = tgHTML;
+                _safeSetHTML('matchTensionGrowth', tgHTML);
 
-                const strengthsHTML = analysis.strengths.map(function(s) { return '<li style="padding:4px 0;padding-left:16px;position:relative;"><span style="position:absolute;left:0;color:var(--ac);">→</span>' + s + '</li>'; }).join('');
-                document.getElementById('matchStrengths').innerHTML = strengthsHTML;
-                const risksHTML = analysis.risks.map(function(r) { return '<li style="padding:4px 0;padding-left:16px;position:relative;"><span style="position:absolute;left:0;color:#F87171;">→</span>' + r + '</li>'; }).join('');
-                document.getElementById('matchRisks').innerHTML = risksHTML;
-                document.getElementById('matchGrowth').innerHTML = analysis.growth;
-                document.getElementById('matchOutlook').innerHTML = analysis.outlook;
+                try {
+                    const strengthsHTML = (analysis.strengths || []).map(function(s) { return '<li style="padding:4px 0;padding-left:16px;position:relative;"><span style="position:absolute;left:0;color:var(--ac);">→</span>' + s + '</li>'; }).join('');
+                    _safeSetHTML('matchStrengths', strengthsHTML);
+                    const risksHTML = (analysis.risks || []).map(function(r) { return '<li style="padding:4px 0;padding-left:16px;position:relative;"><span style="position:absolute;left:0;color:#F87171;">→</span>' + r + '</li>'; }).join('');
+                    _safeSetHTML('matchRisks', risksHTML);
+                    _safeSetHTML('matchGrowth', analysis.growth || '');
+                    _safeSetHTML('matchOutlook', analysis.outlook || '');
+                } catch(e){ console.warn('[fallback analysis]', e); }
 
-                document.getElementById('matchEssaySection').style.display = 'none';
-                document.getElementById('matchFallbackAnalysis').style.display = '';
-                document.getElementById('matchCrossSim').innerHTML = '';
-                document.getElementById('matchTypeComparison').innerHTML = '';
+                _safeStyle('matchEssaySection', 'display', 'none');
+                _safeStyle('matchFallbackAnalysis', 'display', '');
+                _safeSetHTML('matchCrossSim', '');
+                _safeSetHTML('matchTypeComparison', '');
 
-                // Fallback: 인사이트 카드 + 타임라인을 축 데이터에서 생성
-                renderMatchInsightCards(null, currentProfile.axes, matchProfile.axes);
-                renderMatchTimeline(null, currentProfile.axes, matchProfile.axes);
+                try { renderMatchInsightCards(null, currentProfile.axes, matchProfile.axes); } catch(e){ console.warn('[fallback insightCards]', e); }
+                try { renderMatchTimeline(null, currentProfile.axes, matchProfile.axes); } catch(e){ console.warn('[fallback timeline]', e); }
             }
 
             // v3.6.46 Phase 2+3: 신규 커플 섹션 렌더 (RARITY / TRAJECTORY / OUTLOOK + LLM narrative)
