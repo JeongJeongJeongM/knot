@@ -4700,6 +4700,26 @@
             .v39-risk-matrix .cell{font-size:12px}
         }
 
+        /* v4 v3.9.38 — DEEP DIVE 해체: 각 섹션 하단 "해석 블록" 컴포넌트 */
+        .v39-interp-container{max-width:720px;margin:0 auto}
+        .v39-interp-block{margin-top:var(--sp-5);padding-top:var(--sp-4);border-top:1px dashed var(--sf-3);position:relative}
+        .v39-interp-block + .v39-interp-block{margin-top:var(--sp-4);padding-top:var(--sp-4)}
+        .v39-interp-block::before{content:'';position:absolute;top:-1px;left:0;width:60px;height:2px;background:var(--ac);border-radius:1px}
+        .v39-interp-head{display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3)}
+        .v39-interp-icon{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--af-2);border-radius:7px;font-size:15px;flex-shrink:0}
+        .v39-interp-labels{flex:1;min-width:0}
+        .v39-interp-label{font-size:10px;color:var(--ac);font-family:'JetBrains Mono',monospace;letter-spacing:2px;font-weight:700;margin-bottom:2px}
+        .v39-interp-lens{font-size:13px;font-weight:700;color:#fff;letter-spacing:0.3px}
+        .v39-interp-lens .lens-code{color:rgba(255,255,255,0.35);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:400;margin-left:6px;letter-spacing:1px}
+        .v39-interp-summary{padding:var(--sp-3) var(--sp-4);background:var(--af-1);border-left:3px solid var(--ac);border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:13.5px;color:rgba(255,255,255,0.85);line-height:var(--lh-loose);margin-bottom:var(--sp-3)}
+        .v39-interp-subs{display:flex;flex-direction:column;gap:var(--sp-2)}
+        .v39-interp-sub{padding:var(--sp-3) var(--sp-4);background:var(--sf-1);border:1px solid var(--sf-2);border-radius:var(--r-sm)}
+        .v39-interp-sub-title{font-size:12px;font-weight:700;color:#fff;margin-bottom:var(--sp-1);letter-spacing:0.2px}
+        .v39-interp-sub-body{font-size:12.5px;color:rgba(255,255,255,0.72);line-height:1.85}
+        .v39-interp-sub-body p{margin-bottom:var(--sp-1)}
+        .v39-interp-sub-body p:last-child{margin-bottom:0}
+        .v39-interp-sub-body strong{color:#fff;font-weight:700;background:rgba(245,166,35,0.08);padding:1px 4px;border-radius:3px}
+
         /* v4 M12 — 상황별 교차 (탭 + 양쪽 정체성 + 5축 비교) */
         .v39-sit-wrap{max-width:720px;margin:0 auto}
         .v39-sit-tabs{display:flex;gap:6px;margin-bottom:var(--sp-4);flex-wrap:wrap;justify-content:center}
@@ -5500,6 +5520,7 @@
                         </div>
                     </div>
                     <div class="v39-chips" id="v39Chips"></div>
+                    <div class="v39-interp-container" id="v39InterpVerdict"></div>
                     <!-- v4 M1: essay + growth/risk zones (2026-04-23) -->
                     <div class="v39-mi-essay" id="v39MiEssay" style="display:none"></div>
                     <div class="v39-mi-zones" id="v39MiZones" style="display:none">
@@ -5588,6 +5609,7 @@
                         <div class="v39-conv-grid" id="v39ConvGrid"></div>
                         <div class="v39-conv-judgment" id="v39ConvJudgment"></div>
                     </div>
+                    <div class="v39-interp-container" id="v39InterpConvergence"></div>
                     <div class="v39-cross-empty" id="v39ConvEmpty">10단계 시뮬레이션 데이터가 부족합니다.</div>
                   </div>
                 </section>
@@ -5642,6 +5664,7 @@
                         <div class="v39-def-severity" id="v39DefSeverity" style="display:none"></div>
                         <div class="v39-def-desc" id="v39DefDesc"></div>
                     </div>
+                    <div class="v39-interp-container" id="v39InterpDefense"></div>
                   </div>
                 </section>
 
@@ -5660,6 +5683,7 @@
                         <div class="v39-att-desc" id="v39AttachDesc"></div>
                     </div>
                     <div class="v39-cross-empty" id="v39AttachCrossEmpty" style="display:none">애착 교차 데이터가 부족합니다.</div>
+                    <div class="v39-interp-container" id="v39InterpAttach"></div>
                   </div>
                 </section>
 
@@ -5726,6 +5750,7 @@
                     </div>
                     <div class="v39-topic-desc" id="v39TopicDesc" style="display:none"></div>
                     <div class="v39-cross-empty" id="v39TopicEmpty" style="display:none">주제 겹침 데이터가 부족합니다.</div>
+                    <div class="v39-interp-container" id="v39InterpTopic"></div>
                   </div>
                 </section>
 
@@ -5740,6 +5765,7 @@
                         <div class="v39-risk-summary" id="v39RiskSummary"></div>
                     </div>
                     <div class="v39-cross-empty" id="v39SharedRisksEmpty" style="display:none">공유 위험 요소는 감지되지 않았습니다.</div>
+                    <div class="v39-interp-container" id="v39InterpSharedRisks"></div>
                   </div>
                 </section>
 
@@ -5761,7 +5787,7 @@
                         <canvas id="v39ArcCanvas" style="width:100%;height:220px;display:block;"></canvas>
                     </div>
                     <div class="v39-ra-pair" id="v39RaPair"></div>
-                    <div class="v39-bridge">더 깊이 읽고 싶으면 아래 렌즈를 선택하세요</div>
+                    <div class="v39-interp-container" id="v39InterpArc"></div>
                   </div>
                 </section>
 
@@ -5776,23 +5802,18 @@
                         <div class="v39-sit-panel" id="v39SitPanel"></div>
                     </div>
                     <div class="v39-cross-empty" id="v39SitEmpty">측정된 상황별 세션이 아직 없습니다.</div>
+                    <div class="v39-interp-container" id="v39InterpSituational"></div>
                   </div>
                 </section>
 
-                <!-- 05 · DEEP DIVE -->
-                <section class="result-section v39-section" id="matchSectionDeepDive">
-                  <div class="result-section-inner">
-                    <div class="v39-meta"><b>05</b> · DEEP DIVE · <span style="color:#4A4A60">OPTIONAL</span></div>
-                    <h2 class="v39-title">렌즈별 상세</h2>
-                    <p class="v39-subtitle">탭을 선택하면 해당 주제의 서술형 분석이 열립니다. 읽지 않아도 괜찮습니다.</p>
-                    <div class="v39-dd">
-                        <div class="v39-dd-nav" id="v39DdNav"></div>
-                        <div class="v39-dd-body" id="v39DdBody">
-                            <div class="v39-dd-empty">분석 항목을 선택하세요</div>
-                        </div>
-                    </div>
-                  </div>
-                </section>
+                <!-- v3.9.38: DEEP DIVE 섹션 해체 → 각 섹션 하단 해석 블록으로 흡수.
+                     렌즈 서술 (sections[].key = first/emotion/stimulus/defense/attract/world/risk/arc/possibility)
+                     은 renderV39AllInterpBlocks 가 v39Interp* container 에 그림.
+                     Legacy v39DdNav / v39DdBody / renderV39DeepDive 는 hidden placeholder 에 유지 (호출 안 됨). -->
+                <div style="display:none;" aria-hidden="true">
+                    <div id="v39DdNav"></div>
+                    <div id="v39DdBody"></div>
+                </div>
 
                 <!-- Legacy placeholders (hidden; v3.9.4 — 레거시 render fn 이 getElementById 로
                      touch 하는 모든 ID 포함. 누락 시 null.innerHTML 에러 → loadProfileFromCode
@@ -12011,7 +12032,89 @@ function displayResult() {
             try { renderV39SharedRisks(ctx); } catch(e){ console.error('[v39 srisks]', e); }
             try { renderV39Arc(ctx); } catch(e){ console.error('[v39 arc]', e); }
             try { renderV39Situational(ctx); } catch(e){ console.error('[v39 sit]', e); }
-            try { renderV39DeepDive(ctx); } catch(e){ console.error('[v39 dd]', e); }
+            // v3.9.38: DEEP DIVE 해체 — 9 렌즈를 각 데이터 섹션 하단에 해석 블록으로 흡수
+            try { renderV39AllInterpBlocks(ctx); } catch(e){ console.error('[v39 interp]', e); }
+        }
+
+        // ── v4 v3.9.38 · 렌즈 → 섹션 매핑 + 해석 블록 렌더 ──
+        var _V39_LENS_META = {
+            first:       { icon:'🤝', title:'첫 인상 해석' },
+            emotion:     { icon:'💓', title:'감정 교류 해석' },
+            stimulus:    { icon:'⚡', title:'자극-반응 역학 해석' },
+            defense:     { icon:'🛡️', title:'방어 패턴 심층 해석' },
+            attract:     { icon:'✨', title:'매력·끌림의 구조' },
+            world:       { icon:'🌐', title:'공유 세계 해석' },
+            risk:        { icon:'⚠️', title:'위험 심층 해석' },
+            arc:         { icon:'🌀', title:'정서 궤적 해석' },
+            possibility: { icon:'🌱', title:'관계 가능성 해석' }
+        };
+        // container id → LLM sections.key[] 매핑
+        var _V39_INTERP_MAPPING = {
+            v39InterpVerdict:      ['first', 'emotion'],
+            v39InterpConvergence:  ['stimulus'],
+            v39InterpDefense:      ['defense'],
+            v39InterpAttach:       ['attract'],
+            v39InterpTopic:        ['world'],
+            v39InterpSharedRisks:  ['risk'],
+            v39InterpArc:          ['arc'],
+            v39InterpSituational:  ['possibility']
+        };
+        function _v39FindSection(sections, key){
+            if (Array.isArray(sections)) {
+                return sections.find(function(s){ return s && (s.key === key || s.title === key); }) || null;
+            }
+            if (sections && typeof sections === 'object') return sections[key] || null;
+            return null;
+        }
+        function renderV39InterpBlock(containerId, lensKeys, sections){
+            var el = document.getElementById(containerId);
+            if (!el) return;
+            var matched = [];
+            lensKeys.forEach(function(k){
+                var sec = _v39FindSection(sections, k);
+                if (sec) matched.push({ lens:k, section:sec });
+            });
+            if (matched.length === 0) { el.innerHTML = ''; el.style.display = 'none'; return; }
+            var html = matched.map(function(m){
+                var meta = _V39_LENS_META[m.lens] || {};
+                var sec = m.section;
+                var subs = Array.isArray(sec.subsections) ? sec.subsections : [];
+                var subHtml = subs.map(function(sub){
+                    if (!sub) return '';
+                    var t = sub.title || sub.key || '';
+                    var c = sub.content || sub.text || sub.body || '';
+                    if (!c) return '';
+                    return '<div class="v39-interp-sub">' +
+                        (t ? '<div class="v39-interp-sub-title">' + _v39Safe(t) + '</div>' : '') +
+                        '<div class="v39-interp-sub-body"><p>' + _v39Safe(c).replace(/\n+/g, '</p><p>') + '</p></div>' +
+                        '</div>';
+                }).join('');
+                var summaryHtml = sec.summary
+                    ? '<div class="v39-interp-summary">' + _v39Safe(sec.summary).replace(/\n+/g, '<br>') + '</div>'
+                    : '';
+                return '<div class="v39-interp-block">' +
+                    '<div class="v39-interp-head">' +
+                        '<div class="v39-interp-icon">' + (meta.icon || '◆') + '</div>' +
+                        '<div class="v39-interp-labels">' +
+                            '<div class="v39-interp-label">LENS · INTERPRETATION</div>' +
+                            '<div class="v39-interp-lens">' + _v39Safe(meta.title || sec.title || m.lens) +
+                                '<span class="lens-code">' + _v39Safe(m.lens.toUpperCase()) + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    summaryHtml +
+                    (subHtml ? '<div class="v39-interp-subs">' + subHtml + '</div>' : '') +
+                '</div>';
+            }).join('');
+            el.innerHTML = html;
+            el.style.display = 'block';
+        }
+        function renderV39AllInterpBlocks(ctx){
+            var sections = ctx.sections || [];
+            Object.keys(_V39_INTERP_MAPPING).forEach(function(containerId){
+                try { renderV39InterpBlock(containerId, _V39_INTERP_MAPPING[containerId], sections); }
+                catch(e){ console.error('[v39 interp]', containerId, e); }
+            });
         }
 
         // ── v4 M12 · 상황별 교차 (2026-04-23) ──
