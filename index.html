@@ -42,6 +42,44 @@
             --a9: #E879F9; --a10: #2DD4BF; --a11: #F472B6; --a12: #94A3B8;
             --a13: #C084FC; --a14: #34D399; --a15: #F59E0B; --a16: #818CF8;
             --a17: #EC4899;
+
+            /* ═══ v4 (2026-04-23) 커플 매칭 리뉴얼 토큰 ═══
+             * 기존 변수는 그대로 유지 (호환성). 아래는 신규 추가.
+             * 목적: 하드코딩 제거, 일관성 확보, 향후 테마 전환 기반. */
+
+            /* 5축 시뮬레이션 색상 (E=정서, C=추진, T=인지, O=개방, X=회복) */
+            --axis-E: #EF4444; --axis-C: #22D3EE; --axis-T: #60A5FA;
+            --axis-O: #A78BFA; --axis-X: #34D399;
+
+            /* 커플 매칭 A/B 사이드 */
+            --side-a: #60A5FA; --side-b: #A78BFA;
+
+            /* 상황 색상 */
+            --sit-normal: #F5A623; --sit-stress: #EF4444; --sit-intimacy: #A78BFA;
+            --sit-conflict: #F97316; --sit-loss: #6B7280;
+
+            /* 상태 (risk/growth/neutral) */
+            --state-risk: #EF4444; --state-growth: #34D399; --state-neutral: #9CA3AF;
+
+            /* 반투명 흰색 배경 스케일 (카드·블록 배경) */
+            --sf-1: rgba(255,255,255,0.02); --sf-2: rgba(255,255,255,0.04);
+            --sf-3: rgba(255,255,255,0.06); --sf-4: rgba(255,255,255,0.08);
+
+            /* Accent (주황) fill 스케일 */
+            --af-1: rgba(245,166,35,0.06); --af-2: rgba(245,166,35,0.12);
+            --af-3: rgba(245,166,35,0.20); --af-4: rgba(245,166,35,0.32);
+
+            /* Typography 스케일 */
+            --fs-xl: 28px; --fs-lg: 20px; --fs-md: 16px;
+            --fs-sm: 14px; --fs-xs: 12px; --fs-xxs: 10px;
+            --lh-tight: 1.25; --lh-normal: 1.5; --lh-loose: 1.75;
+
+            /* Spacing 스케일 (8pt grid) */
+            --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
+            --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
+
+            /* Border-radius */
+            --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 20px;
         }
 
         * {
@@ -4374,6 +4412,37 @@
         .v39-chip.growth b{color:#34D399}
         .v39-chip.tension b{color:#EF4444}
 
+        /* v4 M1 — 관계 정체성: essay + growth/risk zones */
+        .v39-mi-essay{margin-top:var(--sp-5);padding:var(--sp-4) var(--sp-5);border-top:1px solid var(--sf-2);font-size:var(--fs-sm);line-height:var(--lh-loose);color:rgba(255,255,255,0.72);max-width:640px;margin-left:auto;margin-right:auto;text-align:left}
+        .v39-mi-essay strong{color:#fff;font-weight:600}
+        .v39-mi-zones{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-top:var(--sp-5);max-width:640px;margin-left:auto;margin-right:auto}
+        @media(max-width:600px){.v39-mi-zones{grid-template-columns:1fr}}
+        .v39-mi-zone{padding:var(--sp-3) var(--sp-4);border-radius:var(--r-md);border:1px solid var(--sf-2);text-align:left}
+        .v39-mi-zone.growth{background:rgba(52,211,153,0.05);border-color:rgba(52,211,153,0.2)}
+        .v39-mi-zone.risk{background:rgba(239,68,68,0.05);border-color:rgba(239,68,68,0.2)}
+        .v39-mi-zone-label{font-size:var(--fs-xs);font-weight:700;margin-bottom:var(--sp-2);letter-spacing:0.3px}
+        .v39-mi-zone.growth .v39-mi-zone-label{color:var(--state-growth)}
+        .v39-mi-zone.risk .v39-mi-zone-label{color:var(--state-risk)}
+        .v39-mi-zone ul{list-style:none;padding:0;margin:0;font-size:var(--fs-xs);color:rgba(255,255,255,0.78);line-height:1.8}
+        .v39-mi-zone li{padding:2px 0}
+        .v39-mi-zone li::before{content:'· ';color:rgba(255,255,255,0.3)}
+
+        /* v4 M2 — 호환도 상세 (4 friction 바) */
+        .v39-compat-frictions{display:flex;flex-direction:column;gap:var(--sp-3);max-width:640px;margin:0 auto}
+        .v39-fric-row{display:grid;grid-template-columns:minmax(160px,1.2fr) 2fr auto;gap:var(--sp-4);align-items:center;padding:var(--sp-2) 0}
+        @media(max-width:600px){.v39-fric-row{grid-template-columns:1fr auto;gap:var(--sp-2)}.v39-fric-row .v39-fric-bar{grid-column:1/-1}}
+        .v39-fric-name{font-size:var(--fs-sm);color:rgba(255,255,255,0.82);font-weight:500}
+        .v39-fric-name .sub{display:block;font-size:var(--fs-xxs);color:rgba(255,255,255,0.4);margin-top:2px;font-weight:400}
+        .v39-fric-bar{height:8px;background:var(--sf-2);border-radius:var(--r-sm);overflow:hidden;position:relative}
+        .v39-fric-fill{height:100%;border-radius:var(--r-sm);width:0;transition:width 1.2s cubic-bezier(0.16,1,0.3,1)}
+        .v39-fric-fill.intensity{background:linear-gradient(90deg,#F97316,#EF4444)}
+        .v39-fric-fill.structural{background:linear-gradient(90deg,var(--side-a),#818CF8)}
+        .v39-fric-fill.lsm{background:linear-gradient(90deg,var(--state-growth),var(--axis-C))}
+        .v39-fric-fill.total{background:linear-gradient(90deg,var(--ac),#FCD34D)}
+        .v39-fric-val{font-family:'JetBrains Mono',monospace;font-size:var(--fs-sm);font-weight:700;color:#fff;min-width:50px;text-align:right}
+        .v39-fric-row.total .v39-fric-name{color:#fff;font-weight:600}
+        .v39-fric-row.total .v39-fric-val{color:var(--ac)}
+
         /* 공통 카드 프리셋 — 개인 분석의 .traj-chart-card / .lens-split 스타일과 정렬.
            translucent + backdrop-blur + 시그니처 상단 그라데이션 라인 */
         .v39-card{position:relative;background:rgba(12,12,20,0.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.06);border-radius:14px;overflow:hidden}
@@ -4400,6 +4469,11 @@
         @media(max-width:500px){.v39-trow{grid-template-columns:42px 1fr 64px 1fr 42px;gap:6px}}
         .v39-tcap{margin-top:14px;font-size:13px;color:rgba(255,255,255,0.5);text-align:center;line-height:1.7}
         .v39-tcap b{color:#F5A623;font-weight:600}
+        /* v4 M3 — 축 거리 메타 요약 (4칸 그리드) */
+        .v39-map-meta{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2) var(--sp-4);margin-top:var(--sp-4);padding-top:var(--sp-4);border-top:1px solid var(--sf-2);font-size:var(--fs-xs);color:rgba(255,255,255,0.55)}
+        .v39-map-meta span{display:flex;align-items:center;gap:var(--sp-2)}
+        .v39-map-meta b{color:#fff;font-weight:600;font-family:'JetBrains Mono',monospace}
+        @media(max-width:500px){.v39-map-meta{grid-template-columns:1fr}}
 
         /* Attachment plot */
         .v39-attach-wrap{position:relative;background:rgba(12,12,20,0.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px 24px;overflow:hidden}
@@ -4450,6 +4524,133 @@
         @media(max-width:600px){.v39-loop{flex-direction:column}.v39-loop-arrow{padding:6px 0;transform:rotate(90deg)}}
         .v39-loop-cap{margin-top:18px;font-size:13px;color:rgba(255,255,255,0.5);text-align:center;line-height:1.7}
         .v39-loop-cap b{color:#EF4444;font-weight:600}
+
+        /* v4 M5 — 추가 반응 고리 (desc 전문 노출) */
+        .v39-loops-more{margin-top:var(--sp-5);max-width:640px;margin-left:auto;margin-right:auto}
+        .v39-loops-more-title{font-size:var(--fs-xs);color:var(--ac);font-weight:700;margin-bottom:var(--sp-3);letter-spacing:1.5px}
+        .v39-loops-more-list{display:flex;flex-direction:column;gap:var(--sp-2)}
+        .v39-loops-more-item{padding:var(--sp-3) var(--sp-4);background:var(--sf-1);border:1px solid var(--sf-2);border-left:3px solid var(--side-b);border-radius:0 var(--r-md) var(--r-md) 0}
+        .v39-loops-more-item .lmi-type{font-size:var(--fs-xs);font-weight:700;color:#fff;margin-bottom:var(--sp-1);letter-spacing:0.3px}
+        .v39-loops-more-item .lmi-desc{font-size:var(--fs-xs);color:rgba(255,255,255,0.68);line-height:1.75}
+
+        /* v4 M6 — 방어 충돌 */
+        .v39-def-clash{display:grid;grid-template-columns:1fr auto 1fr;gap:var(--sp-4);align-items:center;margin-bottom:var(--sp-3);max-width:640px;margin-left:auto;margin-right:auto}
+        @media(max-width:500px){.v39-def-clash{grid-template-columns:1fr;gap:var(--sp-2)}.v39-def-vs{transform:rotate(90deg)}}
+        .v39-def-side{text-align:center;padding:var(--sp-4);border-radius:var(--r-md);background:var(--sf-2);border:1px solid var(--sf-3)}
+        .v39-def-side.a{border-left:2px solid var(--side-a)}
+        .v39-def-side.b{border-right:2px solid var(--side-b)}
+        .v39-def-side-label{font-size:var(--fs-xxs);font-weight:700;margin-bottom:var(--sp-1)}
+        .v39-def-side.a .v39-def-side-label{color:var(--side-a)}
+        .v39-def-side.b .v39-def-side-label{color:var(--side-b)}
+        .v39-def-side-name{font-size:var(--fs-md);font-weight:700;color:#fff;margin-bottom:2px}
+        .v39-def-side-code{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xxs);color:rgba(255,255,255,0.35);letter-spacing:1.5px}
+        .v39-def-vs{font-size:22px;color:rgba(239,68,68,0.6);font-weight:800;text-align:center}
+        .v39-def-severity{display:inline-block;padding:3px 10px;border-radius:var(--r-sm);font-size:var(--fs-xs);font-weight:700;background:rgba(239,68,68,0.12);color:var(--state-risk);margin-bottom:var(--sp-2);max-width:640px}
+        .v39-def-severity.medium{background:var(--af-2);color:var(--ac)}
+        .v39-def-severity.low{background:rgba(148,163,184,0.12);color:var(--state-neutral)}
+        .v39-def-desc{padding:var(--sp-3) var(--sp-4);background:var(--sf-1);border-left:3px solid var(--state-risk);border-radius:0 var(--r-md) var(--r-md) 0;font-size:var(--fs-sm);color:rgba(255,255,255,0.72);line-height:var(--lh-loose);max-width:640px;margin:0 auto}
+
+        /* v4 M7/M8 — 애착/갈등 교차 (공용) */
+        .v39-cross-active{max-width:640px;margin:0 auto;padding:var(--sp-4) var(--sp-5);background:var(--af-1);border:1px solid var(--af-2);border-radius:var(--r-md)}
+        .v39-cross-label{font-size:var(--fs-md);font-weight:700;color:var(--ac);margin-bottom:var(--sp-3);letter-spacing:0.3px}
+        .v39-cross-sides{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-bottom:var(--sp-3);font-size:var(--fs-sm);color:rgba(255,255,255,0.75);line-height:var(--lh-normal)}
+        @media(max-width:500px){.v39-cross-sides{grid-template-columns:1fr}}
+        .v39-cross-side{display:flex;gap:var(--sp-2);align-items:baseline}
+        .v39-cross-side .k{font-size:var(--fs-xxs);font-weight:700;letter-spacing:1px;padding:2px 7px;border-radius:var(--r-sm);flex-shrink:0}
+        .v39-cross-side.a .k{background:rgba(96,165,250,0.15);color:var(--side-a)}
+        .v39-cross-side.b .k{background:rgba(167,139,250,0.15);color:var(--side-b)}
+        .v39-cross-score{display:inline-block;padding:2px 10px;border-radius:var(--r-sm);font-size:var(--fs-xxs);font-family:'JetBrains Mono',monospace;font-weight:700;background:var(--sf-3);color:#fff;margin-bottom:var(--sp-3);letter-spacing:0.5px}
+        .v39-cross-desc{font-size:var(--fs-sm);color:rgba(255,255,255,0.72);line-height:var(--lh-loose)}
+        .v39-cross-empty{max-width:640px;margin:0 auto;padding:var(--sp-4);background:var(--sf-1);border:1px dashed var(--sf-3);border-radius:var(--r-md);text-align:center;font-size:var(--fs-xs);color:rgba(255,255,255,0.4)}
+
+        /* v4 M9 — 회복 속도 차이 */
+        .v39-recovery-wrap{display:grid;grid-template-columns:auto 1fr;gap:var(--sp-5);align-items:center;max-width:640px;margin:0 auto}
+        @media(max-width:500px){.v39-recovery-wrap{grid-template-columns:1fr;text-align:center}}
+        .v39-recovery-delta{text-align:center}
+        .v39-recovery-num{font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:800;color:var(--ac);line-height:1}
+        .v39-recovery-label{font-size:var(--fs-xs);color:rgba(255,255,255,0.55);margin-top:var(--sp-1)}
+        .v39-recovery-desc{font-size:var(--fs-sm);color:rgba(255,255,255,0.72);line-height:var(--lh-loose)}
+
+        /* v4 M10 — 공통 관심사 Venn + chips */
+        .v39-topic-wrap{display:grid;grid-template-columns:160px 1fr;gap:var(--sp-5);align-items:center;max-width:640px;margin:0 auto var(--sp-4)}
+        @media(max-width:500px){.v39-topic-wrap{grid-template-columns:1fr;justify-items:center}}
+        .v39-topic-venn{position:relative;width:160px;height:120px}
+        .v39-topic-venn svg{width:100%;height:100%}
+        .v39-topic-venn-label{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:'JetBrains Mono',monospace;font-size:var(--fs-md);font-weight:700;color:#fff}
+        .v39-topic-venn-sub{position:absolute;left:50%;top:calc(50% + 16px);transform:translateX(-50%);font-size:var(--fs-xxs);color:rgba(255,255,255,0.5)}
+        .v39-topic-chips{display:flex;flex-direction:column;gap:var(--sp-2)}
+        .v39-topic-row{display:grid;grid-template-columns:60px 1fr;gap:var(--sp-3);font-size:var(--fs-xs);align-items:start}
+        .v39-topic-row .tr-label{font-size:var(--fs-xxs);font-weight:700;padding-top:3px;letter-spacing:0.3px}
+        .v39-topic-row .tr-label.shared{color:var(--ac)}
+        .v39-topic-row .tr-label.a{color:var(--side-a)}
+        .v39-topic-row .tr-label.b{color:var(--side-b)}
+        .v39-topic-row .tr-list{display:flex;gap:4px;flex-wrap:wrap}
+        .v39-topic-chip{padding:3px 9px;border-radius:var(--r-sm);font-size:var(--fs-xxs);background:var(--sf-2);color:rgba(255,255,255,0.75)}
+        .v39-topic-chip.shared{background:var(--af-2);color:var(--ac)}
+        .v39-topic-chip.a{background:rgba(96,165,250,0.12);color:var(--side-a)}
+        .v39-topic-chip.b{background:rgba(167,139,250,0.12);color:var(--side-b)}
+        .v39-topic-desc{max-width:640px;margin:var(--sp-3) auto 0;padding-top:var(--sp-3);border-top:1px solid var(--sf-2);font-size:var(--fs-xs);color:rgba(255,255,255,0.6);line-height:var(--lh-loose)}
+
+        /* v4 M11 — 공유 위험 리스트 */
+        .v39-shared-risks{display:flex;flex-direction:column;gap:var(--sp-2);max-width:640px;margin:0 auto}
+        .v39-shared-risk-item{padding:var(--sp-3) var(--sp-4);background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-left:3px solid var(--state-risk);border-radius:0 var(--r-md) var(--r-md) 0;font-size:var(--fs-sm);color:rgba(255,255,255,0.75);line-height:var(--lh-loose)}
+        .v39-shared-risk-item strong{color:#FCA5A5;font-weight:600}
+
+        /* v4 M12 — 상황별 교차 (탭 + 양쪽 정체성 + 5축 비교) */
+        .v39-sit-wrap{max-width:720px;margin:0 auto}
+        .v39-sit-tabs{display:flex;gap:6px;margin-bottom:var(--sp-4);flex-wrap:wrap;justify-content:center}
+        .v39-sit-tab{padding:8px 16px;font-size:var(--fs-xs);font-weight:500;color:rgba(255,255,255,0.5);background:transparent;border:1px solid var(--sf-4);border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:var(--sp-1);transition:all 0.2s}
+        .v39-sit-tab.on.normal{background:var(--sit-normal);border-color:var(--sit-normal);color:#000;box-shadow:0 0 14px rgba(245,166,35,0.25);font-weight:600}
+        .v39-sit-tab.on.stress{background:var(--sit-stress);border-color:var(--sit-stress);color:#fff;box-shadow:0 0 14px rgba(239,68,68,0.25);font-weight:600}
+        .v39-sit-tab.on.intimacy{background:var(--sit-intimacy);border-color:var(--sit-intimacy);color:#000;box-shadow:0 0 14px rgba(167,139,250,0.25);font-weight:600}
+        .v39-sit-tab.on.conflict{background:var(--sit-conflict);border-color:var(--sit-conflict);color:#fff;box-shadow:0 0 14px rgba(249,115,22,0.25);font-weight:600}
+        .v39-sit-tab.on.loss{background:var(--sit-loss);border-color:var(--sit-loss);color:#fff;box-shadow:0 0 14px rgba(107,114,128,0.25);font-weight:600}
+        .v39-sit-tab.dim{opacity:0.3;cursor:not-allowed}
+        .v39-sit-panel{padding:var(--sp-4);background:var(--sf-1);border:1px solid var(--sf-2);border-radius:var(--r-md)}
+        .v39-sit-synopsis{padding:var(--sp-3) var(--sp-4);background:var(--af-1);border:1px dashed var(--af-2);border-radius:var(--r-sm);font-size:var(--fs-xs);color:rgba(255,255,255,0.78);margin-bottom:var(--sp-3);line-height:var(--lh-loose)}
+        .v39-sit-identities{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-bottom:var(--sp-4)}
+        @media(max-width:500px){.v39-sit-identities{grid-template-columns:1fr}}
+        .v39-sit-side{padding:var(--sp-3) var(--sp-4);background:var(--sf-2);border-radius:var(--r-sm)}
+        .v39-sit-side.a{border-left:2px solid var(--side-a)}
+        .v39-sit-side.b{border-left:2px solid var(--side-b)}
+        .v39-sit-side .si-role{font-size:var(--fs-xxs);font-weight:700;margin-bottom:var(--sp-2)}
+        .v39-sit-side.a .si-role{color:var(--side-a)}
+        .v39-sit-side.b .si-role{color:var(--side-b)}
+        .v39-sit-side .si-hero{display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-2)}
+        .v39-sit-side .si-emoji{font-size:24px;line-height:1}
+        .v39-sit-side .si-name{font-size:var(--fs-sm);color:#fff;font-weight:600}
+        .v39-sit-side .si-shift{font-size:var(--fs-xxs);color:rgba(255,255,255,0.6);line-height:var(--lh-normal);padding-top:var(--sp-2);border-top:1px dashed var(--sf-3)}
+        .v39-sit-side .si-shift b{color:#fff;font-weight:700;font-family:'JetBrains Mono',monospace}
+        .v39-sit-axes-wrap{padding-top:var(--sp-3);border-top:1px solid var(--sf-2)}
+        .v39-sit-axes-header{font-size:var(--fs-xxs);color:rgba(255,255,255,0.4);margin-bottom:var(--sp-2)}
+        .v39-sit-axis{display:grid;grid-template-columns:40px 1fr 48px 1fr 40px;gap:var(--sp-2);align-items:center;padding:5px 0;font-family:'JetBrains Mono',monospace;font-size:var(--fs-xxs)}
+        .v39-sit-axis .a-val{color:var(--side-a);font-weight:700;text-align:right}
+        .v39-sit-axis .b-val{color:var(--side-b);font-weight:700}
+        .v39-sit-axis .a-bar,.v39-sit-axis .b-bar{height:8px;background:var(--sf-2);border-radius:var(--r-sm);position:relative;overflow:hidden}
+        .v39-sit-axis .a-bar .fill{position:absolute;right:0;top:0;bottom:0;background:var(--side-a);border-radius:var(--r-sm) 0 0 var(--r-sm)}
+        .v39-sit-axis .b-bar .fill{position:absolute;left:0;top:0;bottom:0;background:var(--side-b);border-radius:0 var(--r-sm) var(--r-sm) 0}
+        .v39-sit-axis .k{text-align:center;font-weight:700;color:#fff}
+        .v39-sit-meta{display:flex;gap:var(--sp-3);margin-top:var(--sp-3);padding-top:var(--sp-3);border-top:1px solid var(--sf-2);font-size:var(--fs-xs);color:rgba(255,255,255,0.55);flex-wrap:wrap}
+        .v39-sit-meta .conv{padding:2px 10px;border-radius:var(--r-sm);font-weight:700;font-size:var(--fs-xxs)}
+        .v39-sit-meta .conv.convergent{background:rgba(52,211,153,0.12);color:var(--state-growth)}
+        .v39-sit-meta .conv.parallel{background:var(--af-2);color:var(--ac)}
+        .v39-sit-meta .conv.divergent{background:rgba(239,68,68,0.12);color:var(--state-risk)}
+        .v39-sit-defense{margin-top:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:rgba(239,68,68,0.05);border-left:3px solid var(--state-risk);border-radius:0 var(--r-md) var(--r-md) 0;font-size:var(--fs-xs);color:rgba(255,255,255,0.75);line-height:var(--lh-loose)}
+        .v39-sit-defense strong{color:#FCA5A5;font-weight:600;display:block;margin-bottom:3px}
+
+        /* v4 M4 — 궤적 수렴성 (Canvas) */
+        .v39-conv-wrap{max-width:760px;margin:0 auto;padding:var(--sp-4);background:var(--sf-1);border:1px solid var(--sf-2);border-radius:var(--r-md)}
+        .v39-conv-wrap canvas{display:block;width:100%;height:auto;max-height:260px}
+        .v39-conv-legend{display:flex;flex-wrap:wrap;gap:var(--sp-3);justify-content:center;margin-top:var(--sp-3);font-size:var(--fs-xxs);color:rgba(255,255,255,0.6)}
+        .v39-conv-legend span{display:inline-flex;align-items:center;gap:var(--sp-1)}
+        .v39-conv-legend .ln{display:inline-block;width:16px;height:2px;border-radius:1px}
+        .v39-conv-legend .ln.dash{background:repeating-linear-gradient(90deg,rgba(255,255,255,0.6) 0,rgba(255,255,255,0.6) 3px,transparent 3px,transparent 6px) !important}
+        .v39-conv-legend .sep{color:rgba(255,255,255,0.2)}
+        .v39-conv-judgment{margin-top:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:var(--sf-2);border-radius:var(--r-sm);font-size:var(--fs-sm);color:rgba(255,255,255,0.72);line-height:var(--lh-loose)}
+        .v39-conv-judgment .type{font-size:var(--fs-md);font-weight:700;margin-right:var(--sp-2)}
+        .v39-conv-judgment .type.convergent{color:var(--state-growth)}
+        .v39-conv-judgment .type.parallel{color:var(--ac)}
+        .v39-conv-judgment .type.divergent{color:var(--state-risk)}
 
         /* ARC */
         .v39-arc-chart{position:relative;background:rgba(12,12,20,0.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:24px 20px 18px;margin-bottom:28px;overflow:hidden}
@@ -5188,6 +5389,49 @@
                         </div>
                     </div>
                     <div class="v39-chips" id="v39Chips"></div>
+                    <!-- v4 M1: essay + growth/risk zones (2026-04-23) -->
+                    <div class="v39-mi-essay" id="v39MiEssay" style="display:none"></div>
+                    <div class="v39-mi-zones" id="v39MiZones" style="display:none">
+                        <div class="v39-mi-zone growth">
+                            <div class="v39-mi-zone-label">◇ 성장 영역</div>
+                            <ul id="v39MiGrowth"></ul>
+                        </div>
+                        <div class="v39-mi-zone risk">
+                            <div class="v39-mi-zone-label">△ 주의 영역</div>
+                            <ul id="v39MiRisk"></ul>
+                        </div>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- v4 M2 · 호환도 (2026-04-23) -->
+                <section class="result-section v39-section" id="matchSectionCompat">
+                  <div class="result-section-inner">
+                    <div class="v39-meta">호환도 · <span class="dim">COMPATIBILITY</span></div>
+                    <h2 class="v39-title">세 가지 차원에서 본 두 사람의 거리</h2>
+                    <p class="v39-subtitle">값이 작을수록 두 사람이 그 차원에서 덜 마찰합니다. "대화 스타일 일치도"만 반대로 클수록 닿아있음.</p>
+                    <div class="v39-compat-frictions">
+                      <div class="v39-fric-row">
+                        <div class="v39-fric-name">감정 강도 차이<span class="sub">얼마나 다르게 느끼는가</span></div>
+                        <div class="v39-fric-bar"><div class="v39-fric-fill intensity" id="v39FricFillIntensity"></div></div>
+                        <div class="v39-fric-val" id="v39FricValIntensity">—</div>
+                      </div>
+                      <div class="v39-fric-row">
+                        <div class="v39-fric-name">관계 구조 차이<span class="sub">역할과 방식의 차이</span></div>
+                        <div class="v39-fric-bar"><div class="v39-fric-fill structural" id="v39FricFillStructural"></div></div>
+                        <div class="v39-fric-val" id="v39FricValStructural">—</div>
+                      </div>
+                      <div class="v39-fric-row">
+                        <div class="v39-fric-name">대화 스타일 일치도<span class="sub">어휘·리듬이 얼마나 닿아있는가</span></div>
+                        <div class="v39-fric-bar"><div class="v39-fric-fill lsm" id="v39FricFillLsm"></div></div>
+                        <div class="v39-fric-val" id="v39FricValLsm">—</div>
+                      </div>
+                      <div class="v39-fric-row total">
+                        <div class="v39-fric-name">종합 마찰도<span class="sub">세 차원의 가중 평균</span></div>
+                        <div class="v39-fric-bar"><div class="v39-fric-fill total" id="v39FricFillTotal"></div></div>
+                        <div class="v39-fric-val" id="v39FricValTotal">—</div>
+                      </div>
+                    </div>
                   </div>
                 </section>
 
@@ -5206,6 +5450,13 @@
                         </div>
                         <div id="v39TornadoRows"></div>
                         <div class="v39-tcap" id="v39TornadoCap"></div>
+                        <!-- v4 M3: 축 거리 메타 요약 (평균/가까운/먼/총) -->
+                        <div class="v39-map-meta" id="v39MapMeta">
+                            <span>평균 격차 <b id="v39MapMetaAvg">—</b></span>
+                            <span>가장 가까운 축 <b id="v39MapMetaClosest">—</b></span>
+                            <span>가장 먼 축 <b id="v39MapMetaFarthest">—</b></span>
+                            <span>총 격차 <b id="v39MapMetaTotal">—</b></span>
+                        </div>
                     </div>
                     <div class="v39-attach-wrap" id="v39AttachWrap">
                         <div class="v39-attach-title">◇ ATTACHMENT ◇</div>
@@ -5213,6 +5464,30 @@
                         <div class="v39-attach-cap" id="v39AttachCap"></div>
                     </div>
                     <div class="v39-bridge">이 지형에서 반복되는 패턴을 보세요</div>
+                  </div>
+                </section>
+
+                <!-- v4 M4 · 궤적 수렴성 (2026-04-23) -->
+                <section class="result-section v39-section" id="matchSectionConvergence">
+                  <div class="result-section-inner">
+                    <div class="v39-meta">움직이는 방향 · <span class="dim">TRAJECTORY CONVERGENCE</span></div>
+                    <h2 class="v39-title">10단계 대화 시뮬레이션에서 두 사람의 5축이 어떻게 변하는가</h2>
+                    <p class="v39-subtitle">A 실선 · B 점선. 가까워짐 / PARALLEL / 멀어짐 — 세 방향 중 하나.</p>
+                    <div class="v39-conv-wrap" id="v39ConvWrap" style="display:none">
+                        <canvas id="v39ConvCanvas" width="760" height="260"></canvas>
+                        <div class="v39-conv-legend">
+                            <span><i class="ln solid" style="background:var(--axis-E)"></i>정서</span>
+                            <span><i class="ln solid" style="background:var(--axis-C)"></i>추진</span>
+                            <span><i class="ln solid" style="background:var(--axis-T)"></i>인지</span>
+                            <span><i class="ln solid" style="background:var(--axis-O)"></i>개방</span>
+                            <span><i class="ln solid" style="background:var(--axis-X)"></i>회복</span>
+                            <span class="sep">|</span>
+                            <span><i class="ln solid" style="background:rgba(255,255,255,0.6)"></i>A (실선)</span>
+                            <span><i class="ln dash" style="background:rgba(255,255,255,0.6)"></i>B (점선)</span>
+                        </div>
+                        <div class="v39-conv-judgment" id="v39ConvJudgment"></div>
+                    </div>
+                    <div class="v39-cross-empty" id="v39ConvEmpty">10단계 시뮬레이션 데이터가 부족합니다.</div>
                   </div>
                 </section>
 
@@ -5230,7 +5505,119 @@
                         <div class="v39-loop" id="v39LoopChain"></div>
                         <div class="v39-loop-cap" id="v39LoopCap"></div>
                     </div>
+                    <!-- v4 M5: 추가 반응 고리 (2번째 이후 loops) -->
+                    <div class="v39-loops-more" id="v39LoopsMore" style="display:none">
+                        <div class="v39-loops-more-title">◇ 다른 반복 고리</div>
+                        <div class="v39-loops-more-list" id="v39LoopsMoreList"></div>
+                    </div>
                     <div class="v39-bridge">이 패턴이 3개월 · 1년 뒤 어디로 향할지 보세요</div>
+                  </div>
+                </section>
+
+                <!-- v4 M6 · 방어 충돌 (2026-04-23) -->
+                <section class="result-section v39-section" id="matchSectionDefense">
+                  <div class="result-section-inner">
+                    <div class="v39-meta">방어 충돌 · <span class="dim">DEFENSE CLASH</span></div>
+                    <h2 class="v39-title">방어 패턴의 충돌</h2>
+                    <p class="v39-subtitle">압박받을 때 각자 사용하는 방어 방식이 어떻게 부딪히는가</p>
+                    <div class="v39-def-clash">
+                        <div class="v39-def-side a">
+                            <div class="v39-def-side-label">A의 방어</div>
+                            <div class="v39-def-side-name" id="v39DefAName">—</div>
+                            <div class="v39-def-side-code" id="v39DefACode"></div>
+                        </div>
+                        <div class="v39-def-vs">⚡</div>
+                        <div class="v39-def-side b">
+                            <div class="v39-def-side-label">B의 방어</div>
+                            <div class="v39-def-side-name" id="v39DefBName">—</div>
+                            <div class="v39-def-side-code" id="v39DefBCode"></div>
+                        </div>
+                    </div>
+                    <div class="v39-def-severity" id="v39DefSeverity" style="display:none"></div>
+                    <div class="v39-def-desc" id="v39DefDesc"></div>
+                  </div>
+                </section>
+
+                <!-- v4 M7 · 애착 교차 (2026-04-23) -->
+                <section class="result-section v39-section" id="matchSectionAttachCross">
+                  <div class="result-section-inner">
+                    <div class="v39-meta">애착 교차 · <span class="dim">ATTACHMENT CROSS</span></div>
+                    <h2 class="v39-title">애착 스타일의 만남</h2>
+                    <p class="v39-subtitle">두 사람의 애착 성향이 어떤 조합을 만드는가</p>
+                    <div class="v39-cross-active" id="v39AttachCrossActive" style="display:none">
+                        <div class="v39-cross-label" id="v39AttachCrossLabel">—</div>
+                        <div class="v39-cross-sides">
+                            <div class="v39-cross-side a"><span class="k">A</span><span id="v39AttachATend">—</span></div>
+                            <div class="v39-cross-side b"><span class="k">B</span><span id="v39AttachBTend">—</span></div>
+                        </div>
+                        <div class="v39-cross-desc" id="v39AttachDesc"></div>
+                    </div>
+                    <div class="v39-cross-empty" id="v39AttachCrossEmpty" style="display:none">애착 교차 데이터가 부족합니다.</div>
+                  </div>
+                </section>
+
+                <!-- v4 M8 · 갈등 교차 (2026-04-23) -->
+                <section class="result-section v39-section" id="matchSectionConflictCross">
+                  <div class="result-section-inner">
+                    <div class="v39-meta">갈등 교차 · <span class="dim">CONFLICT CROSS</span></div>
+                    <h2 class="v39-title">갈등 스타일의 만남</h2>
+                    <p class="v39-subtitle">두 사람이 싸울 때 드러나는 방식의 조합</p>
+                    <div class="v39-cross-active" id="v39ConflictCrossActive" style="display:none">
+                        <div class="v39-cross-label" id="v39ConflictCrossLabel">—</div>
+                        <div class="v39-cross-score" id="v39ConflictCrossScore" style="display:none"></div>
+                        <div class="v39-cross-desc" id="v39ConflictDesc"></div>
+                    </div>
+                    <div class="v39-cross-empty" id="v39ConflictCrossEmpty" style="display:none">갈등 교차 데이터가 부족합니다.</div>
+                  </div>
+                </section>
+
+                <!-- v4 M9 · 회복 속도 차이 (2026-04-23) -->
+                <section class="result-section v39-section" id="matchSectionRecovery">
+                  <div class="result-section-inner">
+                    <div class="v39-meta">회복 속도 차이 · <span class="dim">RECOVERY MISMATCH</span></div>
+                    <h2 class="v39-title">마찰 후 얼마나 빨리 중립으로 돌아오나</h2>
+                    <p class="v39-subtitle">각자 회복 속도가 다르면 "해결됐다" 시점도 다릅니다.</p>
+                    <div class="v39-recovery-wrap" id="v39RecoveryWrap" style="display:none">
+                        <div class="v39-recovery-delta">
+                            <div class="v39-recovery-num" id="v39RecoveryNum">—</div>
+                            <div class="v39-recovery-label" id="v39RecoveryLabel">—</div>
+                        </div>
+                        <div class="v39-recovery-desc" id="v39RecoveryDesc"></div>
+                    </div>
+                    <div class="v39-cross-empty" id="v39RecoveryEmpty" style="display:none">회복 속도 데이터가 부족합니다.</div>
+                  </div>
+                </section>
+
+                <!-- v4 M10 · 공통 관심사 (2026-04-23) -->
+                <section class="result-section v39-section" id="matchSectionTopic">
+                  <div class="result-section-inner">
+                    <div class="v39-meta">공통 관심사 · <span class="dim">TOPIC OVERLAP</span></div>
+                    <h2 class="v39-title">두 사람이 공유하는 주제</h2>
+                    <p class="v39-subtitle">서로 겹치는 주제와 각자만의 영역</p>
+                    <div class="v39-topic-wrap" id="v39TopicWrap" style="display:none">
+                        <div class="v39-topic-venn">
+                            <svg viewBox="0 0 160 120">
+                                <circle cx="60" cy="60" r="45" fill="rgba(96,165,250,0.2)" stroke="rgba(96,165,250,0.6)" stroke-width="1.5"/>
+                                <circle cx="100" cy="60" r="45" fill="rgba(167,139,250,0.2)" stroke="rgba(167,139,250,0.6)" stroke-width="1.5"/>
+                            </svg>
+                            <div class="v39-topic-venn-label" id="v39TopicJaccardPct">—</div>
+                            <div class="v39-topic-venn-sub">공통점</div>
+                        </div>
+                        <div class="v39-topic-chips" id="v39TopicChips"></div>
+                    </div>
+                    <div class="v39-topic-desc" id="v39TopicDesc" style="display:none"></div>
+                    <div class="v39-cross-empty" id="v39TopicEmpty" style="display:none">주제 겹침 데이터가 부족합니다.</div>
+                  </div>
+                </section>
+
+                <!-- v4 M11 · 공유 위험 (2026-04-23) -->
+                <section class="result-section v39-section" id="matchSectionSharedRisks">
+                  <div class="result-section-inner">
+                    <div class="v39-meta">같이 피해야 할 지뢰 · <span class="dim">SHARED RISKS</span></div>
+                    <h2 class="v39-title">두 사람이 함께 취약한 구간</h2>
+                    <p class="v39-subtitle">같은 상황에서 양쪽이 동시에 흔들리는 지점을 조심하세요.</p>
+                    <div class="v39-shared-risks" id="v39SharedRisksList" style="display:none"></div>
+                    <div class="v39-cross-empty" id="v39SharedRisksEmpty" style="display:none">공유 위험 요소는 감지되지 않았습니다.</div>
                   </div>
                 </section>
 
@@ -5253,6 +5640,20 @@
                     </div>
                     <div class="v39-ra-pair" id="v39RaPair"></div>
                     <div class="v39-bridge">더 깊이 읽고 싶으면 아래 렌즈를 선택하세요</div>
+                  </div>
+                </section>
+
+                <!-- v4 M12 · 상황별 교차 (2026-04-23) -->
+                <section class="result-section v39-section" id="matchSectionSituational">
+                  <div class="result-section-inner">
+                    <div class="v39-meta">상황별 교차 · <span class="dim">SITUATIONAL CROSS</span></div>
+                    <h2 class="v39-title">상황별로 달라지는 두 사람</h2>
+                    <p class="v39-subtitle">평소·스트레스·친밀감·갈등·상실 상황에서 각자 어떻게 변하고 서로 어떻게 맞물리는가</p>
+                    <div class="v39-sit-wrap" id="v39SitWrap" style="display:none">
+                        <div class="v39-sit-tabs" id="v39SitTabs"></div>
+                        <div class="v39-sit-panel" id="v39SitPanel"></div>
+                    </div>
+                    <div class="v39-cross-empty" id="v39SitEmpty">측정된 상황별 세션이 아직 없습니다.</div>
                   </div>
                 </section>
 
@@ -5376,11 +5777,37 @@
         // CONFLICT_MATRIX: server-side only (worker.js)
 
         // ============ LSM (Language Style Matching) ============
-    // v3.8.16: KOREAN_FUNC_WORDS / computeFunctionWordProfile / computeLSMSimilarity
-    // → 서버 전용. worker.js 의 동일 로직 + v3.6 zero-count 보정이 단일 진실 소스.
-    // FE 는 raw_messages 만 보내고 서버가 fwp/LSM 계산.
-    function computeFunctionWordProfile() { return null; } // deprecated — server computes
-    function computeLSMSimilarity() { return null; } // deprecated — server computes
+    // v3.9.21: FWP(기능어 프로필)는 분석 시점에 계산해 프로필에 보관.
+    // v3.8.16 이 "서버가 raw_messages 에서 재계산" 가정했으나, clearSensitiveData() 가
+    // messages 를 null 로 덮은 뒤 /match 호출 시 fwpA/fwpB=null → LSM fallback 0.5 고정.
+    // 해결: 분석 직후(messages 살아있을 때) FWP 계산해 프로필에 저장 → /match 전송.
+    // worker.js:6737-6761 과 동일 로직 (단일 진실 소스는 여전히 worker.js; FE는 사전 계산만).
+    const KOREAN_FUNC_WORDS = {
+      particles: ['은','는','이','가','을','를','에','에서','의','로','으로','와','과','도','만','까지','부터','마다','조차','라도','이나','나','든지','이든지'],
+      pronouns: ['나','너','저','우리','너희','그','그녀','이것','저것','그것','여기','저기','거기','누구','뭐','무엇','어디','언제'],
+      conjunctions: ['그리고','그런데','그래서','하지만','그러나','또','또는','그래도','그러면','왜냐하면','즉','만약','비록','때문에'],
+      adverbs: ['좀','너무','매우','정말','진짜','아주','조금','많이','잘','못','안','다','또','이미','아직','바로','꼭','항상','자주','가끔'],
+      negations: ['안','못','없','아니','절대','전혀','별로','싫','말'],
+      quantifiers: ['모든','각','여러','몇','많은','적은','조금','약간','대부분','전부','다','좀','꽤','상당히'],
+      fillers: ['음','어','그','뭐','아','네','예','응','글쎄','뭐랄까','그냥','일단','아마','혹시']
+    };
+    function computeFunctionWordProfile(messages) {
+      if (!messages || messages.length === 0) return null;
+      const allText = messages.map(m => typeof m === 'string' ? m : (m.text || m.content || '')).join(' ');
+      const totalChars = allText.length || 1;
+      const profile = {};
+      for (const cat in KOREAN_FUNC_WORDS) {
+        const words = KOREAN_FUNC_WORDS[cat];
+        let count = 0;
+        for (const w of words) {
+          let idx = 0;
+          while ((idx = allText.indexOf(w, idx)) !== -1) { count++; idx += w.length; }
+        }
+        profile[cat] = count / (totalChars / 100);
+      }
+      return profile;
+    }
+    function computeLSMSimilarity() { return null; } // deprecated — server computes (worker.js:6763)
 
     // ============ V3 IDENTITY SYSTEM (server-only) ============
         // v3.8.15: 엔진 로직·아키타입 맵 전부 서버로 이관.
@@ -6415,7 +6842,7 @@
                     anchor: r.anchor || null,
                     analysisId: data.analysis_id,
                     messages: [],
-                    functionWordProfile: null,
+                    functionWordProfile: r.fwp || null, // v3.9.21: 서버가 포함 시 복원, 없으면 null (LSM 칸 "—")
                     rates: null,
                     timestamp: data.created_at,
                     _restored: true
@@ -6822,17 +7249,21 @@
             const axesB = pB.axes || null;
             const hasAxes = !!(axesA && (axesA.intensity || axesA.structural));
 
-            // identity 복원: DB에 identity가 저장되지 않으므로 axes에서 재계산
-            var idA = pA.identity || null;
-            var idB = pB.identity || null;
-            if (!idA && hasAxes && typeof computeIdentity === 'function') {
-                try { idA = computeIdentity(axesA); } catch(e) { idA = null; }
+            // v3.9.21: identity 복원 — pA.identity 가 null 이면 DB 에 identity 누락 (구 데이터).
+            //   m.name_a / m.name_b 로 최소 이름이라도 살리고, mi.emoji_a / mi.emoji_b 에서 이모지 시도.
+            //   computeIdentity 의 '식별 불가' placeholder 보다 항상 나음.
+            function _restoreIdentity(identity, name, emoji, code){
+                if (identity && identity.code) return identity;  // 이미 완전
+                return {
+                    name: (identity && identity.name) || name || 'A',
+                    code: (identity && identity.code) || code || '',
+                    emoji: (identity && identity.emoji) || emoji || '🔮',
+                    tagline: (identity && identity.tagline) || '',
+                    axisResults: (identity && identity.axisResults) || []
+                };
             }
-            if (!idB && axesB && typeof computeIdentity === 'function') {
-                try { idB = computeIdentity(axesB); } catch(e) { idB = null; }
-            }
-            idA = idA || {};
-            idB = idB || {};
+            var idA = _restoreIdentity(pA.identity, m.name_a, mi.emoji_a, '');
+            var idB = _restoreIdentity(pB.identity, m.name_b, mi.emoji_b, '');
 
             // 글로벌 프로필 세팅 — v3.8.17: sim/prism/anchor enrich (renderMatchStructTags / 재공유 참조)
             currentProfile = { axes: axesA, identity: idA, simulation: m.simulationA || null, prism: m.prismA || null, anchor: m.anchorA || null, _restored: true };
@@ -6883,7 +7314,8 @@
                     var sA = axesA.structural || {};
                     var sB = axesB.structural || {};
                     var iFric = (Math.abs((iA.A1||50)-(iB.A1||50)) + Math.abs((iA.A2||50)-(iB.A2||50)) + Math.abs((iA.A3||50)-(iB.A3||50)) + Math.abs((iA.A4||50)-(iB.A4||50)) + Math.abs((iA.A5||50)-(iB.A5||50)) + Math.abs((iA.A6||50)-(iB.A6||50))) / 600;
-                    renderMatchScoreGrid({ intensity_friction: iFric, structural_friction: iFric * 0.8, lsm_friction: 0.3 });
+                    // v3.9.21: LSM 은 fwp 없이 추정 불가 → null. renderMatchScoreGrid 가 null 이면 "—" 표시.
+                    renderMatchScoreGrid({ intensity_friction: iFric, structural_friction: iFric * 0.8, lsm_friction: null });
                 } catch(e) {}
             }
 
@@ -7066,7 +7498,7 @@
                 llmResult,
                 simulation,
                 messages: null,
-                functionWordProfile: null,
+                functionWordProfile: a.fwp || null, // v3.9.21: 이전 분석 복구 시 서버 fwp 사용 (있으면)
                 prism: a.prism || null,
                 anchor: a.anchor || null,
                 analysisId: a.id,
@@ -7773,7 +8205,7 @@
                     llmResult,
                     simulation: simulationResult,
                     messages,
-                    functionWordProfile: null, // v3.8.16: 서버가 /match 요청 시 raw messages 에서 재계산
+                    functionWordProfile: computeFunctionWordProfile(messages), // v3.9.21: 분석 시점 계산 (clearSensitiveData 대비)
                     prism: prismResult,
                     anchor: anchorResult,
                     analysisId: analysisId,
@@ -11445,10 +11877,504 @@ function displayResult() {
 
         function renderV39All(ctx){
             try { renderV39Verdict(ctx); } catch(e){ console.error('[v39 verdict]', e); }
+            try { renderV39Compat(ctx); } catch(e){ console.error('[v39 compat]', e); }
             try { renderV39Map(ctx); } catch(e){ console.error('[v39 map]', e); }
+            try { renderV39Convergence(ctx); } catch(e){ console.error('[v39 conv]', e); }
             try { renderV39Pattern(ctx); } catch(e){ console.error('[v39 pattern]', e); }
+            try { renderV39Defense(ctx); } catch(e){ console.error('[v39 defense]', e); }
+            try { renderV39AttachCross(ctx); } catch(e){ console.error('[v39 attach]', e); }
+            try { renderV39ConflictCross(ctx); } catch(e){ console.error('[v39 conflict]', e); }
+            try { renderV39Recovery(ctx); } catch(e){ console.error('[v39 recovery]', e); }
+            try { renderV39Topic(ctx); } catch(e){ console.error('[v39 topic]', e); }
+            try { renderV39SharedRisks(ctx); } catch(e){ console.error('[v39 srisks]', e); }
             try { renderV39Arc(ctx); } catch(e){ console.error('[v39 arc]', e); }
+            try { renderV39Situational(ctx); } catch(e){ console.error('[v39 sit]', e); }
             try { renderV39DeepDive(ctx); } catch(e){ console.error('[v39 dd]', e); }
+        }
+
+        // ── v4 M12 · 상황별 교차 (2026-04-23) ──
+        // crossSituational 의 5 상황별 {a_identity, b_identity, axis_deltas, convergence,
+        // defense_clash, a_shift, b_shift, synopsis} 를 탭 전환식으로 노출.
+        // 기존 renderMatchScenarioDrift(L10971) 과 데이터 소스 동일, UI 만 v4 스펙.
+        var _V39_SIT_ORDER = ['normal','stress','intimacy','conflict','loss'];
+        var _V39_SIT_META = {
+            normal:{label:'평소', icon:'◆'}, stress:{label:'스트레스', icon:'⚡'},
+            intimacy:{label:'친밀감', icon:'♥'}, conflict:{label:'갈등', icon:'🔥'},
+            loss:{label:'상실', icon:'◇'}
+        };
+        var _V39_SIT_AXES = [
+            {key:'emotion',name:'정서',color:'var(--axis-E)'},
+            {key:'drive',name:'추진',color:'var(--axis-C)'},
+            {key:'cognition',name:'인지',color:'var(--axis-T)'},
+            {key:'boundary',name:'개방',color:'var(--axis-O)'},
+            {key:'resilience',name:'회복',color:'var(--axis-X)'}
+        ];
+        var _v39SitData = null;
+        var _v39SitActive = null;
+
+        function renderV39Situational(ctx){
+            var cs = ctx.crossSituational;
+            var wrap = document.getElementById('v39SitWrap');
+            var empty = document.getElementById('v39SitEmpty');
+            if (!wrap || !empty) return;
+            if (!cs || typeof cs !== 'object') {
+                wrap.style.display = 'none'; empty.style.display = 'block'; return;
+            }
+            var available = _V39_SIT_ORDER.filter(function(k){
+                return cs[k] && cs[k].dataMode === 'measured';
+            });
+            if (!available.length) {
+                wrap.style.display = 'none'; empty.style.display = 'block'; return;
+            }
+            _v39SitData = cs;
+            _v39SitActive = available[0];
+
+            var tabsEl = document.getElementById('v39SitTabs');
+            if (tabsEl) {
+                tabsEl.innerHTML = _V39_SIT_ORDER.map(function(k){
+                    var m = _V39_SIT_META[k];
+                    var ok = available.indexOf(k) >= 0;
+                    var active = k === _v39SitActive;
+                    return '<div class="v39-sit-tab ' + k + (active?' on':'') + (ok?'':' dim') + '" ' +
+                        (ok?('onclick="selectV39SitTab(\'' + k + '\')"'):'') +
+                        ' data-sit="' + k + '">' +
+                        '<span>' + m.icon + '</span><span>' + m.label + '</span>' +
+                        '</div>';
+                }).join('');
+            }
+            _renderV39SitPanel(_v39SitActive);
+            wrap.style.display = 'block';
+            empty.style.display = 'none';
+        }
+
+        function selectV39SitTab(key){
+            if (!_v39SitData || !_v39SitData[key]) return;
+            _v39SitActive = key;
+            var tabs = document.querySelectorAll('#v39SitTabs .v39-sit-tab');
+            tabs.forEach(function(t){
+                var k = t.getAttribute('data-sit');
+                // 상황 클래스 유지 + on 토글
+                t.classList.toggle('on', k === key);
+            });
+            _renderV39SitPanel(key);
+        }
+
+        function _renderV39SitPanel(key){
+            var panelEl = document.getElementById('v39SitPanel');
+            if (!panelEl || !_v39SitData) return;
+            var e = _v39SitData[key];
+            if (!e) { panelEl.innerHTML = '<div class="v39-cross-empty">이 상황 데이터 없음.</div>'; return; }
+
+            var aI = e.a_identity || {}, bI = e.b_identity || {};
+            var conv = e.convergence || 'parallel';
+            var convLabel = {convergent:'가까워짐', parallel:'PARALLEL', divergent:'멀어짐'}[conv] || conv;
+
+            var aShift = e.a_shift || {}, bShift = e.b_shift || {};
+            function shiftTxt(s){
+                if (!s) return '—';
+                if (s.same) return '평소와 동일';
+                if (Array.isArray(s.diff_axes) && s.diff_axes.length) return s.diff_axes.join(' · ');
+                if (typeof s.diff_count === 'number') return s.diff_count + '축 이동';
+                return '이동 감지';
+            }
+            var aShiftTxt = shiftTxt(aShift);
+            var bShiftTxt = shiftTxt(bShift);
+
+            var synopsis = e.synopsis ? _v39Safe(e.synopsis) : '';
+            var defense = e.defense_clash;
+            var defenseTxt = defense ? (defense.desc || defense.type || '') : '';
+            var sitLabel = _V39_SIT_META[key].label;
+
+            var axesHTML = _V39_SIT_AXES.map(function(ax){
+                var d = e.axis_deltas && e.axis_deltas[ax.key];
+                if (!d) return '';
+                var aV = typeof d.a === 'number' ? d.a : 0.5;
+                var bV = typeof d.b === 'number' ? d.b : 0.5;
+                return '<div class="v39-sit-axis">' +
+                    '<div class="a-val">' + aV.toFixed(2) + '</div>' +
+                    '<div class="a-bar"><div class="fill" style="width:' + Math.round(aV * 100) + '%"></div></div>' +
+                    '<div class="k" style="color:' + ax.color + '">' + ax.name + '</div>' +
+                    '<div class="b-bar"><div class="fill" style="width:' + Math.round(bV * 100) + '%"></div></div>' +
+                    '<div class="b-val">' + bV.toFixed(2) + '</div>' +
+                '</div>';
+            }).join('');
+
+            panelEl.innerHTML =
+                (synopsis ? '<div class="v39-sit-synopsis">' + synopsis + '</div>' : '') +
+                '<div class="v39-sit-identities">' +
+                    '<div class="v39-sit-side a">' +
+                        '<div class="si-role">A · ' + sitLabel + ' 상황</div>' +
+                        '<div class="si-hero"><span class="si-emoji">' + _v39Safe(aI.emoji || '◆') + '</span>' +
+                            '<div class="si-name">' + _v39Safe(aI.name || aI.code || '—') + '</div></div>' +
+                        '<div class="si-shift">달라진 축: <b>' + _v39Safe(aShiftTxt) + '</b></div>' +
+                    '</div>' +
+                    '<div class="v39-sit-side b">' +
+                        '<div class="si-role">B · ' + sitLabel + ' 상황</div>' +
+                        '<div class="si-hero"><span class="si-emoji">' + _v39Safe(bI.emoji || '◆') + '</span>' +
+                            '<div class="si-name">' + _v39Safe(bI.name || bI.code || '—') + '</div></div>' +
+                        '<div class="si-shift">달라진 축: <b>' + _v39Safe(bShiftTxt) + '</b></div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="v39-sit-axes-wrap">' +
+                    '<div class="v39-sit-axes-header">5축 비교 · ' + sitLabel + ' (A 좌 ← → B 우)</div>' +
+                    axesHTML +
+                '</div>' +
+                '<div class="v39-sit-meta">' +
+                    '<span class="conv ' + conv + '">' + convLabel + '</span>' +
+                    (e.avgDistance != null ? '<span>평균 거리 ' + e.avgDistance.toFixed(2) + '</span>' : '') +
+                    (typeof e.a_sessionCount === 'number' ? '<span>A 세션 ' + e.a_sessionCount + '</span>' : '') +
+                    (typeof e.b_sessionCount === 'number' ? '<span>B 세션 ' + e.b_sessionCount + '</span>' : '') +
+                '</div>' +
+                (defenseTxt ? '<div class="v39-sit-defense"><strong>' + sitLabel + ' 방어 충돌</strong><div>' + _v39Safe(defenseTxt) + '</div></div>' : '');
+        }
+
+        // ── v4 M4 · 궤적 수렴성 (Canvas overlay) ──
+        // simA/simB trajectory 각 10-step × 5축 을 캔버스에 두 선으로 그림 (A 실선 · B 점선).
+        var _V39_CONV_AXES = [
+            { key:'E', color:'#EF4444' },
+            { key:'C', color:'#22D3EE' },
+            { key:'T', color:'#60A5FA' },
+            { key:'O', color:'#A78BFA' },
+            { key:'X', color:'#34D399' }
+        ];
+        function renderV39Convergence(ctx){
+            var simA = ctx.simulationA || {}, simB = ctx.simulationB || {};
+            var trajA = simA.trajectory && simA.trajectory.trajectory;
+            var trajB = simB.trajectory && simB.trajectory.trajectory;
+            var wrap = document.getElementById('v39ConvWrap');
+            var empty = document.getElementById('v39ConvEmpty');
+            if (!wrap || !empty) return;
+            if (!Array.isArray(trajA) || !Array.isArray(trajB) || trajA.length < 2 || trajB.length < 2) {
+                wrap.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            var canvas = document.getElementById('v39ConvCanvas');
+            if (!canvas) return;
+            var dpr = window.devicePixelRatio || 1;
+            var rect = canvas.getBoundingClientRect();
+            var cssW = rect.width > 0 ? rect.width : 720;
+            var cssH = 260;
+            canvas.width = Math.round(cssW * dpr);
+            canvas.height = Math.round(cssH * dpr);
+            canvas.style.height = cssH + 'px';
+            var c = canvas.getContext('2d');
+            c.setTransform(dpr, 0, 0, dpr, 0, 0);
+            c.clearRect(0, 0, cssW, cssH);
+
+            var pad = { t:16, r:16, b:26, l:40 };
+            var plotW = cssW - pad.l - pad.r;
+            var plotH = cssH - pad.t - pad.b;
+
+            // grid (4 horizontal)
+            c.strokeStyle = 'rgba(255,255,255,0.05)';
+            c.lineWidth = 1;
+            c.setLineDash([]);
+            for (var i = 0; i <= 4; i++) {
+                var y = pad.t + (i / 4) * plotH;
+                c.beginPath(); c.moveTo(pad.l, y); c.lineTo(pad.l + plotW, y); c.stroke();
+            }
+            // y axis labels (0, 0.5, 1)
+            c.fillStyle = 'rgba(255,255,255,0.3)';
+            c.font = '10px "JetBrains Mono", monospace';
+            c.textAlign = 'right';
+            c.fillText('1.0', pad.l - 6, pad.t + 4);
+            c.fillText('0.5', pad.l - 6, pad.t + plotH / 2 + 4);
+            c.fillText('0.0', pad.l - 6, pad.t + plotH + 4);
+            // x axis labels (step 0, 5, 10)
+            c.textAlign = 'center';
+            c.fillText('0', pad.l, pad.t + plotH + 16);
+            c.fillText('5', pad.l + plotW / 2, pad.t + plotH + 16);
+            c.fillText('10', pad.l + plotW, pad.t + plotH + 16);
+
+            var nA = trajA.length;
+            var nB = trajB.length;
+            _V39_CONV_AXES.forEach(function(ax){
+                // A solid
+                c.strokeStyle = ax.color;
+                c.lineWidth = 1.8;
+                c.setLineDash([]);
+                c.globalAlpha = 0.85;
+                c.beginPath();
+                trajA.forEach(function(pt, i){
+                    var v = pt[ax.key];
+                    if (typeof v !== 'number') return;
+                    var x = pad.l + (i / (nA - 1)) * plotW;
+                    var y = pad.t + (1 - Math.max(0, Math.min(1, v))) * plotH;
+                    if (i === 0) c.moveTo(x, y); else c.lineTo(x, y);
+                });
+                c.stroke();
+                // B dashed
+                c.setLineDash([4, 3]);
+                c.globalAlpha = 0.85;
+                c.beginPath();
+                trajB.forEach(function(pt, i){
+                    var v = pt[ax.key];
+                    if (typeof v !== 'number') return;
+                    var x = pad.l + (i / (nB - 1)) * plotW;
+                    var y = pad.t + (1 - Math.max(0, Math.min(1, v))) * plotH;
+                    if (i === 0) c.moveTo(x, y); else c.lineTo(x, y);
+                });
+                c.stroke();
+            });
+            c.setLineDash([]);
+            c.globalAlpha = 1;
+
+            // judgment
+            var cross = ctx.crossSim || {};
+            var conv = cross.convergence || 'parallel';
+            var judgEl = document.getElementById('v39ConvJudgment');
+            if (judgEl) {
+                var labelMap = {
+                    convergent: { label:'가까워짐', desc:'두 궤적이 시간이 갈수록 수렴. 상호 이해가 깊어지는 구조.' },
+                    parallel:   { label:'PARALLEL', desc:'두 궤적이 교차하지 않고 일정 거리를 유지. "같이 움직이지만 거리는 그대로".' },
+                    divergent:  { label:'멀어짐', desc:'시간이 갈수록 궤적 간격이 벌어짐. 교착 위험 구간.' }
+                };
+                var m = labelMap[conv] || { label: conv, desc: '' };
+                judgEl.innerHTML = '<span class="type ' + conv + '">' + m.label + '</span>' + _v39Safe(m.desc);
+            }
+
+            wrap.style.display = 'block';
+            empty.style.display = 'none';
+        }
+
+        // ── v4 M9 · 회복 속도 차이 ──
+        function renderV39Recovery(ctx){
+            var cross = ctx.crossSim || {};
+            var rm = cross.recoveryMismatch;
+            var wrap = document.getElementById('v39RecoveryWrap');
+            var empty = document.getElementById('v39RecoveryEmpty');
+            if (!wrap || !empty) return;
+            var delta = null, desc = '';
+            if (rm) {
+                if (typeof rm === 'number') delta = rm;
+                else if (typeof rm === 'object') { delta = rm.delta; desc = rm.desc || ''; }
+            }
+            if (delta == null || !Number.isFinite(delta)) {
+                wrap.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+            var num = document.getElementById('v39RecoveryNum');
+            var lbl = document.getElementById('v39RecoveryLabel');
+            var d = document.getElementById('v39RecoveryDesc');
+            if (num) num.textContent = delta.toFixed(2);
+            if (lbl) {
+                var level = delta >= 1.2 ? '차이: 큼' : delta >= 0.5 ? '차이: 중간' : '차이: 작음';
+                lbl.textContent = level;
+            }
+            if (d) d.textContent = desc || '회복 속도 격차가 "언제 대화를 재개할지" 타이밍 갈등으로 이어질 수 있습니다.';
+            wrap.style.display = 'grid';
+            empty.style.display = 'none';
+        }
+
+        // ── v4 M10 · 공통 관심사 (Topic Overlap) ──
+        var _V39_TOPIC_LABELS = {
+            technology:'기술', relationships:'관계', daily_life:'일상', philosophy:'철학',
+            entertainment:'엔터테인먼트', work:'일', health:'건강', finance:'돈',
+            art_culture:'예술·문화', sports:'스포츠', food:'음식', travel:'여행',
+            education:'교육', politics_society:'정치·사회', nature_science:'자연·과학',
+            psychology:'심리', humor:'유머', other:'기타'
+        };
+        function _v39TopicChip(name, cls){
+            var label = _V39_TOPIC_LABELS[name] || name;
+            return '<span class="v39-topic-chip ' + cls + '">' + _v39Safe(label) + '</span>';
+        }
+        function renderV39Topic(ctx){
+            var cross = ctx.crossSim || {};
+            var ov = cross.topicOverlap;
+            var wrap = document.getElementById('v39TopicWrap');
+            var empty = document.getElementById('v39TopicEmpty');
+            var descEl = document.getElementById('v39TopicDesc');
+            if (!wrap || !empty) return;
+            if (!ov || typeof ov.jaccard !== 'number' || !Number.isFinite(ov.jaccard)) {
+                wrap.style.display = 'none';
+                empty.style.display = 'block';
+                if (descEl) descEl.style.display = 'none';
+                return;
+            }
+            var pctEl = document.getElementById('v39TopicJaccardPct');
+            if (pctEl) pctEl.textContent = Math.round(ov.jaccard * 100) + '%';
+
+            var chipsEl = document.getElementById('v39TopicChips');
+            if (chipsEl) {
+                var shared = Array.isArray(ov.shared) ? ov.shared : [];
+                var uniqA = Array.isArray(ov.uniqueA) ? ov.uniqueA : [];
+                var uniqB = Array.isArray(ov.uniqueB) ? ov.uniqueB : [];
+                var rows = '';
+                if (shared.length) rows += '<div class="v39-topic-row"><div class="tr-label shared">공통</div><div class="tr-list">' + shared.map(function(t){ return _v39TopicChip(t,'shared'); }).join('') + '</div></div>';
+                if (uniqA.length) rows += '<div class="v39-topic-row"><div class="tr-label a">A만</div><div class="tr-list">' + uniqA.map(function(t){ return _v39TopicChip(t,'a'); }).join('') + '</div></div>';
+                if (uniqB.length) rows += '<div class="v39-topic-row"><div class="tr-label b">B만</div><div class="tr-list">' + uniqB.map(function(t){ return _v39TopicChip(t,'b'); }).join('') + '</div></div>';
+                chipsEl.innerHTML = rows;
+            }
+            if (descEl) {
+                if (ov.desc) {
+                    descEl.textContent = ov.desc;
+                    descEl.style.display = 'block';
+                } else {
+                    descEl.style.display = 'none';
+                }
+            }
+            wrap.style.display = 'grid';
+            empty.style.display = 'none';
+        }
+
+        // ── v4 M11 · 공유 위험 ──
+        function renderV39SharedRisks(ctx){
+            var cross = ctx.crossSim || {};
+            var arr = Array.isArray(cross.sharedRisks) ? cross.sharedRisks : [];
+            var listEl = document.getElementById('v39SharedRisksList');
+            var empty = document.getElementById('v39SharedRisksEmpty');
+            if (!listEl || !empty) return;
+            if (arr.length === 0) {
+                listEl.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+            listEl.innerHTML = arr.map(function(r){
+                var text = typeof r === 'string' ? r : (r.desc || r.name || JSON.stringify(r));
+                return '<div class="v39-shared-risk-item">' + _v39Safe(text) + '</div>';
+            }).join('');
+            listEl.style.display = 'flex';
+            empty.style.display = 'none';
+        }
+
+        // ── v4 M7/M8 · 애착·갈등 교차 유형 한글 매핑 ──
+        var _V39_ATTACH_LABELS = {
+            anchor_seeker:'닻 역할', stable_pair:'안정 한 쌍', patience_test:'인내의 시간',
+            mutual_spiral:'상호 증폭', pursuit_withdrawal:'밀고 당기기', parallel_isolation:'나란히 고립',
+            double_chaos:'이중 혼돈', secure_anchor:'닻 역할'
+        };
+        var _V39_CONFLICT_LABELS = {
+            speed_gap:'속도 차이', head_on:'정면 대립', soft_wall:'부드러운 벽',
+            frozen_conflict:'얼어붙은 갈등', wall_punch:'벽을 때리기', mirror_storm:'거울 폭주'
+        };
+
+        // ── v4 M7 · 애착 교차 ──
+        function renderV39AttachCross(ctx){
+            var cross = ctx.crossSim || {};
+            var ac = cross.attachmentCross || null;
+            var active = document.getElementById('v39AttachCrossActive');
+            var empty = document.getElementById('v39AttachCrossEmpty');
+            if (!active || !empty) return;
+            if (!ac || (!ac.type && !ac.desc)) {
+                active.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+            var type = ac.type || '';
+            var label = _V39_ATTACH_LABELS[type] || type || '교차 유형';
+            var lblEl = document.getElementById('v39AttachCrossLabel');
+            if (lblEl) lblEl.innerHTML = '◆ 이 관계는 "' + _v39Safe(label) + '" 조합';
+            var aT = document.getElementById('v39AttachATend');
+            var bT = document.getElementById('v39AttachBTend');
+            if (aT) aT.textContent = ac.a_tendency || '—';
+            if (bT) bT.textContent = ac.b_tendency || '—';
+            var descEl = document.getElementById('v39AttachDesc');
+            if (descEl) descEl.innerHTML = ac.desc ? _v39Safe(ac.desc) : '';
+            active.style.display = 'block';
+            empty.style.display = 'none';
+        }
+
+        // ── v4 M8 · 갈등 교차 ──
+        function renderV39ConflictCross(ctx){
+            var cross = ctx.crossSim || {};
+            var cc = cross.conflictCross || null;
+            var active = document.getElementById('v39ConflictCrossActive');
+            var empty = document.getElementById('v39ConflictCrossEmpty');
+            if (!active || !empty) return;
+            if (!cc || (!cc.type && !cc.desc)) {
+                active.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+            var type = cc.type || '';
+            var label = _V39_CONFLICT_LABELS[type] || type || '교차 유형';
+            var lblEl = document.getElementById('v39ConflictCrossLabel');
+            if (lblEl) lblEl.innerHTML = '◆ 이 관계는 "' + _v39Safe(label) + '" 조합';
+            var scoreEl = document.getElementById('v39ConflictCrossScore');
+            if (scoreEl) {
+                if (typeof cc.score === 'number' && Number.isFinite(cc.score)) {
+                    scoreEl.textContent = '강도 ' + cc.score.toFixed(2);
+                    scoreEl.style.display = 'inline-block';
+                } else {
+                    scoreEl.style.display = 'none';
+                }
+            }
+            var descEl = document.getElementById('v39ConflictDesc');
+            if (descEl) descEl.innerHTML = cc.desc ? _v39Safe(cc.desc) : '';
+            active.style.display = 'block';
+            empty.style.display = 'none';
+        }
+
+        // ── v4 M6 · 방어 충돌 (2026-04-23) ──
+        function renderV39Defense(ctx){
+            var cross = ctx.crossSim || {};
+            var clash = cross.defenseClash || {};
+            var simA = ctx.simulationA || {}, simB = ctx.simulationB || {};
+            var defA = (simA && simA.defense) || {};
+            var defB = (simB && simB.defense) || {};
+
+            var aName = document.getElementById('v39DefAName');
+            var aCode = document.getElementById('v39DefACode');
+            var bName = document.getElementById('v39DefBName');
+            var bCode = document.getElementById('v39DefBCode');
+            if (aName) aName.textContent = defA.name || '—';
+            if (aCode) aCode.textContent = defA.code || '';
+            if (bName) bName.textContent = defB.name || '—';
+            if (bCode) bCode.textContent = defB.code || '';
+
+            var sevEl = document.getElementById('v39DefSeverity');
+            if (sevEl) {
+                if (clash.severity) {
+                    var sevMap = { high:'심각도 · 높음', medium:'심각도 · 중간', low:'심각도 · 낮음' };
+                    var sev = String(clash.severity).toLowerCase();
+                    sevEl.textContent = sevMap[sev] || '심각도 · ' + clash.severity;
+                    sevEl.className = 'v39-def-severity ' + sev;
+                    sevEl.style.display = 'inline-block';
+                } else {
+                    sevEl.style.display = 'none';
+                }
+            }
+
+            var descEl = document.getElementById('v39DefDesc');
+            if (descEl) {
+                if (clash.desc) {
+                    descEl.innerHTML = _v39Safe(clash.desc);
+                } else if (clash.type) {
+                    descEl.textContent = '방어 패턴 "' + _v39Safe(clash.type) + '" 감지.';
+                } else if (!defA.name && !defB.name) {
+                    descEl.textContent = '방어 데이터가 충분하지 않습니다.';
+                } else {
+                    descEl.textContent = '두 사람의 방어 패턴이 직접 충돌하지 않는 조합입니다.';
+                }
+            }
+        }
+
+        // ── v4 M2 · 호환도 상세 (2026-04-23) ──
+        // compatDetail 4 필드를 바 형태로. lsm 만 "일치도"(1-friction), 나머지는 "차이"(friction).
+        function renderV39Compat(ctx){
+            var cd = ctx.compatDetail || {};
+            function setFric(idSuffix, val){
+                var fill = document.getElementById('v39FricFill' + idSuffix);
+                var valEl = document.getElementById('v39FricVal' + idSuffix);
+                if (val == null || !Number.isFinite(val)) {
+                    if (fill) fill.style.width = '0%';
+                    if (valEl) valEl.textContent = '—';
+                    return;
+                }
+                var pct = Math.max(0, Math.min(1, val)) * 100;
+                if (fill) fill.style.width = pct.toFixed(1) + '%';
+                if (valEl) valEl.textContent = val.toFixed(2);
+            }
+            setFric('Intensity', cd.intensity_friction);
+            setFric('Structural', cd.structural_friction);
+            // lsm: "일치도" = 1 - lsm_friction. lsm_friction=null 이면 lsm 도 null (Sprint 0 fallback).
+            var lsmFriction = cd.lsm_friction;
+            var lsmMatch = (lsmFriction == null || !Number.isFinite(lsmFriction)) ? null : (1 - lsmFriction);
+            setFric('Lsm', lsmMatch);
+            setFric('Total', cd.total_friction);
         }
 
         // ── 01 · VERDICT ──
@@ -11532,6 +12458,32 @@ function displayResult() {
                 }
                 chipsEl.innerHTML = chips;
             }
+
+            // v4 M1: essay + growth/risk zones (있으면 표시, 없으면 숨김)
+            var essayEl = document.getElementById('v39MiEssay');
+            if (essayEl) {
+                var essay = mi.essay || '';
+                if (essay) {
+                    essayEl.innerHTML = _v39Safe(essay).replace(/\n/g, '<br>');
+                    essayEl.style.display = 'block';
+                } else {
+                    essayEl.style.display = 'none';
+                }
+            }
+            var zonesEl = document.getElementById('v39MiZones');
+            var growthZones = Array.isArray(mi.growth_zones) ? mi.growth_zones : [];
+            var riskZones = Array.isArray(mi.risk_zones) ? mi.risk_zones : [];
+            if (zonesEl) {
+                if (growthZones.length > 0 || riskZones.length > 0) {
+                    var gEl = document.getElementById('v39MiGrowth');
+                    var rEl = document.getElementById('v39MiRisk');
+                    if (gEl) gEl.innerHTML = growthZones.map(function(g){ return '<li>' + _v39Safe(g) + '</li>'; }).join('');
+                    if (rEl) rEl.innerHTML = riskZones.map(function(r){ return '<li>' + _v39Safe(r) + '</li>'; }).join('');
+                    zonesEl.style.display = 'grid';
+                } else {
+                    zonesEl.style.display = 'none';
+                }
+            }
         }
 
         // ── 02 · THE MAP ──
@@ -11599,6 +12551,19 @@ function displayResult() {
                 var twoCore = rows.slice(0,2).map(function(r){ return r.ax.sub; }).join(' + ');
                 cap.innerHTML = '총 격차 <b>' + totalGap.toFixed(2) + '</b> · 핵심 충돌축은 <b>' + _v39Safe(twoCore) + '</b>.';
             }
+
+            // v4 M3: 축 거리 메타 요약 (평균/가까운/먼/총)
+            var avgGap = rows.length ? totalGap / rows.length : 0;
+            var closest = rows.length ? rows[rows.length - 1] : null;
+            var farthest = rows.length ? rows[0] : null;
+            var mAvg = document.getElementById('v39MapMetaAvg');
+            var mClose = document.getElementById('v39MapMetaClosest');
+            var mFar = document.getElementById('v39MapMetaFarthest');
+            var mTot = document.getElementById('v39MapMetaTotal');
+            if (mAvg) mAvg.textContent = avgGap.toFixed(2);
+            if (mClose && closest) mClose.textContent = closest.ax.sub + ' (' + closest.gap.toFixed(2) + ')';
+            if (mFar && farthest) mFar.textContent = farthest.ax.sub + ' (' + farthest.gap.toFixed(2) + ')';
+            if (mTot) mTot.textContent = totalGap.toFixed(2);
 
             // Attachment plot
             renderV39AttachPlot(ctx);
@@ -11803,6 +12768,30 @@ function displayResult() {
                     loopWrap.style.display = '';
                 } else {
                     loopWrap.style.display = 'none';
+                }
+            }
+
+            // v4 M5: 추가 loops (2번째 이후) — type 라벨 + desc 전문
+            var moreWrap = document.getElementById('v39LoopsMore');
+            if (moreWrap) {
+                var allLoops = (cross.triggerLoops && Array.isArray(cross.triggerLoops)) ? cross.triggerLoops : [];
+                if (allLoops.length > 1) {
+                    var moreList = document.getElementById('v39LoopsMoreList');
+                    if (moreList) {
+                        var moreHtml = '';
+                        allLoops.slice(1).forEach(function(l){
+                            var t = l.label || l.type || '반복 고리';
+                            var d = l.desc || '';
+                            moreHtml += '<div class="v39-loops-more-item">' +
+                                '<div class="lmi-type">' + _v39Safe(t) + '</div>' +
+                                (d ? '<div class="lmi-desc">' + _v39Safe(d) + '</div>' : '') +
+                            '</div>';
+                        });
+                        moreList.innerHTML = moreHtml;
+                    }
+                    moreWrap.style.display = '';
+                } else {
+                    moreWrap.style.display = 'none';
                 }
             }
         }
@@ -12109,13 +13098,13 @@ function displayResult() {
                     messages = await parseFile(file);
                 }
 
-                // v3.8.16: 로컬 스텁 호출 제거. 서버가 /match 요청 시 axes/identity/fwp 모두 재계산.
+                // v3.9.21: 매칭 파트너 파일 로드 시 FWP 즉시 계산 (분석 없이 매칭만 할 수 있으므로).
                 matchProfile = {
                     rates: null,
                     axes: null,
                     identity: null,
                     messages,
-                    functionWordProfile: null,
+                    functionWordProfile: computeFunctionWordProfile(messages),
                     timestamp: new Date().toISOString()
                 };
 

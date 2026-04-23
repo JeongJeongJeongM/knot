@@ -13497,8 +13497,9 @@ function switchTab(id, el) {
                   JSON.stringify(effectiveMatchIdentity),
                   fullText,
                   sectionsJson,
-                  JSON.stringify({ axes: profileA.axes || profileA }),
-                  JSON.stringify({ axes: profileB.axes || profileB }),
+                  // v3.9.21: identity 도 저장. 이전엔 axes 만 → 복구 시 '식별 불가' placeholder.
+                  JSON.stringify({ axes: profileA.axes || profileA, identity: identityA || null }),
+                  JSON.stringify({ axes: profileB.axes || profileB, identity: identityB || null }),
                   prismA ? JSON.stringify(prismA) : null,
                   prismB ? JSON.stringify(prismB) : null,
                   anchorA ? JSON.stringify(anchorA) : null,
