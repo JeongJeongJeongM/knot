@@ -12746,6 +12746,46 @@ function displayResult() {
                     if (matchUpload) matchUpload.style.display = 'none';
                     var matchShareSection = document.getElementById('matchSection4');
                     if (matchShareSection) matchShareSection.style.display = 'none';
+
+                    // v3.9.12: 공유 뷰도 v39 5-섹션 renderer 호출 (이전엔 레거시만 불러서
+                    //   share 뷰가 v39 UI 에서 완전 빈 화면으로 나왔음).
+                    try {
+                        var _simA = profile.simulationA || (pA && pA.simulation) || null;
+                        var _simB = profile.simulationB || (pB && pB.simulation) || null;
+                        renderV39All({
+                            idA: idA,
+                            idB: idB,
+                            matchIdentity: mi,
+                            axesA: axesA,
+                            axesB: axesB,
+                            compatDetail: profile.compatDetail || null,
+                            crossSim: profile.crossSim || null,
+                            crossSituational: profile.crossSituational || null,
+                            prismA: profile.prismA || null,
+                            prismB: profile.prismB || null,
+                            anchorA: profile.anchorA || null,
+                            anchorB: profile.anchorB || null,
+                            simulationA: _simA,
+                            simulationB: _simB,
+                            sections: profile.sections || [],
+                            profileA: { axes: axesA, identity: idA },
+                            profileB: { axes: axesB, identity: idB }
+                        });
+                    } catch (e) { console.error('[Share v39 render]', e); }
+
+                    // 공유 뷰에서도 sticky/sideNav 보이게 (단, "파트너에게 보내기" 버튼 의미 없으니 숨김)
+                    try {
+                        var _shareSticky = document.getElementById('v39Sticky');
+                        if (_shareSticky) {
+                            _shareSticky.classList.add('visible');
+                            // 공유 뷰: 두 번째 버튼 (파트너에게 보내기) 숨김
+                            var btns = _shareSticky.querySelectorAll('button');
+                            if (btns.length >= 2) btns[1].style.display = 'none';
+                        }
+                        var _shareSideNav = document.getElementById('matchSideNav');
+                        if (_shareSideNav) _shareSideNav.classList.add('visible');
+                    } catch(e){}
+
                     showScreen('match');
                     initMatchScrollAnimations();
                 } else {
