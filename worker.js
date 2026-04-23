@@ -11770,7 +11770,7 @@ export default {
         }
         try {
           const rows = await db.prepare(
-            `SELECT a.id, a.type_code, a.type_name, a.tagline, a.axis_fs, a.axis_ah, a.axis_tr, a.axis_ow, a.axis_xv, a.axis_ei, a.axes_json, a.identity_json, a.simulation_json, a.prism_json, a.anchor_json, a.message_count, a.created_at, e.sections_json, e.essay_text
+            `SELECT a.id, a.type_code, a.type_name, a.tagline, a.axis_fs, a.axis_ah, a.axis_tr, a.axis_ow, a.axis_xv, a.axis_ei, a.axes_json, a.identity_json, a.simulation_json, a.prism_json, a.anchor_json, a.fwp_json, a.message_count, a.created_at, e.sections_json, e.essay_text
              FROM analyses a
              LEFT JOIN essays e ON e.analysis_id = a.id
              WHERE a.user_id = ? AND a.status = 'complete'
@@ -11806,6 +11806,7 @@ export default {
             simulation: (() => { try { return r.simulation_json ? JSON.parse(r.simulation_json) : null; } catch { return null; } })(),
             prism: (() => { try { return r.prism_json ? JSON.parse(r.prism_json) : null; } catch { return null; } })(),
             anchor: (() => { try { return r.anchor_json ? JSON.parse(r.anchor_json) : null; } catch { return null; } })(),
+            fwp: (() => { try { return r.fwp_json ? JSON.parse(r.fwp_json) : null; } catch { return null; } })(),
             sections: (() => {
               // Try sections_json first
               if (r.sections_json) {
@@ -12418,7 +12419,7 @@ function switchTab(id, el) {
       try {
         // 최신 complete 분석 1건 (7일 이내)
         const row = await env.KNOT_DB.prepare(
-          `SELECT a.id, a.type_code, a.type_name, a.tagline, a.axes_json, a.identity_json, a.prism_json, a.anchor_json, a.simulation_json, a.message_count, a.status, a.created_at,
+          `SELECT a.id, a.type_code, a.type_name, a.tagline, a.axes_json, a.identity_json, a.prism_json, a.anchor_json, a.simulation_json, a.fwp_json, a.message_count, a.status, a.created_at,
                   e.sections_json, e.essay_text
            FROM analyses a
            LEFT JOIN essays e ON e.analysis_id = a.id
@@ -12441,12 +12442,13 @@ function switchTab(id, el) {
         }
 
         // complete — 전체 결과 반환
-        let axes = null, identity = null, prism = null, anchor = null, simulation = null, sections = null;
+        let axes = null, identity = null, prism = null, anchor = null, simulation = null, fwp = null, sections = null;
         try { axes = row.axes_json ? JSON.parse(row.axes_json) : null; } catch {}
         try { identity = row.identity_json ? JSON.parse(row.identity_json) : null; } catch {}
         try { prism = row.prism_json ? JSON.parse(row.prism_json) : null; } catch {}
         try { anchor = row.anchor_json ? JSON.parse(row.anchor_json) : null; } catch {}
         try { simulation = row.simulation_json ? JSON.parse(row.simulation_json) : null; } catch {}
+        try { fwp = row.fwp_json ? JSON.parse(row.fwp_json) : null; } catch {}
         try { sections = row.sections_json ? JSON.parse(row.sections_json) : null; } catch {}
 
         // sections 없으면 essay_text에서 파싱 시도
@@ -12472,6 +12474,7 @@ function switchTab(id, el) {
             prism,
             anchor,
             simulation,
+            fwp,
             sections,
             message_count: row.message_count,
           }
@@ -12855,18 +12858,31 @@ function switchTab(id, el) {
                 }
 
                 // v3.8.17: legacy DB 에 simulation_json 없을 수 있음 — isolate 1회 ALTER 시도
+                // v3.9.33: fwp_json 컬럼도 동일 패턴으로 추가 (LSM 재계산용 기능어 프로필)
                 if (!globalThis.__kg_analyses_schema_ready) {
-                  try { await env.KNOT_DB.prepare(`ALTER TABLE analyses ADD COLUMN simulation_json TEXT`).run(); }
-                  catch (e) {
-                    const msg = (e && e.message) || '';
-                    if (!/duplicate column|already exists/i.test(msg)) console.error('[D1 ALTER analyses.simulation_json]', msg);
+                  for (const colDef of ['simulation_json TEXT', 'fwp_json TEXT']) {
+                    try { await env.KNOT_DB.prepare(`ALTER TABLE analyses ADD COLUMN ${colDef}`).run(); }
+                    catch (e) {
+                      const msg = (e && e.message) || '';
+                      if (!/duplicate column|already exists/i.test(msg)) console.error(`[D1 ALTER analyses.${colDef.split(' ')[0]}]`, msg);
+                    }
                   }
                   globalThis.__kg_analyses_schema_ready = true;
                 }
 
+                // v3.9.33: 기능어 프로필 계산 — 이후 매칭 시 raw messages 없이도 LSM 계산 가능
+                let fwpJson = null;
+                try {
+                  if (Array.isArray(rawMessages) && rawMessages.length > 0 && typeof computeFunctionWordProfile === 'function') {
+                    const fwp = computeFunctionWordProfile(rawMessages);
+                    if (fwp) fwpJson = JSON.stringify(fwp);
+                  }
+                } catch (e) { console.error('[D1 FWP compute]', e.message); }
+
                 // v3.8.17: simulation_json 컬럼 포함 — 기존엔 INSERT 에서 drop → 리로드 시 시뮬 유실
+                // v3.9.33: fwp_json 컬럼 추가
                 await env.KNOT_DB.prepare(
-                  `INSERT INTO analyses (id, user_id, type_code, type_name, tagline, axis_fs, axis_ah, axis_tr, axis_ow, axis_xv, axis_ei, axes_json, prism_json, anchor_json, identity_json, simulation_json, message_count, input_format, original_count, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scoring', datetime('now'))`
+                  `INSERT INTO analyses (id, user_id, type_code, type_name, tagline, axis_fs, axis_ah, axis_tr, axis_ow, axis_xv, axis_ei, axes_json, prism_json, anchor_json, identity_json, simulation_json, message_count, input_format, original_count, fwp_json, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scoring', datetime('now'))`
                 ).bind(
                   analysisId,
                   userId,
@@ -12886,7 +12902,8 @@ function switchTab(id, el) {
                   simulation ? JSON.stringify(simulation) : null,
                   rawMessages.length,
                   preprocessed.format || null,
-                  preprocessed.originalCount || null
+                  preprocessed.originalCount || null,
+                  fwpJson
                 ).run();
                 analysisInserted = true;
 
