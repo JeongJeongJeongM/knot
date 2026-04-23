@@ -4638,15 +4638,22 @@
         .v39-sit-defense{margin-top:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:rgba(239,68,68,0.05);border-left:3px solid var(--state-risk);border-radius:0 var(--r-md) var(--r-md) 0;font-size:var(--fs-xs);color:rgba(255,255,255,0.75);line-height:var(--lh-loose)}
         .v39-sit-defense strong{color:#FCA5A5;font-weight:600;display:block;margin-bottom:3px}
 
-        /* v4 M4 — 궤적 수렴성 (Canvas) */
-        .v39-conv-wrap{max-width:760px;margin:0 auto;padding:var(--sp-4);background:var(--sf-1);border:1px solid var(--sf-2);border-radius:var(--r-md)}
-        .v39-conv-wrap canvas{display:block;width:100%;height:auto;max-height:260px}
-        .v39-conv-legend{display:flex;flex-wrap:wrap;gap:var(--sp-3);justify-content:center;margin-top:var(--sp-3);font-size:var(--fs-xxs);color:rgba(255,255,255,0.6)}
-        .v39-conv-legend span{display:inline-flex;align-items:center;gap:var(--sp-1)}
-        .v39-conv-legend .ln{display:inline-block;width:16px;height:2px;border-radius:1px}
-        .v39-conv-legend .ln.dash{background:repeating-linear-gradient(90deg,rgba(255,255,255,0.6) 0,rgba(255,255,255,0.6) 3px,transparent 3px,transparent 6px) !important}
-        .v39-conv-legend .sep{color:rgba(255,255,255,0.2)}
-        .v39-conv-judgment{margin-top:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:var(--sf-2);border-radius:var(--r-sm);font-size:var(--fs-sm);color:rgba(255,255,255,0.72);line-height:var(--lh-loose)}
+        /* v4 M4 — 궤적 수렴성 (Small multiples, v3.9.35 재설계) */
+        .v39-conv-wrap{max-width:760px;margin:0 auto}
+        .v39-conv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-bottom:var(--sp-3)}
+        @media(max-width:700px){.v39-conv-grid{grid-template-columns:repeat(2,1fr)}}
+        @media(max-width:400px){.v39-conv-grid{grid-template-columns:1fr}}
+        .v39-conv-sc{background:var(--sf-1);border:1px solid var(--sf-2);border-radius:var(--r-sm);padding:var(--sp-3)}
+        .v39-conv-sc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-2);gap:var(--sp-1)}
+        .v39-conv-sc-name{font-size:var(--fs-xs);font-weight:700;display:inline-flex;align-items:center;gap:6px;color:#fff}
+        .v39-conv-sc-name .dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+        .v39-conv-sc-drift{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.5);white-space:nowrap}
+        .v39-conv-sc svg{display:block;width:100%;height:60px}
+        .v39-conv-legend-card{background:var(--sf-1);border:1px dashed var(--sf-2);border-radius:var(--r-sm);padding:var(--sp-3);display:flex;flex-direction:column;justify-content:center;font-size:var(--fs-xxs);color:rgba(255,255,255,0.55);font-family:'JetBrains Mono',monospace;gap:4px}
+        .v39-conv-legend-card .lg-row{display:flex;align-items:center;gap:6px}
+        .v39-conv-legend-card .ln{width:16px;height:2px;border-radius:1px;background:rgba(255,255,255,0.6);flex-shrink:0}
+        .v39-conv-legend-card .ln.dash{background:repeating-linear-gradient(90deg,rgba(255,255,255,0.6) 0,rgba(255,255,255,0.6) 3px,transparent 3px,transparent 6px)}
+        .v39-conv-judgment{padding:var(--sp-3) var(--sp-4);background:var(--sf-2);border-radius:var(--r-sm);font-size:var(--fs-sm);color:rgba(255,255,255,0.72);line-height:var(--lh-loose)}
         .v39-conv-judgment .type{font-size:var(--fs-md);font-weight:700;margin-right:var(--sp-2)}
         .v39-conv-judgment .type.convergent{color:var(--state-growth)}
         .v39-conv-judgment .type.parallel{color:var(--ac)}
@@ -5472,19 +5479,9 @@
                   <div class="result-section-inner">
                     <div class="v39-meta">움직이는 방향 · <span class="dim">TRAJECTORY CONVERGENCE</span></div>
                     <h2 class="v39-title">10단계 대화 시뮬레이션에서 두 사람의 5축이 어떻게 변하는가</h2>
-                    <p class="v39-subtitle">A 실선 · B 점선. 가까워짐 / PARALLEL / 멀어짐 — 세 방향 중 하나.</p>
+                    <p class="v39-subtitle">5축 각각 A 실선 · B 점선. 가까워짐 / PARALLEL / 멀어짐 — 세 방향 중 하나.</p>
                     <div class="v39-conv-wrap" id="v39ConvWrap" style="display:none">
-                        <canvas id="v39ConvCanvas" width="760" height="260"></canvas>
-                        <div class="v39-conv-legend">
-                            <span><i class="ln solid" style="background:var(--axis-E)"></i>정서</span>
-                            <span><i class="ln solid" style="background:var(--axis-C)"></i>추진</span>
-                            <span><i class="ln solid" style="background:var(--axis-T)"></i>인지</span>
-                            <span><i class="ln solid" style="background:var(--axis-O)"></i>개방</span>
-                            <span><i class="ln solid" style="background:var(--axis-X)"></i>회복</span>
-                            <span class="sep">|</span>
-                            <span><i class="ln solid" style="background:rgba(255,255,255,0.6)"></i>A (실선)</span>
-                            <span><i class="ln dash" style="background:rgba(255,255,255,0.6)"></i>B (점선)</span>
-                        </div>
+                        <div class="v39-conv-grid" id="v39ConvGrid"></div>
                         <div class="v39-conv-judgment" id="v39ConvJudgment"></div>
                     </div>
                     <div class="v39-cross-empty" id="v39ConvEmpty">10단계 시뮬레이션 데이터가 부족합니다.</div>
@@ -12028,14 +12025,15 @@ function displayResult() {
                 (defenseTxt ? '<div class="v39-sit-defense"><strong>' + sitLabel + ' 방어 충돌</strong><div>' + _v39Safe(defenseTxt) + '</div></div>' : '');
         }
 
-        // ── v4 M4 · 궤적 수렴성 (Canvas overlay) ──
-        // simA/simB trajectory 각 10-step × 5축 을 캔버스에 두 선으로 그림 (A 실선 · B 점선).
+        // ── v4 M4 · 궤적 수렴성 (Small multiples, v3.9.35) ──
+        // simA/simB trajectory 10-step × 5축 을 5개 독립 미니 SVG 로 분할.
+        // 한 카드 안에는 A 실선 / B 점선 2개만 → 겹침 제거, 축별 디테일 선명.
         var _V39_CONV_AXES = [
-            { key:'E', color:'#EF4444' },
-            { key:'C', color:'#22D3EE' },
-            { key:'T', color:'#60A5FA' },
-            { key:'O', color:'#A78BFA' },
-            { key:'X', color:'#34D399' }
+            { key:'E', name:'정서', color:'#EF4444' },
+            { key:'C', name:'추진', color:'#22D3EE' },
+            { key:'T', name:'인지', color:'#60A5FA' },
+            { key:'O', name:'개방', color:'#A78BFA' },
+            { key:'X', name:'회복', color:'#34D399' }
         ];
         function renderV39Convergence(ctx){
             var simA = ctx.simulationA || {}, simB = ctx.simulationB || {};
@@ -12043,85 +12041,64 @@ function displayResult() {
             var trajB = simB.trajectory && simB.trajectory.trajectory;
             var wrap = document.getElementById('v39ConvWrap');
             var empty = document.getElementById('v39ConvEmpty');
-            if (!wrap || !empty) return;
+            var grid = document.getElementById('v39ConvGrid');
+            if (!wrap || !empty || !grid) return;
             if (!Array.isArray(trajA) || !Array.isArray(trajB) || trajA.length < 2 || trajB.length < 2) {
                 wrap.style.display = 'none';
                 empty.style.display = 'block';
                 return;
             }
 
-            var canvas = document.getElementById('v39ConvCanvas');
-            if (!canvas) return;
-            var dpr = window.devicePixelRatio || 1;
-            var rect = canvas.getBoundingClientRect();
-            var cssW = rect.width > 0 ? rect.width : 720;
-            var cssH = 260;
-            canvas.width = Math.round(cssW * dpr);
-            canvas.height = Math.round(cssH * dpr);
-            canvas.style.height = cssH + 'px';
-            var c = canvas.getContext('2d');
-            c.setTransform(dpr, 0, 0, dpr, 0, 0);
-            c.clearRect(0, 0, cssW, cssH);
-
-            var pad = { t:16, r:16, b:26, l:40 };
-            var plotW = cssW - pad.l - pad.r;
-            var plotH = cssH - pad.t - pad.b;
-
-            // grid (4 horizontal)
-            c.strokeStyle = 'rgba(255,255,255,0.05)';
-            c.lineWidth = 1;
-            c.setLineDash([]);
-            for (var i = 0; i <= 4; i++) {
-                var y = pad.t + (i / 4) * plotH;
-                c.beginPath(); c.moveTo(pad.l, y); c.lineTo(pad.l + plotW, y); c.stroke();
+            var nA = trajA.length, nB = trajB.length;
+            var W = 200, H = 60;
+            function linePath(traj, n, key){
+                var pts = '', drew = false;
+                for (var i = 0; i < n; i++) {
+                    var pt = traj[i];
+                    if (!pt) continue;
+                    var v = pt[key];
+                    if (typeof v !== 'number' || !Number.isFinite(v)) continue;
+                    var x = (i / (n - 1)) * W;
+                    var y = (1 - Math.max(0, Math.min(1, v))) * H;
+                    pts += (drew ? ' L ' : 'M ') + x.toFixed(1) + ' ' + y.toFixed(1);
+                    drew = true;
+                }
+                return pts;
             }
-            // y axis labels (0, 0.5, 1)
-            c.fillStyle = 'rgba(255,255,255,0.3)';
-            c.font = '10px "JetBrains Mono", monospace';
-            c.textAlign = 'right';
-            c.fillText('1.0', pad.l - 6, pad.t + 4);
-            c.fillText('0.5', pad.l - 6, pad.t + plotH / 2 + 4);
-            c.fillText('0.0', pad.l - 6, pad.t + plotH + 4);
-            // x axis labels (step 0, 5, 10)
-            c.textAlign = 'center';
-            c.fillText('0', pad.l, pad.t + plotH + 16);
-            c.fillText('5', pad.l + plotW / 2, pad.t + plotH + 16);
-            c.fillText('10', pad.l + plotW, pad.t + plotH + 16);
+            function formatDrift(v){
+                if (v == null || !Number.isFinite(v)) return '—';
+                return (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2);
+            }
 
-            var nA = trajA.length;
-            var nB = trajB.length;
+            var html = '';
             _V39_CONV_AXES.forEach(function(ax){
-                // A solid
-                c.strokeStyle = ax.color;
-                c.lineWidth = 1.8;
-                c.setLineDash([]);
-                c.globalAlpha = 0.85;
-                c.beginPath();
-                trajA.forEach(function(pt, i){
-                    var v = pt[ax.key];
-                    if (typeof v !== 'number') return;
-                    var x = pad.l + (i / (nA - 1)) * plotW;
-                    var y = pad.t + (1 - Math.max(0, Math.min(1, v))) * plotH;
-                    if (i === 0) c.moveTo(x, y); else c.lineTo(x, y);
-                });
-                c.stroke();
-                // B dashed
-                c.setLineDash([4, 3]);
-                c.globalAlpha = 0.85;
-                c.beginPath();
-                trajB.forEach(function(pt, i){
-                    var v = pt[ax.key];
-                    if (typeof v !== 'number') return;
-                    var x = pad.l + (i / (nB - 1)) * plotW;
-                    var y = pad.t + (1 - Math.max(0, Math.min(1, v))) * plotH;
-                    if (i === 0) c.moveTo(x, y); else c.lineTo(x, y);
-                });
-                c.stroke();
+                var aStart = trajA[0] && trajA[0][ax.key];
+                var aEnd = trajA[nA-1] && trajA[nA-1][ax.key];
+                var bStart = trajB[0] && trajB[0][ax.key];
+                var bEnd = trajB[nB-1] && trajB[nB-1][ax.key];
+                var aDrift = (typeof aStart === 'number' && typeof aEnd === 'number') ? aEnd - aStart : null;
+                var bDrift = (typeof bStart === 'number' && typeof bEnd === 'number') ? bEnd - bStart : null;
+                var aPath = linePath(trajA, nA, ax.key);
+                var bPath = linePath(trajB, nB, ax.key);
+                html += '<div class="v39-conv-sc">' +
+                    '<div class="v39-conv-sc-head">' +
+                        '<span class="v39-conv-sc-name"><span class="dot" style="background:' + ax.color + '"></span>' + ax.name + '</span>' +
+                        '<span class="v39-conv-sc-drift">A ' + formatDrift(aDrift) + ' / B ' + formatDrift(bDrift) + '</span>' +
+                    '</div>' +
+                    '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+                        (aPath ? '<path d="' + aPath + '" fill="none" stroke="' + ax.color + '" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>' : '') +
+                        (bPath ? '<path d="' + bPath + '" fill="none" stroke="' + ax.color + '" stroke-width="1.8" stroke-dasharray="3,2" opacity="0.8" stroke-linejoin="round" stroke-linecap="round"/>' : '') +
+                    '</svg>' +
+                '</div>';
             });
-            c.setLineDash([]);
-            c.globalAlpha = 1;
+            // 6번째 슬롯 — 공통 범례
+            html += '<div class="v39-conv-legend-card">' +
+                '<div class="lg-row"><span class="ln"></span>A 실선</div>' +
+                '<div class="lg-row"><span class="ln dash"></span>B 점선</div>' +
+                '<div style="color:rgba(255,255,255,0.35);margin-top:2px">Y: 0~1 · X: step 0~' + (nA-1) + '</div>' +
+            '</div>';
+            grid.innerHTML = html;
 
-            // judgment
             var cross = ctx.crossSim || {};
             var conv = cross.convergence || 'parallel';
             var judgEl = document.getElementById('v39ConvJudgment');
