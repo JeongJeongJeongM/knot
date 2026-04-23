@@ -4497,7 +4497,8 @@
             .v39-dd-nav button:last-child{border-right:none}
             .v39-dd-nav button.active::before{left:0;right:0;top:auto;bottom:0;width:auto;height:3px;border-radius:3px 3px 0 0}
         }
-        .v39-dd-body{flex:1;min-width:0;padding:36px 36px 48px}
+        /* v3.9.18: body 너무 길어서 읽기 어려움 → 본문 가독 폭 (~520px) 로 제한 */
+        .v39-dd-body{flex:1;min-width:0;padding:36px 36px 48px;max-width:560px}
         .v39-dd-body h3{font-size:20px;font-weight:700;margin-bottom:20px;color:#fff;display:flex;align-items:center;gap:10px}
         .v39-dd-body p{font-size:14px;line-height:1.85;color:rgba(255,255,255,0.75);margin-bottom:14px}
         .v39-dd-body p b{color:#fff;font-weight:600}
