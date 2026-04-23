@@ -4497,8 +4497,12 @@
             .v39-dd-nav button:last-child{border-right:none}
             .v39-dd-nav button.active::before{left:0;right:0;top:auto;bottom:0;width:auto;height:3px;border-radius:3px 3px 0 0}
         }
-        /* v3.9.18: body 너무 길어서 읽기 어려움 → 본문 가독 폭 (~520px) 로 제한 */
-        .v39-dd-body{flex:1;min-width:0;padding:36px 36px 48px;max-width:560px}
+        /* v3.9.20: body 세로 길이도 제한 — 긴 콘텐츠는 내부 스크롤. 폭 560 + 높이 620px */
+        .v39-dd-body{flex:1;min-width:0;padding:36px 36px 48px;max-width:560px;max-height:620px;overflow-y:auto}
+        .v39-dd-body::-webkit-scrollbar{width:6px}
+        .v39-dd-body::-webkit-scrollbar-track{background:transparent}
+        .v39-dd-body::-webkit-scrollbar-thumb{background:rgba(245,166,35,0.2);border-radius:3px}
+        .v39-dd-body::-webkit-scrollbar-thumb:hover{background:rgba(245,166,35,0.4)}
         .v39-dd-body h3{font-size:20px;font-weight:700;margin-bottom:20px;color:#fff;display:flex;align-items:center;gap:10px}
         .v39-dd-body p{font-size:14px;line-height:1.85;color:rgba(255,255,255,0.75);margin-bottom:14px}
         .v39-dd-body p b{color:#fff;font-weight:600}
@@ -11917,28 +11921,32 @@ function displayResult() {
                         cx.fillText(s.label, x, H - pad.b + 8);
                     });
 
-                    // Draw line (skip nulls — connect only consecutive defined points)
-                    function drawLine(pts, color){
-                        cx.strokeStyle = color; cx.lineWidth = 2; cx.lineJoin = 'round'; cx.lineCap = 'round';
-                        var moved = false;
-                        pts.forEach(function(v, i){
-                            if (v == null) { moved = false; return; }
-                            var x = pad.l + (i / (pts.length - 1)) * plotW;
-                            var y = pad.t + (1 - v) * plotH;
-                            if (!moved) { cx.beginPath(); cx.moveTo(x, y); moved = true; }
-                            else cx.lineTo(x, y);
-                        });
-                        if (moved) cx.stroke();
-                        // dots on measured points
-                        pts.forEach(function(v, i){
-                            if (v == null) return;
-                            var x = pad.l + (i / (pts.length - 1)) * plotW;
-                            var y = pad.t + (1 - v) * plotH;
-                            cx.fillStyle = color; cx.beginPath(); cx.arc(x, y, 3.5, 0, Math.PI * 2); cx.fill();
-                        });
-                    }
-                    if (hasA) drawLine(ptsA, '#60A5FA');
-                    if (hasB) drawLine(ptsB, '#A78BFA');
+                    // v3.9.20: 라인 → 그룹 바. 상황별 A/B 막대 쌍. 엔진의 고정 delta 특성상
+                    //   선형 상승 회피 불가 → 막대 비교가 시각적으로 더 의미 있음.
+                    var groupW = plotW / SITS.length;
+                    var barW = Math.min(26, groupW * 0.32);
+                    SITS.forEach(function(s, i){
+                        var cx0 = pad.l + (i + 0.5) * groupW;
+                        var vA = ptsA[i], vB = ptsB[i];
+                        // A bar (left)
+                        if (vA != null) {
+                            var hA = vA * plotH;
+                            var yA = pad.t + plotH - hA;
+                            var grad = cx.createLinearGradient(0, yA, 0, yA + hA);
+                            grad.addColorStop(0, '#60A5FA'); grad.addColorStop(1, '#818cf8');
+                            cx.fillStyle = grad;
+                            cx.fillRect(cx0 - barW - 2, yA, barW, hA);
+                        }
+                        // B bar (right)
+                        if (vB != null) {
+                            var hB = vB * plotH;
+                            var yB = pad.t + plotH - hB;
+                            var gradB = cx.createLinearGradient(0, yB, 0, yB + hB);
+                            gradB.addColorStop(0, '#A78BFA'); gradB.addColorStop(1, '#c4b5fd');
+                            cx.fillStyle = gradB;
+                            cx.fillRect(cx0 + 2, yB, barW, hB);
+                        }
+                    });
                 }
             }
 
