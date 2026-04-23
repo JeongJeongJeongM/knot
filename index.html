@@ -4550,6 +4550,27 @@
         .v39-def-severity.low{background:rgba(148,163,184,0.12);color:var(--state-neutral)}
         .v39-def-desc{padding:var(--sp-3) var(--sp-4);background:var(--sf-1);border-left:3px solid var(--state-risk);border-radius:0 var(--r-md) var(--r-md) 0;font-size:var(--fs-sm);color:rgba(255,255,255,0.72);line-height:var(--lh-loose);max-width:640px;margin:0 auto}
 
+        /* v4 M6 — 방어 6타입 레이더 (v3.9.36 재설계) */
+        .v39-def-wrap{max-width:720px;margin:0 auto}
+        .v39-def-layout{display:grid;grid-template-columns:280px 1fr;gap:var(--sp-5);align-items:center;margin-bottom:var(--sp-4)}
+        @media(max-width:700px){.v39-def-layout{grid-template-columns:1fr;justify-items:center}}
+        .v39-def-radar{position:relative;width:280px;height:280px;flex-shrink:0}
+        .v39-def-radar svg{width:100%;height:100%;display:block}
+        .v39-def-types{display:flex;flex-direction:column;gap:var(--sp-1);width:100%;max-width:380px}
+        .v39-def-type-row{display:grid;grid-template-columns:88px 1fr 1fr;gap:var(--sp-2);align-items:center;padding:var(--sp-2) var(--sp-3);background:var(--sf-1);border-radius:var(--r-sm);border-left:2px solid var(--sf-3)}
+        .v39-def-type-row.primary{border-left-color:var(--ac);background:var(--af-1)}
+        .v39-def-type-row .name{font-size:11px;font-weight:700;color:#fff}
+        .v39-def-type-row .name .k{color:rgba(255,255,255,0.35);font-family:'JetBrains Mono',monospace;font-size:9px;display:block;margin-top:1px;letter-spacing:0.5px}
+        .v39-def-type-row .bar{display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:9px}
+        .v39-def-type-row .side{width:10px;font-weight:700;font-size:10px}
+        .v39-def-type-row .side.a{color:var(--side-a)}
+        .v39-def-type-row .side.b{color:var(--side-b)}
+        .v39-def-type-row .track{flex:1;height:5px;background:var(--sf-3);border-radius:3px;overflow:hidden;position:relative}
+        .v39-def-type-row .fill{position:absolute;top:0;left:0;bottom:0;border-radius:3px}
+        .v39-def-type-row .fill.a{background:var(--side-a)}
+        .v39-def-type-row .fill.b{background:var(--side-b)}
+        .v39-def-type-row .val{color:rgba(255,255,255,0.5);font-size:9px;width:28px;text-align:right}
+
         /* v4 M7/M8 — 애착/갈등 교차 (공용) */
         .v39-cross-active{max-width:640px;margin:0 auto;padding:var(--sp-4) var(--sp-5);background:var(--af-1);border:1px solid var(--af-2);border-radius:var(--r-md)}
         .v39-cross-label{font-size:var(--fs-md);font-weight:700;color:var(--ac);margin-bottom:var(--sp-3);letter-spacing:0.3px}
@@ -4563,13 +4584,65 @@
         .v39-cross-desc{font-size:var(--fs-sm);color:rgba(255,255,255,0.72);line-height:var(--lh-loose)}
         .v39-cross-empty{max-width:640px;margin:0 auto;padding:var(--sp-4);background:var(--sf-1);border:1px dashed var(--sf-3);border-radius:var(--r-md);text-align:center;font-size:var(--fs-xs);color:rgba(255,255,255,0.4)}
 
-        /* v4 M9 — 회복 속도 차이 */
-        .v39-recovery-wrap{display:grid;grid-template-columns:auto 1fr;gap:var(--sp-5);align-items:center;max-width:640px;margin:0 auto}
-        @media(max-width:500px){.v39-recovery-wrap{grid-template-columns:1fr;text-align:center}}
-        .v39-recovery-delta{text-align:center}
-        .v39-recovery-num{font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:800;color:var(--ac);line-height:1}
-        .v39-recovery-label{font-size:var(--fs-xs);color:rgba(255,255,255,0.55);margin-top:var(--sp-1)}
-        .v39-recovery-desc{font-size:var(--fs-sm);color:rgba(255,255,255,0.72);line-height:var(--lh-loose)}
+        /* v4 M7 — 애착 2D 평면 (v3.9.36 재설계) */
+        .v39-att-wrap{max-width:700px;margin:0 auto}
+        .v39-att-layout{display:grid;grid-template-columns:320px 1fr;gap:var(--sp-5);align-items:start;margin-bottom:var(--sp-4)}
+        @media(max-width:700px){.v39-att-layout{grid-template-columns:1fr;justify-items:center}}
+        .v39-att-plot{position:relative;width:320px;height:320px;background:rgba(6,6,11,0.5);border:1px solid var(--sf-2);border-radius:var(--r-md);flex-shrink:0}
+        .v39-att-plot svg{width:100%;height:100%;display:block}
+        .v39-att-prob{display:flex;flex-direction:column;gap:var(--sp-2);width:100%}
+        .v39-att-prob-title{font-size:var(--fs-xxs);color:rgba(255,255,255,0.4);font-family:'JetBrains Mono',monospace;letter-spacing:1px;margin-bottom:var(--sp-1)}
+        .v39-att-prob-row{display:grid;grid-template-columns:78px 1fr;gap:var(--sp-3);align-items:center}
+        .v39-att-prob-row .tname{font-weight:700;color:#fff;font-size:11px}
+        .v39-att-prob-row .tname .k{color:rgba(255,255,255,0.35);font-family:'JetBrains Mono',monospace;font-size:9px;display:block;margin-top:1px;letter-spacing:0.5px}
+        .v39-att-prob-row .bars{display:flex;flex-direction:column;gap:3px}
+        .v39-att-prob-row .bline{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:9px}
+        .v39-att-prob-row .side{width:10px;font-weight:700}
+        .v39-att-prob-row .side.a{color:var(--side-a)}
+        .v39-att-prob-row .side.b{color:var(--side-b)}
+        .v39-att-prob-row .track{flex:1;height:5px;background:var(--sf-3);border-radius:3px;overflow:hidden;position:relative}
+        .v39-att-prob-row .fill{position:absolute;top:0;left:0;bottom:0;border-radius:3px}
+        .v39-att-prob-row .fill.a{background:var(--side-a)}
+        .v39-att-prob-row .fill.b{background:var(--side-b)}
+        .v39-att-prob-row .val{color:rgba(255,255,255,0.55);width:30px;text-align:right}
+        .v39-att-label{font-size:var(--fs-md);font-weight:700;color:var(--ac);margin-top:var(--sp-3);margin-bottom:var(--sp-2);letter-spacing:0.3px;max-width:640px;margin-left:auto;margin-right:auto}
+        .v39-att-desc{font-size:var(--fs-sm);color:rgba(255,255,255,0.72);line-height:var(--lh-loose);max-width:640px;margin:0 auto}
+
+        /* v4 M8 — 갈등 2D 평면 (v3.9.36 재설계) */
+        .v39-conf-wrap{max-width:720px;margin:0 auto}
+        .v39-conf-layout{display:grid;grid-template-columns:340px 1fr;gap:var(--sp-5);align-items:start;margin-bottom:var(--sp-4)}
+        @media(max-width:720px){.v39-conf-layout{grid-template-columns:1fr;justify-items:center}}
+        .v39-conf-plot{position:relative;width:340px;height:320px;background:rgba(6,6,11,0.5);border:1px solid var(--sf-2);border-radius:var(--r-md);flex-shrink:0}
+        .v39-conf-plot svg{width:100%;height:100%;display:block}
+        .v39-conf-side{display:flex;flex-direction:column;gap:var(--sp-3);width:100%;max-width:280px}
+        .v39-conf-score-ring{position:relative;width:140px;height:140px;margin:0 auto}
+        .v39-conf-score-ring > svg{position:absolute;inset:0;width:100%;height:100%}
+        .v39-conf-score-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+        .v39-conf-score-num .conf-val{font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:800;color:var(--ac);line-height:1}
+        .v39-conf-score-num .conf-sub{font-size:var(--fs-xxs);color:rgba(255,255,255,0.5);letter-spacing:1px;margin-top:4px}
+        .v39-conf-type{padding:var(--sp-3) var(--sp-4);background:var(--af-1);border:1px solid var(--af-2);border-radius:var(--r-sm)}
+        .v39-conf-type .cname{font-size:var(--fs-md);font-weight:700;color:var(--ac);margin-bottom:var(--sp-2)}
+        .v39-conf-type .csides{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);font-size:var(--fs-xs);color:rgba(255,255,255,0.72);line-height:1.5}
+        .v39-conf-type .csides .tk{font-size:var(--fs-xxs);font-weight:700;letter-spacing:1px;display:block;margin-bottom:2px}
+        .v39-conf-type .csides .a .tk{color:var(--side-a)}
+        .v39-conf-type .csides .b .tk{color:var(--side-b)}
+        .v39-conf-desc{font-size:var(--fs-sm);color:rgba(255,255,255,0.72);line-height:var(--lh-loose);max-width:640px;margin:0 auto;padding:var(--sp-3) var(--sp-4);background:var(--sf-1);border-left:3px solid var(--ac);border-radius:0 var(--r-md) var(--r-md) 0}
+
+        /* v4 M9 — 회복 속도 차이 (v3.9.36 재설계 · 타임라인 overlay) */
+        .v39-recovery-wrap{display:block;max-width:720px;margin:0 auto}
+        .v39-rec-timeline{background:rgba(6,6,11,0.5);border:1px solid var(--sf-2);border-radius:var(--r-md);padding:var(--sp-4);margin-bottom:var(--sp-3)}
+        .v39-rec-timeline svg{width:100%;height:auto;display:block;max-height:240px}
+        .v39-rec-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-bottom:var(--sp-3)}
+        @media(max-width:500px){.v39-rec-stats{grid-template-columns:1fr}}
+        .v39-rec-stat{padding:var(--sp-2) var(--sp-3);background:var(--sf-1);border-radius:var(--r-sm);border-left:2px solid var(--sf-3)}
+        .v39-rec-stat.a{border-left-color:var(--side-a)}
+        .v39-rec-stat.b{border-left-color:var(--side-b)}
+        .v39-rec-stat.gap{border-left-color:var(--state-risk)}
+        .v39-rec-stat .sk{font-size:var(--fs-xxs);color:rgba(255,255,255,0.4);font-family:'JetBrains Mono',monospace;letter-spacing:1px}
+        .v39-rec-stat .sv{font-size:var(--fs-lg);font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace;margin-top:4px;line-height:1}
+        .v39-rec-stat .sv.gap{color:var(--state-risk)}
+        .v39-rec-stat .ssub{font-size:var(--fs-xxs);color:rgba(255,255,255,0.45);margin-top:4px}
+        .v39-rec-desc{font-size:var(--fs-sm);color:rgba(255,255,255,0.72);line-height:var(--lh-loose);padding:var(--sp-3) var(--sp-4);background:var(--sf-1);border-left:3px solid var(--ac);border-radius:0 var(--r-md) var(--r-md) 0}
 
         /* v4 M10 — 공통 관심사 Venn + chips */
         .v39-topic-wrap{display:grid;grid-template-columns:160px 1fr;gap:var(--sp-5);align-items:center;max-width:640px;margin:0 auto var(--sp-4)}
@@ -5516,22 +5589,28 @@
                   <div class="result-section-inner">
                     <div class="v39-meta">방어 충돌 · <span class="dim">DEFENSE CLASH</span></div>
                     <h2 class="v39-title">방어 패턴의 충돌</h2>
-                    <p class="v39-subtitle">압박받을 때 각자 사용하는 방어 방식이 어떻게 부딪히는가</p>
-                    <div class="v39-def-clash">
-                        <div class="v39-def-side a">
-                            <div class="v39-def-side-label">A의 방어</div>
-                            <div class="v39-def-side-name" id="v39DefAName">—</div>
-                            <div class="v39-def-side-code" id="v39DefACode"></div>
+                    <p class="v39-subtitle">6 방어 타입 축에 A와 B overlay. 겹치면 동조, 한쪽만 뻗으면 그 지점에서 충돌.</p>
+                    <div class="v39-def-wrap">
+                        <div class="v39-def-layout">
+                            <div class="v39-def-radar"><svg id="v39DefRadar" viewBox="0 0 280 280"></svg></div>
+                            <div class="v39-def-types" id="v39DefTypes"></div>
                         </div>
-                        <div class="v39-def-vs">⚡</div>
-                        <div class="v39-def-side b">
-                            <div class="v39-def-side-label">B의 방어</div>
-                            <div class="v39-def-side-name" id="v39DefBName">—</div>
-                            <div class="v39-def-side-code" id="v39DefBCode"></div>
+                        <div class="v39-def-clash">
+                            <div class="v39-def-side a">
+                                <div class="v39-def-side-label">A의 주 방어</div>
+                                <div class="v39-def-side-name" id="v39DefAName">—</div>
+                                <div class="v39-def-side-code" id="v39DefACode"></div>
+                            </div>
+                            <div class="v39-def-vs">⚡</div>
+                            <div class="v39-def-side b">
+                                <div class="v39-def-side-label">B의 주 방어</div>
+                                <div class="v39-def-side-name" id="v39DefBName">—</div>
+                                <div class="v39-def-side-code" id="v39DefBCode"></div>
+                            </div>
                         </div>
+                        <div class="v39-def-severity" id="v39DefSeverity" style="display:none"></div>
+                        <div class="v39-def-desc" id="v39DefDesc"></div>
                     </div>
-                    <div class="v39-def-severity" id="v39DefSeverity" style="display:none"></div>
-                    <div class="v39-def-desc" id="v39DefDesc"></div>
                   </div>
                 </section>
 
@@ -5540,14 +5619,14 @@
                   <div class="result-section-inner">
                     <div class="v39-meta">애착 교차 · <span class="dim">ATTACHMENT CROSS</span></div>
                     <h2 class="v39-title">애착 스타일의 만남</h2>
-                    <p class="v39-subtitle">두 사람의 애착 성향이 어떤 조합을 만드는가</p>
-                    <div class="v39-cross-active" id="v39AttachCrossActive" style="display:none">
-                        <div class="v39-cross-label" id="v39AttachCrossLabel">—</div>
-                        <div class="v39-cross-sides">
-                            <div class="v39-cross-side a"><span class="k">A</span><span id="v39AttachATend">—</span></div>
-                            <div class="v39-cross-side b"><span class="k">B</span><span id="v39AttachBTend">—</span></div>
+                    <p class="v39-subtitle">불안 × 회피 2축 평면에 A/B 위치. 4사분면 = 4 애착 유형. 거리가 애착 유사도.</p>
+                    <div class="v39-att-wrap" id="v39AttachCrossActive" style="display:none">
+                        <div class="v39-att-layout">
+                            <div class="v39-att-plot"><svg id="v39AttachPlot" viewBox="0 0 320 320"></svg></div>
+                            <div class="v39-att-prob" id="v39AttachProb"></div>
                         </div>
-                        <div class="v39-cross-desc" id="v39AttachDesc"></div>
+                        <div class="v39-att-label" id="v39AttachCrossLabel">—</div>
+                        <div class="v39-att-desc" id="v39AttachDesc"></div>
                     </div>
                     <div class="v39-cross-empty" id="v39AttachCrossEmpty" style="display:none">애착 교차 데이터가 부족합니다.</div>
                   </div>
@@ -5559,10 +5638,24 @@
                     <div class="v39-meta">갈등 교차 · <span class="dim">CONFLICT CROSS</span></div>
                     <h2 class="v39-title">갈등 스타일의 만남</h2>
                     <p class="v39-subtitle">두 사람이 싸울 때 드러나는 방식의 조합</p>
-                    <div class="v39-cross-active" id="v39ConflictCrossActive" style="display:none">
-                        <div class="v39-cross-label" id="v39ConflictCrossLabel">—</div>
-                        <div class="v39-cross-score" id="v39ConflictCrossScore" style="display:none"></div>
-                        <div class="v39-cross-desc" id="v39ConflictDesc"></div>
+                    <div class="v39-conf-wrap" id="v39ConflictCrossActive" style="display:none">
+                        <div class="v39-conf-layout">
+                            <div class="v39-conf-plot"><svg id="v39ConflictPlot" viewBox="0 0 340 320"></svg></div>
+                            <div class="v39-conf-side">
+                                <div class="v39-conf-score-ring">
+                                    <svg viewBox="0 0 140 140">
+                                        <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8"/>
+                                        <circle id="v39ConflictScoreArc" cx="70" cy="70" r="60" fill="none" stroke="#EF4444" stroke-width="8" stroke-dasharray="377" stroke-dashoffset="377" stroke-linecap="round" transform="rotate(-90 70 70)"/>
+                                    </svg>
+                                    <div class="v39-conf-score-num">
+                                        <div class="conf-val" id="v39ConflictScoreVal">—</div>
+                                        <div class="conf-sub">강도</div>
+                                    </div>
+                                </div>
+                                <div class="v39-conf-type" id="v39ConflictTypeCard"></div>
+                            </div>
+                        </div>
+                        <div class="v39-conf-desc" id="v39ConflictDesc"></div>
                     </div>
                     <div class="v39-cross-empty" id="v39ConflictCrossEmpty" style="display:none">갈등 교차 데이터가 부족합니다.</div>
                   </div>
@@ -5575,11 +5668,9 @@
                     <h2 class="v39-title">마찰 후 얼마나 빨리 중립으로 돌아오나</h2>
                     <p class="v39-subtitle">각자 회복 속도가 다르면 "해결됐다" 시점도 다릅니다.</p>
                     <div class="v39-recovery-wrap" id="v39RecoveryWrap" style="display:none">
-                        <div class="v39-recovery-delta">
-                            <div class="v39-recovery-num" id="v39RecoveryNum">—</div>
-                            <div class="v39-recovery-label" id="v39RecoveryLabel">—</div>
-                        </div>
-                        <div class="v39-recovery-desc" id="v39RecoveryDesc"></div>
+                        <div class="v39-rec-timeline"><svg id="v39RecoveryChart" viewBox="0 0 720 220" preserveAspectRatio="xMidYMid meet"></svg></div>
+                        <div class="v39-rec-stats" id="v39RecoveryStats"></div>
+                        <div class="v39-rec-desc" id="v39RecoveryDesc"></div>
                     </div>
                     <div class="v39-cross-empty" id="v39RecoveryEmpty" style="display:none">회복 속도 데이터가 부족합니다.</div>
                   </div>
@@ -12117,32 +12208,117 @@ function displayResult() {
         }
 
         // ── v4 M9 · 회복 속도 차이 ──
+        // ── v4 M9 · 회복 속도 차이 (v3.9.36 · 타임라인 overlay) ──
+        // classification → 시간 매핑 · A/B 곡선 overlay · 격차 구간 하이라이트
+        function _v39RecoveryTime(stress){
+            if (!stress || !stress.recovery) return null;
+            var cls = stress.recovery.classification;
+            if (cls === 'resilient') return { hours:48, label:'2일', desc:'빠른 복귀' };
+            if (cls === 'partial') return { hours:96, label:'4일', desc:'중간 복귀' };
+            if (cls === 'fragile') return { hours:168, label:'7일', desc:'느린 복귀' };
+            // fallback: recoveryRate 기반
+            var r = stress.recoveryRate;
+            if (typeof r === 'number' && Number.isFinite(r)) {
+                if (r >= 0.7) return { hours:48, label:'2일', desc:'빠른 복귀' };
+                if (r >= 0.4) return { hours:96, label:'4일', desc:'중간 복귀' };
+                return { hours:168, label:'7일', desc:'느린 복귀' };
+            }
+            return null;
+        }
+        function _v39GapLabel(hours){
+            if (hours >= 48) return Math.round(hours / 24) + '일';
+            return Math.max(1, Math.round(hours)) + '시간';
+        }
         function renderV39Recovery(ctx){
             var cross = ctx.crossSim || {};
             var rm = cross.recoveryMismatch;
-            var wrap = document.getElementById('v39RecoveryWrap');
-            var empty = document.getElementById('v39RecoveryEmpty');
-            if (!wrap || !empty) return;
+            var simA = ctx.simulationA || {}, simB = ctx.simulationB || {};
+            var timeA = _v39RecoveryTime(simA.stimulus && simA.stimulus.stress);
+            var timeB = _v39RecoveryTime(simB.stimulus && simB.stimulus.stress);
             var delta = null, desc = '';
             if (rm) {
                 if (typeof rm === 'number') delta = rm;
                 else if (typeof rm === 'object') { delta = rm.delta; desc = rm.desc || ''; }
             }
-            if (delta == null || !Number.isFinite(delta)) {
-                wrap.style.display = 'none';
-                empty.style.display = 'block';
-                return;
+            var wrap = document.getElementById('v39RecoveryWrap');
+            var empty = document.getElementById('v39RecoveryEmpty');
+            if (!wrap || !empty) return;
+            if (!timeA && !timeB && (delta == null || !Number.isFinite(delta))) {
+                wrap.style.display = 'none'; empty.style.display = 'block'; return;
             }
-            var num = document.getElementById('v39RecoveryNum');
-            var lbl = document.getElementById('v39RecoveryLabel');
+            // delta fallback 시간 추정
+            if (!timeA) timeA = { hours:72, label:'≈3일', desc:'추정' };
+            if (!timeB) timeB = { hours: Math.max(24, 72 + (delta || 0) * 60), label: _v39GapLabel(Math.max(24, 72 + (delta || 0) * 60)), desc:'추정' };
+
+            var gapHours = Math.abs(timeA.hours - timeB.hours);
+            var gapLabel = _v39GapLabel(gapHours);
+            var gapLevel = gapHours >= 120 ? '큰 격차' : gapHours >= 48 ? '중간 격차' : '작은 격차';
+
+            // SVG
+            var svgW = 720, svgH = 220;
+            var padL = 40, padR = 20, padT = 40, padB = 30;
+            var plotW = svgW - padL - padR, plotH = svgH - padT - padB;
+            var maxT = Math.max(timeA.hours, timeB.hours, 48) * 1.25;
+            function xpos(h){ return padL + (h / maxT) * plotW; }
+            var midY = padT + plotH / 2;
+
+            var svg = document.getElementById('v39RecoveryChart');
+            if (svg) {
+                var s = '';
+                s += '<g stroke="rgba(255,255,255,0.04)">';
+                s += '<line x1="' + padL + '" y1="' + padT + '" x2="' + (svgW-padR) + '" y2="' + padT + '"/>';
+                s += '<line x1="' + padL + '" y1="' + midY + '" x2="' + (svgW-padR) + '" y2="' + midY + '" stroke="rgba(255,255,255,0.15)" stroke-dasharray="3,3"/>';
+                s += '<line x1="' + padL + '" y1="' + (padT+plotH) + '" x2="' + (svgW-padR) + '" y2="' + (padT+plotH) + '"/>';
+                s += '</g>';
+                s += '<g font-family="JetBrains Mono" font-size="9" fill="rgba(255,255,255,0.35)" text-anchor="end">';
+                s += '<text x="' + (padL-4) + '" y="' + (padT+4) + '">격양 1.0</text>';
+                s += '<text x="' + (padL-4) + '" y="' + (midY+4) + '">중립 0.5</text>';
+                s += '<text x="' + (padL-4) + '" y="' + (padT+plotH+4) + '">안정 0.0</text>';
+                s += '</g>';
+                // Gap highlight
+                var faster = timeA.hours <= timeB.hours ? timeA : timeB;
+                var slower = timeA.hours <= timeB.hours ? timeB : timeA;
+                if (faster.hours < slower.hours) {
+                    var gx1 = xpos(faster.hours), gx2 = xpos(slower.hours);
+                    s += '<rect x="' + gx1.toFixed(1) + '" y="' + padT + '" width="' + (gx2-gx1).toFixed(1) + '" height="' + plotH + '" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.2)" stroke-dasharray="3,3"/>';
+                    s += '<text x="' + ((gx1+gx2)/2).toFixed(1) + '" y="' + (padT-10) + '" font-family="JetBrains Mono" font-size="10" fill="#EF4444" text-anchor="middle" font-weight="700">재발 위험 구간 · ' + _v39Safe(gapLabel) + '</text>';
+                }
+                // A curve
+                var xA = xpos(timeA.hours);
+                s += '<path d="M ' + padL + ' ' + (padT+plotH*0.08) + ' Q ' + (padL + (xA-padL)*0.5) + ' ' + (padT+plotH*0.35) + ', ' + xA.toFixed(1) + ' ' + midY + ' L ' + (svgW-padR) + ' ' + midY + '" fill="none" stroke="#60A5FA" stroke-width="2.5" stroke-linejoin="round"/>';
+                s += '<circle cx="' + xA.toFixed(1) + '" cy="' + midY + '" r="4" fill="#60A5FA"/>';
+                s += '<text x="' + (xA+8).toFixed(1) + '" y="' + (midY-6) + '" font-family="Inter" font-size="11" font-weight="700" fill="#60A5FA">A ' + _v39Safe(timeA.label) + '</text>';
+                // B curve
+                var xB = xpos(timeB.hours);
+                s += '<path d="M ' + padL + ' ' + (padT+plotH*0.08) + ' Q ' + (padL + (xB-padL)*0.5) + ' ' + (padT+plotH*0.4) + ', ' + xB.toFixed(1) + ' ' + midY + ' L ' + (svgW-padR) + ' ' + midY + '" fill="none" stroke="#A78BFA" stroke-width="2.5" stroke-dasharray="4,3" stroke-linejoin="round"/>';
+                s += '<circle cx="' + xB.toFixed(1) + '" cy="' + midY + '" r="4" fill="#A78BFA"/>';
+                var bLabelAnchor = xB > svgW - 100 ? 'end' : 'start';
+                var bLabelX = bLabelAnchor === 'end' ? xB - 8 : xB + 8;
+                s += '<text x="' + bLabelX.toFixed(1) + '" y="' + (midY+16) + '" font-family="Inter" font-size="11" font-weight="700" fill="#A78BFA" text-anchor="' + bLabelAnchor + '">B ' + _v39Safe(timeB.label) + '</text>';
+                // x axis
+                s += '<line x1="' + padL + '" y1="' + (padT+plotH) + '" x2="' + (svgW-padR) + '" y2="' + (padT+plotH) + '" stroke="rgba(255,255,255,0.2)"/>';
+                s += '<line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (padT+plotH) + '" stroke="rgba(255,255,255,0.2)"/>';
+                // tick
+                s += '<g font-family="JetBrains Mono" font-size="9" fill="rgba(255,255,255,0.35)" text-anchor="middle">';
+                s += '<text x="' + padL + '" y="' + (padT+plotH+14) + '">0h</text>';
+                s += '<text x="' + xpos(maxT/2).toFixed(1) + '" y="' + (padT+plotH+14) + '">' + _v39GapLabel(maxT/2) + '</text>';
+                s += '<text x="' + (svgW-padR) + '" y="' + (padT+plotH+14) + '">' + _v39GapLabel(maxT) + '</text>';
+                s += '</g>';
+                svg.innerHTML = s;
+            }
+
+            // stats
+            var statsEl = document.getElementById('v39RecoveryStats');
+            if (statsEl) {
+                statsEl.innerHTML =
+                    '<div class="v39-rec-stat a"><div class="sk">A 회복</div><div class="sv">' + _v39Safe(timeA.label) + '</div><div class="ssub">' + _v39Safe(timeA.desc) + '</div></div>' +
+                    '<div class="v39-rec-stat b"><div class="sk">B 회복</div><div class="sv">' + _v39Safe(timeB.label) + '</div><div class="ssub">' + _v39Safe(timeB.desc) + '</div></div>' +
+                    '<div class="v39-rec-stat gap"><div class="sk">격차</div><div class="sv gap">' + _v39Safe(gapLabel) + '</div><div class="ssub">' + _v39Safe(gapLevel) + (delta != null ? ' · Δ ' + delta.toFixed(2) : '') + '</div></div>';
+            }
             var d = document.getElementById('v39RecoveryDesc');
-            if (num) num.textContent = delta.toFixed(2);
-            if (lbl) {
-                var level = delta >= 1.2 ? '차이: 큼' : delta >= 0.5 ? '차이: 중간' : '차이: 작음';
-                lbl.textContent = level;
-            }
-            if (d) d.textContent = desc || '회복 속도 격차가 "언제 대화를 재개할지" 타이밍 갈등으로 이어질 수 있습니다.';
-            wrap.style.display = 'grid';
+            if (d) d.innerHTML = desc ? _v39Safe(desc) : '빠른 쪽이 "해결됐다" 선언해도 느린 쪽은 잔여 긴장이 남음. 중간 구간이 재발 위험 창구 — 느린 쪽이 복귀 시점 선언, 빠른 쪽이 대기.';
+
+            wrap.style.display = 'block';
             empty.style.display = 'none';
         }
 
@@ -12228,71 +12404,394 @@ function displayResult() {
             frozen_conflict:'얼어붙은 갈등', wall_punch:'벽을 때리기', mirror_storm:'거울 폭주'
         };
 
-        // ── v4 M7 · 애착 교차 ──
+        // ── v4 M7 · 애착 교차 (v3.9.36 · 2D 평면 + 확률 분포) ──
+        var _V39_TEND_COORDS = {
+            // (x=회피성 0-1, y=불안성 0-1)
+            leans_secure:       { x:0.22, y:0.22, key:'secure' },
+            secure:             { x:0.22, y:0.22, key:'secure' },
+            leans_anxious:      { x:0.22, y:0.78, key:'anxious' },
+            anxious:            { x:0.22, y:0.78, key:'anxious' },
+            leans_avoidant:     { x:0.78, y:0.22, key:'avoidant' },
+            avoidant:           { x:0.78, y:0.22, key:'avoidant' },
+            leans_disorganized: { x:0.78, y:0.78, key:'disorganized' },
+            disorganized:       { x:0.78, y:0.78, key:'disorganized' }
+        };
+        var _V39_TEND_KO = { secure:'안정형', anxious:'불안형', avoidant:'회피형', disorganized:'혼란형' };
         function renderV39AttachCross(ctx){
             var cross = ctx.crossSim || {};
             var ac = cross.attachmentCross || null;
+            var anchorA = ctx.anchorA || null, anchorB = ctx.anchorB || null;
             var active = document.getElementById('v39AttachCrossActive');
             var empty = document.getElementById('v39AttachCrossEmpty');
             if (!active || !empty) return;
-            if (!ac || (!ac.type && !ac.desc)) {
-                active.style.display = 'none';
-                empty.style.display = 'block';
-                return;
+            if (!ac && !anchorA && !anchorB) {
+                active.style.display = 'none'; empty.style.display = 'block'; return;
             }
-            var type = ac.type || '';
-            var label = _V39_ATTACH_LABELS[type] || type || '교차 유형';
+            var tendA = (anchorA && anchorA.attachment && anchorA.attachment.primary_tendency) || null;
+            var tendB = (anchorB && anchorB.attachment && anchorB.attachment.primary_tendency) || null;
+            var coordA = tendA && _V39_TEND_COORDS[tendA] || null;
+            var coordB = tendB && _V39_TEND_COORDS[tendB] || null;
+
+            function probsFrom(anchor, tend){
+                var att = (anchor && anchor.attachment) || {};
+                if (typeof att.secure_ratio === 'number' || typeof att.anxious_ratio === 'number') {
+                    return { secure: att.secure_ratio||0, anxious: att.anxious_ratio||0, avoidant: att.avoidant_ratio||0, disorganized: att.disorganized_ratio||0 };
+                }
+                // fallback: primary 0.55, 나머지 0.15
+                var p = { secure:0.15, anxious:0.15, avoidant:0.15, disorganized:0.15 };
+                var coord = tend && _V39_TEND_COORDS[tend];
+                if (coord && p.hasOwnProperty(coord.key)) p[coord.key] = 0.55;
+                return p;
+            }
+            var probsA = probsFrom(anchorA, tendA);
+            var probsB = probsFrom(anchorB, tendB);
+
+            // SVG 2D plot
+            var svg = document.getElementById('v39AttachPlot');
+            if (svg) {
+                function xp(x){ return 20 + x * 280; }
+                function yp(y){ return 20 + (1 - y) * 280; }
+                var s = '';
+                // quadrant fills
+                s += '<rect x="20" y="160" width="140" height="140" fill="rgba(52,211,153,0.05)"/>';
+                s += '<rect x="160" y="160" width="140" height="140" fill="rgba(245,166,35,0.05)"/>';
+                s += '<rect x="20" y="20" width="140" height="140" fill="rgba(96,165,250,0.05)"/>';
+                s += '<rect x="160" y="20" width="140" height="140" fill="rgba(239,68,68,0.05)"/>';
+                // dividers
+                s += '<line x1="160" y1="20" x2="160" y2="300" stroke="rgba(255,255,255,0.1)" stroke-dasharray="3,3"/>';
+                s += '<line x1="20" y1="160" x2="300" y2="160" stroke="rgba(255,255,255,0.1)" stroke-dasharray="3,3"/>';
+                s += '<line x1="20" y1="300" x2="300" y2="300" stroke="rgba(255,255,255,0.15)"/>';
+                s += '<line x1="20" y1="20" x2="20" y2="300" stroke="rgba(255,255,255,0.15)"/>';
+                // quadrant labels
+                s += '<g font-family="JetBrains Mono" font-size="10" fill="rgba(255,255,255,0.5)" font-weight="700">';
+                s += '<text x="36" y="186">SECURE</text>';
+                s += '<text x="172" y="186">AVOIDANT</text>';
+                s += '<text x="36" y="46">ANXIOUS</text>';
+                s += '<text x="148" y="46">DISORGAN.</text>';
+                s += '</g>';
+                s += '<g font-family="Inter" font-size="10" fill="rgba(255,255,255,0.35)">';
+                s += '<text x="36" y="200">안정형</text>';
+                s += '<text x="172" y="200">회피형</text>';
+                s += '<text x="36" y="60">불안형</text>';
+                s += '<text x="172" y="60">혼란형</text>';
+                s += '</g>';
+                // axis descriptors
+                s += '<g font-family="JetBrains Mono" font-size="9" fill="rgba(255,255,255,0.35)">';
+                s += '<text x="160" y="316" text-anchor="middle">회피성 →</text>';
+                s += '<text x="10" y="160" transform="rotate(-90 10 160)" text-anchor="middle">← 불안성</text>';
+                s += '</g>';
+                if (coordA && coordB) {
+                    s += '<line x1="' + xp(coordA.x).toFixed(1) + '" y1="' + yp(coordA.y).toFixed(1) +
+                         '" x2="' + xp(coordB.x).toFixed(1) + '" y2="' + yp(coordB.y).toFixed(1) +
+                         '" stroke="rgba(245,166,35,0.5)" stroke-width="1" stroke-dasharray="2,2"/>';
+                }
+                function drawPoint(coord, side){
+                    if (!coord) return '';
+                    var cx = xp(coord.x), cy = yp(coord.y);
+                    var fill = side==='a' ? 'rgba(96,165,250,0.3)' : 'rgba(167,139,250,0.3)';
+                    var stroke = side==='a' ? '#60A5FA' : '#A78BFA';
+                    var text = side==='a' ? 'A' : 'B';
+                    return '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="12" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2"/>' +
+                        '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="4" fill="' + stroke + '"/>' +
+                        '<text x="' + (cx+16).toFixed(1) + '" y="' + (cy+4).toFixed(1) + '" font-family="Inter" font-size="12" font-weight="700" fill="' + stroke + '">' + text + '</text>';
+                }
+                s += drawPoint(coordA, 'a');
+                s += drawPoint(coordB, 'b');
+                svg.innerHTML = s;
+            }
+
+            // 확률 분포 4 바
+            var probEl = document.getElementById('v39AttachProb');
+            if (probEl) {
+                var rows = [
+                    { k:'secure', name:'안정형', code:'SECURE' },
+                    { k:'anxious', name:'불안형', code:'ANXIOUS' },
+                    { k:'avoidant', name:'회피형', code:'AVOIDANT' },
+                    { k:'disorganized', name:'혼란형', code:'DISORG.' }
+                ];
+                var h = '<div class="v39-att-prob-title">// 4 타입 확률 분포</div>';
+                rows.forEach(function(r){
+                    var pa = probsA[r.k] || 0, pb = probsB[r.k] || 0;
+                    h += '<div class="v39-att-prob-row">' +
+                        '<div class="tname">' + r.name + '<span class="k">' + r.code + '</span></div>' +
+                        '<div class="bars">' +
+                            '<div class="bline"><span class="side a">A</span><span class="track"><span class="fill a" style="width:' + Math.round(pa*100) + '%"></span></span><span class="val">' + pa.toFixed(2) + '</span></div>' +
+                            '<div class="bline"><span class="side b">B</span><span class="track"><span class="fill b" style="width:' + Math.round(pb*100) + '%"></span></span><span class="val">' + pb.toFixed(2) + '</span></div>' +
+                        '</div>' +
+                    '</div>';
+                });
+                probEl.innerHTML = h;
+            }
+
+            // 라벨 + desc
+            var type = ac ? (ac.type || '') : '';
+            var label = _V39_ATTACH_LABELS[type] || type || '';
             var lblEl = document.getElementById('v39AttachCrossLabel');
-            if (lblEl) lblEl.innerHTML = '◆ 이 관계는 "' + _v39Safe(label) + '" 조합';
-            var aT = document.getElementById('v39AttachATend');
-            var bT = document.getElementById('v39AttachBTend');
-            if (aT) aT.textContent = ac.a_tendency || '—';
-            if (bT) bT.textContent = ac.b_tendency || '—';
+            if (lblEl) {
+                var sidesTxt = '';
+                var tA = tendA && _V39_TEND_COORDS[tendA] && _V39_TEND_KO[_V39_TEND_COORDS[tendA].key];
+                var tB = tendB && _V39_TEND_COORDS[tendB] && _V39_TEND_KO[_V39_TEND_COORDS[tendB].key];
+                if (tA && tB) sidesTxt = ' · A ' + tA + ' × B ' + tB;
+                lblEl.innerHTML = label ? '◆ ' + _v39Safe(label) + ' 조합' + _v39Safe(sidesTxt) : '◆ 애착 조합' + _v39Safe(sidesTxt);
+            }
             var descEl = document.getElementById('v39AttachDesc');
-            if (descEl) descEl.innerHTML = ac.desc ? _v39Safe(ac.desc) : '';
+            if (descEl) descEl.innerHTML = ac && ac.desc ? _v39Safe(ac.desc) : '';
+
             active.style.display = 'block';
             empty.style.display = 'none';
         }
 
-        // ── v4 M8 · 갈등 교차 ──
+        // ── v4 M8 · 갈등 2D 평면 (v3.9.36) ──
+        // x=방향(직설 0 ↔ 완곡 1), y=속도(즉각 0 ↔ 완충 1). A/B 각자 conflict style → 좌표.
+        var _V39_CONFLICT_STYLE_COORDS = {
+            confrontational:       { x:0.18, y:0.18 },
+            escalation:            { x:0.12, y:0.1 },
+            direct_engagement:     { x:0.25, y:0.22 },
+            aggression:            { x:0.15, y:0.14 },
+            assertion:             { x:0.32, y:0.3 },
+            boundary:              { x:0.45, y:0.3 },
+            repair:                { x:0.65, y:0.5 },
+            diplomatic_approach:   { x:0.72, y:0.45 },
+            strategic_withdrawal:  { x:0.78, y:0.78 },
+            avoidant:              { x:0.82, y:0.82 },
+            avoidance:             { x:0.82, y:0.82 },
+            suppression:           { x:0.7, y:0.82 }
+        };
+        var _V39_CONFLICT_STYLE_KO = {
+            confrontational:'직설 · 즉각',
+            direct_engagement:'직설 · 즉각',
+            aggression:'공격적',
+            escalation:'상승형',
+            assertion:'주장형',
+            boundary:'경계 설정',
+            repair:'복구형',
+            diplomatic_approach:'완곡 · 완충',
+            avoidant:'회피형',
+            strategic_withdrawal:'전략적 후퇴',
+            avoidance:'회피형',
+            suppression:'억제형'
+        };
+        var _V39_CONFLICT_TYPE_DEFAULT = {
+            head_on:         [{x:0.18,y:0.18},{x:0.22,y:0.22}],
+            speed_gap:       [{x:0.22,y:0.22},{x:0.78,y:0.78}],
+            soft_wall:       [{x:0.75,y:0.7},{x:0.82,y:0.78}],
+            frozen_conflict: [{x:0.78,y:0.82},{x:0.82,y:0.85}],
+            wall_punch:      [{x:0.2,y:0.2},{x:0.82,y:0.82}],
+            mirror_storm:    [{x:0.2,y:0.15},{x:0.22,y:0.18}]
+        };
+        function _v39ConflictStyle(axes){
+            var a8 = axes && axes.structural && axes.structural.A8;
+            return (a8 && a8.primary) || null;
+        }
         function renderV39ConflictCross(ctx){
             var cross = ctx.crossSim || {};
             var cc = cross.conflictCross || null;
+            var axesA = ctx.axesA || null, axesB = ctx.axesB || null;
             var active = document.getElementById('v39ConflictCrossActive');
             var empty = document.getElementById('v39ConflictCrossEmpty');
             if (!active || !empty) return;
-            if (!cc || (!cc.type && !cc.desc)) {
-                active.style.display = 'none';
-                empty.style.display = 'block';
-                return;
+            if (!cc && !axesA && !axesB) { active.style.display='none'; empty.style.display='block'; return; }
+
+            var styleA = _v39ConflictStyle(axesA) || (cc && cc.a_style) || null;
+            var styleB = _v39ConflictStyle(axesB) || (cc && cc.b_style) || null;
+            var coordA = (styleA && _V39_CONFLICT_STYLE_COORDS[styleA]) || null;
+            var coordB = (styleB && _V39_CONFLICT_STYLE_COORDS[styleB]) || null;
+            if ((!coordA || !coordB) && cc && cc.type && _V39_CONFLICT_TYPE_DEFAULT[cc.type]) {
+                if (!coordA) coordA = _V39_CONFLICT_TYPE_DEFAULT[cc.type][0];
+                if (!coordB) coordB = _V39_CONFLICT_TYPE_DEFAULT[cc.type][1];
             }
-            var type = cc.type || '';
-            var label = _V39_CONFLICT_LABELS[type] || type || '교차 유형';
-            var lblEl = document.getElementById('v39ConflictCrossLabel');
-            if (lblEl) lblEl.innerHTML = '◆ 이 관계는 "' + _v39Safe(label) + '" 조합';
-            var scoreEl = document.getElementById('v39ConflictCrossScore');
-            if (scoreEl) {
-                if (typeof cc.score === 'number' && Number.isFinite(cc.score)) {
-                    scoreEl.textContent = '강도 ' + cc.score.toFixed(2);
-                    scoreEl.style.display = 'inline-block';
-                } else {
-                    scoreEl.style.display = 'none';
+
+            // SVG
+            var svg = document.getElementById('v39ConflictPlot');
+            if (svg) {
+                var pad = 20, W = 340, H = 320;
+                function xp(x){ return pad + x * (W - pad*2); }
+                function yp(y){ return pad + (1-y) * (H - pad*2); }
+                var s = '';
+                s += '<rect x="'+pad+'" y="'+pad+'" width="150" height="140" fill="rgba(239,68,68,0.05)"/>';
+                s += '<rect x="170" y="'+pad+'" width="150" height="140" fill="rgba(245,166,35,0.05)"/>';
+                s += '<rect x="'+pad+'" y="160" width="150" height="140" fill="rgba(96,165,250,0.05)"/>';
+                s += '<rect x="170" y="160" width="150" height="140" fill="rgba(52,211,153,0.05)"/>';
+                s += '<line x1="170" y1="'+pad+'" x2="170" y2="300" stroke="rgba(255,255,255,0.1)" stroke-dasharray="3,3"/>';
+                s += '<line x1="'+pad+'" y1="160" x2="320" y2="160" stroke="rgba(255,255,255,0.1)" stroke-dasharray="3,3"/>';
+                s += '<g font-family="JetBrains Mono" font-size="10" fill="rgba(255,255,255,0.5)" font-weight="700">';
+                s += '<text x="36" y="40">정면 대립</text>';
+                s += '<text x="186" y="40">거울 폭주</text>';
+                s += '<text x="36" y="180">속도 차이</text>';
+                s += '<text x="186" y="180">부드러운 벽</text>';
+                s += '</g>';
+                s += '<g font-family="JetBrains Mono" font-size="9" fill="rgba(255,255,255,0.3)">';
+                s += '<text x="36" y="52">head_on</text>';
+                s += '<text x="186" y="52">mirror</text>';
+                s += '<text x="36" y="192">speed_gap</text>';
+                s += '<text x="186" y="192">soft_wall</text>';
+                s += '</g>';
+                s += '<g font-family="JetBrains Mono" font-size="9" fill="rgba(255,255,255,0.4)">';
+                s += '<text x="170" y="314" text-anchor="middle">방향: 직설 ← → 완곡</text>';
+                s += '<text x="10" y="160" transform="rotate(-90 10 160)" text-anchor="middle">← 완충  속도  즉각 →</text>';
+                s += '</g>';
+                if (coordA && coordB) {
+                    s += '<line x1="' + xp(coordA.x).toFixed(1) + '" y1="' + yp(coordA.y).toFixed(1) +
+                         '" x2="' + xp(coordB.x).toFixed(1) + '" y2="' + yp(coordB.y).toFixed(1) +
+                         '" stroke="rgba(239,68,68,0.5)" stroke-width="1.5" stroke-dasharray="4,3"/>';
+                    if (cc && typeof cc.score === 'number') {
+                        s += '<text x="' + ((xp(coordA.x)+xp(coordB.x))/2).toFixed(1) + '" y="' + ((yp(coordA.y)+yp(coordB.y))/2 - 4).toFixed(1) + '" font-family="JetBrains Mono" font-size="10" fill="#EF4444" text-anchor="middle" font-weight="700">Δ ' + cc.score.toFixed(2) + '</text>';
+                    }
                 }
+                function drawP(coord, side){
+                    if (!coord) return '';
+                    var cx = xp(coord.x), cy = yp(coord.y);
+                    var fill = side==='a' ? 'rgba(96,165,250,0.3)' : 'rgba(167,139,250,0.3)';
+                    var stroke = side==='a' ? '#60A5FA' : '#A78BFA';
+                    return '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="12" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2"/>' +
+                        '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="4" fill="' + stroke + '"/>' +
+                        '<text x="' + (cx+16).toFixed(1) + '" y="' + (cy+4).toFixed(1) + '" font-family="Inter" font-size="12" font-weight="700" fill="' + stroke + '">' + (side==='a'?'A':'B') + '</text>';
+                }
+                s += drawP(coordA, 'a');
+                s += drawP(coordB, 'b');
+                svg.innerHTML = s;
             }
+
+            // score ring
+            var score = cc && typeof cc.score === 'number' && Number.isFinite(cc.score) ? cc.score : null;
+            var scoreVal = document.getElementById('v39ConflictScoreVal');
+            var scoreArc = document.getElementById('v39ConflictScoreArc');
+            if (scoreVal) scoreVal.textContent = score != null ? score.toFixed(2) : '—';
+            if (scoreArc) {
+                var circ = 2 * Math.PI * 60;
+                scoreArc.setAttribute('stroke-dasharray', String(circ));
+                scoreArc.setAttribute('stroke-dashoffset', String(score != null ? circ * (1 - Math.max(0, Math.min(1, score))) : circ));
+            }
+
+            // type card
+            var typeCard = document.getElementById('v39ConflictTypeCard');
+            if (typeCard) {
+                var type = cc ? (cc.type || '') : '';
+                var label = _V39_CONFLICT_LABELS[type] || type || '—';
+                var aKo = _V39_CONFLICT_STYLE_KO[styleA] || styleA || '—';
+                var bKo = _V39_CONFLICT_STYLE_KO[styleB] || styleB || '—';
+                typeCard.innerHTML = '<div class="cname">' + _v39Safe(label) + '</div>' +
+                    '<div class="csides">' +
+                        '<div class="a"><span class="tk">A</span>' + _v39Safe(aKo) + '</div>' +
+                        '<div class="b"><span class="tk">B</span>' + _v39Safe(bKo) + '</div>' +
+                    '</div>';
+            }
+
             var descEl = document.getElementById('v39ConflictDesc');
-            if (descEl) descEl.innerHTML = cc.desc ? _v39Safe(cc.desc) : '';
+            if (descEl) descEl.innerHTML = cc && cc.desc ? _v39Safe(cc.desc) : '';
             active.style.display = 'block';
             empty.style.display = 'none';
         }
 
-        // ── v4 M6 · 방어 충돌 (2026-04-23) ──
+        // ── v4 M6 · 방어 6타입 레이더 (v3.9.36) ──
+        // 각 방어 rule 조건을 simAxes(E/C/T/O/X)에서 soft-match 로 proximity 계산.
+        // worker.js:DEFENSE_RULES 와 동일 조건 · 프론트 시각화 전용 (engine 일관성 무관).
+        var _V39_DEFENSE_TYPES = [
+            { key:'adaptive',   name:'적응형',       code:'ADAPTIVE',   angle:-90 },
+            { key:'projection', name:'합리화된 전가', code:'PROJECTION', angle:-30 },
+            { key:'fortress',   name:'지적 요새화',   code:'FORTRESS',   angle:30 },
+            { key:'shutdown',   name:'수동적 회피',   code:'SHUTDOWN',   angle:90 },
+            { key:'diffusion',  name:'경계 해체',     code:'DIFFUSION',  angle:150 },
+            { key:'explosion',  name:'정서적 폭주',   code:'EXPLOSION',  angle:-150 }
+        ];
+        function _v39DefenseProximities(axes){
+            if (!axes || typeof axes !== 'object') return null;
+            var E = axes.emotion || 0, C = axes.drive || 0, T = axes.cognition || 0,
+                O = axes.boundary || 0, X = axes.resilience || 0;
+            function clamp01(v){ return Math.max(0, Math.min(1, v)); }
+            function ge(v, t){ return clamp01((v - t + 0.2) / 0.4); }  // v>=t: v=t=0.5 · v=t+0.2=1
+            function lt(v, t){ return clamp01((t - v + 0.2) / 0.4); }
+            var projection = (ge(E,0.5) + ge(T,0.6) + ge(C,0.5) + lt(O,0.45)) / 4;
+            var fortress   = (ge(C,0.6) + lt(O,0.4) + ge(T,0.5)) / 3;
+            var explosion  = (ge(E,0.6) + lt(C,0.4)) / 2;
+            var diffusion  = (ge(O,0.65) + lt(C,0.45) + ge(E,0.5)) / 3;
+            var shutdown   = (lt(X,0.4) + lt(O,0.4)) / 2;
+            var maxOther = Math.max(projection, fortress, explosion, diffusion, shutdown);
+            var adaptive = Math.max(0.15, 1 - maxOther);  // ADAPTIVE 는 나머지의 역
+            return { projection:projection, fortress:fortress, explosion:explosion,
+                     diffusion:diffusion, shutdown:shutdown, adaptive:adaptive };
+        }
         function renderV39Defense(ctx){
             var cross = ctx.crossSim || {};
             var clash = cross.defenseClash || {};
             var simA = ctx.simulationA || {}, simB = ctx.simulationB || {};
             var defA = (simA && simA.defense) || {};
             var defB = (simB && simB.defense) || {};
+            var proxA = _v39DefenseProximities(simA.axes);
+            var proxB = _v39DefenseProximities(simB.axes);
 
+            // SVG radar
+            var svg = document.getElementById('v39DefRadar');
+            if (svg) {
+                var cx = 140, cy = 140, rMax = 100;
+                function pt(deg, r){
+                    var rad = deg * Math.PI / 180;
+                    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+                }
+                var s = '';
+                // concentric hexagons
+                s += '<g fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1">';
+                for (var lvl = 1; lvl <= 5; lvl++) {
+                    var pts = _V39_DEFENSE_TYPES.map(function(t){
+                        var p = pt(t.angle, rMax * lvl / 5);
+                        return p.x.toFixed(1) + ',' + p.y.toFixed(1);
+                    });
+                    s += '<polygon points="' + pts.join(' ') + '"/>';
+                }
+                s += '</g>';
+                // axis labels
+                s += '<g font-family="JetBrains Mono" font-size="9" fill="rgba(255,255,255,0.55)" text-anchor="middle" font-weight="600">';
+                _V39_DEFENSE_TYPES.forEach(function(t){
+                    var p = pt(t.angle, rMax + 22);
+                    s += '<text x="' + p.x.toFixed(1) + '" y="' + (p.y + 3).toFixed(1) + '">' + t.code.slice(0,5) + '</text>';
+                });
+                s += '</g>';
+                function polyFor(prox, color, fill, dash){
+                    if (!prox) return '';
+                    var pts2 = _V39_DEFENSE_TYPES.map(function(t){
+                        var v = Math.max(0.05, prox[t.key] || 0);
+                        var p = pt(t.angle, rMax * v);
+                        return p.x.toFixed(1) + ',' + p.y.toFixed(1);
+                    });
+                    return '<polygon points="' + pts2.join(' ') + '" fill="' + fill + '" stroke="' + color + '" stroke-width="2" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="4,2"' : '') + '/>';
+                }
+                s += polyFor(proxA, '#60A5FA', 'rgba(96,165,250,0.15)', false);
+                s += polyFor(proxB, '#A78BFA', 'rgba(167,139,250,0.15)', true);
+                function dotsFor(prox, color){
+                    if (!prox) return '';
+                    var o = '';
+                    _V39_DEFENSE_TYPES.forEach(function(t){
+                        var v = Math.max(0.05, prox[t.key] || 0);
+                        var p = pt(t.angle, rMax * v);
+                        o += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="' + color + '"/>';
+                    });
+                    return o;
+                }
+                s += dotsFor(proxA, '#60A5FA');
+                s += dotsFor(proxB, '#A78BFA');
+                svg.innerHTML = s;
+            }
+
+            // 6 row table
+            var typesEl = document.getElementById('v39DefTypes');
+            if (typesEl) {
+                var primaryA = (defA.code || '').toLowerCase();
+                var primaryB = (defB.code || '').toLowerCase();
+                var h = '';
+                _V39_DEFENSE_TYPES.forEach(function(t){
+                    var va = proxA ? (proxA[t.key] || 0) : 0;
+                    var vb = proxB ? (proxB[t.key] || 0) : 0;
+                    var isPrimary = primaryA === t.key || primaryB === t.key;
+                    h += '<div class="v39-def-type-row' + (isPrimary ? ' primary' : '') + '">' +
+                        '<div class="name">' + t.name + '<span class="k">' + t.code + '</span></div>' +
+                        '<div class="bar"><span class="side a">A</span><span class="track"><span class="fill a" style="width:' + Math.round(va*100) + '%"></span></span><span class="val">' + va.toFixed(2) + '</span></div>' +
+                        '<div class="bar"><span class="side b">B</span><span class="track"><span class="fill b" style="width:' + Math.round(vb*100) + '%"></span></span><span class="val">' + vb.toFixed(2) + '</span></div>' +
+                    '</div>';
+                });
+                typesEl.innerHTML = h;
+            }
+
+            // A/B primary 카드
             var aName = document.getElementById('v39DefAName');
             var aCode = document.getElementById('v39DefACode');
             var bName = document.getElementById('v39DefBName');
@@ -12302,6 +12801,7 @@ function displayResult() {
             if (bName) bName.textContent = defB.name || '—';
             if (bCode) bCode.textContent = defB.code || '';
 
+            // severity
             var sevEl = document.getElementById('v39DefSeverity');
             if (sevEl) {
                 if (clash.severity) {
@@ -12310,22 +12810,15 @@ function displayResult() {
                     sevEl.textContent = sevMap[sev] || '심각도 · ' + clash.severity;
                     sevEl.className = 'v39-def-severity ' + sev;
                     sevEl.style.display = 'inline-block';
-                } else {
-                    sevEl.style.display = 'none';
-                }
+                } else { sevEl.style.display = 'none'; }
             }
 
             var descEl = document.getElementById('v39DefDesc');
             if (descEl) {
-                if (clash.desc) {
-                    descEl.innerHTML = _v39Safe(clash.desc);
-                } else if (clash.type) {
-                    descEl.textContent = '방어 패턴 "' + _v39Safe(clash.type) + '" 감지.';
-                } else if (!defA.name && !defB.name) {
-                    descEl.textContent = '방어 데이터가 충분하지 않습니다.';
-                } else {
-                    descEl.textContent = '두 사람의 방어 패턴이 직접 충돌하지 않는 조합입니다.';
-                }
+                if (clash.desc) descEl.innerHTML = _v39Safe(clash.desc);
+                else if (clash.type) descEl.textContent = '방어 패턴 "' + _v39Safe(clash.type) + '" 감지.';
+                else if (!defA.name && !defB.name) descEl.textContent = '방어 데이터가 충분하지 않습니다.';
+                else descEl.textContent = '두 사람의 방어 패턴이 직접 충돌하지 않는 조합입니다.';
             }
         }
 
