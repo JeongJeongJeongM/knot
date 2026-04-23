@@ -11834,9 +11834,11 @@ function displayResult() {
                 { key:'loss',     label:'상실' }
             ];
             function sitMean(sim, key){
-                // v3.9.9: backend result[sit].mean 은 step 인덱스 배열 [{step, E, C, T, O, X}, ...].
-                //   배열 전체의 E 평균을 내서 situational 반응값으로 사용. sessionCount === 0 이면 null.
+                // v3.9.16: situational (측정) → stimulus (시뮬레이션 투사) → baseline axes 순서로 fallback.
+                //   유저 대화가 normal 위주면 situational.stress 등 sessionCount=0 → null → 점 안 찍힘.
+                //   stimulus[key].shifted.E 는 항상 계산되므로 이걸 fallback 으로 쓰면 5 상황 전부 표시.
                 if (!sim) return null;
+                // 1. situational (실측)
                 if (sim.situational && sim.situational[key]) {
                     var s = sim.situational[key];
                     if ((s.sessionCount || 0) > 0 && Array.isArray(s.mean) && s.mean.length) {
@@ -11848,7 +11850,13 @@ function displayResult() {
                         if (n > 0) return _v39Norm01(sum / n);
                     }
                 }
-                // normal (baseline) 은 sim.axes.emotion 으로 fallback
+                // 2. stimulus (시뮬레이션 투사) — normal 은 default 키 사용
+                if (sim.stimulus) {
+                    var stimKey = key === 'normal' ? 'default' : key;
+                    var st = sim.stimulus[stimKey];
+                    if (st && st.shifted && typeof st.shifted.E === 'number') return _v39Norm01(st.shifted.E);
+                }
+                // 3. normal (baseline) 은 sim.axes.emotion fallback
                 if (key === 'normal') {
                     if (sim.axes && typeof sim.axes.emotion === 'number') return _v39Norm01(sim.axes.emotion);
                     if (sim.now && typeof sim.now.emotion === 'number') return _v39Norm01(sim.now.emotion);
