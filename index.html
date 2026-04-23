@@ -4664,10 +4664,41 @@
         .v39-topic-chip.b{background:rgba(167,139,250,0.12);color:var(--side-b)}
         .v39-topic-desc{max-width:640px;margin:var(--sp-3) auto 0;padding-top:var(--sp-3);border-top:1px solid var(--sf-2);font-size:var(--fs-xs);color:rgba(255,255,255,0.6);line-height:var(--lh-loose)}
 
-        /* v4 M11 — 공유 위험 리스트 */
-        .v39-shared-risks{display:flex;flex-direction:column;gap:var(--sp-2);max-width:640px;margin:0 auto}
-        .v39-shared-risk-item{padding:var(--sp-3) var(--sp-4);background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-left:3px solid var(--state-risk);border-radius:0 var(--r-md) var(--r-md) 0;font-size:var(--fs-sm);color:rgba(255,255,255,0.75);line-height:var(--lh-loose)}
-        .v39-shared-risk-item strong{color:#FCA5A5;font-weight:600}
+        /* v4 M11 — 위험 매트릭스 (v3.9.37 재설계) */
+        .v39-risk-matrix-wrap{max-width:720px;margin:0 auto}
+        .v39-risk-matrix{display:grid;grid-template-columns:140px 1fr 56px 56px 70px;gap:1px;background:var(--sf-3);border-radius:var(--r-md);overflow:hidden;margin-bottom:var(--sp-3)}
+        .v39-risk-matrix > div{background:var(--bg);padding:var(--sp-2) var(--sp-3);font-size:var(--fs-xs);display:flex;align-items:center}
+        .v39-risk-matrix .mh{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.4);font-weight:700;letter-spacing:1px;background:var(--sf-1)}
+        .v39-risk-matrix .mh.ctr{justify-content:center}
+        .v39-risk-matrix .trig{font-weight:700;color:#fff;flex-direction:column;align-items:flex-start;justify-content:center}
+        .v39-risk-matrix .trig .sub{display:block;font-size:9px;color:rgba(255,255,255,0.4);font-weight:400;margin-top:2px;letter-spacing:0.5px;font-family:'JetBrains Mono',monospace}
+        .v39-risk-matrix .desc{font-size:11px;color:rgba(255,255,255,0.65);line-height:1.5}
+        .v39-risk-matrix .cell{justify-content:center;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700}
+        .v39-risk-matrix .cell.mark.a{background:rgba(96,165,250,0.1);color:var(--side-a)}
+        .v39-risk-matrix .cell.mark.b{background:rgba(167,139,250,0.1);color:var(--side-b)}
+        .v39-risk-matrix .cell.mark.both{background:rgba(239,68,68,0.15);color:#FCA5A5}
+        .v39-risk-matrix .cell.empty{color:rgba(255,255,255,0.15)}
+        .v39-risk-matrix .sev-cell{justify-content:center;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace}
+        .v39-risk-matrix .sev-cell.high{background:rgba(239,68,68,0.1);color:#FCA5A5}
+        .v39-risk-matrix .sev-cell.medium{background:rgba(245,166,35,0.1);color:#FBBF24}
+        .v39-risk-matrix .sev-cell.low{background:rgba(156,163,175,0.1);color:#D1D5DB}
+        .v39-risk-matrix .sev-cell.none{color:rgba(255,255,255,0.15)}
+        .v39-risk-summary{padding:var(--sp-3) var(--sp-4);background:var(--sf-1);border-left:3px solid var(--ac);border-radius:0 var(--r-md) var(--r-md) 0}
+        .v39-risk-summary .rs-counts{display:flex;gap:var(--sp-2);margin-bottom:var(--sp-2);flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:var(--fs-xxs);letter-spacing:0.5px}
+        .v39-risk-summary .rs-count{padding:3px 9px;border-radius:var(--r-sm);font-weight:700}
+        .v39-risk-summary .rs-count.shared{background:rgba(239,68,68,0.12);color:#FCA5A5}
+        .v39-risk-summary .rs-count.a{background:rgba(96,165,250,0.12);color:var(--side-a)}
+        .v39-risk-summary .rs-count.b{background:rgba(167,139,250,0.12);color:var(--side-b)}
+        .v39-risk-summary .rs-count.none{background:rgba(52,211,153,0.12);color:var(--state-growth)}
+        .v39-risk-summary .rs-body{font-size:var(--fs-sm);color:rgba(255,255,255,0.72);line-height:var(--lh-loose)}
+        .v39-risk-summary .rs-body strong{color:#fff;font-weight:600}
+        @media(max-width:600px){
+            .v39-risk-matrix{grid-template-columns:108px 1fr 38px 38px 54px}
+            .v39-risk-matrix > div{padding:var(--sp-2) 6px}
+            .v39-risk-matrix .trig{font-size:11px}
+            .v39-risk-matrix .desc{font-size:10px;line-height:1.4}
+            .v39-risk-matrix .cell{font-size:12px}
+        }
 
         /* v4 M12 — 상황별 교차 (탭 + 양쪽 정체성 + 5축 비교) */
         .v39-sit-wrap{max-width:720px;margin:0 auto}
@@ -5703,8 +5734,11 @@
                   <div class="result-section-inner">
                     <div class="v39-meta">같이 피해야 할 지뢰 · <span class="dim">SHARED RISKS</span></div>
                     <h2 class="v39-title">두 사람이 함께 취약한 구간</h2>
-                    <p class="v39-subtitle">같은 상황에서 양쪽이 동시에 흔들리는 지점을 조심하세요.</p>
-                    <div class="v39-shared-risks" id="v39SharedRisksList" style="display:none"></div>
+                    <p class="v39-subtitle">5가지 위험 trigger × A/B 매트릭스. 둘 다 표시된 행이 <strong style="color:#FCA5A5">공유 위험</strong> — 같이 피해야 할 지뢰.</p>
+                    <div class="v39-risk-matrix-wrap" id="v39SharedRisksList" style="display:none">
+                        <div class="v39-risk-matrix" id="v39RiskMatrixGrid"></div>
+                        <div class="v39-risk-summary" id="v39RiskSummary"></div>
+                    </div>
                     <div class="v39-cross-empty" id="v39SharedRisksEmpty" style="display:none">공유 위험 요소는 감지되지 않았습니다.</div>
                   </div>
                 </section>
@@ -12374,22 +12408,94 @@ function displayResult() {
         }
 
         // ── v4 M11 · 공유 위험 ──
+        // ── v4 M11 · 위험 매트릭스 (v3.9.37 · 5 trigger × A/B) ──
+        var _V39_RISK_TRIGGER_CODES = {
+            '정서 과부하':'EMO_OVERLOAD',
+            '통제 붕괴':'CTRL_COLLAPSE',
+            '고립 나선':'ISOLATION',
+            '회복력 소진':'RESIL_ERODE',
+            '상실 취약성':'LOSS_VULN'
+        };
+        var _V39_SEV_LABELS = { high:'HIGH', medium:'MED', low:'LOW' };
         function renderV39SharedRisks(ctx){
             var cross = ctx.crossSim || {};
-            var arr = Array.isArray(cross.sharedRisks) ? cross.sharedRisks : [];
-            var listEl = document.getElementById('v39SharedRisksList');
+            var matrix = Array.isArray(cross.riskMatrix) ? cross.riskMatrix : null;
+            var wrap = document.getElementById('v39SharedRisksList');
             var empty = document.getElementById('v39SharedRisksEmpty');
-            if (!listEl || !empty) return;
-            if (arr.length === 0) {
-                listEl.style.display = 'none';
-                empty.style.display = 'block';
-                return;
+            var gridEl = document.getElementById('v39RiskMatrixGrid');
+            var sumEl = document.getElementById('v39RiskSummary');
+            if (!wrap || !empty || !gridEl || !sumEl) return;
+
+            // riskMatrix 없으면 (legacy data) → sharedRisks string[] fallback
+            if (!matrix) {
+                var arr = Array.isArray(cross.sharedRisks) ? cross.sharedRisks : [];
+                if (arr.length === 0) {
+                    wrap.style.display = 'none'; empty.style.display = 'block'; return;
+                }
+                // 간이 matrix: shared 만 표시, A/B 둘 다 on
+                matrix = arr.map(function(r){
+                    var trig = typeof r === 'string' ? r : (r.trigger || r.name || '');
+                    return { trigger: trig, desc: '상세 정보 없음 (구 데이터)', in_a:true, in_b:true, shared:true, severity:'medium' };
+                });
             }
-            listEl.innerHTML = arr.map(function(r){
-                var text = typeof r === 'string' ? r : (r.desc || r.name || JSON.stringify(r));
-                return '<div class="v39-shared-risk-item">' + _v39Safe(text) + '</div>';
-            }).join('');
-            listEl.style.display = 'flex';
+
+            var hasAny = matrix.some(function(r){ return r.in_a || r.in_b; });
+            if (!hasAny) { wrap.style.display = 'none'; empty.style.display = 'block'; return; }
+
+            // Grid 렌더
+            var html = '<div class="mh">위험 Trigger</div><div class="mh">설명</div><div class="mh ctr">A</div><div class="mh ctr">B</div><div class="mh ctr">심각도</div>';
+            matrix.forEach(function(r){
+                var code = _V39_RISK_TRIGGER_CODES[r.trigger] || '';
+                var aCls = r.in_a ? 'mark ' + (r.shared ? 'both' : 'a') : 'empty';
+                var bCls = r.in_b ? 'mark ' + (r.shared ? 'both' : 'b') : 'empty';
+                var aMark = r.in_a ? '●' : '○';
+                var bMark = r.in_b ? '●' : '○';
+                var sevRaw = String(r.severity || 'low').toLowerCase();
+                var sevCls = (r.in_a || r.in_b) ? sevRaw : 'none';
+                var sevText = (r.in_a || r.in_b) ? (_V39_SEV_LABELS[sevRaw] || sevRaw.toUpperCase()) : '—';
+                html += '<div class="trig">' + _v39Safe(r.trigger) + (code ? '<span class="sub">' + code + '</span>' : '') + '</div>' +
+                    '<div class="desc">' + _v39Safe(r.desc || '') + '</div>' +
+                    '<div class="cell ' + aCls + '">' + aMark + '</div>' +
+                    '<div class="cell ' + bCls + '">' + bMark + '</div>' +
+                    '<div class="sev-cell ' + sevCls + '">' + sevText + '</div>';
+            });
+            gridEl.innerHTML = html;
+
+            // Summary — 표 아래 해석 텍스트
+            var sharedItems = matrix.filter(function(r){ return r.shared; });
+            var aOnlyItems = matrix.filter(function(r){ return r.in_a && !r.shared; });
+            var bOnlyItems = matrix.filter(function(r){ return r.in_b && !r.shared; });
+            var sharedCount = sharedItems.length, aOnly = aOnlyItems.length, bOnly = bOnlyItems.length;
+
+            var counts = '<div class="rs-counts">';
+            if (sharedCount > 0) counts += '<span class="rs-count shared">● 공유 ' + sharedCount + '개</span>';
+            else counts += '<span class="rs-count none">○ 공유 없음</span>';
+            if (aOnly > 0) counts += '<span class="rs-count a">A만 ' + aOnly + '개</span>';
+            if (bOnly > 0) counts += '<span class="rs-count b">B만 ' + bOnly + '개</span>';
+            counts += '</div>';
+
+            var bodyParts = [];
+            if (sharedCount > 0) {
+                var sharedNames = sharedItems.map(function(r){ return r.trigger; }).join(', ');
+                bodyParts.push('<strong>공유 위험 ' + sharedCount + '개</strong> (' + _v39Safe(sharedNames) + ') 는 같은 상황에서 <strong>둘 다 동시에 흔들리는 구간</strong>. 상호 조절이 어려우므로 외부 안전판(친구·상담 등)이 필요합니다.');
+            } else if (aOnly + bOnly > 0) {
+                bodyParts.push('<strong>공유 위험 없음</strong> — 같은 상황에서 한쪽이 흔들려도 다른 쪽이 지탱 가능한 구조.');
+            }
+            if (aOnly > 0) {
+                var aNames = aOnlyItems.map(function(r){ return r.trigger; }).join(', ');
+                bodyParts.push('<strong>A만 걸린 ' + aOnly + '개</strong> (' + _v39Safe(aNames) + ') 는 <strong>B가 먼저 경고 신호를 감지해야 할 지점</strong>. B의 상대적 안정이 A의 완충 역할.');
+            }
+            if (bOnly > 0) {
+                var bNames = bOnlyItems.map(function(r){ return r.trigger; }).join(', ');
+                bodyParts.push('<strong>B만 걸린 ' + bOnly + '개</strong> (' + _v39Safe(bNames) + ') 는 <strong>A가 먼저 경고 신호를 감지해야 할 지점</strong>.');
+            }
+            if (sharedCount === 0 && aOnly === 0 && bOnly === 0) {
+                bodyParts = ['<strong>모든 위험 trigger 미감지</strong> — 두 사람 모두 현재 안정 범위 내.'];
+            }
+
+            sumEl.innerHTML = counts + '<div class="rs-body">' + bodyParts.join(' ') + '</div>';
+
+            wrap.style.display = 'block';
             empty.style.display = 'none';
         }
 

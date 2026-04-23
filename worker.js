@@ -9345,6 +9345,31 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
     shared.forEach(f => sharedRisks.push(f));
   }
 
+  // v3.9.37: 위험 매트릭스 — 5 trigger 전체 × A/B × severity·desc·shared.
+  //   기존 sharedRisks(string[]) 는 라벨만 → 프론트에서 desc/severity/A-only/B-only 정보 못 얻음.
+  //   RISK_CATALOG 기준으로 모든 trigger 에 대한 A/B 매치 여부 + 원본 정보 포함한 행 생성.
+  const RISK_CATALOG_V4 = [
+    { trigger: '정서 과부하',  desc: '높은 감정 강도와 낮은 회복 탄성의 결합. 감정적 사건이 연쇄적 시스템 불안정을 유발할 수 있다.', default_severity: 'high' },
+    { trigger: '통제 붕괴',    desc: '스트레스 상황에서 통제 시스템이 임계점 이하로 하락하며 회복이 어렵다.', default_severity: 'high' },
+    { trigger: '고립 나선',    desc: '높은 통제 욕구와 닫힌 경계의 결합. 타인의 접근을 차단하면서 자기 확인 루프에 갇힐 수 있다.', default_severity: 'medium' },
+    { trigger: '회복력 소진',  desc: '시간이 지남에 따라 회복 탄성이 자연 감소하는 궤적. 축적된 스트레스가 시스템 내구성을 점진적으로 약화시킨다.', default_severity: 'medium' },
+    { trigger: '상실 취약성',  desc: '관계 단절이나 기대 붕괴에 대한 시스템 반응이 과도하며, 자연 회복이 불완전하다.', default_severity: 'medium' }
+  ];
+  const riskMatrix = RISK_CATALOG_V4.map(cat => {
+    const inA = riskA?.risks?.find(r => (r.trigger || r) === cat.trigger);
+    const inB = riskB?.risks?.find(r => (r.trigger || r) === cat.trigger);
+    return {
+      trigger: cat.trigger,
+      desc: (inA && inA.desc) || (inB && inB.desc) || cat.desc,
+      in_a: !!inA,
+      in_b: !!inB,
+      a_severity: inA ? (inA.severity || cat.default_severity) : null,
+      b_severity: inB ? (inB.severity || cat.default_severity) : null,
+      severity: (inA && inA.severity) || (inB && inB.severity) || cat.default_severity,
+      shared: !!(inA && inB)
+    };
+  });
+
   // ── 6. 종합 호환성 스코어 (0-100) ──
   let compat = 50;
   // 축 거리가 작을수록 +
@@ -9485,6 +9510,7 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
     triggerLoops,
     defenseClash,
     sharedRisks,
+    riskMatrix,  // v3.9.37: 5 trigger × A/B × desc·severity (M11 매트릭스용)
     attachmentCross,
     conflictCross,
     recoveryMismatch,
