@@ -11978,16 +11978,25 @@ function displayResult() {
         //   INDIVIDUAL_SECTIONS (L10417+) = 9개: persona / cognitive_topology / control_system /
         //   emotional_energy / defense_system / behavioral_trajectory / risk_model / growth_direction / unconscious
         //   각 섹션의 title (서버 한글) 을 탭 라벨로 사용. 매핑 loss 없음.
-        // 서버 key → 짧은 대문자 라벨 (탭에 한글 대신 영문 축약 쓰고 싶을 때만)
+        // 서버 key 또는 한글 title → 짧은 대문자 라벨 (v3.9.18: 기존 stored match 중 key 필드 빠진 경우
+        //   title 을 fallback 으로 쓸 때도 영문 축약 일관성 유지)
         var _V39_KEY_SHORTLABEL = {
-            // Matching sections
+            // Matching sections — 영문 key
             first_impression:'FIRST', attraction_structure:'ATTRACT', defense_collision:'DEFENSE',
             stimulus_dynamics:'STIMULUS', trajectory_forecast:'ARC', shared_world:'WORLD',
             risk_map:'RISK', emotional_dynamics:'EMOTION', possibility:'POSSIBILITY',
-            // Individual sections
+            // Matching sections — 한글 title alias
+            '첫 인상':'FIRST', '끌림의 구조':'ATTRACT', '방어 체계 충돌':'DEFENSE',
+            '자극-반응 역학':'STIMULUS', '궤적 전망':'ARC', '공유 세계':'WORLD',
+            '관계 위험 맵':'RISK', '감정 역학':'EMOTION', '이 관계의 가능성':'POSSIBILITY',
+            // Individual sections — 영문 key
             persona:'PERSONA', cognitive_topology:'COGNITION', control_system:'CONTROL',
             emotional_energy:'ENERGY', defense_system:'DEFENSE', behavioral_trajectory:'TRAJECTORY',
-            risk_model:'RISK', growth_direction:'GROWTH', unconscious:'SHADOW'
+            risk_model:'RISK', growth_direction:'GROWTH', unconscious:'SHADOW',
+            // Individual sections — 한글 title alias
+            '페르소나':'PERSONA', '사유의 지형':'COGNITION', '통제 체계':'CONTROL',
+            '정서 에너지':'ENERGY', '방어 체계':'DEFENSE', '행동 궤적':'TRAJECTORY',
+            '위험 모델':'RISK', '성장 지향점':'GROWTH', '무의식':'SHADOW'
         };
 
         function renderV39DeepDive(ctx){
@@ -12038,9 +12047,12 @@ function displayResult() {
                 if (!html) html = '<p class="v39-dd-empty">내용 없음</p>';
                 return html;
             }
-            // 탭 라벨: 짧은 영문 축약 있으면 사용, 없으면 한글 title 을 그대로
+            // 탭 라벨: key 매칭 → title 매칭 → fallback (v3.9.18: title 도 축약 사전 검색)
             function _tabLabel(sec){
-                return _V39_KEY_SHORTLABEL[sec.key] || (sec.title || (sec.key || '').toUpperCase()) || 'SECTION';
+                return _V39_KEY_SHORTLABEL[sec.key] ||
+                       _V39_KEY_SHORTLABEL[sec.title] ||
+                       (sec.title || (sec.key || '').toUpperCase()) ||
+                       'SECTION';
             }
             // 0 개면 empty state, 1 개면 nav 숨기고 panel 만, 2+ 면 탭 네비.
             if (!arr.length) {
