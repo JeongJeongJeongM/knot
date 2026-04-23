@@ -4479,17 +4479,25 @@
         .v39-ra.growth .ra-anti b{color:#34D399;font-weight:700}
         .v39-ra .ra-action{font-size:14px;line-height:1.7;color:rgba(255,255,255,0.85)}
 
-        /* DEEP DIVE */
-        .v39-dd{position:relative;background:rgba(12,12,20,0.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.06);border-radius:14px;overflow:hidden}
+        /* DEEP DIVE — v3.9.15: 개인 페이지 .lens-split 레이아웃 복제
+           (왼쪽 260px 세로 사이드바 + 오른쪽 본문. 모바일은 상단 가로 스크롤) */
+        .v39-dd{position:relative;display:flex;background:rgba(12,12,20,0.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.06);border-radius:14px;overflow:hidden}
         .v39-dd::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,166,35,0.3),transparent);z-index:1}
-        /* v3.9.14: flex-wrap 으로 9개 탭 자동 줄바꿈. 기존 nowrap + overflow 로 8개 가려졌음. */
-        .v39-dd-nav{display:flex;flex-wrap:wrap;overflow-x:visible;border-bottom:1px solid rgba(255,255,255,0.04);scrollbar-width:none}
-        .v39-dd-nav::-webkit-scrollbar{display:none}
-        .v39-dd-nav button{position:relative;flex-shrink:0;background:none;border:none;color:rgba(255,255,255,0.5);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;transition:all 0.25s ease;text-transform:uppercase;font-weight:500}
-        .v39-dd-nav button:hover:not(.active){color:#fff;background:rgba(245,166,35,0.04)}
-        .v39-dd-nav button.active{color:#fff;background:rgba(245,166,35,0.08);font-weight:600}
+        .v39-dd-nav{width:260px;min-width:260px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06)}
+        .v39-dd-nav button{position:relative;background:none;border:none;padding:18px 20px;cursor:pointer;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;text-align:left;color:rgba(255,255,255,0.5);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500}
+        .v39-dd-nav button:last-child{border-bottom:none}
+        .v39-dd-nav button:hover:not(.active){background:rgba(245,166,35,0.04);color:#fff}
+        .v39-dd-nav button.active{background:rgba(245,166,35,0.08);color:#fff;font-weight:600}
         .v39-dd-nav button.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#F5A623;border-radius:0 3px 3px 0}
-        .v39-dd-body{padding:36px 36px 48px}
+        @media(max-width:768px){
+            .v39-dd{flex-direction:column}
+            .v39-dd-nav{width:100%;min-width:100%;flex-direction:row;overflow-x:auto;overflow-y:hidden;border-right:none;border-bottom:1px solid rgba(255,255,255,0.06);-webkit-overflow-scrolling:touch;scrollbar-width:none}
+            .v39-dd-nav::-webkit-scrollbar{display:none}
+            .v39-dd-nav button{flex-shrink:0;padding:14px 16px;border-bottom:none;border-right:1px solid rgba(255,255,255,0.04);white-space:nowrap}
+            .v39-dd-nav button:last-child{border-right:none}
+            .v39-dd-nav button.active::before{left:0;right:0;top:auto;bottom:0;width:auto;height:3px;border-radius:3px 3px 0 0}
+        }
+        .v39-dd-body{flex:1;min-width:0;padding:36px 36px 48px}
         .v39-dd-body h3{font-size:20px;font-weight:700;margin-bottom:20px;color:#fff;display:flex;align-items:center;gap:10px}
         .v39-dd-body p{font-size:14px;line-height:1.85;color:rgba(255,255,255,0.75);margin-bottom:14px}
         .v39-dd-body p b{color:#fff;font-weight:600}
@@ -4502,17 +4510,15 @@
         @keyframes v39LensFadeIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
         .v39-dd-empty{color:rgba(255,255,255,0.3);font-style:italic;font-size:13px;text-align:center;padding:40px 0}
 
-        /* Sticky share */
-        .v39-sticky{position:fixed;bottom:0;left:0;right:0;background:rgba(6,6,11,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,0.06);padding:12px 16px;z-index:100;display:none;align-items:center;gap:12px;width:100%;box-sizing:border-box}
+        /* Sticky share — v3.9.15: 개인 페이지 .share-url-btn 사이즈 복제
+           (transparent bg + blue border + padding:10px 18px + 600 weight + 1px letter-spacing) */
+        .v39-sticky{position:fixed;bottom:0;left:0;right:0;background:rgba(6,6,11,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,0.06);padding:10px 16px;z-index:100;display:none;align-items:center;justify-content:center;gap:14px;width:100%;box-sizing:border-box}
         .v39-sticky.visible{display:flex}
-        /* v3.9.9: min-width:0 — Korean flex child 가 min-content(한 글자) 로 shrink 되면서 세로 박살 → 0 으로 명시 */
-        .v39-sticky .msg{flex:1 1 0;min-width:0;font-size:12px;color:rgba(255,255,255,0.5);padding-left:4px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .v39-sticky .msg{font-size:12px;color:rgba(255,255,255,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:50%}
         .v39-sticky .msg b{color:#F5A623;font-weight:600}
-        @media(max-width:500px){.v39-sticky .msg{display:none}}
-        .v39-sticky button{flex:0 0 auto;background:#F5A623;color:#000;border:none;padding:11px 18px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;transition:transform 0.1s}
-        .v39-sticky button:hover{transform:translateY(-1px)}
-        .v39-sticky button.secondary{background:transparent;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.06);font-weight:500}
-        .v39-sticky button.secondary:hover{color:#fff;border-color:rgba(255,255,255,0.15)}
+        @media(max-width:600px){.v39-sticky .msg{display:none}}
+        .v39-sticky button{flex:0 0 auto;background:transparent;color:#60A5FA;border:1px solid #60A5FA;padding:10px 18px;border-radius:6px;font-weight:600;font-size:12px;letter-spacing:1px;cursor:pointer;white-space:nowrap;transition:background 0.15s,transform 0.1s;width:auto;display:inline-block}
+        .v39-sticky button:hover{background:rgba(96,165,250,0.1);transform:translateY(-1px)}
         .screen.match{padding-bottom:90px}
     </style>
 </head>
