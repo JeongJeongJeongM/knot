@@ -4482,7 +4482,8 @@
         /* DEEP DIVE */
         .v39-dd{position:relative;background:rgba(12,12,20,0.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.06);border-radius:14px;overflow:hidden}
         .v39-dd::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,166,35,0.3),transparent);z-index:1}
-        .v39-dd-nav{display:flex;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,0.04);scrollbar-width:none}
+        /* v3.9.14: flex-wrap 으로 9개 탭 자동 줄바꿈. 기존 nowrap + overflow 로 8개 가려졌음. */
+        .v39-dd-nav{display:flex;flex-wrap:wrap;overflow-x:visible;border-bottom:1px solid rgba(255,255,255,0.04);scrollbar-width:none}
         .v39-dd-nav::-webkit-scrollbar{display:none}
         .v39-dd-nav button{position:relative;flex-shrink:0;background:none;border:none;color:rgba(255,255,255,0.5);padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;transition:all 0.25s ease;text-transform:uppercase;font-weight:500}
         .v39-dd-nav button:hover:not(.active){color:#fff;background:rgba(245,166,35,0.04)}
@@ -10405,7 +10406,15 @@ function displayResult() {
                 var defDesc = def.desc || '';
 
                 var recovery = sim.risk && sim.risk.recovery_time || (stim.stress && stim.stress.recovery_time) || '—';
-                var volatility = sim.trajectory && sim.trajectory.volatility != null ? sim.trajectory.volatility.toFixed(2) : '—';
+                // v3.9.14: 서버가 volatility 를 {E,C,T,O,X} 객체로 줌. 숫자 가정이면 toFixed throw.
+                var _vol = sim.trajectory && sim.trajectory.volatility;
+                var volatility;
+                if (typeof _vol === 'number') volatility = _vol.toFixed(2);
+                else if (_vol && typeof _vol === 'object') {
+                    var _sum = 0, _n = 0;
+                    ['E','C','T','O','X'].forEach(function(k){ if (typeof _vol[k] === 'number') { _sum += _vol[k]; _n++; } });
+                    volatility = _n ? (_sum / _n).toFixed(2) : '—';
+                } else volatility = '—';
                 var peakEmoVal = Math.max(0, Math.min(1, peakE)).toFixed(2);
                 var riskLevel = sim.risk && sim.risk.level || (sim.risk && sim.risk.overall) || '—';
                 var riskDisplay = riskLevel === 'high' ? 'HIGH' : riskLevel === 'low' ? 'LOW' : riskLevel === 'medium' || riskLevel === 'moderate' ? 'MED' : String(riskLevel).toUpperCase();
