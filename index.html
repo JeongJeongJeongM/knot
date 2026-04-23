@@ -5317,10 +5317,9 @@
         </div>
     </div>
 
-    <!-- v3.9.0 · Sticky share footer for match screen -->
+    <!-- v3.9.13: sticky share footer — PDF 버튼 제거, 공유 버튼만 -->
     <div class="v39-sticky" id="v39Sticky">
         <span class="msg">이 분석을 <b>함께 읽어보세요</b></span>
-        <button class="secondary" onclick="window.print()">PDF 저장</button>
         <button onclick="(function(){try{generateMatchShareURL();}catch(e){alert('공유 링크 생성 오류: '+e.message);}})();">파트너에게 보내기</button>
     </div>
 
@@ -11886,30 +11885,23 @@ function displayResult() {
         }
 
         // ── 05 · DEEP DIVE ──
-        var _V39_LENS_MAP = [
-            { code:'persona',   label:'PERSONA',        ko:'페르소나' },
-            { code:'comm',      label:'COMMUNICATION',  ko:'소통' },
-            { code:'defense',   label:'DEFENSE',        ko:'방어' },
-            { code:'shadow',    label:'SHADOW',         ko:'그림자' },
-            { code:'ritual',    label:'RITUAL',         ko:'의식' },
-            { code:'thinking',  label:'THINKING',       ko:'사유의 지형' },
-            { code:'anchor',    label:'ANCHOR',         ko:'애착' }
-        ];
-        // Korean section name → lens key (v3.9.10: 서버 실제 schema {key, title} 양쪽 매칭)
-        //   backend worker.js L10418+ 기준: persona/attraction_structure/trajectory_forecast/risk_map/possibility
-        var _V39_SECTION_KO_MAP = {
-            // keys (영문)
-            'persona':'persona', 'attraction_structure':'shadow', 'trajectory_forecast':'thinking',
-            'risk_map':'defense', 'possibility':'ritual', 'communication':'comm', 'anchor':'anchor',
-            'shadow':'shadow', 'ritual':'ritual', 'thinking':'thinking', 'defense':'defense', 'comm':'comm',
-            // titles (한글 실제)
-            '페르소나': 'persona', '첫 인상':'persona', '첫인상':'persona', '관계 페르소나':'persona', '정체성':'persona',
-            '끌림의 구조': 'shadow', '매력 구조':'shadow', '그림자':'shadow', '무의식':'shadow', '거울':'shadow',
-            '궤적 전망': 'thinking', '사유의 지형':'thinking', '사고':'thinking', '판단':'thinking',
-            '관계 위험 맵':'defense', '방어':'defense', '방어 체계':'defense', '갈등':'defense', '갈등 처리':'defense', '위기':'defense', '위기 반응':'defense',
-            '이 관계의 가능성':'ritual', '가능성':'ritual', '의식':'ritual', '의식화':'ritual', '미래':'ritual', '성장':'ritual', '루틴':'ritual',
-            '소통':'comm', '의사소통':'comm', '대화':'comm', '커뮤니케이션':'comm',
-            '애착':'anchor', '애착 양식':'anchor'
+        // v3.9.13: lens map 체계 폐기. 서버가 주는 sections 를 그대로 탭으로 렌더.
+        //   backend MATCHING_SECTIONS (worker.js L10474+) = 9개 섹션:
+        //   first_impression / attraction_structure / defense_collision / stimulus_dynamics /
+        //   trajectory_forecast / shared_world / risk_map / emotional_dynamics / possibility
+        //   INDIVIDUAL_SECTIONS (L10417+) = 9개: persona / cognitive_topology / control_system /
+        //   emotional_energy / defense_system / behavioral_trajectory / risk_model / growth_direction / unconscious
+        //   각 섹션의 title (서버 한글) 을 탭 라벨로 사용. 매핑 loss 없음.
+        // 서버 key → 짧은 대문자 라벨 (탭에 한글 대신 영문 축약 쓰고 싶을 때만)
+        var _V39_KEY_SHORTLABEL = {
+            // Matching sections
+            first_impression:'FIRST', attraction_structure:'ATTRACT', defense_collision:'DEFENSE',
+            stimulus_dynamics:'STIMULUS', trajectory_forecast:'ARC', shared_world:'WORLD',
+            risk_map:'RISK', emotional_dynamics:'EMOTION', possibility:'POSSIBILITY',
+            // Individual sections
+            persona:'PERSONA', cognitive_topology:'COGNITION', control_system:'CONTROL',
+            emotional_energy:'ENERGY', defense_system:'DEFENSE', behavioral_trajectory:'TRAJECTORY',
+            risk_model:'RISK', growth_direction:'GROWTH', unconscious:'SHADOW'
         };
 
         function renderV39DeepDive(ctx){
@@ -11943,16 +11935,7 @@ function displayResult() {
                     };
                 });
             }
-            // Map to lens codes — key 우선, 없으면 title
-            var byCode = {};
-            arr.forEach(function(s){
-                var code = _V39_SECTION_KO_MAP[s.key] ||
-                           _V39_SECTION_KO_MAP[s.title] ||
-                           _V39_SECTION_KO_MAP[(s.title||'').toLowerCase()] ||
-                           null;
-                if (code && !byCode[code]) byCode[code] = s;
-            });
-            // Build lens body HTML (single escape per field)
+            // v3.9.13: 서버 sections 전부를 탭으로. 매핑 loss 없음.
             function _buildLensBody(sec){
                 var html = '';
                 if (sec.summary) {
@@ -11969,45 +11952,34 @@ function displayResult() {
                 if (!html) html = '<p class="v39-dd-empty">내용 없음</p>';
                 return html;
             }
-            // Build available lenses
-            var available = _V39_LENS_MAP.filter(function(l){ return byCode[l.code]; });
-            // v3.9.11: body 는 _buildLensBody(sec) 가 summary + subsections 을 구조 그대로 HTML 생성.
-            //   더 이상 body 필드 사전 flatten 안 함 → double-escape 제거.
-            function _renderSingleOrTabs(items){
-                if (!items.length) {
-                    navEl.style.display = 'none';
-                    bodyEl.innerHTML = '<div class="v39-dd-empty">심층 분석 데이터가 준비되지 않았습니다.</div>';
-                    return;
-                }
-                if (items.length === 1) {
-                    var s = items[0];
-                    navEl.style.display = 'none';
-                    bodyEl.innerHTML = '<div class="v39-dd-panel active">' +
-                        (s.navLabel ? '<h3>' + _v39Safe(s.navLabel) + '</h3>' : '') +
-                        _buildLensBody(s.sec) +
-                    '</div>';
-                    return;
-                }
-                navEl.style.display = '';
-                navEl.innerHTML = items.map(function(it, i){
-                    return '<button class="' + (i===0?'active':'') + '" data-v39lens="' + it.key + '">' + _v39Safe(it.navLabel) + '</button>';
-                }).join('');
-                bodyEl.innerHTML = items.map(function(it, i){
-                    var h3 = (it.h3 && it.h3 !== it.navLabel) ? '<h3>' + _v39Safe(it.h3) + '</h3>' : '';
-                    return '<div class="v39-dd-panel' + (i===0?' active':'') + '" data-v39panel="' + it.key + '">' +
-                        h3 + _buildLensBody(it.sec) +
-                    '</div>';
-                }).join('');
+            // 탭 라벨: 짧은 영문 축약 있으면 사용, 없으면 한글 title 을 그대로
+            function _tabLabel(sec){
+                return _V39_KEY_SHORTLABEL[sec.key] || (sec.title || (sec.key || '').toUpperCase()) || 'SECTION';
             }
-            if (!available.length) {
-                _renderSingleOrTabs(arr.map(function(s, i){
-                    return { key:'_fb'+i, navLabel:s.title||'SECTION '+(i+1), h3:s.title||'', sec:s };
-                }));
+            // 0 개면 empty state, 1 개면 nav 숨기고 panel 만, 2+ 면 탭 네비.
+            if (!arr.length) {
+                navEl.style.display = 'none';
+                bodyEl.innerHTML = '<div class="v39-dd-empty">심층 분석 데이터가 준비되지 않았습니다.</div>';
+            } else if (arr.length === 1) {
+                var onlySec = arr[0];
+                navEl.style.display = 'none';
+                bodyEl.innerHTML = '<div class="v39-dd-panel active">' +
+                    (onlySec.title ? '<h3>' + _v39Safe(onlySec.title) + '</h3>' : '') +
+                    _buildLensBody(onlySec) +
+                '</div>';
             } else {
-                _renderSingleOrTabs(available.map(function(l, i){
-                    var s = byCode[l.code];
-                    return { key:l.code, navLabel:l.label, h3:s.title||l.ko, sec:s };
-                }));
+                navEl.style.display = '';
+                navEl.innerHTML = arr.map(function(s, i){
+                    var tabKey = s.key || ('_i' + i);
+                    return '<button class="' + (i===0?'active':'') + '" data-v39lens="' + _v39Safe(tabKey) + '">' + _v39Safe(_tabLabel(s)) + '</button>';
+                }).join('');
+                bodyEl.innerHTML = arr.map(function(s, i){
+                    var tabKey = s.key || ('_i' + i);
+                    var h3 = s.title && s.title !== _tabLabel(s) ? '<h3>' + _v39Safe(s.title) + '</h3>' : '';
+                    return '<div class="v39-dd-panel' + (i===0?' active':'') + '" data-v39panel="' + _v39Safe(tabKey) + '">' +
+                        h3 + _buildLensBody(s) +
+                    '</div>';
+                }).join('');
             }
             // Wire tabs
             navEl.querySelectorAll('button').forEach(function(btn){
@@ -12773,15 +12745,11 @@ function displayResult() {
                         });
                     } catch (e) { console.error('[Share v39 render]', e); }
 
-                    // 공유 뷰에서도 sticky/sideNav 보이게 (단, "파트너에게 보내기" 버튼 의미 없으니 숨김)
+                    // v3.9.13: 공유 뷰도 sticky + sideNav 표시. 공유 버튼 숨기던 로직 삭제
+                    //   (공유 받은 사람이 다른 사람에게 또 전달하는 건 자연스러움)
                     try {
                         var _shareSticky = document.getElementById('v39Sticky');
-                        if (_shareSticky) {
-                            _shareSticky.classList.add('visible');
-                            // 공유 뷰: 두 번째 버튼 (파트너에게 보내기) 숨김
-                            var btns = _shareSticky.querySelectorAll('button');
-                            if (btns.length >= 2) btns[1].style.display = 'none';
-                        }
+                        if (_shareSticky) _shareSticky.classList.add('visible');
                         var _shareSideNav = document.getElementById('matchSideNav');
                         if (_shareSideNav) _shareSideNav.classList.add('visible');
                     } catch(e){}
