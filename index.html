@@ -6569,6 +6569,36 @@
                 const matchUpload = document.querySelector('.screen.match .landing-panel');
                 if (matchUpload) matchUpload.style.display = 'none';
 
+                // v3.9.16: pending 매칭 복구 경로도 v39 renderer 호출
+                try {
+                    renderV39All({
+                        idA: pndIdA,
+                        idB: pndIdB,
+                        matchIdentity: matchId,
+                        axesA: pndAxesA,
+                        axesB: pndAxesB,
+                        compatDetail: r.compatDetail || null,
+                        crossSim: r.crossSim || null,
+                        crossSituational: r.crossSituational || null,
+                        prismA: r.prismA || null,
+                        prismB: r.prismB || null,
+                        anchorA: r.anchorA || null,
+                        anchorB: r.anchorB || null,
+                        simulationA: r.simulationA || null,
+                        simulationB: r.simulationB || null,
+                        sections: sections || [],
+                        profileA: { axes: pndAxesA, identity: pndIdA },
+                        profileB: { axes: pndAxesB, identity: pndIdB }
+                    });
+                } catch (e) { console.error('[pending v39 render]', e); }
+
+                try {
+                    var _pndSticky = document.getElementById('v39Sticky');
+                    if (_pndSticky) _pndSticky.classList.add('visible');
+                    var _pndSideNav = document.getElementById('matchSideNav');
+                    if (_pndSideNav) _pndSideNav.classList.add('visible');
+                } catch(e){}
+
                 showScreen('match');
                 initMatchScrollAnimations();
 
@@ -6949,6 +6979,38 @@
             // 공유 버튼 리셋
             const shareResult = document.getElementById('matchShareUrlResult');
             if (shareResult) shareResult.style.display = 'none';
+
+            // v3.9.16: 히스토리 복구 경로에서도 v39 5-섹션 renderer 호출 (이전엔 레거시만 불러서
+            //   VERDICT/MAP/PATTERN/ARC/DEEP DIVE 전부 placeholder 그대로 표시됐음).
+            try {
+                renderV39All({
+                    idA: idA,
+                    idB: idB,
+                    matchIdentity: mi,
+                    axesA: axesA,
+                    axesB: axesB,
+                    compatDetail: m.compatDetail || null,
+                    crossSim: m.crossSim || null,
+                    crossSituational: m.crossSituational || null,
+                    prismA: m.prismA || null,
+                    prismB: m.prismB || null,
+                    anchorA: m.anchorA || null,
+                    anchorB: m.anchorB || null,
+                    simulationA: m.simulationA || null,
+                    simulationB: m.simulationB || null,
+                    sections: m.sections || [],
+                    profileA: { axes: axesA, identity: idA },
+                    profileB: { axes: axesB, identity: idB }
+                });
+            } catch (e) { console.error('[history v39 render]', e); }
+
+            // sticky + sideNav 표시
+            try {
+                var _histSticky = document.getElementById('v39Sticky');
+                if (_histSticky) _histSticky.classList.add('visible');
+                var _histSideNav = document.getElementById('matchSideNav');
+                if (_histSideNav) _histSideNav.classList.add('visible');
+            } catch(e){}
 
             showScreen('match');
             initMatchScrollAnimations();
