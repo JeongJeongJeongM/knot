@@ -4700,6 +4700,24 @@
             .v39-risk-matrix .cell{font-size:12px}
         }
 
+        /* v4 v3.9.42 — 5 챕터 라벨 (매칭 페이지 그룹화) */
+        .v39-chapter{display:flex;align-items:center;gap:16px;max-width:800px;margin:60px auto 20px;padding:20px 24px;background:linear-gradient(90deg,rgba(245,166,35,0.08) 0%,transparent 80%);border-left:4px solid #F5A623;border-radius:0 10px 10px 0;scroll-margin-top:20px}
+        .v39-chapter:first-of-type{margin-top:0}
+        .v39-chapter .ch-num{font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:800;color:#F5A623;line-height:1;flex-shrink:0}
+        .v39-chapter .ch-info{flex:1;min-width:0}
+        .v39-chapter .ch-nm{font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.3px;margin-bottom:2px}
+        .v39-chapter .ch-en{font-size:11px;color:rgba(255,255,255,0.4);font-family:'JetBrains Mono',monospace;letter-spacing:2px;font-weight:600}
+        .v39-chapter .ch-cnt{padding:6px 12px;background:rgba(245,166,35,0.12);border-radius:5px;font-size:11px;color:#F5A623;font-family:'JetBrains Mono',monospace;font-weight:700;white-space:nowrap}
+        @media(max-width:600px){
+            .v39-chapter{padding:16px 18px;margin:40px auto 16px}
+            .v39-chapter .ch-num{font-size:28px}
+            .v39-chapter .ch-nm{font-size:18px}
+            .v39-chapter .ch-en{font-size:10px}
+        }
+        /* 사이드 네비 number 배지 추가 */
+        .side-nav-num{display:block;font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.35);letter-spacing:1px;font-weight:700;margin-bottom:1px}
+        .side-nav-item.active .side-nav-num{color:#F5A623}
+
         /* v4 v3.9.41 — DEEP DIVE 해체: 각 섹션 하단 "해석 블록" 컴포넌트
            · 개인 분석 DYNAMICS 렌즈 패널 톤 계승 (글래스 카드 + 여백 + 14px 본문).
            · 기존 .v39-dd-sum / .v39-dd-subtitle / .v39-dd-body 폰트 스케일 그대로. */
@@ -5380,12 +5398,13 @@
     </div>
 
     <!-- Match Side Navigation (screen 바깥 — position:fixed가 transform에 영향 안 받도록) -->
+    <!-- v3.9.42: 5 챕터 구조로 재설계 · Verdict/Map/Pattern/Arc/DeepDive 5 섹션 나열 → 그룹화 -->
     <nav class="side-nav" id="matchSideNav">
-        <div class="side-nav-item active" data-section="Verdict"><span class="side-nav-label">VERDICT</span><div class="side-nav-dot"></div></div>
-        <div class="side-nav-item" data-section="Map"><span class="side-nav-label">MAP</span><div class="side-nav-dot"></div></div>
-        <div class="side-nav-item" data-section="Pattern"><span class="side-nav-label">PATTERN</span><div class="side-nav-dot"></div></div>
-        <div class="side-nav-item" data-section="Arc"><span class="side-nav-label">ARC</span><div class="side-nav-dot"></div></div>
-        <div class="side-nav-item" data-section="DeepDive"><span class="side-nav-label">DEEP DIVE</span><div class="side-nav-dot"></div></div>
+        <div class="side-nav-item active" data-section="matchChapter1"><span class="side-nav-num">01</span><span class="side-nav-label">정체성</span><div class="side-nav-dot"></div></div>
+        <div class="side-nav-item" data-section="matchChapter2"><span class="side-nav-num">02</span><span class="side-nav-label">지형·움직임</span><div class="side-nav-dot"></div></div>
+        <div class="side-nav-item" data-section="matchChapter3"><span class="side-nav-num">03</span><span class="side-nav-label">상호작용</span><div class="side-nav-dot"></div></div>
+        <div class="side-nav-item" data-section="matchChapter4"><span class="side-nav-num">04</span><span class="side-nav-label">회복·연결</span><div class="side-nav-dot"></div></div>
+        <div class="side-nav-item" data-section="matchChapter5"><span class="side-nav-num">05</span><span class="side-nav-label">상황별</span><div class="side-nav-dot"></div></div>
     </nav>
     <div class="scroll-progress" id="matchScrollProgress"></div>
 
@@ -5506,6 +5525,16 @@
             <div id="matchResultsContainer" class="hidden">
 
                 <!-- ═══ v3.9.0 · 5-SECTION COUPLE REDESIGN ═══ -->
+                <!-- v3.9.42: 5 챕터 그룹화 — 섹션들을 IDENTITY/TOPOLOGY/INTERACTION/RECOVERY/SITUATIONAL 로 묶음 -->
+
+                <div class="v39-chapter" id="matchChapter1">
+                    <div class="ch-num">01</div>
+                    <div class="ch-info">
+                        <div class="ch-nm">정체성</div>
+                        <div class="ch-en">IDENTITY</div>
+                    </div>
+                    <div class="ch-cnt">2 섹션</div>
+                </div>
 
                 <!-- 01 · VERDICT -->
                 <section class="result-section v39-verdict" id="matchSectionVerdict">
@@ -5580,6 +5609,15 @@
                   </div>
                 </section>
 
+                <div class="v39-chapter" id="matchChapter2">
+                    <div class="ch-num">02</div>
+                    <div class="ch-info">
+                        <div class="ch-nm">지형 · 움직임</div>
+                        <div class="ch-en">TOPOLOGY & TRAJECTORY</div>
+                    </div>
+                    <div class="ch-cnt">2 섹션</div>
+                </div>
+
                 <!-- 02 · THE MAP -->
                 <section class="result-section v39-section" id="matchSectionMap">
                   <div class="result-section-inner">
@@ -5626,6 +5664,15 @@
                     <div class="v39-cross-empty" id="v39ConvEmpty">10단계 시뮬레이션 데이터가 부족합니다.</div>
                   </div>
                 </section>
+
+                <div class="v39-chapter" id="matchChapter3">
+                    <div class="ch-num">03</div>
+                    <div class="ch-info">
+                        <div class="ch-nm">상호작용</div>
+                        <div class="ch-en">INTERACTION</div>
+                    </div>
+                    <div class="ch-cnt">4 섹션</div>
+                </div>
 
                 <!-- 03 · THE PATTERN -->
                 <section class="result-section v39-section" id="matchSectionPattern">
@@ -5729,6 +5776,15 @@
                   </div>
                 </section>
 
+                <div class="v39-chapter" id="matchChapter4">
+                    <div class="ch-num">04</div>
+                    <div class="ch-info">
+                        <div class="ch-nm">회복 · 연결</div>
+                        <div class="ch-en">RECOVERY & BOND</div>
+                    </div>
+                    <div class="ch-cnt">3 섹션</div>
+                </div>
+
                 <!-- v4 M9 · 회복 속도 차이 (2026-04-23) -->
                 <section class="result-section v39-section" id="matchSectionRecovery">
                   <div class="result-section-inner">
@@ -5781,6 +5837,15 @@
                     <div class="v39-interp-container" id="v39InterpSharedRisks"></div>
                   </div>
                 </section>
+
+                <div class="v39-chapter" id="matchChapter5">
+                    <div class="ch-num">05</div>
+                    <div class="ch-info">
+                        <div class="ch-nm">상황별 변화</div>
+                        <div class="ch-en">SITUATIONAL</div>
+                    </div>
+                    <div class="ch-cnt">2 섹션</div>
+                </div>
 
                 <!-- 04 · THE ARC -->
                 <section class="result-section v39-section" id="matchSectionArc">
