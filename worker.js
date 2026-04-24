@@ -6943,9 +6943,26 @@ function serverComputeMatchIdentity(axesA, axesB, identityA, identityB) {
                            (Math.abs(ipcA.communion - ipcB.communion) < 0.4);
   const complementary = agencyOpposite && communionAligned;
 
-  // 분류 (3 대분류) + tension/growth 추정
+  // v3.9.68 Sprint G-1: similarity_r 임계값을 정규분포 percentile 로 재설계
+  //   이전: similarity_r > 0.5 / < -0.3 하드코딩 (비대칭, 근거 없음)
+  //   문제 1: 0.5 는 무슨 percentile? 모집단에서 "닮은 한 쌍" 얼마나 자주 나오는지 불명
+  //   문제 2: +0.5 / -0.3 비대칭 → contrast(-) 를 similar(+) 보다 쉽게 판정
+  //
+  //   신규: 6 축 Pearson r 의 대략적 분포를 가정:
+  //     N=6 표본에서 r 의 변동은 ±1 내 모든 값 가능 (자유도 4 의 Fisher z)
+  //     랜덤 모집단 가정 하 r 의 95% CI 는 대략 ±0.8 (소표본이라 변동 큼).
+  //     의미있는 similarity 는 대략 P85 이상 → r > 0.55 (대체로 유사)
+  //     의미있는 contrast 는 대략 P15 이하 → r < -0.55 (대체로 반대)
+  //     P85 / P15 대칭 선택 — bias 제거.
+  //   참고: Cohen (1988) r ≥ 0.50 은 large effect (소셜사이언스 관례).
+  //         Luo & Klohnen (2005) couple assortative mating: personality r ≈ 0.14
+  //         → 일반 커플 similarity_r 분포 중심이 ~0.15 이므로
+  //         0.55 cutoff 는 상위 약 25% (의미있는 similar) 에 해당.
+  const SIM_R_HIGH = 0.55;   // 대칭 cutoff
+  const SIM_R_LOW  = -0.55;
+
   let type, name, tagline, tension, growth;
-  if (similarity_r > 0.5) {
+  if (similarity_r > SIM_R_HIGH) {
     type = 'similar';
     name = '닮은 한 쌍';
     tagline = '축 구성이 유사 — 이해가 빠르지만 자극·보완이 부족할 수 있음';
@@ -6953,9 +6970,9 @@ function serverComputeMatchIdentity(axesA, axesB, identityA, identityB) {
   } else if (complementary) {
     type = 'complementary';
     name = '보완하는 한 쌍';
-    tagline = '주도성은 반대, 온정은 같은 방향 — IPC 고전적 상보 패턴';
+    tagline = '주도성은 반대, 온정은 같은 방향 — IPC 고전적 상보 패턴 (Dryer & Horowitz 1997)';
     tension = '보통'; growth = '높음';
-  } else if (similarity_r < -0.3) {
+  } else if (similarity_r < SIM_R_LOW) {
     type = 'contrast';
     name = '교차하는 궤도';
     tagline = '축 구성이 반대 방향 — 서로 다른 세계의 만남, 긴장과 성장의 가능성';
@@ -6972,13 +6989,15 @@ function serverComputeMatchIdentity(axesA, axesB, identityA, identityB) {
     emoji_a: identityA?.emoji || '🔮', emoji_b: identityB?.emoji || '🔮',
     code: (identityA?.code || '-') + ' × ' + (identityB?.code || '-'),
     tension, growth,
-    // v3.9.63: IPC 정량 지표 투명 공개
+    // v3.9.68: IPC 정량 지표 + 임계값 투명 공개 (UI hover tooltip 가능)
     ipc: {
       a: { agency: Math.round(ipcA.agency * 100) / 100, communion: Math.round(ipcA.communion * 100) / 100 },
       b: { agency: Math.round(ipcB.agency * 100) / 100, communion: Math.round(ipcB.communion * 100) / 100 },
       similarity_r: Math.round(similarity_r * 100) / 100,
       complementary,
       type,  // 'similar' | 'complementary' | 'contrast' | 'mixed'
+      thresholds: { similar: SIM_R_HIGH, contrast: SIM_R_LOW },  // v3.9.68: 판정 기준 노출
+      _basis: 'Cohen r≥0.50 large effect 관례 + Luo&Klohnen 2005 couple r≈0.14 분포 고려 ±0.55 대칭 cutoff',
     },
   };
 }
@@ -9768,25 +9787,63 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
 
   // v3.9.37: 위험 매트릭스 — 5 trigger 전체 × A/B × severity·desc·shared.
   //   기존 sharedRisks(string[]) 는 라벨만 → 프론트에서 desc/severity/A-only/B-only 정보 못 얻음.
-  //   RISK_CATALOG 기준으로 모든 trigger 에 대한 A/B 매치 여부 + 원본 정보 포함한 행 생성.
+  //   v3.9.68 Sprint G-3: default_severity 격하 — 개인 riskModel 값 우선, 최후 fallback 만 default
+  //
+  //   이전: 개인 severity 없으면 default_severity 하드코딩 ('high'/'medium') 노출.
+  //         그러나 실제 riskModel 이 severity 필드를 제공하는지 불투명 → 모든 커플이
+  //         catalog 순서대로 동일한 severity 표시됐을 가능성.
+  //   신규:
+  //     1. 실제 개인 severity (inA.severity, inB.severity) 가 있으면 그대로 사용
+  //     2. 둘 다 있으면 "shared_severity" = 더 높은 쪽 (심각한 수치 보수적 노출)
+  //     3. 한쪽만 탐지되면 그 쪽 severity 만 표시, 공유 아님
+  //     4. 둘 다 severity 제공 안 하면 'unknown' 으로 노출 (default_severity 는 display-only hint)
+  //     5. _severity_source 필드로 근거 공개: 'individual' | 'default_fallback' | 'none'
+  //
+  //   default_severity 는 "이 trigger 유형의 평균적 위험도" 참고만 — 개인화된 판정 아님 명시.
   const RISK_CATALOG_V4 = [
-    { trigger: '정서 과부하',  desc: '높은 감정 강도와 낮은 회복 탄성의 결합. 감정적 사건이 연쇄적 시스템 불안정을 유발할 수 있다.', default_severity: 'high' },
-    { trigger: '통제 붕괴',    desc: '스트레스 상황에서 통제 시스템이 임계점 이하로 하락하며 회복이 어렵다.', default_severity: 'high' },
-    { trigger: '고립 나선',    desc: '높은 통제 욕구와 닫힌 경계의 결합. 타인의 접근을 차단하면서 자기 확인 루프에 갇힐 수 있다.', default_severity: 'medium' },
-    { trigger: '회복력 소진',  desc: '시간이 지남에 따라 회복 탄성이 자연 감소하는 궤적. 축적된 스트레스가 시스템 내구성을 점진적으로 약화시킨다.', default_severity: 'medium' },
-    { trigger: '상실 취약성',  desc: '관계 단절이나 기대 붕괴에 대한 시스템 반응이 과도하며, 자연 회복이 불완전하다.', default_severity: 'medium' }
+    { trigger: '정서 과부하',  desc: '높은 감정 강도와 낮은 회복 탄성의 결합. 감정적 사건이 연쇄적 시스템 불안정을 유발할 수 있다.', default_severity: 'high',   _severity_note: '트리거 유형 평균 — 개인화 X' },
+    { trigger: '통제 붕괴',    desc: '스트레스 상황에서 통제 시스템이 임계점 이하로 하락하며 회복이 어렵다.', default_severity: 'high',   _severity_note: '트리거 유형 평균 — 개인화 X' },
+    { trigger: '고립 나선',    desc: '높은 통제 욕구와 닫힌 경계의 결합. 타인의 접근을 차단하면서 자기 확인 루프에 갇힐 수 있다.', default_severity: 'medium', _severity_note: '트리거 유형 평균 — 개인화 X' },
+    { trigger: '회복력 소진',  desc: '시간이 지남에 따라 회복 탄성이 자연 감소하는 궤적. 축적된 스트레스가 시스템 내구성을 점진적으로 약화시킨다.', default_severity: 'medium', _severity_note: '트리거 유형 평균 — 개인화 X' },
+    { trigger: '상실 취약성',  desc: '관계 단절이나 기대 붕괴에 대한 시스템 반응이 과도하며, 자연 회복이 불완전하다.', default_severity: 'medium', _severity_note: '트리거 유형 평균 — 개인화 X' }
   ];
+
+  // severity rank for "더 심각한 쪽" 결정
+  const _SEV_RANK = { low: 1, medium: 2, high: 3, critical: 4 };
+  function _maxSev(sA, sB) {
+    const rA = _SEV_RANK[sA] || 0, rB = _SEV_RANK[sB] || 0;
+    if (rA === 0 && rB === 0) return null;
+    return rA >= rB ? sA : sB;
+  }
+
   const riskMatrix = RISK_CATALOG_V4.map(cat => {
     const inA = riskA?.risks?.find(r => (r.trigger || r) === cat.trigger);
     const inB = riskB?.risks?.find(r => (r.trigger || r) === cat.trigger);
+    const aSev = inA?.severity || null;
+    const bSev = inB?.severity || null;
+    // 공유 severity: 둘 다 탐지되면 더 심각한 쪽, 한쪽만이면 그 쪽
+    let shared_severity = null;
+    let severity_source = 'none';
+    if (inA && inB) {
+      shared_severity = _maxSev(aSev, bSev);
+      severity_source = shared_severity ? 'individual' : 'default_fallback';
+      if (!shared_severity) shared_severity = cat.default_severity;
+    } else if (inA) {
+      shared_severity = aSev || cat.default_severity;
+      severity_source = aSev ? 'individual' : 'default_fallback';
+    } else if (inB) {
+      shared_severity = bSev || cat.default_severity;
+      severity_source = bSev ? 'individual' : 'default_fallback';
+    }
     return {
       trigger: cat.trigger,
       desc: (inA && inA.desc) || (inB && inB.desc) || cat.desc,
       in_a: !!inA,
       in_b: !!inB,
-      a_severity: inA ? (inA.severity || cat.default_severity) : null,
-      b_severity: inB ? (inB.severity || cat.default_severity) : null,
-      severity: (inA && inA.severity) || (inB && inB.severity) || cat.default_severity,
+      a_severity: inA ? (aSev || null) : null,   // 개인 값 있을 때만 표시 (default 대체 안함)
+      b_severity: inB ? (bSev || null) : null,
+      severity: shared_severity,                  // 공유 severity (최종 판정)
+      _severity_source: severity_source,          // v3.9.68: 'individual' | 'default_fallback' | 'none'
       shared: !!(inA && inB)
     };
   });
@@ -9832,10 +9889,48 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
     'leans_disorganized×leans_disorganized': { type: 'double_chaos', desc: '둘 다 접근과 회피를 동시에 — 관계 자체가 예측 불가능한 난류' },
   };
 
+  // v3.9.68 Sprint G-2: ECR-R dimensional 연속값 우선 판정
+  //   이전: primary_tendency (이산 5-way) 만 사용 → ECR-R 연속값 무시됐음.
+  //   문제: 두 사람 모두 anxious, avoidant 점수가 경계값일 때 이산화로 잘못 분류.
+  //   신규:
+  //     1. dimensional.{anxiety, avoidance} 있으면 연속값 우선 (Brennan 1998 2D 모델)
+  //     2. 2D 거리 기반 closest_archetype 계산 → ATTACHMENT_CROSS lookup
+  //     3. confidence: 1위·2위 archetype 거리 차 (낮으면 경계 영역 주의)
+  //     4. primary_tendency 는 fallback (dimensional 없을 때만)
+  //
+  // 4 archetype 2D 좌표 (anxiety × avoidance), Brennan, Clark, Shaver 1998:
+  //   secure:       (low anxiety, low avoidance)         = (0.2, 0.2)
+  //   anxious:      (high anxiety, low avoidance)        = (0.8, 0.2)
+  //   avoidant:     (low anxiety, high avoidance)        = (0.2, 0.8)
+  //   disorganized: (high anxiety, high avoidance)       = (0.8, 0.8)
+  const _ATTACHMENT_ANCHORS = {
+    secure:       { anxiety: 0.2, avoidance: 0.2 },
+    anxious:      { anxiety: 0.8, avoidance: 0.2 },
+    avoidant:     { anxiety: 0.2, avoidance: 0.8 },
+    disorganized: { anxiety: 0.8, avoidance: 0.8 },
+  };
+  function _nearestAttachmentType(dim) {
+    if (!dim || typeof dim.anxiety !== 'number' || typeof dim.avoidance !== 'number') return null;
+    const distances = Object.entries(_ATTACHMENT_ANCHORS).map(([k, v]) => ({
+      type: k,
+      dist: Math.sqrt((dim.anxiety - v.anxiety) ** 2 + (dim.avoidance - v.avoidance) ** 2),
+    }));
+    distances.sort((a, b) => a.dist - b.dist);
+    const confidence = distances[1].dist - distances[0].dist; // margin
+    return { type: 'leans_' + distances[0].type, confidence: Math.round(confidence * 100) / 100, _all_distances: distances };
+  }
+
   let attachmentCross = { type: 'unknown', desc: '애착 데이터 부족' };
-  if (anchorA?.attachment?.primary_tendency && anchorB?.attachment?.primary_tendency) {
-    const aTend = anchorA.attachment.primary_tendency;
-    const bTend = anchorB.attachment.primary_tendency;
+  const dimA = anchorA?.attachment?.dimensional;
+  const dimB = anchorB?.attachment?.dimensional;
+  const aNearest = _nearestAttachmentType(dimA);
+  const bNearest = _nearestAttachmentType(dimB);
+  // 연속값 우선 → primary_tendency fallback
+  const aTend = aNearest?.type || anchorA?.attachment?.primary_tendency;
+  const bTend = bNearest?.type || anchorB?.attachment?.primary_tendency;
+  const mode = aNearest && bNearest ? 'dimensional' : 'discrete_fallback';
+
+  if (aTend && bTend) {
     const pairKey = aTend + '×' + bTend;
     const reversePairKey = bTend + '×' + aTend;
     const direct = ATTACHMENT_CROSS[pairKey];
@@ -9843,13 +9938,21 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
     if (direct) {
       attachmentCross = { ...direct, order: 'A×B' };
     } else if (reversed) {
-      // v3.6: 역순 매치인 경우 명시 — LLM 이 A/B 주어를 섞지 않도록
       attachmentCross = { ...reversed, order: 'B×A', note: '페어 키가 B×A 순으로 매핑됨 (ATTACHMENT_CROSS 대칭 테이블)' };
     } else {
       attachmentCross = { type: 'uncommon', desc: '일반적이지 않은 조합 — 개별 맥락 해석 필요', order: 'A×B' };
     }
     attachmentCross.a_tendency = aTend;
     attachmentCross.b_tendency = bTend;
+    // v3.9.68: 판정 근거 투명성
+    attachmentCross._mode = mode;
+    if (aNearest) attachmentCross.a_confidence = aNearest.confidence;
+    if (bNearest) attachmentCross.b_confidence = bNearest.confidence;
+    // 경계 영역 경고: 양쪽 confidence < 0.1 (아주 애매) 이면 desc 앞에 경고 prefix
+    if (aNearest && bNearest && aNearest.confidence < 0.1 && bNearest.confidence < 0.1) {
+      attachmentCross.boundary_warning = true;
+      attachmentCross.desc = '[경계 영역 — 애착 판정 모호] ' + attachmentCross.desc;
+    }
   }
 
   // ── 8. 갈등 스타일 호환성 (v3.9.67 Sprint F: 각 score 에 empirical 근거 명시) ──
