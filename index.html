@@ -7474,6 +7474,30 @@
             if (currentUser) {
                 // 공유 뷰에서는 화면 전환하지 않음 (share route가 이미 result 화면을 띄운 상태)
                 if (!currentProfile || !currentProfile._isSharedView) {
+                    // v3.9.93: flash 방지 — 히스토리 fetch 결과 나오기 전까진 default panel 숨김.
+                    //   기존엔 showScreen → upload panel 잠시 보임 → fetch 완료되면 history 로 교체 (깜빡거림).
+                    //   localStorage 에 이전 히스토리 존재 힌트 있으면 preemptive 히스토리 로딩 상태.
+                    var _histHint = null;
+                    try { _histHint = localStorage.getItem('knot_had_history'); } catch(e){}
+                    var _defaults = document.getElementById('defaultLandingPanels');
+                    var _sysInfo = document.getElementById('systemInfoPanel');
+                    var _prevPanel = document.getElementById('previousResultsPanel');
+                    if (_histHint === '1') {
+                        // 이전에 히스토리 있던 유저 → defaults 숨기고 history 스켈레톤
+                        if (_defaults) _defaults.style.display = 'none';
+                        if (_sysInfo) _sysInfo.style.display = 'none';
+                        if (_prevPanel) {
+                            _prevPanel.style.display = 'block';
+                            var _list = document.getElementById('previousResultsList');
+                            if (_list && !_list.innerHTML) {
+                                _list.innerHTML = '<div style="padding:20px;text-align:center;color:rgba(255,255,255,0.4);font-size:12px;">이전 분석 불러오는 중…</div>';
+                            }
+                        }
+                    } else {
+                        // 첫 방문이거나 불명 → defaults 잠시 숨기고 fetch 결과 대기 (깜빡임 최소화)
+                        if (_defaults) _defaults.style.display = 'none';
+                        if (_sysInfo) _sysInfo.style.display = 'none';
+                    }
                     showScreen('landing');
                 }
                 if (userSection) userSection.style.display = 'flex';
@@ -7502,13 +7526,24 @@
                 const resp = await fetch(WORKER_URL + '/my-analyses', {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
-                if (!resp.ok) return;
+                if (!resp.ok) {
+                    // 실패 시 defaults 복원 (preemptive hide 했던 것 원상)
+                    showNewAnalysisMode();
+                    return;
+                }
                 const data = await resp.json();
                 if (data.analyses && data.analyses.length > 0) {
                     renderPreviousResults(data.analyses);
+                    // v3.9.93: 다음 로그인 때 flash 방지 힌트
+                    try { localStorage.setItem('knot_had_history', '1'); } catch(e){}
+                } else {
+                    // 히스토리 없음 → defaults 원상 복구
+                    showNewAnalysisMode();
+                    try { localStorage.removeItem('knot_had_history'); } catch(e){}
                 }
             } catch (e) {
                 console.log('[KNOT] 과거 분석 조회 실패:', e.message);
+                showNewAnalysisMode(); // 에러 시 defaults 복원
             }
         }
 
