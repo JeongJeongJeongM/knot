@@ -6901,8 +6901,19 @@ function serverComputeCompatibility(axesA, axesB, fwpA, fwpB) {
   const lsm_similarity = computeLSMSimilarity(fwpA, fwpB);
   const lsm_friction = 1 - lsm_similarity;
 
-  // Weighted formula
-  const total_friction = 0.40 * intensity_friction + 0.40 * structural_friction + 0.20 * lsm_friction;
+  // Weighted formula — v3.9.60 Sprint A: 메타분석 기반 가중치 재보정
+  //   기존 0.40 / 0.40 / 0.20 은 저자 직관. 아래는 공개된 effect size 기반:
+  //     · LSM ↔ 관계 안정성 r ≈ 0.30 (Ireland et al. 2011, Psych Sci)
+  //     · 정서 유사성 ↔ 만족도 r ≈ 0.20 (Anderson et al. 2003)
+  //     · 성격 유사성 ↔ 만족도 r ≈ 0.15 (Luo & Klohnen 2005 meta-analysis)
+  //   normalize sum → 0.46 / 0.31 / 0.23 (LSM 이 가장 큰 weight, 기존의 정반대)
+  const W_LSM = 0.46;
+  const W_INTENSITY = 0.31;
+  const W_STRUCTURAL = 0.23;
+  const total_friction =
+    W_INTENSITY * intensity_friction +
+    W_STRUCTURAL * structural_friction +
+    W_LSM * lsm_friction;
   const compatibility = (1 - total_friction) * 100;
 
   return {
@@ -6911,7 +6922,9 @@ function serverComputeCompatibility(axesA, axesB, fwpA, fwpB) {
     structural_friction,
     lsm_similarity,
     lsm_friction,
-    total_friction
+    total_friction,
+    // v3.9.60: weight 투명성 — UI 에서 disclosure 가능
+    weights: { lsm: W_LSM, intensity: W_INTENSITY, structural: W_STRUCTURAL }
   };
 }
 
@@ -9255,6 +9268,35 @@ function runSimulation(axes, anchor, rawMessages, prism, _features = null) {
 // CROSS-SIMULATION — 두 사람의 시뮬레이션 교차 분석
 // ═══════════════════════════════════════════════════════════
 
+// v3.9.60 Sprint A 헬퍼
+//   _vecVariance: 분산 (표본), pooled SD 계산용
+//   _cosineSimilarity: 분포 벡터 cosine (Jaccard 대체)
+//   _convergenceFromD: Cohen's d → {convergent/parallel/divergent}
+function _vecVariance(arr) {
+  if (!arr || arr.length === 0) return 0;
+  const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+  const sq = arr.reduce((a, b) => a + (b - mean) * (b - mean), 0);
+  return sq / arr.length;
+}
+function _cosineSimilarity(vecA, vecB) {
+  if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
+  let dot = 0, nA = 0, nB = 0;
+  for (let i = 0; i < vecA.length; i++) {
+    dot += vecA[i] * vecB[i];
+    nA += vecA[i] * vecA[i];
+    nB += vecB[i] * vecB[i];
+  }
+  const denom = Math.sqrt(nA) * Math.sqrt(nB);
+  return denom > 0 ? dot / denom : 0;
+}
+function _convergenceFromD(d) {
+  // Cohen (1988) 관례: 0.2 small, 0.5 medium, 0.8 large
+  if (d == null || !Number.isFinite(d)) return 'parallel';
+  if (d < 0.2) return 'convergent';
+  if (d > 0.8) return 'divergent';
+  return 'parallel';
+}
+
 function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
   const axA = simA.axes;
   const axB = simB.axes;
@@ -9279,20 +9321,27 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
   //   BUG FIX (v3.6): trajA.drift / volatility 는 {E,C,T,O,X} 객체인데
   //   이전 코드는 숫자처럼 뺐음 → Math.abs(NaN)=NaN → 항상 'parallel'.
   //   수정: 5축 각각의 차이 절댓값을 평균내서 스칼라 지표로 사용.
+  // v3.9.60 Sprint A: 수렴 임계값을 Cohen's d (표준화 효과크기) 로 교체
+  //   기존: 0.03 / 0.08 하드코딩 — 근거 없음. M12 는 또 0.15 / 0.30 으로 불일치.
+  //   신규: pooled SD 로 표준화 후 Cohen (1988) 관례 (d<0.2 small, d>0.8 large).
+  //   효과: 스케일 무관 일관 판정. M4 와 M12 동일 기준 사용 가능.
   const trajA = simA.trajectory;
   const trajB = simB.trajectory;
   let convergence = 'parallel';
+  let convergence_d = null; // 투명성 — UI/디버깅용
   if (trajA?.drift && trajB?.drift && trajA?.volatility && trajB?.volatility) {
     const AK = ['E', 'C', 'T', 'O', 'X'];
-    let driftDiffSum = 0, volDiffSum = 0;
-    for (const k of AK) {
-      driftDiffSum += Math.abs((trajA.drift[k] || 0) - (trajB.drift[k] || 0));
-      volDiffSum  += Math.abs((trajA.volatility[k] || 0) - (trajB.volatility[k] || 0));
-    }
-    const driftDiff = driftDiffSum / AK.length;
-    const volDiff   = volDiffSum / AK.length;
-    if (driftDiff < 0.03 && volDiff < 0.03) convergence = 'convergent';
-    else if (driftDiff > 0.08 || volDiff > 0.08) convergence = 'divergent';
+    // drift 차의 평균 + pooled SD (A/B 각자의 drift 벡터 분산 기반)
+    const driftDiffs = AK.map(k => (trajA.drift[k] || 0) - (trajB.drift[k] || 0));
+    const meanAbsDiff = driftDiffs.reduce((a, b) => a + Math.abs(b), 0) / AK.length;
+    // 각 개인 drift 벡터 분산 (절대 규모)
+    const varA = _vecVariance(AK.map(k => trajA.drift[k] || 0));
+    const varB = _vecVariance(AK.map(k => trajB.drift[k] || 0));
+    const pooledSD = Math.sqrt((varA + varB) / 2) || 0.1; // floor 0.1 (zero-div 회피)
+    convergence_d = meanAbsDiff / pooledSD;
+    if (convergence_d < 0.2) convergence = 'convergent';       // Cohen small
+    else if (convergence_d > 0.8) convergence = 'divergent';    // Cohen large
+    else convergence = 'parallel';                               // medium
   }
 
   // ── 3. 자극-반응 호환성: A의 반응이 B의 트리거가 되는지 ──
@@ -9465,7 +9514,10 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
   }
 
   // ── 10. PRISM 주제 겹침률 ──
-  let topicOverlap = { jaccard: 0, shared: [], uniqueA: [], uniqueB: [], desc: '주제 데이터 부족' };
+  // v3.9.60 Sprint A: Jaccard (binary set) → Cosine on distribution vectors.
+  //   기존 Jaccard 는 키 집합만 봐서 "관계 대화 80% vs 관계 대화 10%" 를 동일 취급.
+  //   신규 Cosine 은 빈도 벡터 유사도 → 비중까지 반영. 하위 호환 위해 jaccard 도 병기.
+  let topicOverlap = { jaccard: 0, cosine: 0, shared: [], uniqueA: [], uniqueB: [], desc: '주제 데이터 부족' };
   if (prismA?.topic_distribution && prismB?.topic_distribution) {
     const topicsA = prismA.topic_distribution.topics || prismA.topic_distribution;
     const topicsB = prismB.topic_distribution.topics || prismB.topic_distribution;
@@ -9475,14 +9527,26 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
       const shared = [...keysA].filter(k => keysB.has(k));
       const union = new Set([...keysA, ...keysB]);
       const jaccard = union.size > 0 ? Math.round((shared.length / union.size) * 100) / 100 : 0;
+      // Cosine: union 키 순서로 두 사람의 분포 벡터 생성 (없으면 0)
+      const allKeys = [...union];
+      const vecA = allKeys.map(k => {
+        const v = topicsA[k];
+        return typeof v === 'number' ? v : (v && typeof v === 'object' ? (v.count || v.weight || v.freq || 0) : 1);
+      });
+      const vecB = allKeys.map(k => {
+        const v = topicsB[k];
+        return typeof v === 'number' ? v : (v && typeof v === 'object' ? (v.count || v.weight || v.freq || 0) : 1);
+      });
+      const cosine = Math.round(_cosineSimilarity(vecA, vecB) * 100) / 100;
       const uniqueA = [...keysA].filter(k => !keysB.has(k));
       const uniqueB = [...keysB].filter(k => !keysA.has(k));
       let desc = '';
-      if (jaccard > 0.6) desc = '높은 주제 겹침 — 대화 소재가 풍부하지만 새로운 자극이 부족할 수 있다';
-      else if (jaccard > 0.3) desc = '적당한 주제 겹침 — 공통 기반 위에 서로 다른 세계를 보여줄 수 있다';
-      else if (jaccard > 0) desc = '낮은 주제 겹침 — 서로 다른 세계의 사람들. 호기심이 있으면 확장, 없으면 단절';
+      // desc 는 cosine 기준 (빈도 반영) — jaccard 보다 사용자 체감에 가까움
+      if (cosine > 0.7) desc = '높은 주제 겹침 — 대화 소재가 풍부하지만 새로운 자극이 부족할 수 있다';
+      else if (cosine > 0.4) desc = '적당한 주제 겹침 — 공통 기반 위에 서로 다른 세계를 보여줄 수 있다';
+      else if (cosine > 0.1) desc = '낮은 주제 겹침 — 서로 다른 세계의 사람들. 호기심이 있으면 확장, 없으면 단절';
       else desc = '주제 겹침 없음 — 완전히 다른 관심사. 접점을 만들어야 한다';
-      topicOverlap = { jaccard, shared, uniqueA: uniqueA.slice(0, 5), uniqueB: uniqueB.slice(0, 5), desc };
+      topicOverlap = { jaccard, cosine, shared, uniqueA: uniqueA.slice(0, 5), uniqueB: uniqueB.slice(0, 5), desc };
     }
   }
 
@@ -9492,7 +9556,7 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
   else if (attachmentCross.type === 'stable_pair') compat += 8;
   else if (attachmentCross.type === 'anchor_seeker' || attachmentCross.type === 'patience_test') compat += 3;
   if (recoveryMismatch.delta >= 2) compat -= 5;
-  if (topicOverlap.jaccard > 0.3) compat += 3;
+  if ((topicOverlap.cosine ?? topicOverlap.jaccard ?? 0) > 0.4) compat += 3;
   compat = Math.max(5, Math.min(95, compat));
 
   // 긴장도/성장 재계산 — 애착 패턴 기반 오버라이드 (이전 방어충돌 기반 결과 위)
@@ -9507,6 +9571,7 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
     closest,
     farthest,
     convergence,
+    convergence_d: convergence_d != null ? Math.round(convergence_d * 100) / 100 : null, // v3.9.60 Cohen's d 노출
     triggerLoops,
     defenseClash,
     sharedRisks,
@@ -9610,12 +9675,20 @@ function computeCrossSituational(simA, simB) {
       entry.closest  = { axis: sorted[0][0], delta: sorted[0][1].delta };
       entry.farthest = { axis: sorted[sorted.length - 1][0], delta: sorted[sorted.length - 1][1].delta };
 
-      // 수렴성
-      // v3.6: 메인 computeCrossSimulation 은 drift/volatility 기반, 여기는 avgDist 기반.
-      //   두 정의가 다름을 주석에 명시 (의도된 차이 — situational 은 상황별 축 스냅샷만 있음).
-      //   임계: <0.15 convergent, >0.30 divergent (메인 로직의 drift 임계와 스케일 맞춤).
-      entry.convergence = avgDist < 0.15 ? 'convergent' : avgDist > 0.30 ? 'divergent' : 'parallel';
-      entry.convergence_basis = 'axis_distance_snapshot';  // vs main: trajectory_drift_and_volatility
+      // 수렴성 — v3.9.60 Sprint A: Cohen's d 로 표준화 (메인 computeCrossSimulation 과 동일 기준)
+      //   이전: <0.15 / >0.30 임의 임계. 메인은 0.03 / 0.08 로 전혀 달랐음 → 한 커플이
+      //   메인에선 "수렴", 상황별에선 "발산" 으로 모순 표시되는 버그.
+      //   신규: A/B 각자의 5축 벡터 분산으로 pooled SD 계산 후 d = mean|diff|/pooledSD.
+      //   Cohen (1988) d<0.2 small / d>0.8 large 관례.
+      const vecA = AK.map(ax => sA.simAxes?.[ax] ?? 0.5);
+      const vecB = AK.map(ax => sB.simAxes?.[ax] ?? 0.5);
+      const varA = _vecVariance(vecA);
+      const varB = _vecVariance(vecB);
+      const pooledSD = Math.sqrt((varA + varB) / 2) || 0.1;
+      const cohenD = (totalDist / AK.length) / pooledSD;
+      entry.convergence_d = Math.round(cohenD * 100) / 100;
+      entry.convergence = _convergenceFromD(cohenD);
+      entry.convergence_basis = 'cohens_d_on_axis_snapshot'; // v3.9.60
 
       // 방어 충돌 — 상황별 방어 패턴 사용
       entry.defense_clash = _lookupDefenseClash(sA.defense?.code, sB.defense?.code);

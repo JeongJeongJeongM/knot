@@ -12828,14 +12828,18 @@ function displayResult() {
             var empty = document.getElementById('v39TopicEmpty');
             var descEl = document.getElementById('v39TopicDesc');
             if (!wrap || !empty) return;
-            if (!ov || typeof ov.jaccard !== 'number' || !Number.isFinite(ov.jaccard)) {
+            // v3.9.60 Sprint A: cosine 우선 사용 (빈도 반영). 레거시 jaccard 는 fallback.
+            var sim = (typeof ov?.cosine === 'number' && Number.isFinite(ov.cosine))
+                ? ov.cosine
+                : (typeof ov?.jaccard === 'number' && Number.isFinite(ov.jaccard) ? ov.jaccard : null);
+            if (sim == null) {
                 wrap.style.display = 'none';
                 empty.style.display = 'block';
                 if (descEl) descEl.style.display = 'none';
                 return;
             }
             var pctEl = document.getElementById('v39TopicJaccardPct');
-            if (pctEl) pctEl.textContent = Math.round(ov.jaccard * 100) + '%';
+            if (pctEl) pctEl.textContent = Math.round(sim * 100) + '%';
 
             var chipsEl = document.getElementById('v39TopicChips');
             if (chipsEl) {
