@@ -5541,6 +5541,31 @@ function R1AttachmentAnalyzer_analyze(texts) {
 
   const narrative = R1AttachmentAnalyzer_generateNarrative(primary, stress_shift, reassurance_ratio, avoidance_ratio);
 
+  // v3.9.61 Sprint B — ECR-R 스타일 2D 연속값 (Brennan, Clark, Shaver 1998)
+  //   기존 5-way 분류(leans_*)는 discretization. ECR-R 은 원래 anxiety·avoidance
+  //   2 차원 연속 척도. 원 count 를 정규화한 dimensional 점수 병기.
+  //     anxiety_score:   anxious_count  / total (총 신호 중 불안 비율)
+  //     avoidance_score: avoidant_count / total
+  //   disorganized 는 두 점수가 동시에 높은 경우 → 별도 derived 지표.
+  //   confidence 는 총 signal 수 기반 (N<2 low, N<5 medium, else high).
+  const totalForScore = Math.max(totalSignals, 1);
+  const anxiety_score   = Math.round((anxious_count   / totalForScore) * 100) / 100;
+  const avoidance_score = Math.round((avoidant_count  / totalForScore) * 100) / 100;
+  const secure_score    = Math.round((secure_count    / totalForScore) * 100) / 100;
+  const disorganized_score = Math.round((disorganized_count / totalForScore) * 100) / 100;
+
+  // 가장 가까운 4-type 라벨 + confidence (연속값 유지하면서 UI 참고용)
+  const typeScores = {
+    secure: secure_score,
+    anxious: anxiety_score,
+    avoidant: avoidance_score,
+    disorganized: disorganized_score,
+  };
+  const nearest = Object.entries(typeScores).sort((a, b) => b[1] - a[1])[0];
+  const runnerUp = Object.entries(typeScores).sort((a, b) => b[1] - a[1])[1];
+  // 1위-2위 점수 차로 type_confidence — 차이 크면 명확, 작으면 경계
+  const typeConfidence = Math.round((nearest[1] - runnerUp[1]) * 100) / 100;
+
   return {
     primary_tendency: primary,
     stress_shift: stress_shift,
@@ -5548,6 +5573,16 @@ function R1AttachmentAnalyzer_analyze(texts) {
     narrative: narrative,
     reassurance_seeking_ratio: reassurance_ratio,
     emotional_avoidance_ratio: avoidance_ratio,
+    // v3.9.61: ECR-R dimensional scores (0~1)
+    dimensional: {
+      anxiety: anxiety_score,
+      avoidance: avoidance_score,
+      secure: secure_score,
+      disorganized: disorganized_score,
+      nearest_type: nearest[0],       // 'secure'|'anxious'|'avoidant'|'disorganized'
+      type_confidence: typeConfidence, // 1위-2위 차 (낮으면 경계 영역)
+      total_signals: totalSignals,     // 신뢰도 지표
+    },
     _counts: counts,  // 디버그/하류 분석용
   };
 }
@@ -8900,29 +8935,114 @@ const DEFENSE_RULES = [
   },
 ];
 
-function classifyDefensePattern(simAxes, anchor) {
-  // v3.6: first-match early return → score-all 방식.
-  //   같은 사람이 PROJECTION + FORTRESS 동시 매치 가능하므로 모든 매치 기록.
-  //   primary 는 하위 호환을 위해 가장 먼저 매치된 것(=가장 엄격한 조건 만족) 유지.
-  const matched = [];
-  for (const rule of DEFENSE_RULES) {
-    if (rule.match(simAxes, anchor)) {
-      matched.push({ code: rule.code, name: rule.name, desc: rule.desc });
+// v3.9.61 Sprint B — Mikulincer & Shaver (2016) 2D defensive regulation 모델
+//   "Attachment in Adulthood" 2e (Guilford), Ch.7
+//
+//   Hyperactivation: 위협 신호에 대한 과민·과잉 반응, 접근·매달림·증폭
+//   Deactivation:    위협 신호 무시·거리두기·억제·지적처리로 전환
+//
+//   KNOT 5축 → MAS 2D 매핑 (이론적 근거):
+//     hyperactivation = 0.4*emotion + 0.3*(1-boundary) + 0.3*(1-resilience)
+//       · emotion 높음: 정서 활성화 민감
+//       · boundary 낮음: 타자 침투 허용 (매달림)
+//       · resilience 낮음: 자기 조절 실패 → 증폭
+//     deactivation    = 0.4*cognition + 0.3*boundary + 0.3*(1-emotion)
+//       · cognition 높음: 지적 처리로 정서 우회
+//       · boundary 높음: 침투 차단 (거리두기)
+//       · emotion 낮음: 정서 표현 억제
+//
+//   기존 6 코드(PROJECTION/FORTRESS/EXPLOSION/DIFFUSION/SHUTDOWN/ADAPTIVE) 는
+//   2D 좌표의 4 사분면 + 극단값에 lookup 으로 매핑 → 하위 호환 유지.
+function _computeMAS2D(simAxes) {
+  const e = simAxes.emotion ?? 0.5;
+  const c = simAxes.cognition ?? 0.5;
+  const b = simAxes.boundary ?? 0.5;
+  const r = simAxes.resilience ?? 0.5;
+  const hyper = Math.max(0, Math.min(1, 0.4 * e + 0.3 * (1 - b) + 0.3 * (1 - r)));
+  const deact = Math.max(0, Math.min(1, 0.4 * c + 0.3 * b + 0.3 * (1 - e)));
+  return { hyperactivation: hyper, deactivation: deact };
+}
+
+// MAS 2D → 4 분면 + legacy 6 코드 매핑.
+//   분면 기준선 0.5 (중립). 양쪽 모두 높으면 disorganized (fearful defense).
+//   Legacy 코드는 사분면 + 추가 조건으로 세분화.
+function _mas2dToLegacy(mas, simAxes) {
+  const { hyperactivation: h, deactivation: d } = mas;
+  const e = simAxes.emotion ?? 0.5;
+  const c = simAxes.cognition ?? 0.5;
+  const HIGH = 0.55, LOW = 0.45;
+
+  // 분면 분류
+  let quadrant;
+  if (h < LOW && d < LOW) quadrant = 'secure';           // 양쪽 낮음 → 안정
+  else if (h >= HIGH && d < LOW) quadrant = 'hyperactivated';  // 과활성화
+  else if (h < LOW && d >= HIGH) quadrant = 'deactivated';     // 비활성화
+  else if (h >= HIGH && d >= HIGH) quadrant = 'disorganized';  // 양쪽 높음 (혼란)
+  else quadrant = 'mixed';                                      // 중간 영역
+
+  // Legacy 코드 매핑 — 분면 + 추가 축 조건
+  let code, name, desc;
+  if (quadrant === 'secure') {
+    code = 'ADAPTIVE';
+    name = '적응적 방어';
+    desc = '특정 방어 패턴에 고착되지 않고 상황에 따라 유연하게 대응. 활성화·비활성화 양쪽 모두 낮은 안정 프로필.';
+  } else if (quadrant === 'hyperactivated') {
+    if (e >= 0.6 && c >= 0.5) { // 감정 + 인지 동시 활성 → 전가
+      code = 'PROJECTION';
+      name = '합리화된 전가';
+      desc = '감정을 인지적 틀로 포장하여 외부에 귀인. 활성화된 상태에서 분석력이 감정을 은폐한다. (hyperactivation 우세)';
+    } else if (c < 0.4) { // 감정 우세, 인지 낮음 → 폭주
+      code = 'EXPLOSION';
+      name = '정서적 폭주';
+      desc = '감쇠 기제 부족으로 인한 감정의 강제 배출. 접근·증폭 전략이 통제를 잃을 때. (hyperactivation 극단)';
+    } else {
+      code = 'DIFFUSION';
+      name = '경계 해체';
+      desc = '자기와 타인의 경계가 흐려져 외부 정서에 과도하게 동조. (hyperactivation + 낮은 경계)';
     }
+  } else if (quadrant === 'deactivated') {
+    if (c >= 0.55) {
+      code = 'FORTRESS';
+      name = '지적 요새화';
+      desc = '자기 논리에 갇혀 외부 정보를 오류로 처리. 거리두기 + 지적처리. (deactivation 우세)';
+    } else {
+      code = 'SHUTDOWN';
+      name = '수동적 회피';
+      desc = '갈등 상황에서 시스템이 셧다운. 외부 자극을 차단. (deactivation 극단)';
+    }
+  } else if (quadrant === 'disorganized') {
+    code = 'PROJECTION'; // 양쪽 high — 갈등적 방어, 전가가 가장 빈번
+    name = '혼란된 방어';
+    desc = '활성화와 비활성화가 동시에 발현. 접근-회피 갈등으로 일관된 방어 실패. (disorganized quadrant)';
+  } else { // mixed
+    code = 'ADAPTIVE';
+    name = '혼합 프로필';
+    desc = '활성화·비활성화 양쪽 moderate. 뚜렷한 방어 고착 없음.';
   }
-  if (matched.length === 0) {
-    return {
-      code: 'ADAPTIVE',
-      name: '적응적 방어',
-      desc: '특정 방어 패턴에 고착되지 않고 상황에 따라 유연하게 대응. 축 간 균형이 극단적이지 않다.',
-      all_matches: [],
-      count: 0,
-    };
-  }
+
+  return { code, name, desc, quadrant };
+}
+
+function classifyDefensePattern(simAxes, anchor) {
+  // v3.9.61 Sprint B: Mikulincer-Shaver 2D 모델로 전면 교체.
+  //   출력 schema 는 하위 호환:
+  //     · code/name/desc: 기존 legacy 코드 (매핑 유지)
+  //     · mas2d: {hyperactivation, deactivation} 연속 점수
+  //     · quadrant: 'secure'|'hyperactivated'|'deactivated'|'disorganized'|'mixed'
+  //     · all_matches/count: 하위 호환 (단일 판정이므로 length 1)
+  const mas = _computeMAS2D(simAxes);
+  const legacy = _mas2dToLegacy(mas, simAxes);
   return {
-    ...matched[0],          // primary (하위 호환)
-    all_matches: matched,   // 복수 매치 전체
-    count: matched.length,
+    code: legacy.code,
+    name: legacy.name,
+    desc: legacy.desc,
+    mas2d: {
+      hyperactivation: Math.round(mas.hyperactivation * 100) / 100,
+      deactivation:    Math.round(mas.deactivation * 100) / 100,
+    },
+    quadrant: legacy.quadrant,
+    all_matches: [{ code: legacy.code, name: legacy.name, desc: legacy.desc }],
+    count: 1,
   };
 }
 
