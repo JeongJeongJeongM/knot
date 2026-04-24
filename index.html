@@ -14865,6 +14865,31 @@ function displayResult() {
                         if (_shareSideNav) _shareSideNav.classList.add('visible');
                     } catch(e){}
 
+                    // v3.9.50: 공유 뷰에서도 재공유 가능하도록 _lastMatchResult 주입.
+                    //   기존엔 generateMatchShareURL() 이 "매칭 결과가 없습니다" alert 뱉음.
+                    try {
+                        window._lastMatchResult = {
+                            type: 'match',
+                            identityA: idA,
+                            identityB: idB,
+                            matchIdentity: mi,
+                            profileA: (typeof sharePA !== 'undefined' && sharePA) ? sharePA : { axes: axesA, identity: idA, simulation: profile.simulationA || null },
+                            profileB: (typeof sharePB !== 'undefined' && sharePB) ? sharePB : { axes: axesB, identity: idB, simulation: profile.simulationB || null },
+                            crossSim: profile.crossSim || null,
+                            crossSituational: profile.crossSituational || null,
+                            compatDetail: profile.compatDetail || null,
+                            sections: profile.sections || [],
+                            prismA: profile.prismA || null,
+                            prismB: profile.prismB || null,
+                            anchorA: profile.anchorA || null,
+                            anchorB: profile.anchorB || null,
+                            simulationA: profile.simulationA || null,
+                            simulationB: profile.simulationB || null,
+                            compatibility: compat,
+                            timestamp: profile.timestamp || new Date().toISOString()
+                        };
+                    } catch(e) { console.error('[Share reshare cache]', e); }
+
                     showScreen('match');
                     initMatchScrollAnimations();
                 } else {
