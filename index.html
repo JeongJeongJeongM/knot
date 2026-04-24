@@ -4700,6 +4700,13 @@
             .v39-risk-matrix .cell{font-size:12px}
         }
 
+        /* v4 v3.9.43 Phase 2 — MAP+CONV 통합 (part 구분 헤더) */
+        .v39-mapconv-part{margin-bottom:32px}
+        .v39-mapconv-part:last-child{margin-bottom:0}
+        .v39-mapconv-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:#F5A623;letter-spacing:2px;font-weight:600;margin-bottom:6px;padding-left:12px;position:relative;text-transform:uppercase}
+        .v39-mapconv-head::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:14px;background:#F5A623;border-radius:2px}
+        .v39-mapconv-sub{font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:14px;padding-left:12px}
+
         /* v4 v3.9.42 — 5 챕터 라벨 (매칭 페이지 그룹화) */
         .v39-chapter{display:flex;align-items:center;gap:16px;max-width:800px;margin:60px auto 20px;padding:20px 24px;background:linear-gradient(90deg,rgba(245,166,35,0.08) 0%,transparent 80%);border-left:4px solid #F5A623;border-radius:0 10px 10px 0;scroll-margin-top:20px}
         .v39-chapter:first-of-type{margin-top:0}
@@ -5615,53 +5622,57 @@
                         <div class="ch-nm">지형 · 움직임</div>
                         <div class="ch-en">TOPOLOGY & TRAJECTORY</div>
                     </div>
-                    <div class="ch-cnt">2 섹션</div>
+                    <div class="ch-cnt">통합 1 섹션</div>
                 </div>
 
-                <!-- 02 · THE MAP -->
+                <!-- v3.9.43 Phase 2: MAP + CONVERGENCE 통합 (지형 + 움직임 한 섹션) -->
                 <section class="result-section v39-section" id="matchSectionMap">
                   <div class="result-section-inner">
-                    <div class="v39-meta"><b>02</b> · THE MAP</div>
-                    <h2 class="v39-title">두 사람이 그리는 지형</h2>
-                    <p class="v39-subtitle">축별 격차를 큰 순서로 정렬. 중앙선에서 멀수록 두 사람의 방향이 다릅니다.</p>
-                    <div class="v39-tier1" id="v39MapTier1">축 데이터 로딩 중…</div>
-                    <div class="v39-tornado">
-                        <div class="v39-thead">
-                            <div class="l" id="v39MapHeadA">◀ A</div>
-                            <div class="c">AXIS</div>
-                            <div class="r" id="v39MapHeadB">B ▶</div>
-                        </div>
-                        <div id="v39TornadoRows"></div>
-                        <div class="v39-tcap" id="v39TornadoCap"></div>
-                        <!-- v4 M3: 축 거리 메타 요약 (평균/가까운/먼/총) -->
-                        <div class="v39-map-meta" id="v39MapMeta">
-                            <span>평균 격차 <b id="v39MapMetaAvg">—</b></span>
-                            <span>가장 가까운 축 <b id="v39MapMetaClosest">—</b></span>
-                            <span>가장 먼 축 <b id="v39MapMetaFarthest">—</b></span>
-                            <span>총 격차 <b id="v39MapMetaTotal">—</b></span>
+                    <div class="v39-meta">지형과 움직임 · <span class="dim">TOPOLOGY & TRAJECTORY</span></div>
+                    <h2 class="v39-title">축 공간에서 두 사람이 어디 있고 어디로 가는가</h2>
+                    <p class="v39-subtitle">현재 위치(축 거리) + 10단계 시뮬레이션의 움직임. 정·동 두 뷰.</p>
+
+                    <!-- Part 1: 축 거리 (기존 MAP 의 Tornado) -->
+                    <div class="v39-mapconv-part">
+                        <div class="v39-mapconv-head">// 축 거리 · 현재 위치</div>
+                        <div class="v39-tier1" id="v39MapTier1">축 데이터 로딩 중…</div>
+                        <div class="v39-tornado">
+                            <div class="v39-thead">
+                                <div class="l" id="v39MapHeadA">◀ A</div>
+                                <div class="c">AXIS</div>
+                                <div class="r" id="v39MapHeadB">B ▶</div>
+                            </div>
+                            <div id="v39TornadoRows"></div>
+                            <div class="v39-tcap" id="v39TornadoCap"></div>
+                            <div class="v39-map-meta" id="v39MapMeta">
+                                <span>평균 격차 <b id="v39MapMetaAvg">—</b></span>
+                                <span>가장 가까운 축 <b id="v39MapMetaClosest">—</b></span>
+                                <span>가장 먼 축 <b id="v39MapMetaFarthest">—</b></span>
+                                <span>총 격차 <b id="v39MapMetaTotal">—</b></span>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Part 2: 10-STEP 궤적 (기존 CONVERGENCE) -->
+                    <div class="v39-mapconv-part">
+                        <div class="v39-mapconv-head">// 10-STEP 궤적 · 움직임</div>
+                        <div class="v39-mapconv-sub">5축 각각 A 실선 · B 점선 · 가까워짐 / PARALLEL / 멀어짐</div>
+                        <div class="v39-conv-wrap" id="v39ConvWrap" style="display:none">
+                            <div class="v39-conv-grid" id="v39ConvGrid"></div>
+                            <div class="v39-conv-judgment" id="v39ConvJudgment"></div>
+                        </div>
+                        <div class="v39-cross-empty" id="v39ConvEmpty">10단계 시뮬레이션 데이터가 부족합니다.</div>
+                    </div>
+
+                    <!-- Part 3: Attachment (MAP 고유 · 유지) -->
                     <div class="v39-attach-wrap" id="v39AttachWrap">
                         <div class="v39-attach-title">◇ ATTACHMENT ◇</div>
                         <div id="v39AttachBars"></div>
                         <div class="v39-attach-cap" id="v39AttachCap"></div>
                     </div>
-                    <div class="v39-bridge">이 지형에서 반복되는 패턴을 보세요</div>
-                  </div>
-                </section>
 
-                <!-- v4 M4 · 궤적 수렴성 (2026-04-23) -->
-                <section class="result-section v39-section" id="matchSectionConvergence">
-                  <div class="result-section-inner">
-                    <div class="v39-meta">움직이는 방향 · <span class="dim">TRAJECTORY CONVERGENCE</span></div>
-                    <h2 class="v39-title">10단계 대화 시뮬레이션에서 두 사람의 5축이 어떻게 변하는가</h2>
-                    <p class="v39-subtitle">5축 각각 A 실선 · B 점선. 가까워짐 / PARALLEL / 멀어짐 — 세 방향 중 하나.</p>
-                    <div class="v39-conv-wrap" id="v39ConvWrap" style="display:none">
-                        <div class="v39-conv-grid" id="v39ConvGrid"></div>
-                        <div class="v39-conv-judgment" id="v39ConvJudgment"></div>
-                    </div>
+                    <!-- STIMULUS 해석 (기존 InterpConvergence) -->
                     <div class="v39-interp-container" id="v39InterpConvergence"></div>
-                    <div class="v39-cross-empty" id="v39ConvEmpty">10단계 시뮬레이션 데이터가 부족합니다.</div>
                   </div>
                 </section>
 
@@ -5844,42 +5855,47 @@
                         <div class="ch-nm">상황별 변화</div>
                         <div class="ch-en">SITUATIONAL</div>
                     </div>
-                    <div class="ch-cnt">2 섹션</div>
+                    <div class="ch-cnt">통합 1 섹션</div>
                 </div>
 
                 <!-- 04 · THE ARC -->
-                <section class="result-section v39-section" id="matchSectionArc">
-                  <div class="result-section-inner">
-                    <div class="v39-meta"><b>04</b> · THE ARC</div>
-                    <h2 class="v39-title">상황별 반응 궤적</h2>
-                    <p class="v39-subtitle">다섯 가지 상황(일반·친밀·스트레스·갈등·상실)에서 두 사람의 정서 반응 평균. 선이 붙어 있으면 같은 방향, 벌어지면 다른 방향.</p>
-                    <div class="v39-tier1" id="v39ArcTier1"></div>
-                    <div class="v39-arc-chart">
-                        <div class="v39-arc-head">
-                            <span>정서 축 (E)</span>
-                            <span class="legend">
-                                <span class="a"><i></i> <span id="v39ArcLegA">A</span></span>
-                                <span class="b"><i></i> <span id="v39ArcLegB">B</span></span>
-                            </span>
-                        </div>
-                        <canvas id="v39ArcCanvas" style="width:100%;height:220px;display:block;"></canvas>
-                    </div>
-                    <div class="v39-ra-pair" id="v39RaPair"></div>
-                    <div class="v39-interp-container" id="v39InterpArc"></div>
-                  </div>
-                </section>
-
-                <!-- v4 M12 · 상황별 교차 (2026-04-23) -->
+                <!-- v3.9.43 Phase 3: ARC + SITUATIONAL 통합 (개관 + 상세) -->
                 <section class="result-section v39-section" id="matchSectionSituational">
                   <div class="result-section-inner">
-                    <div class="v39-meta">상황별 교차 · <span class="dim">SITUATIONAL CROSS</span></div>
+                    <div class="v39-meta">상황별 변화 · <span class="dim">SITUATIONAL</span></div>
                     <h2 class="v39-title">상황별로 달라지는 두 사람</h2>
-                    <p class="v39-subtitle">평소·스트레스·친밀감·갈등·상실 상황에서 각자 어떻게 변하고 서로 어떻게 맞물리는가</p>
-                    <div class="v39-sit-wrap" id="v39SitWrap" style="display:none">
-                        <div class="v39-sit-tabs" id="v39SitTabs"></div>
-                        <div class="v39-sit-panel" id="v39SitPanel"></div>
+                    <p class="v39-subtitle">평소·스트레스·친밀감·갈등·상실 — 5상황 정서 개관 + 각 상황별 상세</p>
+
+                    <!-- Part 1: 5상황 정서 개관 (기존 ARC canvas) -->
+                    <div class="v39-mapconv-part">
+                        <div class="v39-mapconv-head">// 5상황 정서 개관</div>
+                        <div class="v39-mapconv-sub">각 상황의 A/B 정서 반응 평균. 바가 붙어 있으면 같은 방향, 벌어지면 다른 방향.</div>
+                        <div class="v39-tier1" id="v39ArcTier1"></div>
+                        <div class="v39-arc-chart">
+                            <div class="v39-arc-head">
+                                <span>정서 축 (E)</span>
+                                <span class="legend">
+                                    <span class="a"><i></i> <span id="v39ArcLegA">A</span></span>
+                                    <span class="b"><i></i> <span id="v39ArcLegB">B</span></span>
+                                </span>
+                            </div>
+                            <canvas id="v39ArcCanvas" style="width:100%;height:220px;display:block;"></canvas>
+                        </div>
+                        <div class="v39-ra-pair" id="v39RaPair"></div>
                     </div>
-                    <div class="v39-cross-empty" id="v39SitEmpty">측정된 상황별 세션이 아직 없습니다.</div>
+
+                    <!-- Part 2: 각 상황별 상세 탭 (기존 SITUATIONAL 5탭) -->
+                    <div class="v39-mapconv-part">
+                        <div class="v39-mapconv-head">// 각 상황별 상세 (탭 전환)</div>
+                        <div class="v39-mapconv-sub">탭을 선택해 그 상황의 양쪽 정체성·5축·방어 충돌 확인.</div>
+                        <div class="v39-sit-wrap" id="v39SitWrap" style="display:none">
+                            <div class="v39-sit-tabs" id="v39SitTabs"></div>
+                            <div class="v39-sit-panel" id="v39SitPanel"></div>
+                        </div>
+                        <div class="v39-cross-empty" id="v39SitEmpty">측정된 상황별 세션이 아직 없습니다.</div>
+                    </div>
+
+                    <!-- 해석: TRAJECTORY_FORECAST + POSSIBILITY (2 렌즈) -->
                     <div class="v39-interp-container" id="v39InterpSituational"></div>
                   </div>
                 </section>
@@ -12128,6 +12144,7 @@ function displayResult() {
             possibility:          { icon:'🌱', title:'관계 가능성 해석' }
         };
         // container id → LLM sections.key[] 매핑 (worker.js:11266 출력 스키마 기준)
+        // v3.9.43 Phase 3: matchSectionArc 제거 → trajectory_forecast 를 Situational 로 합침
         var _V39_INTERP_MAPPING = {
             v39InterpVerdict:      ['first_impression', 'emotional_dynamics'],
             v39InterpConvergence:  ['stimulus_dynamics'],
@@ -12135,8 +12152,7 @@ function displayResult() {
             v39InterpAttach:       ['attraction_structure'],
             v39InterpTopic:        ['shared_world'],
             v39InterpSharedRisks:  ['risk_map'],
-            v39InterpArc:          ['trajectory_forecast'],
-            v39InterpSituational:  ['possibility']
+            v39InterpSituational:  ['trajectory_forecast', 'possibility']
         };
         function _v39FindSection(sections, key){
             if (Array.isArray(sections)) {
