@@ -14011,10 +14011,24 @@ function switchTab(id, el) {
           console.error('[Compatibility Error]', e.message);
         }
 
-        // Use server computations, with crossSim overrides
+        // v3.9.72 Phase 4 QA: compatibility 수치 이중화 버그 수정
+        //   이전: matchIdentity.compatibility = crossSim.compatibility (휴리스틱 50±가감)
+        //         compatibilityDetail.score  = serverCompatibility (Sprint A 과학 공식)
+        //         → UI 메인 링 91 vs M2 호환도 바 76 괴리 (15점 차)
+        //   신규: matchIdentity.compatibility = serverCompatibility.score (과학 공식 공식)
+        //         matchIdentity.compatibility_behavioral = crossSim.compatibility (보조)
+        //         UI 메인 숫자 = 과학 공식. 휴리스틱은 참고 지표.
+        const scientific_compat = serverCompatibility?.score != null ? Math.round(serverCompatibility.score) : null;
+        const behavioral_compat = crossSim?.compatibility != null ? crossSim.compatibility : null;
+
         const effectiveMatchIdentity = {
           ...(serverMatchIdentity || matchIdentity),
-          ...(crossSim ? { compatibility: crossSim.compatibility, tension: crossSim.tension, growth: crossSim.growth } : {}),
+          // 메인 compatibility: 과학 공식 우선, 없으면 휴리스틱, 없으면 기본
+          compatibility: scientific_compat != null ? scientific_compat : (behavioral_compat != null ? behavioral_compat : 50),
+          // 보조: 휴리스틱 기반 행동 조정 수치 (참고용)
+          compatibility_behavioral: behavioral_compat,
+          // crossSim 에서 가져오는 tension/growth 는 그대로 (행동 신호 반영)
+          ...(crossSim ? { tension: crossSim.tension, growth: crossSim.growth } : {}),
           ...(serverCompatibility ? { compatibilityDetail: serverCompatibility } : {})
         };
 
