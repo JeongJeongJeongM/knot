@@ -13357,7 +13357,16 @@ function displayResult() {
                 lblEl.innerHTML = label ? '◆ ' + _v39Safe(label) + ' 조합' + _v39Safe(sidesTxt) : '◆ 애착 조합' + _v39Safe(sidesTxt);
             }
             var descEl = document.getElementById('v39AttachDesc');
-            if (descEl) descEl.innerHTML = ac && ac.desc ? _v39Safe(ac.desc) : '';
+            if (descEl) {
+                // v3.9.74 Sprint H: 친근 phrase 우선, 원본 desc 는 .tier3
+                var friendly = type ? _v39FriendlyPhrase(type) : null;
+                if (friendly) {
+                    var rawDesc = (ac && ac.desc) ? '<div class="tier3" style="margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,255,255,0.1);font-size:12.5px;color:rgba(255,255,255,0.55);line-height:1.65">' + _v39Safe(ac.desc) + '</div>' : '';
+                    descEl.innerHTML = '<div>' + _v39Safe(friendly) + '</div>' + rawDesc;
+                } else {
+                    descEl.innerHTML = ac && ac.desc ? _v39Safe(ac.desc) : '';
+                }
+            }
 
             active.style.display = 'block';
             empty.style.display = 'none';
@@ -13514,7 +13523,17 @@ function displayResult() {
             }
 
             var descEl = document.getElementById('v39ConflictDesc');
-            if (descEl) descEl.innerHTML = cc && cc.desc ? _v39Safe(cc.desc) : '';
+            if (descEl) {
+                // v3.9.74 Sprint H: 친근 phrase + _gottman_basis 를 tier3 로
+                var friendly = cc?.type ? _v39FriendlyPhrase(cc.type) : null;
+                if (friendly) {
+                    var rawDesc = (cc && cc.desc) ? '<div style="margin-top:8px;font-size:13px;color:rgba(255,255,255,0.72);line-height:1.65">' + _v39Safe(cc.desc) + '</div>' : '';
+                    var gottman = cc?._gottman_basis ? '<div class="tier3" style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,0.03);border-left:2px solid rgba(245,166,35,0.4);border-radius:0 6px 6px 0;font-size:11px;color:rgba(255,255,255,0.55);line-height:1.6;font-family:system-ui;"><span style="color:var(--ac);font-family:JetBrains Mono,monospace;font-size:9px;font-weight:700;letter-spacing:1.5px;margin-right:6px">BASIS</span>' + _v39Safe(cc._gottman_basis) + '</div>' : '';
+                    descEl.innerHTML = '<div style="font-weight:500;color:rgba(255,255,255,0.88)">' + _v39Safe(friendly) + '</div>' + rawDesc + gottman;
+                } else {
+                    descEl.innerHTML = cc && cc.desc ? _v39Safe(cc.desc) : '';
+                }
+            }
             active.style.display = 'block';
             empty.style.display = 'none';
         }
@@ -14008,36 +14027,15 @@ function displayResult() {
             var mi = ctx.matchIdentity || {};
             var idA = ctx.idA || {}, idB = ctx.idB || {};
 
-            // pattern name: prefer conflict/attachment type → readable label
+            // v3.9.74 Sprint H: 중앙 _V39_FRIENDLY 사용으로 통일 (cmap/amap 제거)
             var pName = '패턴 분석';
             var pSub = '';
-            // v3.9.9: backend 실제 type 키 (CONFLICT_CROSS L9410, ATTACHMENT_CROSS L9376) 기반 Korean 매핑
             if (cross.conflictCross && cross.conflictCross.type) {
-                // v3.9.65: Sprint D (v3.9.63) Gottman 기반 신규 타입 10개 + 레거시 10개 병기
-                var cmap = {
-                    // 신규 (Gottman 2-style 기반)
-                    volatile: '격동형 (둘 다 직면)', validator: '검증자형 (둘 다 신중)',
-                    mutual_retreat: '상호 후퇴', avoider: '회피자형',
-                    validator_volatile: '신중 × 열정', demand_withdraw: '요구-회피',
-                    hostile_detached: '적대-단절', soft_demand_withdraw: '부드러운 요구-회피',
-                    gentle_wall: '부드러운 벽', double_exit: '이중 탈출',
-                    // 레거시 (구 데이터/share 호환)
-                    head_on: '정면 충돌', speed_gap: '속도 격차', chase_retreat: '추적 - 후퇴',
-                    wall_punch: '벽치기', polite_loop: '정중한 루프', gentle_fade: '천천한 소멸',
-                    soft_wall: '부드러운 벽', frozen_conflict: '동결된 갈등',
-                    unknown: '갈등 데이터 부족', uncommon: '비정형 조합'
-                };
-                pName = cmap[cross.conflictCross.type] || '갈등 패턴';
-                pSub = cross.conflictCross.desc || '';
+                pName = _v39FriendlyLabel(cross.conflictCross.type) || '갈등 패턴';
+                pSub = _v39FriendlyPhrase(cross.conflictCross.type) || cross.conflictCross.desc || '';
             } else if (cross.attachmentCross && cross.attachmentCross.type) {
-                var amap = {
-                    stable_pair: '안정 페어', anchor_seeker: '닻 찾기', patience_test: '인내 시험',
-                    ground_wire: '접지선', mutual_spiral: '상호 나선', pursuit_withdrawal: '추적 - 회피',
-                    chaos_amplifier: '혼돈 증폭', parallel_isolation: '평행 고립', ghost_dance: '유령 춤',
-                    double_chaos: '이중 혼돈', unknown: '애착 데이터 부족'
-                };
-                pName = amap[cross.attachmentCross.type] || '애착 패턴';
-                pSub = cross.attachmentCross.desc || '';
+                pName = _v39FriendlyLabel(cross.attachmentCross.type) || '애착 패턴';
+                pSub = _v39FriendlyPhrase(cross.attachmentCross.type) || cross.attachmentCross.desc || '';
             } else if (mi.name) {
                 pName = mi.name + ' 패턴';
             }
