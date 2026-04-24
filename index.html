@@ -12037,26 +12037,27 @@ function displayResult() {
         }
 
         // ── v4 v3.9.38 · 렌즈 → 섹션 매핑 + 해석 블록 렌더 ──
+        // v3.9.39: 실제 LLM sections.key (first_impression/emotional_dynamics/…) 에 맞춤
         var _V39_LENS_META = {
-            first:       { icon:'🤝', title:'첫 인상 해석' },
-            emotion:     { icon:'💓', title:'감정 교류 해석' },
-            stimulus:    { icon:'⚡', title:'자극-반응 역학 해석' },
-            defense:     { icon:'🛡️', title:'방어 패턴 심층 해석' },
-            attract:     { icon:'✨', title:'매력·끌림의 구조' },
-            world:       { icon:'🌐', title:'공유 세계 해석' },
-            risk:        { icon:'⚠️', title:'위험 심층 해석' },
-            arc:         { icon:'🌀', title:'정서 궤적 해석' },
-            possibility: { icon:'🌱', title:'관계 가능성 해석' }
+            first_impression:     { icon:'🤝', title:'첫 인상 해석' },
+            emotional_dynamics:   { icon:'💓', title:'감정 역학 해석' },
+            stimulus_dynamics:    { icon:'⚡', title:'자극-반응 역학 해석' },
+            defense_collision:    { icon:'🛡️', title:'방어 체계 충돌 해석' },
+            attraction_structure: { icon:'✨', title:'끌림의 구조 해석' },
+            shared_world:         { icon:'🌐', title:'공유 세계 해석' },
+            risk_map:             { icon:'⚠️', title:'관계 위험 맵 해석' },
+            trajectory_forecast:  { icon:'🌀', title:'궤적 전망 해석' },
+            possibility:          { icon:'🌱', title:'관계 가능성 해석' }
         };
-        // container id → LLM sections.key[] 매핑
+        // container id → LLM sections.key[] 매핑 (worker.js:11266 출력 스키마 기준)
         var _V39_INTERP_MAPPING = {
-            v39InterpVerdict:      ['first', 'emotion'],
-            v39InterpConvergence:  ['stimulus'],
-            v39InterpDefense:      ['defense'],
-            v39InterpAttach:       ['attract'],
-            v39InterpTopic:        ['world'],
-            v39InterpSharedRisks:  ['risk'],
-            v39InterpArc:          ['arc'],
+            v39InterpVerdict:      ['first_impression', 'emotional_dynamics'],
+            v39InterpConvergence:  ['stimulus_dynamics'],
+            v39InterpDefense:      ['defense_collision'],
+            v39InterpAttach:       ['attraction_structure'],
+            v39InterpTopic:        ['shared_world'],
+            v39InterpSharedRisks:  ['risk_map'],
+            v39InterpArc:          ['trajectory_forecast'],
             v39InterpSituational:  ['possibility']
         };
         function _v39FindSection(sections, key){
