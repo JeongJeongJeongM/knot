@@ -4937,6 +4937,9 @@
         .v39-arc-chart{position:relative;background:rgba(12,12,20,0.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:24px 20px 18px;margin-bottom:28px;overflow:hidden}
         .v39-arc-chart::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,166,35,0.3),transparent);z-index:1}
         .v39-arc-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:0.1em;text-transform:uppercase}
+        /* v3.9.81: 정서 반응 강도 차트 하단 footnote — 성격 정서 강도 아님 명시 */
+        .v39-arc-footnote{margin-top:14px;padding:10px 14px;background:rgba(52,211,153,0.06);border-left:2px solid rgba(52,211,153,0.4);border-radius:0 6px 6px 0;font-size:11px;color:rgba(255,255,255,0.7);line-height:1.6}
+        .v39-arc-footnote b{color:#fff;font-weight:600}
         .v39-arc-head .legend{display:flex;gap:14px}
         .v39-arc-head .legend span{display:inline-flex;align-items:center;gap:6px}
         .v39-arc-head .legend i{display:inline-block;width:10px;height:2px;border-radius:1px}
@@ -5983,20 +5986,24 @@
                     <h2 class="v39-title">상황별로 달라지는 두 사람</h2>
                     <p class="v39-subtitle">평소·스트레스·친밀감·갈등·상실 — 5상황 정서 개관 + 각 상황별 상세</p>
 
-                    <!-- Part 1: 5상황 정서 개관 (기존 ARC canvas) -->
+                    <!-- Part 1: 5상황 정서 개관 (기존 ARC canvas)
+                         v3.9.81: 라벨 명확화 — "정서 축 값" 이 아니라 "각 상황 대화에서 측정된
+                         정서 반응 강도" 임을 분명히. 사용자가 평소 0.05 보고 "내 정서 축이 바닥"
+                         이라고 오해하는 혼선 방지. -->
                     <div class="v39-mapconv-part">
-                        <div class="v39-mapconv-head">// 5상황 정서 개관</div>
-                        <div class="v39-mapconv-sub">각 상황의 A/B 정서 반응 평균. 바가 붙어 있으면 같은 방향, 벌어지면 다른 방향.</div>
+                        <div class="v39-mapconv-head">// 상황별 정서 반응 강도</div>
+                        <div class="v39-mapconv-sub">각 상황 대화에서 <b>감정이 얼마나 활성화</b>되는지 측정한 값 (0 = 진정, 1 = 활성화). 평소 대화에서는 낮고 스트레스·갈등에서 높은 게 자연스러움.</div>
                         <div class="v39-tier1" id="v39ArcTier1"></div>
                         <div class="v39-arc-chart">
                             <div class="v39-arc-head">
-                                <span>정서 축 (E)</span>
+                                <span>정서 반응 강도</span>
                                 <span class="legend">
                                     <span class="a"><i></i> <span id="v39ArcLegA">A</span></span>
                                     <span class="b"><i></i> <span id="v39ArcLegB">B</span></span>
                                 </span>
                             </div>
                             <canvas id="v39ArcCanvas" style="width:100%;height:220px;display:block;"></canvas>
+                            <div class="v39-arc-footnote">💡 평소에 낮고 스트레스·갈등에서 높게 나오는 건 정상. 이 차트는 <b>상황별 감정 활성도</b>이지 <b>성격의 정서 강도</b>가 아닙니다 (성격 정서 강도는 M3 축 거리 섹션에 있음).</div>
                         </div>
                         <div class="v39-ra-pair" id="v39RaPair"></div>
                     </div>
