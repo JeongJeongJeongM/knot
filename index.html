@@ -12325,7 +12325,9 @@ function displayResult() {
 
                 var activeSub = subs[activeIdx];
                 var activeContent = activeSub.content || activeSub.text || activeSub.body || '';
-                var panelHtml = summaryHtml +
+                // v3.9.58: summary 는 01 번 탭에서만 노출. 02/03 에 재출현하면 동일 문장이
+                //   반복돼 사용자 지적 "동일 문장이 챕터 별로 반복 출력".
+                var panelHtml = (activeIdx === 0 ? summaryHtml : '') +
                     (activeSub.title ? '<div class="v39-interp-sub-title">' + _v39Safe(activeSub.title) + '</div>' : '') +
                     '<div class="v39-interp-sub-body"><p>' + _v39Safe(activeContent).replace(/\n+/g, '</p><p>') + '</p></div>';
 
@@ -12374,10 +12376,11 @@ function displayResult() {
                 it.classList.toggle('active', si === subIdx);
             });
 
-            // panel content 교체 (summary 유지)
+            // panel content 교체 — v3.9.58: summary 는 subIdx===0 일 때만 포함
+            //   (탭 전환 시 summary 가 반복 노출되던 이슈 수정)
             var activeSub = subs[subIdx];
             var activeContent = activeSub.content || activeSub.text || activeSub.body || '';
-            var summary = m.section.summary
+            var summary = (subIdx === 0 && m.section.summary)
                 ? '<div class="v39-interp-summary">' + _v39Safe(m.section.summary).replace(/\n+/g, '<br>') + '</div>'
                 : '';
             var panelContent = summary +
