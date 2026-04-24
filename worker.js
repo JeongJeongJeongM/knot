@@ -7895,7 +7895,9 @@ function aggregateBySituation(sessions, features, prism, anchor, defaultIdentity
   // 각 상황으로 분류된 세션들만 모아서 17축 → 6축 → archetype 매핑.
   // 이게 "평상시엔 X 인데 스트레스 상황에선 Y 로 이동" 서술의 데이터 원천.
   // feature cache subset 만으로 계산 — regex 재스캔 0 회.
-  const MIN_MSGS_FOR_IDENTITY = 20;
+  // v3.9.89: 20 → 12 하향. 상황별 세션이 짧은 경우가 흔해 20 은 과하게 보수적.
+  // 신뢰도 ↓ 하지만 "추정 불가 → 측정 가능" 전환이 UX 가치 큼.
+  const MIN_MSGS_FOR_IDENTITY = 12;
   for (const sit of SESSION_CONFIG.SITUATIONS) {
     const sessList = sessionsBySit[sit];
     if (sessList.length === 0) continue;
@@ -10190,37 +10192,42 @@ function softmax(scores, temperature = STATE_TEMPERATURE) {
 //   dataMode: 'measured' | 'fallback_none'  // 실측/폴백 표시
 // }
 // ══════════════════════════════════════════════════════════════
-// v3.9.87: measured situational 없을 때 stimulus.shifted 값으로 합성 스냅샷 생성.
+// v3.9.87 → v3.9.89: measured 없을 때 stimulus.shifted 값으로 합성 스냅샷 생성.
 //   dataMode: 'synthesized' 로 표기해 "측정 아님, 시뮬레이션 추정" 투명 공개.
 //   normal 은 baseline (axes) 그대로. 나머지 4 상황은 stimulus[key].shifted 사용.
+//   v3.9.89: identity 를 synthesized simAxes 에서 computeServerIdentity 로 재계산
+//   (이전엔 null 이라 UI 가 엉뚱한 타입 표시).
 function _synthesizeSituationalEntry(sim, situationKey) {
   if (!sim) return null;
-  // normal: baseline axes
+  let simAxes;
   if (situationKey === 'normal') {
     const ax = sim.axes;
     if (!ax) return null;
-    return {
-      simAxes: {
-        emotion: ax.emotion, drive: ax.drive, cognition: ax.cognition,
-        boundary: ax.boundary, resilience: ax.resilience
-      },
-      defense: sim.defense || null,
-      identity: null,  // 별도 identity 재계산 안함 (synthesized 임을 명시)
-      sessionCount: 0,
-      _synthesized: true,
-    };
+    simAxes = { emotion: ax.emotion, drive: ax.drive, cognition: ax.cognition, boundary: ax.boundary, resilience: ax.resilience };
+  } else {
+    const stim = sim.stimulus?.[situationKey];
+    if (!stim?.shifted) return null;
+    const sh = stim.shifted;
+    simAxes = { emotion: sh.E, drive: sh.C, cognition: sh.T, boundary: sh.O, resilience: sh.X };
   }
-  // stress/intimacy/conflict/loss: stimulus.shifted 사용
-  const stim = sim.stimulus?.[situationKey];
-  if (!stim?.shifted) return null;
-  const sh = stim.shifted;
+  // synthesized identity — simAxes 를 intensity 로 치환하여 6축 identity 재판정
+  //   (simAxes 의 emotion/drive/... 가 intensity A1~A5 와 1:1 매핑 가정)
+  let synthIdentity = null;
+  try {
+    // fake intensity shape: A1~A6 있으면 computeServerIdentity 가 돌아감
+    const fakeIntensity = {
+      A1: simAxes.emotion, A2: 1 - Math.abs(simAxes.emotion - 0.5) * 2,
+      A3: simAxes.emotion, A4: simAxes.drive, A5: simAxes.drive, A6: simAxes.cognition
+    };
+    synthIdentity = computeServerIdentity({ intensity: fakeIntensity, structural: {} });
+    if (synthIdentity) {
+      synthIdentity.name = (synthIdentity.name || '추정 정체') + ' (추정)';
+    }
+  } catch (e) { /* 재판정 실패 시 null 유지 */ }
   return {
-    simAxes: {
-      emotion: sh.E, drive: sh.C, cognition: sh.T,
-      boundary: sh.O, resilience: sh.X
-    },
-    defense: sim.defense || null,  // 상황별 defense 재판정 없음 (단순화)
-    identity: null,
+    simAxes,
+    defense: sim.defense || null,
+    identity: synthIdentity,
     sessionCount: 0,
     _synthesized: true,
   };
