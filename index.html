@@ -18118,11 +18118,12 @@ function displayResult() {
                 var pb = document.getElementById('matchScrollProgress');
                 if (pb) pb.style.width = progress + '%';
 
-                var sections = matchScreen.querySelectorAll('.result-section');
+                // v3.9.44: scroll-spy 는 .v39-chapter 5개와 네비 5개를 1:1 매핑 (섹션 11개 순회 X)
+                var chapters = matchScreen.querySelectorAll('.v39-chapter');
                 var navItems = matchSideNav ? matchSideNav.querySelectorAll('.side-nav-item') : [];
                 var activeIdx = 0;
-                for (var i = 0; i < sections.length; i++) {
-                    if (sections[i].getBoundingClientRect().top < window.innerHeight * 0.5) {
+                for (var i = 0; i < chapters.length; i++) {
+                    if (chapters[i].getBoundingClientRect().top < window.innerHeight * 0.5) {
                         activeIdx = i;
                     }
                 }
@@ -18136,15 +18137,15 @@ function displayResult() {
             };
             window.addEventListener('scroll', window.__matchScrollFn);
 
-            // 클릭 네비
+            // 클릭 네비 (v3.9.44: data-section 값 자체를 element id 로 사용 — 챕터 앵커 직접 참조)
             if (matchSideNav) {
                 var items = matchSideNav.querySelectorAll('.side-nav-item');
                 for (var k = 0; k < items.length; k++) {
                     (function(item) {
                         item.onclick = function() {
-                            var idx = item.getAttribute('data-section');
-                            var sec = document.getElementById('matchSection' + idx);
-                            if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+                            var targetId = item.getAttribute('data-section');
+                            var target = document.getElementById(targetId);
+                            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         };
                     })(items[k]);
                 }
