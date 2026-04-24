@@ -8563,7 +8563,7 @@
                 T.addLine('<span class="prompt">$</span> <span class="success">분석 완료. 결과를 렌더링합니다...</span>', 200);
 
                 currentProfile = {
-                    rates,
+                    rates: null, // v3.8.16: 로컬 computeRates 스텁 제거. v3.9.76: 변수 미정의 참조 버그 수정.
                     axes,
                     identity,
                     llmResult,
