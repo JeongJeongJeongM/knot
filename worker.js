@@ -10075,15 +10075,22 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
       const union = new Set([...keysA, ...keysB]);
       const jaccard = union.size > 0 ? Math.round((shared.length / union.size) * 100) / 100 : 0;
       // Cosine: union 키 순서로 두 사람의 분포 벡터 생성 (없으면 0)
+      // v3.9.78 bug fix: topic_distribution.topics[k] 는 {ratio: 0.15} 구조.
+      //   이전 코드는 .count/.weight/.freq 만 체크 → ratio 필드 못 봐서 전부 0 반환
+      //   → cosine = 0 (완전 불일치) 로 나옴.
+      //   또한 missing key 를 1 로 fallback 한 것도 틀림 (없는 걸 있다고 취급).
+      //   수정: .ratio 우선, 다른 필드 fallback, missing → 0.
+      const _topicVal = (v) => {
+        if (v == null) return 0;
+        if (typeof v === 'number') return v;
+        if (typeof v === 'object') {
+          return v.ratio || v.count || v.weight || v.freq || v.value || 0;
+        }
+        return 0;
+      };
       const allKeys = [...union];
-      const vecA = allKeys.map(k => {
-        const v = topicsA[k];
-        return typeof v === 'number' ? v : (v && typeof v === 'object' ? (v.count || v.weight || v.freq || 0) : 1);
-      });
-      const vecB = allKeys.map(k => {
-        const v = topicsB[k];
-        return typeof v === 'number' ? v : (v && typeof v === 'object' ? (v.count || v.weight || v.freq || 0) : 1);
-      });
+      const vecA = allKeys.map(k => _topicVal(topicsA[k]));
+      const vecB = allKeys.map(k => _topicVal(topicsB[k]));
       const cosine = Math.round(_cosineSimilarity(vecA, vecB) * 100) / 100;
       const uniqueA = [...keysA].filter(k => !keysB.has(k));
       const uniqueB = [...keysB].filter(k => !keysA.has(k));

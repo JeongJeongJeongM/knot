@@ -12974,10 +12974,16 @@ function displayResult() {
             var empty = document.getElementById('v39TopicEmpty');
             var descEl = document.getElementById('v39TopicDesc');
             if (!wrap || !empty) return;
-            // v3.9.60 Sprint A: cosine 우선 사용 (빈도 반영). 레거시 jaccard 는 fallback.
-            var sim = (typeof ov?.cosine === 'number' && Number.isFinite(ov.cosine))
-                ? ov.cosine
-                : (typeof ov?.jaccard === 'number' && Number.isFinite(ov.jaccard) ? ov.jaccard : null);
+            // v3.9.78 cosine=0 수상 fallback: cosine 이 정확히 0 인데 jaccard>0 이면
+            //   backend cosine 계산 실패 (topic object 의 ratio 필드 못 잡은 케이스).
+            //   이 경우 jaccard 로 폴백해 사용자한테 "0%" misleading 방지.
+            var _cos = (typeof ov?.cosine === 'number' && Number.isFinite(ov.cosine)) ? ov.cosine : null;
+            var _jac = (typeof ov?.jaccard === 'number' && Number.isFinite(ov.jaccard)) ? ov.jaccard : null;
+            var sim;
+            if (_cos != null && _cos > 0) sim = _cos;           // 정상 cosine
+            else if (_cos === 0 && _jac != null && _jac > 0) sim = _jac;  // cosine=0 수상 → jaccard 구제
+            else if (_jac != null) sim = _jac;                   // cosine 아예 없음 → jaccard
+            else sim = null;
             if (sim == null) {
                 wrap.style.display = 'none';
                 empty.style.display = 'block';
