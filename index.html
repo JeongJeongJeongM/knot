@@ -4740,7 +4740,12 @@
            · 좌 220px 사이드 탭 (subsection 제목) + 우 패널 (선택된 content)
            · 긴 wall-of-text 대신 탭 전환식 — 개인 분석 DYNAMICS 패널과 동일 UX
            · 폰트·색·radius·padding 개인 .lens-* 계승 */
-        .v39-interp-container{max-width:1000px;margin:32px auto 0}
+        /* v3.9.54: text-align:left 명시 — 부모 .v39-verdict 가 text-align:center
+           인데 상속이 interp 블록 내부까지 흘러들어 LENS 라벨/타이틀/본문
+           전부 중앙정렬 됨. 결과: 아이콘은 좌측, 텍스트는 중앙으로 밀려
+           "이모지와 텍스트 사이가 너무 멀다" 처럼 보임. 전체 컨테이너
+           수준에서 좌정렬로 리셋. */
+        .v39-interp-container{max-width:1000px;margin:32px auto 0;text-align:left}
         .v39-interp-block{margin-top:24px}
         .v39-interp-block + .v39-interp-block{margin-top:16px}
 
