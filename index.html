@@ -4767,7 +4767,9 @@
         /* lens-split 복제 (개인 분석 L2546~) */
         .v39-interp-split{display:flex;border-radius:18px;border:1px solid var(--glass-border);background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);overflow:hidden}
         .v39-interp-nav{width:220px;min-width:220px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--glass-border)}
-        .v39-interp-nav-item{padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;position:relative;user-select:none;font-size:12.5px;font-weight:500;color:rgba(255,255,255,0.5);line-height:1.35}
+        .v39-interp-nav-item{padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;position:relative;user-select:none;font-size:12.5px;font-weight:500;color:rgba(255,255,255,0.5);line-height:1.35;outline:none}
+        /* v3.9.73 Phase 5 QA — 키보드 포커스 시각적 피드백 (접근성) */
+        .v39-interp-nav-item:focus-visible{box-shadow:inset 0 0 0 2px var(--ac);color:#fff}
         .v39-interp-nav-item:last-child{border-bottom:none}
         .v39-interp-nav-item:hover{background:rgba(245,166,35,0.04)}
         .v39-interp-nav-item.active{background:rgba(245,166,35,0.08);color:#fff;font-weight:600}
@@ -4810,7 +4812,8 @@
         /* v4 M12 — 상황별 교차 (탭 + 양쪽 정체성 + 5축 비교) */
         .v39-sit-wrap{max-width:720px;margin:0 auto}
         .v39-sit-tabs{display:flex;gap:6px;margin-bottom:var(--sp-4);flex-wrap:wrap;justify-content:center}
-        .v39-sit-tab{padding:8px 16px;font-size:var(--fs-xs);font-weight:500;color:rgba(255,255,255,0.5);background:transparent;border:1px solid var(--sf-4);border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:var(--sp-1);transition:all 0.2s}
+        .v39-sit-tab{padding:8px 16px;font-size:var(--fs-xs);font-weight:500;color:rgba(255,255,255,0.5);background:transparent;border:1px solid var(--sf-4);border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:var(--sp-1);transition:all 0.2s;outline:none}
+        .v39-sit-tab:focus-visible{box-shadow:0 0 0 2px var(--ac);color:#fff}
         .v39-sit-tab.on.normal{background:var(--sit-normal);border-color:var(--sit-normal);color:#000;box-shadow:0 0 14px rgba(245,166,35,0.25);font-weight:600}
         .v39-sit-tab.on.stress{background:var(--sit-stress);border-color:var(--sit-stress);color:#fff;box-shadow:0 0 14px rgba(239,68,68,0.25);font-weight:600}
         .v39-sit-tab.on.intimacy{background:var(--sit-intimacy);border-color:var(--sit-intimacy);color:#000;box-shadow:0 0 14px rgba(167,139,250,0.25);font-weight:600}
@@ -12331,9 +12334,14 @@ function displayResult() {
                 var navItems = subs.map(function(sub, i){
                     var t = sub.title || sub.key || ('섹션 ' + (i+1));
                     var num = String(i+1).padStart(2, '0');
-                    return '<div class="v39-interp-nav-item' + (i === activeIdx ? ' active' : '') + '" ' +
+                    // v3.9.73 Phase 5 QA: 키보드 접근성
+                    var isActive = i === activeIdx;
+                    return '<div class="v39-interp-nav-item' + (isActive ? ' active' : '') + '" ' +
                         'data-cid="' + containerId + '" data-bidx="' + blockIdx + '" data-sidx="' + i + '" ' +
-                        'onclick="selectV39InterpTab(\'' + containerId + '\',' + blockIdx + ',' + i + ')">' +
+                        'role="button" tabindex="0" ' +
+                        'aria-label="' + _v39Safe(t) + ' 탭"' + (isActive?' aria-selected="true"':'') +
+                        ' onclick="selectV39InterpTab(\'' + containerId + '\',' + blockIdx + ',' + i + ')" ' +
+                        'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();selectV39InterpTab(\'' + containerId + '\',' + blockIdx + ',' + i + ');}">' +
                         '<span class="v39-interp-nav-num">' + num + '</span>' +
                         '<span>' + _v39Safe(t) + '</span>' +
                     '</div>';
@@ -12460,8 +12468,13 @@ function displayResult() {
                     var hasData = available.indexOf(k) >= 0;
                     var isMeasured = measured.indexOf(k) >= 0;
                     var active = k === _v39SitActive;
-                    return '<div class="v39-sit-tab ' + k + (active?' on':'') + (hasData?'':' dim') + (hasData && !isMeasured?' partial':'') + '" ' +
-                        (hasData?('onclick="selectV39SitTab(\'' + k + '\')"'):'') +
+                    // v3.9.73 Phase 5 QA: 키보드 접근성 — role+tabindex+keydown
+                    var kbHandler = hasData ? (' tabindex="0" role="button" ' +
+                        'onclick="selectV39SitTab(\'' + k + '\')" ' +
+                        'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();selectV39SitTab(\'' + k + '\');}" ' +
+                        'aria-label="' + _v39Safe(m.label) + ' 상황 탭"' +
+                        (active?' aria-selected="true"':'')) : ' role="button" aria-disabled="true"';
+                    return '<div class="v39-sit-tab ' + k + (active?' on':'') + (hasData?'':' dim') + (hasData && !isMeasured?' partial':'') + '"' + kbHandler +
                         ' data-sit="' + k + '">' +
                         '<span>' + m.icon + '</span><span>' + m.label + '</span>' +
                         '</div>';
