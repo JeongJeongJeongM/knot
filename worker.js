@@ -10190,15 +10190,67 @@ function softmax(scores, temperature = STATE_TEMPERATURE) {
 //   dataMode: 'measured' | 'fallback_none'  // 실측/폴백 표시
 // }
 // ══════════════════════════════════════════════════════════════
+// v3.9.87: measured situational 없을 때 stimulus.shifted 값으로 합성 스냅샷 생성.
+//   dataMode: 'synthesized' 로 표기해 "측정 아님, 시뮬레이션 추정" 투명 공개.
+//   normal 은 baseline (axes) 그대로. 나머지 4 상황은 stimulus[key].shifted 사용.
+function _synthesizeSituationalEntry(sim, situationKey) {
+  if (!sim) return null;
+  // normal: baseline axes
+  if (situationKey === 'normal') {
+    const ax = sim.axes;
+    if (!ax) return null;
+    return {
+      simAxes: {
+        emotion: ax.emotion, drive: ax.drive, cognition: ax.cognition,
+        boundary: ax.boundary, resilience: ax.resilience
+      },
+      defense: sim.defense || null,
+      identity: null,  // 별도 identity 재계산 안함 (synthesized 임을 명시)
+      sessionCount: 0,
+      _synthesized: true,
+    };
+  }
+  // stress/intimacy/conflict/loss: stimulus.shifted 사용
+  const stim = sim.stimulus?.[situationKey];
+  if (!stim?.shifted) return null;
+  const sh = stim.shifted;
+  return {
+    simAxes: {
+      emotion: sh.E, drive: sh.C, cognition: sh.T,
+      boundary: sh.O, resilience: sh.X
+    },
+    defense: sim.defense || null,  // 상황별 defense 재판정 없음 (단순화)
+    identity: null,
+    sessionCount: 0,
+    _synthesized: true,
+  };
+}
+
 function computeCrossSituational(simA, simB) {
   const situations = SESSION_CONFIG.SITUATIONS;
   const result = {};
 
   for (const key of situations) {
-    const sA = simA?.situational?.[key];
-    const sB = simB?.situational?.[key];
+    let sA = simA?.situational?.[key];
+    let sB = simB?.situational?.[key];
 
-    // 기본 골격 — identity 없으면 데이터 부족
+    // v3.9.87: measured 없을 때 합성 스냅샷 생성 → SIT 5탭이 "데이터 부족"
+    //   대신 Before/After 카드 노출 (synthesized 명시).
+    let synthesizedA = false, synthesizedB = false;
+    if (!sA?.simAxes) {
+      const synth = _synthesizeSituationalEntry(simA, key);
+      if (synth) { sA = synth; synthesizedA = true; }
+    }
+    if (!sB?.simAxes) {
+      const synth = _synthesizeSituationalEntry(simB, key);
+      if (synth) { sB = synth; synthesizedB = true; }
+    }
+
+    // 기본 골격 — identity 없으면 데이터 부족 (or 합성)
+    const hasSimAxes = sA?.simAxes && sB?.simAxes;
+    const bothMeasured = sA?.identity && sB?.identity;
+    const dataMode = bothMeasured ? 'measured'
+      : (hasSimAxes ? 'synthesized' : 'fallback_none');
     const entry = {
       a_identity: sA?.identity || null,
       b_identity: sB?.identity || null,
@@ -10206,10 +10258,11 @@ function computeCrossSituational(simA, simB) {
       b_shift: sB?.shift || null,
       a_sessionCount: sA?.sessionCount || 0,
       b_sessionCount: sB?.sessionCount || 0,
-      dataMode: (sA?.identity && sB?.identity) ? 'measured' : 'fallback_none',
+      dataMode,
+      synthesizedA, synthesizedB,
     };
 
-    if (entry.dataMode === 'measured') {
+    if (entry.dataMode === 'measured' || entry.dataMode === 'synthesized') {
       // 5축 거리 — 각 축 절댓값 차 + 평균
       const AK = ['emotion', 'drive', 'cognition', 'boundary', 'resilience'];
       const axisDelta = {};
@@ -10257,9 +10310,14 @@ function computeCrossSituational(simA, simB) {
       entry.defense_clash = _lookupDefenseClash(sA.defense, sB.defense); // v3.9.66: 객체 전달
 
       // Synopsis 한 줄 — LLM 프롬프트 / UI 에 그대로 넣을 수 있는 서술
-      const aName = sA.identity.name || sA.identity.code;
-      const bName = sB.identity.name || sB.identity.code;
-      entry.synopsis = `A ${sA.identity.emoji || ''} ${aName} × B ${sB.identity.emoji || ''} ${bName} → ${entry.defense_clash.type} (${entry.convergence})`;
+      // v3.9.87: synthesized 모드는 identity 없으므로 간략 synopsis
+      if (sA.identity && sB.identity) {
+        const aName = sA.identity.name || sA.identity.code;
+        const bName = sB.identity.name || sB.identity.code;
+        entry.synopsis = `A ${sA.identity.emoji || ''} ${aName} × B ${sB.identity.emoji || ''} ${bName} → ${entry.defense_clash.type} (${entry.convergence})`;
+      } else {
+        entry.synopsis = `${key} 상황 추정 — ${entry.defense_clash?.type || 'neutral'} (${entry.convergence})`;
+      }
     }
 
     result[key] = entry;
