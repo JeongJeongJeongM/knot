@@ -13978,59 +13978,42 @@ function switchTab(id, el) {
           return jsonResponse({ error: 'Missing profile data' }, 400, corsHeaders);
         }
 
-        // ═══ Run simulations for both profiles ═══
-        //   v3.9.82: 3-tier fallback 로 situational 최대한 확보
-        //   Tier 1: messagesA 있으면 재계산 (최신, 완전)
-        //   Tier 2: body.simulationA.situational 이 non-empty 면 사용
-        //   Tier 3: DB 의 analyses.simulation_json 에서 직접 조회 (authUser 사용자)
-        //   Tier 4: runSimulation axes-only (situational = null)
+        // ═══ Simulation 조회 — v3.9.83: DB 저장값 우선, 재계산 최소화 ═══
         //
-        //   v3.9.79 문제: body.simulationA 자체는 있는데 situational 이 빈 객체인 경우
-        //   많음. 이 경우 DB 에 저장된 개인 분석의 simulation 을 조회해 보완.
-        async function resolveSimulation(axes, anchor, rawMsgs, prism, bodySim, userIdHint) {
-          if (rawMsgs) {
-            return runSimulation(axes, anchor, rawMsgs, prism);
-          }
-          // body 에서 온 simulation 이 situational 을 가지고 있는지 확인
-          const bodySituationalOk = bodySim && typeof bodySim === 'object' &&
-            bodySim.situational && typeof bodySim.situational === 'object' &&
-            Object.keys(bodySim.situational).length > 0;
-          if (bodySituationalOk) {
-            return bodySim;
-          }
-          // DB 에서 해당 유저의 최신 analysis 조회 (authUser 가 있고 D1 있을 때)
-          if (userIdHint && env.KNOT_DB) {
-            try {
-              const row = await env.KNOT_DB.prepare(
-                `SELECT simulation_json FROM analyses WHERE user_id = ? AND status = 'complete'
-                 ORDER BY created_at DESC LIMIT 1`
-              ).bind(userIdHint).first();
-              if (row?.simulation_json) {
-                const dbSim = JSON.parse(row.simulation_json);
-                if (dbSim?.situational && Object.keys(dbSim.situational).length > 0) {
-                  return dbSim;
-                }
-              }
-            } catch (dbErr) {
-              console.error('[Match] DB simulation fallback failed:', dbErr.message);
-            }
-          }
-          // bodySim 이 있으면 (situational 없어도) 나머지 부분은 사용
-          if (bodySim && typeof bodySim === 'object') {
-            return bodySim;
-          }
-          // 최후: axes 만으로 재계산
-          return runSimulation(axes, anchor, null, prism);
+        // 원칙: 개인 분석 시 이미 계산해서 DB 에 저장한 simulation 을 그대로 불러다 쓴다.
+        //       매칭 시점에 재계산하지 않음 — messages 부족/없음 이 흔한 상황인데,
+        //       재계산하면 situational 이 null 되어 결과가 더 나빠짐.
+        //
+        // 순서:
+        //   1. DB 에 저장된 해당 유저의 최신 simulation_json (A 본인만 — authUser 필요)
+        //   2. client 가 보낸 body.simulationA (profileA.simulation from localStorage)
+        //   3. 최후: runSimulation (raw_messages 있으면) 또는 axes-only fallback
+        async function loadStoredSimulation(userId) {
+          if (!userId || userId === 'anonymous' || !env.KNOT_DB) return null;
+          try {
+            const row = await env.KNOT_DB.prepare(
+              `SELECT simulation_json FROM analyses WHERE user_id = ? AND status = 'complete'
+               ORDER BY created_at DESC LIMIT 1`
+            ).bind(userId).first();
+            if (row?.simulation_json) return JSON.parse(row.simulation_json);
+          } catch (e) { console.error('[Match] DB simulation load failed:', e.message); }
+          return null;
         }
 
         let simA = null, simB = null, crossSim = null, crossSituational = null;
         try {
           const axesA = profileA.axes || profileA;
           const axesB = profileB.axes || profileB;
-          // A 는 현재 authUser (본인) — DB fallback 가능
-          simA = await resolveSimulation(axesA, anchorA, messagesA, prismA, body.simulationA, matchUserId);
-          // B 는 대체로 카톡 업로드 대상 (다른 사람) — DB fallback 없이 body 만 사용
-          simB = await resolveSimulation(axesB, anchorB, messagesB, prismB, body.simulationB, null);
+
+          // A: DB 저장값 우선 → body → 최후 재계산
+          simA = await loadStoredSimulation(matchUserId);
+          if (!simA) simA = (body.simulationA && typeof body.simulationA === 'object') ? body.simulationA : null;
+          if (!simA) simA = runSimulation(axesA, anchorA, messagesA, prismA);
+
+          // B: body 우선 (B 는 보통 다른 사람이라 DB 권한 없음) → 최후 재계산
+          simB = (body.simulationB && typeof body.simulationB === 'object') ? body.simulationB : null;
+          if (!simB) simB = runSimulation(axesB, anchorB, messagesB, prismB);
+
           crossSim = computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB);
           // 상황별 쌍별 정체 매칭 — 설계 문서 1-B 원칙의 매칭 쪽 구현
           crossSituational = computeCrossSituational(simA, simB);
