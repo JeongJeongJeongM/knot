@@ -4390,6 +4390,30 @@
         .v39-archetype{font-size:32px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;color:#fff;text-shadow:0 0 30px rgba(245,166,35,0.4)}
         .v39-archetype .em{color:#F5A623}
         .v39-verdict-sentence{font-size:14px;line-height:1.85;color:rgba(255,255,255,0.75);max-width:560px;margin:16px auto 48px}
+        /* v3.9.74 Sprint H-4: 관계 한 문장 타이틀 — 친근 문장 template */
+        .v39-rel-title{font-size:15.5px;line-height:1.7;color:rgba(255,255,255,0.88);max-width:620px;margin:-32px auto 48px;padding:14px 20px;background:rgba(245,166,35,0.06);border-left:3px solid var(--ac);border-radius:0 10px 10px 0;font-weight:500;text-align:left}
+        @media(max-width:600px){.v39-rel-title{font-size:14px;padding:12px 16px;margin:-20px 8px 32px}}
+        /* v3.9.74 Sprint H-3: Tier 3 "근거 보기" 토글 */
+        .v39-tech-toggle{position:fixed;bottom:18px;left:18px;z-index:9998;background:rgba(12,12,20,0.85);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;padding:8px 14px;border-radius:20px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:all 0.2s}
+        .v39-tech-toggle:hover{background:rgba(245,166,35,0.15);color:#fff;border-color:rgba(245,166,35,0.4)}
+        body.v39-tech-on .v39-tech-toggle{background:rgba(245,166,35,0.2);color:#F5A623;border-color:rgba(245,166,35,0.5)}
+        /* .tier3 요소 — 기본 숨김, 근거 보기 on 시만 노출 */
+        .tier3{display:none}
+        body.v39-tech-on .tier3{display:block}
+        body.v39-tech-on .tier3.inline{display:inline}
+        /* 모바일: 위치 조정 */
+        @media(max-width:600px){.v39-tech-toggle{bottom:72px;left:12px;font-size:10px;padding:7px 12px}}
+
+        /* v3.9.74 Sprint H-5: "그래서 뭐 하면?" 액션 섹션 */
+        .v39-actions-wrap{max-width:720px;margin:0 auto;padding:32px 24px;background:linear-gradient(135deg,rgba(52,211,153,0.06),rgba(245,166,35,0.06));border:1px solid rgba(52,211,153,0.15);border-radius:14px}
+        .v39-actions-head{margin-bottom:18px}
+        .v39-actions-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--state-growth);letter-spacing:2px;font-weight:700;margin-bottom:6px}
+        .v39-actions-title{font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.3px;margin:0}
+        .v39-actions-list{display:flex;flex-direction:column;gap:10px}
+        .v39-action-item{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;background:rgba(255,255,255,0.03);border-radius:10px;line-height:1.6}
+        .v39-action-num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--state-growth);color:#000;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace}
+        .v39-action-text{font-size:14px;color:rgba(255,255,255,0.85)}
+        @media(max-width:600px){.v39-actions-wrap{padding:24px 18px}.v39-action-text{font-size:13px}}
         .v39-verdict-sentence b{color:#fff;font-weight:600}
         .v39-dual-hero{display:grid;grid-template-columns:1fr auto 1fr;gap:32px;align-items:center;margin:0 auto 36px;max-width:560px}
         .v39-pill{text-align:center}
@@ -5633,6 +5657,8 @@
                     <div class="rarity-line" id="v39RarityLine">01 · VERDICT</div>
                     <h1 class="v39-archetype" id="v39Archetype">매칭 분석</h1>
                     <p class="v39-verdict-sentence" id="v39Sentence"></p>
+                    <!-- v3.9.74 Sprint H-4: 관계 한 문장 타이틀 (template 생성) -->
+                    <p class="v39-rel-title" id="v39RelTitle" style="display:none"></p>
                     <div class="v39-dual-hero">
                         <div class="v39-pill a">
                             <div class="emoji" id="v39EmojiA">🔮</div>
@@ -5987,6 +6013,13 @@
                   </div>
                 </section>
 
+                <!-- v3.9.74 Sprint H-5: 액션 섹션 — "그래서 뭐 하면?" -->
+                <section class="result-section v39-section" id="matchSectionActions">
+                  <div class="result-section-inner">
+                    <div class="v39-actions-wrap" id="v39ActionsWrap" style="display:none"></div>
+                  </div>
+                </section>
+
                 <!-- v3.9.38: DEEP DIVE 섹션 해체 → 각 섹션 하단 해석 블록으로 흡수.
                      렌즈 서술 (sections[].key = first/emotion/stimulus/defense/attract/world/risk/arc/possibility)
                      은 renderV39AllInterpBlocks 가 v39Interp* container 에 그림.
@@ -6059,6 +6092,11 @@
         <span class="msg">이 분석을 <b>함께 읽어보세요</b></span>
         <button onclick="(function(){try{generateMatchShareURL();}catch(e){alert('공유 링크 생성 오류: '+e.message);}})();">파트너에게 보내기</button>
     </div>
+
+    <!-- v3.9.74 Sprint H-3: Tier 3 "근거 보기" 토글 — body.v39-tech-on 클래스로 기술 세부 노출 -->
+    <button class="v39-tech-toggle" id="v39TechToggle" onclick="toggleV39Tech()" aria-label="기술 세부 보기 토글">
+        <span class="label" id="v39TechToggleLabel">근거 보기</span>
+    </button>
 
     <script>
 
@@ -12225,6 +12263,70 @@ function displayResult() {
             try { renderV39Situational(ctx); } catch(e){ console.error('[v39 sit]', e); }
             // v3.9.38: DEEP DIVE 해체 — 9 렌즈를 각 데이터 섹션 하단에 해석 블록으로 흡수
             try { renderV39AllInterpBlocks(ctx); } catch(e){ console.error('[v39 interp]', e); }
+            // v3.9.74 Sprint H-5: "그래서 뭐 하면?" 액션 섹션
+            try { renderV39Actions(ctx); } catch(e){ console.error('[v39 actions]', e); }
+        }
+
+        // v3.9.74 Sprint H-5: 실용 액션 3개 생성 (template 기반)
+        //   현재 매칭의 주요 패턴(pursuit_withdrawal, demand_withdraw 등) 에 따라
+        //   구체 action 제안. LLM 없이 규칙 기반 — 즉시 생성 + 비용 0.
+        var _V39_ACTION_TEMPLATES = {
+            // 가장 common & 위험한 패턴 우선
+            pursuit_withdrawal:   ['한 쪽이 물러선다고 느낄 때 "잠시 생각할 시간 필요해" 라고 서로 말하기', '매주 한 번 갈등 없는 시간에 서로 근황 묻기', '떨어져 있는 시간 서로 책임지지 않기 — 일상 일정 공유만'],
+            demand_withdraw:      ['갈등 생기면 25분 쿨다운 후 재개 룰 정하기', '요구 쪽은 "내가 지금 필요한 건 X 야" 1문장으로 축약', '후퇴 쪽은 완전 침묵 대신 "지금 생각 정리 중" 신호 주기'],
+            hostile_detached:     ['대화 빈도 대신 질(質) 합의 — 하루 15분 집중 대화', '상대 철회 사인 인식 연습 (말수 감소, 답장 지연)', '외부 관찰자(상담/친구) 도움 고려'],
+            protest_withdraw:     ['감정이 올라올 때 "나 지금 불안해서 그래" 라벨링', '다른 쪽은 즉각 철수 대신 "10분 뒤 돌아올게" 약속', '주 1회 확인 없는 시간 (서로 독립)'],
+            mutual_hyperactivation:['둘 다 감정 올라오면 한 쪽이 먼저 "우리 잠깐 멈추자" 신호', '갈등 후 48시간 내 재대화 룰', '감정 라벨링: "화남 70%" 처럼 강도 숫자화'],
+            mutual_deactivation:  ['매주 한 번 의도적 감정 대화 시간 설정', '한 쪽이 "요즘 속마음" 먼저 꺼내는 주 번갈아 책임', '물리적 접촉 주기적 실천 (포옹 등)'],
+            disorganized_clash:   ['감정 혼란 시 즉각 대화 시도 대신 기록 후 24h 뒤 공유', '각자 감정 조절 루틴 (운동/호흡) 확립', '일관성 부재 스스로 인식하기 — 판단 없이 관찰'],
+            volatile:             ['다툼 후 48시간 내 화해 룰 — 미해결 방치 금지', '긍정 대화:부정 대화 5:1 비율 유지 (Gottman 연구)', '친밀 시간에 "오늘 좋았던 순간" 1개 교환'],
+            validator:            ['정중한 회피 조심 — 한 달에 1번 "불편한 주제" 열기', '일상 루틴 공유 (저녁 10분 등) 강화', '서로 성장 지점 구체 언급 (칭찬 말고 피드백)'],
+            avoider:              ['월 1회 "관계 점검" 시간 의도적으로 만들기', '내면 축적 조기 탐지 — 짜증 빈도 체크', '작은 갈등 의도적 표면화 (회피 근육 풀기)'],
+            stable_pair:          ['안정에 안주 경계 — 월 1회 새로운 경험 공유', '각자 개인 성장 지점 서로 지지', '외부 자극 의도적 초대 (여행, 새 취미)'],
+            mutual_spiral:        ['불안 스파이럴 감지 시 각자 먼저 자기 진정', '확인 요청 전 "잠깐, 나 지금 불안해서" 자각 멘트', '주 1회 개인 시간 강제'],
+            parallel_isolation:   ['월 1회 감정 대화 시간 강제', '서로 의미 있는 선물 교환 (물건 X, 시간 투자)', '공동 프로젝트 1개 (요리, 운동 등)'],
+            chaos_amplifier:      ['혼란 감지 즉시 외부 조력 (상담) 고려', '감정 일기 공유 — 실시간 대화 대신 비동기', '서로 건드리면 안 되는 토픽 명시적 합의'],
+            ghost_dance:          ['회피 쪽: "오늘 바빠" 대신 "오늘 피곤해 내일 얘기하자"', '혼란 쪽: 스스로 패턴 관찰 기록', '재접근 시 작은 것부터 (식사 같이 등)'],
+            double_chaos:         ['관계 외 지원 시스템 (친구, 가족) 필수', '위기 시 대응 프로토콜 사전 합의', '감정 강도 상위 20% 때는 대화 연기'],
+            validator_volatile:   ['속도 차이 명시적 합의 — "나는 좀 천천히 / 나는 바로" 자인', '감정 직면 직후 30분 이내 요약 대화', '상대 페이스 존중 + 자기 페이스 주장 균형'],
+            mutual_retreat:       ['후퇴 기간 상한 합의 — 48h 지나면 누군가 먼저', '문제 목록 공유 (실시간 해결 안 해도 됨)', '주기적 재접근 예약 (금요일 저녁 등)'],
+            soft_demand_withdraw: ['부드러움 유지하되 핵심 명확화 — "이게 중요해" 강조', '후퇴 쪽은 시간 구체 약속 ("내일 점심")', '감정 없이 사실만 나누는 시간 별도'],
+            gentle_wall:          ['벽 느낌 인정 — 판단 없이 "지금 거리 느껴져"', '신중한 쪽: 3번 시도 후 외부 도움 고려', '회피 쪽: 구체적 이유 말하기 연습'],
+            double_exit:          ['관계 연속성 자체 재검토 시점', '외부 전문가 권장', '남기고 싶은 것 / 놓고 싶은 것 명확화'],
+            // convergence 기반 보조
+            convergent:           ['안정 속 권태 주의 — 월 1회 새로움', '성장 방향 각자 공유', '일상 감사 표현 유지'],
+            divergent:            ['움직임 방향 차이 공유 — "나는 X 쪽으로 가려 해"', '공통 목표 1개 재설정', '외부 스트레스 공유 투명화'],
+        };
+        function renderV39Actions(ctx){
+            var host = document.getElementById('v39ActionsWrap');
+            if (!host) return;
+            var crossSim = ctx.crossSim || {};
+            // 우선순위: conflict > attachment > defense > convergence
+            var candidates = [
+                crossSim.conflictCross?.type,
+                crossSim.attachmentCross?.type,
+                crossSim.defenseClash?.type,
+                crossSim.convergence,
+            ].filter(Boolean);
+            var actions = null;
+            for (var i = 0; i < candidates.length; i++) {
+                if (_V39_ACTION_TEMPLATES[candidates[i]]) { actions = _V39_ACTION_TEMPLATES[candidates[i]]; break; }
+            }
+            if (!actions) actions = ['한 주 한 번 "요즘 어때?" 시간 갖기', '갈등 때 쿨다운 10~30분 후 재개', '한 달 한 번 새 경험 같이 시도'];
+            host.innerHTML =
+                '<div class="v39-actions-head">' +
+                    '<div class="v39-actions-label">ACTIONS · 실천</div>' +
+                    '<h3 class="v39-actions-title">이번 주 해볼 것</h3>' +
+                '</div>' +
+                '<div class="v39-actions-list">' +
+                    actions.map(function(a, idx){
+                        return '<div class="v39-action-item">' +
+                            '<span class="v39-action-num">' + (idx+1) + '</span>' +
+                            '<span class="v39-action-text">' + _v39Safe(a) + '</span>' +
+                        '</div>';
+                    }).join('') +
+                '</div>';
+            host.style.display = 'block';
         }
 
         // ── v4 v3.9.38 · 렌즈 → 섹션 매핑 + 해석 블록 렌더 ──
@@ -13000,8 +13102,114 @@ function displayResult() {
         var _V39_ATTACH_LABELS = {
             anchor_seeker:'닻 역할', stable_pair:'안정 한 쌍', patience_test:'인내의 시간',
             mutual_spiral:'상호 증폭', pursuit_withdrawal:'밀고 당기기', parallel_isolation:'나란히 고립',
-            double_chaos:'이중 혼돈', secure_anchor:'닻 역할'
+            double_chaos:'이중 혼돈', secure_anchor:'닻 역할',
+            // v3.9.74: 누락 타입 추가
+            ground_wire:'접지선', chaos_amplifier:'혼돈 증폭기',
+            ghost_dance:'유령 춤', uncommon:'드문 조합'
         };
+        // v3.9.74 Sprint H-1: 중앙 "친근한 라벨" 맵 — 모든 기술적 type/code 를 일상어로.
+        //   목적: 사용자 평점 저평가 원인 "출력이 어려움" 해결. Tier 1 (기본 노출) 에서는
+        //   _v39Friendly() 로 치환된 문장만 보이고, raw type 은 Tier 3 근거보기에만.
+        var _V39_FRIENDLY = {
+            // === Defense clash (MAS 2D) ===
+            neutral:              { label:'특별한 충돌 없음', short:'평온함', tone:'neutral', phrase:'방어 패턴이 부딪히지 않음' },
+            mirror_toxic:         { label:'서로 투사',        short:'거울 독',  tone:'danger',  phrase:'상대 탓으로 돌리는 패턴을 서로에게 쓰는 중' },
+            wall_void:            { label:'벽 × 공백',        short:'벽과 공백', tone:'danger',  phrase:'한 쪽이 벽 세우면 다른 쪽은 사라지는 패턴' },
+            fire_ice:             { label:'불 × 얼음',        short:'불과 얼음', tone:'danger',  phrase:'한 쪽이 폭발하면 다른 쪽이 얼어붙음' },
+            double_fire:          { label:'둘 다 폭발',        short:'동시 폭발', tone:'danger',  phrase:'둘 다 감정이 확 올라와 갈등이 크게 커짐' },
+            blame_wall:           { label:'탓 × 차단',        short:'탓과 벽',   tone:'danger',  phrase:'한 쪽은 탓하고 한 쪽은 차단 — 해결 없이 쌓임' },
+            double_fog:           { label:'둘 다 안개',        short:'이중 안개', tone:'warn',    phrase:'감정 책임이 흐려져 만성 혼란' },
+            mirror_flex:          { label:'둘 다 유연',        short:'안정 한 쌍', tone:'good',    phrase:'둘 다 상황에 맞춰 유연하게 대응' },
+            one_flex:             { label:'한 쪽 유연',        short:'버퍼 역할', tone:'ok',      phrase:'한 쪽이 유연해 갈등을 완충 — 단, 그 쪽 소진 주의' },
+            // MAS 2D 신규
+            protest_withdraw:     { label:'한 쪽 다가감 × 한 쪽 물러섬', short:'다가감-물러섬', tone:'danger',  phrase:'한 쪽은 감정이 올라올수록 매달리고, 다른 쪽은 더 물러나는 반복' },
+            mutual_hyperactivation:{label:'둘 다 감정 과활성', short:'상호 증폭', tone:'danger',  phrase:'둘 다 감정이 확 올라와 서로를 증폭' },
+            mutual_deactivation:  { label:'둘 다 거리두기',    short:'정서 진공', tone:'warn',    phrase:'둘 다 감정 억제 — 표면 평화 내면 단절' },
+            disorganized_clash:   { label:'혼란 × 혼란',       short:'이중 혼돈', tone:'danger',  phrase:'둘 다 다가감·회피가 동시에 — 일관된 패턴 실패' },
+
+            // === Attachment cross ===
+            stable_pair:          { label:'안정 한 쌍',       short:'편안한 조합', tone:'good',   phrase:'둘 다 안정 애착 — 갈등이 와도 복원력 높음' },
+            anchor_seeker:        { label:'닻 역할',          short:'안정-불안', tone:'ok',       phrase:'한 쪽 안정감이 다른 쪽 불안을 진정시키는 구조' },
+            patience_test:        { label:'인내의 시간',      short:'안정-회피', tone:'ok',       phrase:'한 쪽 안정감이 다른 쪽 벽을 천천히 녹이는 구조' },
+            ground_wire:          { label:'접지선',            short:'안정-혼란', tone:'ok',       phrase:'한 쪽 안정감이 다른 쪽 혼란의 접지 역할' },
+            mutual_spiral:        { label:'상호 증폭',         short:'불안 × 불안', tone:'warn',   phrase:'둘 다 확인을 구하지만 누구도 줄 수 없는 피드백 루프' },
+            pursuit_withdrawal:   { label:'밀고 당기기',       short:'추적-도주', tone:'danger',   phrase:'한 쪽이 다가갈수록 다른 쪽이 멀어지고, 멀어질수록 더 다가감' },
+            chaos_amplifier:      { label:'혼돈 증폭기',       short:'불안-혼란', tone:'danger',   phrase:'불안과 혼란이 서로 증폭 — 예측 불가능' },
+            parallel_isolation:   { label:'나란히 고립',       short:'회피 × 회피', tone:'warn',   phrase:'둘 다 거리 유지 — 편안하지만 진짜 연결 어려움' },
+            ghost_dance:          { label:'유령 춤',          short:'회피-혼란', tone:'warn',     phrase:'한 쪽은 사라지고 한 쪽은 혼란 — 접점 생겼다 사라짐 반복' },
+            double_chaos:         { label:'이중 혼돈',         short:'혼돈 × 혼돈', tone:'danger',  phrase:'둘 다 다가감과 회피 동시에 — 예측 불가 난류' },
+
+            // === Conflict cross (Gottman) ===
+            volatile:             { label:'격동형',            short:'열정 × 열정', tone:'ok',     phrase:'둘 다 정면 직면 — 파괴적일 수 있으나 자주 해결되면 안정' },
+            validator:            { label:'신중형',            short:'신중 × 신중', tone:'good',   phrase:'둘 다 신중히 조율 — 타협 중심, 안정적' },
+            mutual_retreat:       { label:'상호 후퇴',         short:'후퇴 × 후퇴', tone:'ok',     phrase:'둘 다 한 발 물러서 재접근 대기' },
+            avoider:              { label:'회피자',            short:'회피 × 회피', tone:'warn',   phrase:'둘 다 갈등 언급 안 함 — 표면 평화, 내면 축적 위험' },
+            validator_volatile:   { label:'신중 × 열정',       short:'속도 차이',   tone:'ok',     phrase:'신중한 쪽 × 열정적인 쪽 — 속도 차이가 초기 오해, 장기 보완 가능' },
+            demand_withdraw:      { label:'요구-회피',         short:'다가감-물러섬', tone:'danger', phrase:'한 쪽은 직면, 한 쪽은 후퇴 — 관계 붕괴 최강 예측 패턴' },
+            hostile_detached:     { label:'적대-단절',         short:'요구 × 차단', tone:'danger', phrase:'한 쪽 요구 × 한 쪽 완전 회피 — 문제 제기 자체가 차단' },
+            soft_demand_withdraw: { label:'부드러운 요구-회피', short:'부드러운 다가감-물러섬', tone:'warn',    phrase:'부드러운 접근 × 전략적 후퇴 — 약한 demand-withdraw' },
+            gentle_wall:          { label:'부드러운 벽',       short:'신중 × 회피', tone:'warn',   phrase:'신중히 다가가지만 벽에 부딪힘 — 점진적 정서 고립' },
+            double_exit:          { label:'이중 탈출',         short:'후퇴 × 회피', tone:'danger', phrase:'전략적 후퇴 × 완전 회피 — 갈등 해소 경로 부재' },
+
+            // === Convergence (trajectory) ===
+            convergent:           { label:'가까워짐', short:'수렴',   tone:'good', phrase:'두 사람의 움직임이 같은 방향 — 시간이 갈수록 가까워지는 편' },
+            parallel:             { label:'나란히',   short:'평행',   tone:'ok',   phrase:'두 사람이 비슷한 속도로 나란히 움직임' },
+            divergent:            { label:'멀어짐',   short:'발산',   tone:'warn', phrase:'두 사람의 움직임이 서로 다른 방향 — 시간 갈수록 벌어질 수 있음' },
+
+            // === Defense quadrant (MAS 2D) ===
+            secure:               { label:'안정',             short:'안정 프로필', tone:'good', phrase:'감정 활성·거리두기 모두 낮은 안정 상태' },
+            hyperactivated:       { label:'감정 활성',         short:'감정 올라옴', tone:'warn', phrase:'감정이 쉽게 확 올라오는 편' },
+            deactivated:          { label:'거리두기',         short:'한 발 물러섬', tone:'warn', phrase:'감정을 억제하고 한 발 물러서는 편' },
+            disorganized:         { label:'혼란',             short:'접근-회피 갈등', tone:'danger', phrase:'다가감과 회피가 동시에 나타나 일관된 방어 어려움' },
+            mixed:                { label:'혼합',             short:'균형적',      tone:'ok',   phrase:'활성·비활성 양쪽 모두 중간 — 뚜렷한 고착 없음' },
+
+            // === Defense legacy codes (Tier 3 에만 노출) ===
+            ADAPTIVE:   { label:'적응형',       short:'유연',      tone:'good', phrase:'상황에 따라 유연하게 대응하는 편' },
+            PROJECTION: { label:'합리화된 전가', short:'외부 귀인', tone:'warn', phrase:'감정을 분석으로 포장해 외부에 원인 돌리는 편' },
+            FORTRESS:   { label:'지적 요새화',   short:'논리 방어', tone:'warn', phrase:'논리로 거리를 두고 외부 정보를 오류로 처리하는 편' },
+            EXPLOSION:  { label:'정서적 폭주',   short:'감정 폭발', tone:'danger', phrase:'감정이 강하게 올라와 즉각 배출되는 편' },
+            DIFFUSION:  { label:'경계 해체',     short:'경계 흐림', tone:'warn', phrase:'타인과 경계가 흐려져 감정에 동조되는 편' },
+            SHUTDOWN:   { label:'수동적 회피',   short:'셧다운',    tone:'danger', phrase:'갈등 상황에서 반응 자체를 중단하는 편' },
+
+            // === Match IPC ===
+            similar:              { label:'닮은 한 쌍',       short:'유사',       tone:'ok',   phrase:'축 구성이 비슷 — 이해는 빠르지만 자극·보완 부족할 수 있음' },
+            complementary:        { label:'보완하는 한 쌍',   short:'상보',       tone:'good', phrase:'주도성은 반대, 온정은 같은 방향 — 전통적 상보 패턴' },
+            contrast:             { label:'교차하는 궤도',   short:'대비',       tone:'ok',   phrase:'축 구성이 반대 — 서로 다른 세계의 만남, 긴장과 성장의 가능성' },
+        };
+        // v3.9.74 Sprint H-3: Tier 3 "근거 보기" 토글
+        //   body 에 .v39-tech-on 클래스 추가 → CSS 가 .tier3 요소 노출
+        //   기본 (friendly mode): Tier 1+2 만 보임. 숫자·수식·raw type 숨김.
+        //   근거 보기 on: .tier3 요소들 (convergence_d, MAS 2D 좌표, _basis 문구 등) 표시.
+        function toggleV39Tech(){
+            var body = document.body;
+            body.classList.toggle('v39-tech-on');
+            var labelEl = document.getElementById('v39TechToggleLabel');
+            if (labelEl) labelEl.textContent = body.classList.contains('v39-tech-on') ? '✓ 근거 켜짐' : '근거 보기';
+            try { localStorage.setItem('v39_tech_on', body.classList.contains('v39-tech-on') ? '1' : '0'); } catch(e){}
+        }
+        // 로드 시 localStorage 복원
+        (function(){
+            try {
+                if (localStorage.getItem('v39_tech_on') === '1') {
+                    document.body.classList.add('v39-tech-on');
+                    var labelEl = document.getElementById('v39TechToggleLabel');
+                    if (labelEl) labelEl.textContent = '✓ 근거 켜짐';
+                }
+            } catch(e){}
+        })();
+        window.toggleV39Tech = toggleV39Tech;
+
+        // 친근 라벨 lookup — 없으면 원본 type 반환 (fallback)
+        function _v39Friendly(type, field){
+            if (!type) return null;
+            var entry = _V39_FRIENDLY[type];
+            if (!entry) return null;
+            if (field) return entry[field] || null;
+            return entry;
+        }
+        function _v39FriendlyLabel(type){ var f=_v39Friendly(type); return f ? f.label : type; }
+        function _v39FriendlyPhrase(type){ var f=_v39Friendly(type); return f ? f.phrase : null; }
+        function _v39FriendlyTone(type){ var f=_v39Friendly(type); return f ? f.tone : 'neutral'; }
         // v3.9.66: Sprint D (v3.9.63) Gottman 기반 신규 10 타입 + 레거시 6 병기.
         //   v3.9.65 에서 cmap(L13687)만 확장하고 이 LABELS 를 놓쳤음 → 신규 타입이
         //   type 문자열 그대로(volatile, demand_withdraw 등) UI 에 노출되던 버그.
@@ -13443,8 +13651,15 @@ function displayResult() {
 
             var descEl = document.getElementById('v39DefDesc');
             if (descEl) {
-                if (clash.desc) descEl.innerHTML = _v39Safe(clash.desc);
-                else if (clash.type) descEl.textContent = '방어 패턴 "' + _v39Safe(clash.type) + '" 감지.';
+                // v3.9.74 Sprint H: 친근 phrase 우선 사용. 근거 보기 on 시 원본 desc 추가.
+                var friendly = clash.type ? _v39FriendlyPhrase(clash.type) : null;
+                if (friendly) {
+                    var basisTxt = clash.basis ? '<span class="tier3 inline" style="color:rgba(255,255,255,0.4);font-size:11px;margin-left:8px;font-family:JetBrains Mono,monospace">[' + _v39Safe(clash.basis) + ']</span>' : '';
+                    var rawDesc = clash.desc ? '<div class="tier3" style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(255,255,255,0.1);font-size:12px;color:rgba(255,255,255,0.55);line-height:1.6">' + _v39Safe(clash.desc) + '</div>' : '';
+                    descEl.innerHTML = '<div>' + _v39Safe(friendly) + basisTxt + '</div>' + rawDesc;
+                } else if (clash.desc) {
+                    descEl.innerHTML = _v39Safe(clash.desc);
+                } else if (clash.type) descEl.textContent = '방어 패턴 "' + _v39Safe(clash.type) + '" 감지.';
                 else if (!defA.name && !defB.name) descEl.textContent = '방어 데이터가 충분하지 않습니다.';
                 else descEl.textContent = '두 사람의 방어 패턴이 직접 충돌하지 않는 조합입니다.';
             }
@@ -13541,7 +13756,7 @@ function displayResult() {
                 ringFill.setAttribute('stroke-dashoffset', String(circ * (1 - compat/100)));
             }
 
-            // Chips
+            // Chips — v3.9.74 Sprint H: 친근 라벨 사용
             var chipsEl = document.getElementById('v39Chips');
             if (chipsEl) {
                 var chips = '';
@@ -13549,11 +13764,60 @@ function displayResult() {
                 if (mi.growth) chips += '<span class="v39-chip growth">성장 <b>' + _v39Safe(mi.growth) + '</b></span>';
                 var conv = ctx.crossSim && ctx.crossSim.convergence;
                 if (conv) {
-                    var convLabel = {convergent:'수렴', parallel:'평행', divergent:'발산'}[conv] || conv;
-                    chips += '<span class="v39-chip">궤적 <b>' + _v39Safe(convLabel) + '</b></span>';
+                    var convLabel = _v39FriendlyLabel(conv);
+                    chips += '<span class="v39-chip">관계 방향 <b>' + _v39Safe(convLabel) + '</b></span>';
                 }
                 chipsEl.innerHTML = chips;
             }
+
+            // v3.9.74 Sprint H-4: VERDICT 상단 "관계 한 문장" 생성
+            //   매칭 아키타입 + 갈등 패턴 + 애착 쌍 + 수렴성 조합해 template 으로 생성.
+            //   LLM 호출 없이 규칙 기반 → 즉시 렌더 가능, 비용 0.
+            var titleEl = document.getElementById('v39RelTitle');
+            if (titleEl) {
+                var oneLine = _v39BuildOneLineTitle(mi, ctx.crossSim || {}, idA, idB);
+                if (oneLine) {
+                    titleEl.textContent = oneLine;
+                    titleEl.style.display = 'block';
+                } else {
+                    titleEl.style.display = 'none';
+                }
+            }
+        }
+
+        // v3.9.74: 관계 한 문장 생성기 — template 기반 (LLM 없음)
+        function _v39BuildOneLineTitle(mi, crossSim, idA, idB){
+            if (!mi || !crossSim) return null;
+            var parts = [];
+            // 시작: 매칭 아키타입 (IPC)
+            var miName = mi.name || '';
+            if (miName) parts.push(miName);
+
+            // 갈등 패턴
+            var cc = crossSim.conflictCross;
+            if (cc && cc.type && cc.type !== 'unknown') {
+                var p = _v39FriendlyPhrase(cc.type);
+                if (p) parts.push(p);
+            } else {
+                // 애착 패턴 fallback
+                var ac = crossSim.attachmentCross;
+                if (ac && ac.type && ac.type !== 'unknown') {
+                    var p2 = _v39FriendlyPhrase(ac.type);
+                    if (p2) parts.push(p2);
+                }
+            }
+
+            // 수렴성
+            var conv = crossSim.convergence;
+            if (conv) {
+                var cp = _v39FriendlyPhrase(conv);
+                if (cp) parts.push(cp);
+            }
+
+            if (parts.length === 0) return null;
+            // 연결: "— 설명. 설명." 형태
+            if (parts.length === 1) return parts[0] + '.';
+            return parts[0] + ' — ' + parts.slice(1).join('. ') + '.';
 
             // v4 M1: essay + growth/risk zones (있으면 표시, 없으면 숨김)
             var essayEl = document.getElementById('v39MiEssay');
