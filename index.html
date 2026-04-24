@@ -12518,6 +12518,23 @@ function displayResult() {
             if (!panelEl || !_v39SitData) return;
             var e = _v39SitData[key];
             if (!e) { panelEl.innerHTML = '<div class="v39-cross-empty">이 상황 데이터 없음.</div>'; return; }
+            // v3.9.69: dataMode!=='measured' 일 때 misleading "변화 없음" 카드 대신 데이터 부족 명시.
+            //   기존엔 fallback_none 도 전체 render 돌고 axis_deltas 비어서 "주요 축 변화 없음" 표시 → 사용자 오해.
+            if (e.dataMode && e.dataMode !== 'measured') {
+                var kLabel = (_V39_SIT_META[key] && _V39_SIT_META[key].label) || key;
+                panelEl.innerHTML =
+                    '<div class="v39-cross-empty" style="padding:24px;text-align:center">' +
+                        '<div style="color:rgba(255,255,255,0.55);font-size:13px;margin-bottom:6px">' +
+                            _v39Safe(kLabel) + ' 상황 데이터 부족' +
+                        '</div>' +
+                        '<div style="color:rgba(255,255,255,0.4);font-size:11px;line-height:1.6">' +
+                            '이 상황에서의 두 사람 정체성 이동을 판정하려면<br>' +
+                            '해당 상황으로 분류된 카톡 세션이 충분해야 합니다.<br>' +
+                            '(현재 감지된 세션 수 부족)' +
+                        '</div>' +
+                    '</div>';
+                return;
+            }
 
             var ctx = _v39SitCtx || {};
             var baseA = ctx.idA || {}, baseB = ctx.idB || {};
