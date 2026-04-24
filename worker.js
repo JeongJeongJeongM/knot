@@ -7234,19 +7234,84 @@ function subsetFeatures(features, sessions) {
   };
 }
 
-// Defense clash 매트릭스 — 기존 computeCrossSimulation 에 인라인되어 있던 9종 조합 분류를
-// 재사용 가능한 헬퍼로 추출. situational 매칭에서도 동일 매트릭스 사용.
-function _lookupDefenseClash(cA, cB) {
-  if (!cA || !cB) return { type: 'neutral', desc: '방어 패턴 간 특별한 충돌 없음' };
-  if (cA === 'PROJECTION' && cB === 'PROJECTION') return { type: 'mirror_toxic', desc: '서로에게 투사하는 거울 — 상대의 결함이 자기 것인 줄 모른다' };
-  if ((cA === 'FORTRESS' && cB === 'SHUTDOWN') || (cA === 'SHUTDOWN' && cB === 'FORTRESS')) return { type: 'wall_void', desc: '한쪽이 벽을 세우면 다른 쪽이 사라진다 — 접점이 소멸하는 구조' };
-  if ((cA === 'EXPLOSION' && cB === 'SHUTDOWN') || (cA === 'SHUTDOWN' && cB === 'EXPLOSION')) return { type: 'fire_ice', desc: '한쪽이 폭발하면 다른 쪽이 얼어붙는다 — 반응 자체가 트리거가 되는 루프' };
-  if ((cA === 'EXPLOSION' && cB === 'EXPLOSION')) return { type: 'double_fire', desc: '둘 다 폭발형 — 갈등이 통제 불능으로 에스컬레이션' };
-  if ((cA === 'PROJECTION' && cB === 'FORTRESS') || (cA === 'FORTRESS' && cB === 'PROJECTION')) return { type: 'blame_wall', desc: '한쪽이 투사하면 다른 쪽이 차단 — 갈등이 해결 없이 축적' };
-  if ((cA === 'DIFFUSION' && cB === 'DIFFUSION')) return { type: 'double_fog', desc: '둘 다 경계가 흐려져 감정 책임 소재가 불분명 — 만성적 혼란' };
-  if ((cA === 'ADAPTIVE' && cB === 'ADAPTIVE')) return { type: 'mirror_flex', desc: '둘 다 적응형 — 유연하지만 진짜 갈등을 회피할 위험' };
-  if ((cA === 'ADAPTIVE' || cB === 'ADAPTIVE') && (cA !== 'EXPLOSION' && cB !== 'EXPLOSION')) return { type: 'one_flex', desc: '한쪽의 적응력이 충돌을 완충 — 단, 적응하는 쪽의 소진 위험' };
-  return { type: 'neutral', desc: '방어 패턴 간 특별한 충돌 없음' };
+// v3.9.66: Sprint B 의 MAS 2D (hyperactivation/deactivation) 를 clash 판정에 통합.
+//   이전: legacy 6-code pair lookup 만 사용 → MAS 2D 의 연속값이 clash 에 전혀 반영 안됨.
+//   신규: 두 사람의 MAS 2D 벡터 간 관계를 과학적으로 분류.
+//
+// Mikulincer & Shaver (2016) Ch.7 의 attachment dynamics 관점 확장:
+//   · 둘 다 hyperactivated (H×H): 상호 증폭, 감정 에스컬레이션
+//   · 둘 다 deactivated (D×D): 정서 진공, 거리 증대
+//   · H × D 비대칭: **demand-withdraw 의 정서적 substrate** (Christensen 1990)
+//     → 가장 파괴적. EFT (Johnson 2019) 에서 "protest-withdraw cycle" 로 불림.
+//   · 둘 다 secure (낮은 양쪽): mirror_flex, 안정 상호작용
+//   · 둘 다 disorganized (높은 양쪽): 혼돈 증폭
+//
+// 하위 호환: legacy 6-code 를 계속 받되, 두 번째 인자 세트로 defA/defB 전체 객체를
+//   받으면 mas2d 까지 보고 더 정확한 판정. 프론트 schema 안 깨짐.
+function _lookupDefenseClash(defA_or_codeA, defB_or_codeB) {
+  // Normalize: 객체 받으면 code + mas2d 추출, 문자열이면 legacy code only
+  const defA = typeof defA_or_codeA === 'object' && defA_or_codeA
+    ? defA_or_codeA : (typeof defA_or_codeA === 'string' ? { code: defA_or_codeA } : null);
+  const defB = typeof defB_or_codeB === 'object' && defB_or_codeB
+    ? defB_or_codeB : (typeof defB_or_codeB === 'string' ? { code: defB_or_codeB } : null);
+  if (!defA?.code || !defB?.code) return { type: 'neutral', desc: '방어 패턴 간 특별한 충돌 없음' };
+
+  // MAS 2D 좌표 사용 가능하면 continuous 판정 우선
+  const masA = defA.mas2d, masB = defB.mas2d;
+  if (masA && masB &&
+      typeof masA.hyperactivation === 'number' && typeof masA.deactivation === 'number' &&
+      typeof masB.hyperactivation === 'number' && typeof masB.deactivation === 'number') {
+    const HI = 0.55, LO = 0.45;
+    const aHigh_H = masA.hyperactivation >= HI;
+    const aHigh_D = masA.deactivation    >= HI;
+    const bHigh_H = masB.hyperactivation >= HI;
+    const bHigh_D = masB.deactivation    >= HI;
+    const aLow  = masA.hyperactivation < LO && masA.deactivation < LO;
+    const bLow  = masB.hyperactivation < LO && masB.deactivation < LO;
+
+    // MAS intensity metric — (hyper - deact) asymmetry
+    const maxIntensity = Math.max(Math.abs(masA.hyperactivation - masB.hyperactivation),
+                                   Math.abs(masA.deactivation - masB.deactivation));
+    const severity = Math.round(maxIntensity * 100) / 100;
+
+    // Protest-Withdraw cycle (EFT 핵심 패턴)
+    if ((aHigh_H && !aHigh_D && bHigh_D && !bHigh_H) || (bHigh_H && !bHigh_D && aHigh_D && !aHigh_H)) {
+      return { type: 'protest_withdraw', desc: 'EFT 의 Protest-Withdraw 사이클 — 한쪽은 과활성화(매달림/증폭)로, 다른 쪽은 비활성화(철수/차단)로 반응. Christensen & Heavey (1990) demand-withdraw 의 정서적 substrate.', severity, basis: 'mas2d_asymmetry' };
+    }
+    // 상호 과활성화
+    if (aHigh_H && bHigh_H && !aHigh_D && !bHigh_D) {
+      return { type: 'mutual_hyperactivation', desc: '둘 다 과활성화 — 감정 증폭 상호 강화. 갈등 에스컬레이션 빠름.', severity, basis: 'mas2d_both_hyperact' };
+    }
+    // 상호 비활성화
+    if (aHigh_D && bHigh_D && !aHigh_H && !bHigh_H) {
+      return { type: 'mutual_deactivation', desc: '둘 다 비활성화 — 정서적 진공. 표면 평화, 내적 단절.', severity, basis: 'mas2d_both_deact' };
+    }
+    // 혼란 상호작용
+    if (aHigh_H && aHigh_D && bHigh_H && bHigh_D) {
+      return { type: 'disorganized_clash', desc: '둘 다 혼란(고 hyperactivation + 고 deactivation) — 접근-회피 갈등의 교차. 일관된 방어 구조 실패.', severity, basis: 'mas2d_both_disorganized' };
+    }
+    // 안정 쌍
+    if (aLow && bLow) {
+      return { type: 'mirror_flex', desc: '둘 다 안정 프로필 (낮은 hyper + 낮은 deact) — MAS 연속값으로도 확인. 유연한 상호작용.', severity, basis: 'mas2d_both_secure' };
+    }
+    // 한쪽만 안정 (보완/소진 위험)
+    if (aLow || bLow) {
+      return { type: 'one_flex', desc: '한쪽은 안정, 다른 쪽은 활성·비활성 편향 — 안정 쪽이 buffer 역할이지만 소진 위험.', severity, basis: 'mas2d_asymmetric_secure' };
+    }
+    // 그 외 (mixed) — legacy code pair 로 fallback
+  }
+
+  // Legacy 6-code lookup (mas2d 없거나 mixed zone 일 때)
+  const cA = defA.code, cB = defB.code;
+  if (cA === 'PROJECTION' && cB === 'PROJECTION') return { type: 'mirror_toxic', desc: '서로에게 투사하는 거울 — 상대의 결함이 자기 것인 줄 모른다', basis: 'legacy_code' };
+  if ((cA === 'FORTRESS' && cB === 'SHUTDOWN') || (cA === 'SHUTDOWN' && cB === 'FORTRESS')) return { type: 'wall_void', desc: '한쪽이 벽을 세우면 다른 쪽이 사라진다 — 접점이 소멸하는 구조', basis: 'legacy_code' };
+  if ((cA === 'EXPLOSION' && cB === 'SHUTDOWN') || (cA === 'SHUTDOWN' && cB === 'EXPLOSION')) return { type: 'fire_ice', desc: '한쪽이 폭발하면 다른 쪽이 얼어붙는다 — 반응 자체가 트리거가 되는 루프', basis: 'legacy_code' };
+  if ((cA === 'EXPLOSION' && cB === 'EXPLOSION')) return { type: 'double_fire', desc: '둘 다 폭발형 — 갈등이 통제 불능으로 에스컬레이션', basis: 'legacy_code' };
+  if ((cA === 'PROJECTION' && cB === 'FORTRESS') || (cA === 'FORTRESS' && cB === 'PROJECTION')) return { type: 'blame_wall', desc: '한쪽이 투사하면 다른 쪽이 차단 — 갈등이 해결 없이 축적', basis: 'legacy_code' };
+  if ((cA === 'DIFFUSION' && cB === 'DIFFUSION')) return { type: 'double_fog', desc: '둘 다 경계가 흐려져 감정 책임 소재가 불분명 — 만성적 혼란', basis: 'legacy_code' };
+  if ((cA === 'ADAPTIVE' && cB === 'ADAPTIVE')) return { type: 'mirror_flex', desc: '둘 다 적응형 — 유연하지만 진짜 갈등을 회피할 위험', basis: 'legacy_code' };
+  if ((cA === 'ADAPTIVE' || cB === 'ADAPTIVE') && (cA !== 'EXPLOSION' && cB !== 'EXPLOSION')) return { type: 'one_flex', desc: '한쪽의 적응력이 충돌을 완충 — 단, 적응하는 쪽의 소진 위험', basis: 'legacy_code' };
+  return { type: 'neutral', desc: '방어 패턴 간 특별한 충돌 없음', basis: 'legacy_code' };
 }
 
 // 두 identity 코드의 차이(shift) 감지 — "디폴트 → 상황별" 이동 방향 서술에 사용
@@ -9067,32 +9132,49 @@ const DEFENSE_RULES = [
   },
 ];
 
-// v3.9.61 Sprint B — Mikulincer & Shaver (2016) 2D defensive regulation 모델
-//   "Attachment in Adulthood" 2e (Guilford), Ch.7
+// v3.9.61 Sprint B → v3.9.66 (재감사 반영)
 //
-//   Hyperactivation: 위협 신호에 대한 과민·과잉 반응, 접근·매달림·증폭
-//   Deactivation:    위협 신호 무시·거리두기·억제·지적처리로 전환
+// ⚠ 근거 투명성 (중요):
+//   원 M&S (2016) "Attachment in Adulthood" 2e Ch.7 은 hyperactivation/deactivation 을
+//   이론적 dimension 으로 제시하나, **선형 가중합 공식을 직접 명시하지 않음**.
+//   아래 공식은 KNOT 이 5축(E/C/T/O/X) 을 MAS 2D 에 operationalize 하기 위한
+//   **자체 매핑** 이며, 각 축 기여도는 Shaver & Mikulincer (2007) JPSP 의
+//   attachment strategy 상관 문헌을 "방향성 참조" 했을 뿐 empirical validation 부재.
 //
-//   KNOT 5축 → MAS 2D 매핑 (이론적 근거):
-//     hyperactivation = 0.4*emotion + 0.3*(1-boundary) + 0.3*(1-resilience)
-//       · emotion 높음: 정서 활성화 민감
-//       · boundary 낮음: 타자 침투 허용 (매달림)
-//       · resilience 낮음: 자기 조절 실패 → 증폭
-//     deactivation    = 0.4*cognition + 0.3*boundary + 0.3*(1-emotion)
-//       · cognition 높음: 지적 처리로 정서 우회
-//       · boundary 높음: 침투 차단 (거리두기)
-//       · emotion 낮음: 정서 표현 억제
+//   가중치 선택 근거 (이론적):
+//     Hyperactivation (매달림·증폭·접근):
+//       · E (emotion): +1.0  — 정서 활성화 민감성이 핵심
+//       · (1 - O): +0.7      — 타자 침투 허용 (낮은 경계)
+//       · (1 - X): +0.6      — 자기조절 실패
+//       sum 2.3 → 정규화 0.43 / 0.30 / 0.27 ≈ 0.4 / 0.3 / 0.3
+//     Deactivation (거리두기·억제·지적처리):
+//       · T (cognition): +1.0 — 지적 처리로 정서 우회
+//       · O (boundary):  +0.7 — 침투 차단
+//       · (1 - E):       +0.6 — 정서 표현 억제
+//       sum 2.3 → 정규화 0.43 / 0.30 / 0.27 ≈ 0.4 / 0.3 / 0.3
 //
-//   기존 6 코드(PROJECTION/FORTRESS/EXPLOSION/DIFFUSION/SHUTDOWN/ADAPTIVE) 는
-//   2D 좌표의 4 사분면 + 극단값에 lookup 으로 매핑 → 하위 호환 유지.
+//   이 매핑은 향후 BFI + ECR-R 병행 수집 후 회귀로 재보정 필요.
+//   현재는 "이론적 방향성 맞음" 수준이며, empirical calibration 전까지는
+//   각 축 기여 순서(E>O>X for hyper, T>O>E for deact) 만 유의미.
+//
+// 레퍼런스:
+//   Mikulincer M, Shaver PR (2016) Attachment in Adulthood 2e, Guilford, Ch.7
+//   Shaver PR, Mikulincer M (2007) Adult attachment strategies and the regulation of emotion, JPSP
+//   ⚠ 아직 validation 되지 않은 조작적 정의 — UI 에 투명 disclosure 필요
 function _computeMAS2D(simAxes) {
   const e = simAxes.emotion ?? 0.5;
   const c = simAxes.cognition ?? 0.5;
   const b = simAxes.boundary ?? 0.5;
   const r = simAxes.resilience ?? 0.5;
-  const hyper = Math.max(0, Math.min(1, 0.4 * e + 0.3 * (1 - b) + 0.3 * (1 - r)));
-  const deact = Math.max(0, Math.min(1, 0.4 * c + 0.3 * b + 0.3 * (1 - e)));
-  return { hyperactivation: hyper, deactivation: deact };
+  // v3.9.66: 가중치 명확한 정규화 (sum=1) — 근거 주석 참조
+  const hyper = Math.max(0, Math.min(1, (1.0 * e + 0.7 * (1 - b) + 0.6 * (1 - r)) / 2.3));
+  const deact = Math.max(0, Math.min(1, (1.0 * c + 0.7 * b + 0.6 * (1 - e)) / 2.3));
+  return {
+    hyperactivation: hyper,
+    deactivation: deact,
+    // v3.9.66: validation 상태 투명 공개
+    _calibration_status: 'theoretical_unvalidated',
+  };
 }
 
 // MAS 2D → 4 분면 + legacy 6 코드 매핑.
@@ -9648,7 +9730,8 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
   }
 
   // ── 4. 방어 패턴 충돌 매트릭스 ──
-  const defenseClash = _lookupDefenseClash(simA.defense?.code, simB.defense?.code);
+  // v3.9.66: 객체 전달 → MAS 2D 까지 보고 더 정확한 clash 판정
+  const defenseClash = _lookupDefenseClash(simA.defense, simB.defense);
 
   // ── 5. 위험 교차 ──
   const riskA = simA.risk;
@@ -9981,7 +10064,7 @@ function computeCrossSituational(simA, simB) {
       entry.convergence_basis = 'cohens_d_on_axis_snapshot'; // v3.9.60
 
       // 방어 충돌 — 상황별 방어 패턴 사용
-      entry.defense_clash = _lookupDefenseClash(sA.defense?.code, sB.defense?.code);
+      entry.defense_clash = _lookupDefenseClash(sA.defense, sB.defense); // v3.9.66: 객체 전달
 
       // Synopsis 한 줄 — LLM 프롬프트 / UI 에 그대로 넣을 수 있는 서술
       const aName = sA.identity.name || sA.identity.code;

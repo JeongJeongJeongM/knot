@@ -10018,8 +10018,16 @@ function buildProfileOverview(axes, profile) {
                 const rmLabel = rmDelta === 0 ? '동기화' : rmDelta === 1 ? '약간 차이' : '큰 차이';
                 chipsHTML += `<span style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.03);border:1px solid #1a1a2e;border-radius:4px;font-size:10px;font-family:'Courier New',monospace;">회복 리듬: <span style="color:var(--ac);font-weight:600;">${rmLabel}</span></span>`;
             }
-            if (cross.topicOverlap && cross.topicOverlap.jaccard !== undefined) {
-                chipsHTML += `<span style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.03);border:1px solid #1a1a2e;border-radius:4px;font-size:10px;font-family:'Courier New',monospace;">토픽: <span style="color:var(--ac);font-weight:600;">${(cross.topicOverlap.jaccard * 100).toFixed(0)}%</span></span>`;
+            // v3.9.66: Sprint A (v3.9.60) cosine 우선 사용 + jaccard 폴백.
+            //   이전 레거시 outlook 경로는 jaccard 만 체크 → cosine 무시하던 버그.
+            if (cross.topicOverlap) {
+                var _topicSim = (typeof cross.topicOverlap.cosine === 'number' && Number.isFinite(cross.topicOverlap.cosine))
+                    ? cross.topicOverlap.cosine
+                    : (typeof cross.topicOverlap.jaccard === 'number' && Number.isFinite(cross.topicOverlap.jaccard)
+                        ? cross.topicOverlap.jaccard : null);
+                if (_topicSim !== null) {
+                    chipsHTML += `<span style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.03);border:1px solid #1a1a2e;border-radius:4px;font-size:10px;font-family:'Courier New',monospace;">토픽: <span style="color:var(--ac);font-weight:600;">${(_topicSim * 100).toFixed(0)}%</span></span>`;
+                }
             }
             if (chipsHTML) {
                 crossBody += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;">${chipsHTML}</div>`;
@@ -12964,9 +12972,20 @@ function displayResult() {
             mutual_spiral:'상호 증폭', pursuit_withdrawal:'밀고 당기기', parallel_isolation:'나란히 고립',
             double_chaos:'이중 혼돈', secure_anchor:'닻 역할'
         };
+        // v3.9.66: Sprint D (v3.9.63) Gottman 기반 신규 10 타입 + 레거시 6 병기.
+        //   v3.9.65 에서 cmap(L13687)만 확장하고 이 LABELS 를 놓쳤음 → 신규 타입이
+        //   type 문자열 그대로(volatile, demand_withdraw 등) UI 에 노출되던 버그.
         var _V39_CONFLICT_LABELS = {
+            // 신규 (Gottman 10)
+            volatile:'격동형', validator:'신중형', mutual_retreat:'상호 후퇴',
+            avoider:'회피자', validator_volatile:'신중 × 열정',
+            demand_withdraw:'요구-회피', hostile_detached:'적대-단절',
+            soft_demand_withdraw:'부드러운 요구-회피', gentle_wall:'부드러운 벽',
+            double_exit:'이중 탈출',
+            // 레거시 (구 DB/share 호환)
             speed_gap:'속도 차이', head_on:'정면 대립', soft_wall:'부드러운 벽',
-            frozen_conflict:'얼어붙은 갈등', wall_punch:'벽을 때리기', mirror_storm:'거울 폭주'
+            frozen_conflict:'얼어붙은 갈등', wall_punch:'벽을 때리기', mirror_storm:'거울 폭주',
+            chase_retreat:'추적-후퇴', polite_loop:'정중한 루프', gentle_fade:'천천한 소멸'
         };
 
         // ── v4 M7 · 애착 교차 (v3.9.36 · 2D 평면 + 확률 분포) ──
