@@ -12719,15 +12719,19 @@ function displayResult() {
             var isSynthesized = e.dataMode === 'synthesized';
             var axisNames = { emotion:'정서', drive:'추진', cognition:'인지', boundary:'개방', resilience:'회복' };
 
-            // baseline axes (개인 분석 5축) vs 상황 simAxes 로 per-person shift 계산
+            // v3.9.91: shift 기준 재설정 — baseline(anchor/prism boosted) 대신
+            //   normal 상황 simAxes 를 기준으로. 평소 탭은 shift 자체를 스킵.
             var simA = ctx.simulationA || {}, simB = ctx.simulationB || {};
-            var baselineA = simA.axes || {}, baselineB = simB.axes || {};
             var sitA = (simA.situational && simA.situational[key]) || null;
             var sitB = (simB.situational && simB.situational[key]) || null;
+            // normal 상황의 simAxes 를 "진짜 평소" 기준점으로 사용
+            var normalA = simA.situational && simA.situational.normal && simA.situational.normal.simAxes;
+            var normalB = simB.situational && simB.situational.normal && simB.situational.normal.simAxes;
+            var refA = normalA || simA.axes || {};
+            var refB = normalB || simB.axes || {};
             var curAxesA = sitA && sitA.simAxes ? sitA.simAxes : null;
             var curAxesB = sitB && sitB.simAxes ? sitB.simAxes : null;
 
-            // 각 축별 shift = 상황 값 - baseline 값. 없으면 e.axis_deltas 로 대체 (상대값이므로 방향 주의).
             function personShifts(base, cur){
                 if (!base || !cur) return [];
                 var AXES = ['emotion','drive','cognition','boundary','resilience'];
@@ -12737,8 +12741,10 @@ function displayResult() {
                     return { key: ax, delta: Math.round((c - b) * 100) / 100 };
                 });
             }
-            var shiftsA = personShifts(baselineA, curAxesA);
-            var shiftsB = personShifts(baselineB, curAxesB);
+            // 평소 탭이면 shift 건너뛰기 — 평소 자체가 기준이니 shift 없음
+            var isNormalTab = (key === 'normal');
+            var shiftsA = isNormalTab ? [] : personShifts(refA, curAxesA);
+            var shiftsB = isNormalTab ? [] : personShifts(refB, curAxesB);
 
             // 상위 3 변화만 (절댓값 기준, >= 0.05)
             function topShifts(arr){
@@ -12750,14 +12756,17 @@ function displayResult() {
             var topB = topShifts(shiftsB);
 
             // headline: baseline 타입 → 상황 타입 변화 1문장
+            // v3.9.91: 평소 탭은 다른 서술 사용 (기준점 자체라 "이동" 표현 이상함).
             function buildHeadline(base, cur, shifts){
                 var baseName = (base && (base.name || base.code)) || '이 사람';
                 var curName = (cur && (cur.name || cur.code)) || null;
-                if (curName && curName !== baseName) {
-                    return '평소 <b>' + _v39Safe(baseName) + '</b> 이(가) <b>' + _v39Safe(curName) + '</b> 쪽으로 이동.';
+                if (isNormalTab) {
+                    return '평소 대화에서 주로 <b>' + _v39Safe(curName || baseName) + '</b> 의 모습.';
                 }
-                // 타입 변화 없으면 축 shift 기반 서술
-                if (shifts.length === 0) return '이 상황에서 큰 변화 없음.';
+                if (curName && curName !== baseName) {
+                    return '평소 <b>' + _v39Safe(baseName) + '</b> → <b>' + _v39Safe(curName) + '</b> 쪽으로 이동.';
+                }
+                if (shifts.length === 0) return '이 상황에서 축 변화 작음 — 평소와 거의 동일.';
                 var top = shifts[0];
                 var axName = axisNames[top.key] || top.key;
                 var dir = top.delta > 0 ? '상승' : '하락';
@@ -12782,11 +12791,14 @@ function displayResult() {
             }
 
             // 한 사람 사이드 렌더
+            // v3.9.91: 평소 탭 — shift 막대 대신 "기준선" 안내.
             function renderPerson(side, base, cur, shifts){
-                var roleLabel = side.toUpperCase() + ' · ' + _v39Safe(sitLabel) + ' 상황에서';
+                var roleLabel = side.toUpperCase() + ' · ' + _v39Safe(sitLabel) + (isNormalTab ? ' (기준선)' : ' 상황에서');
                 var headline = buildHeadline(base, cur, shifts);
                 var barsHtml = '';
-                if (shifts.length === 0) {
+                if (isNormalTab) {
+                    barsHtml = '<div class="v39b-no-shift">✓ 평소 기준점 — 다른 상황 탭에서 이 평소 대비 변화를 확인하세요.</div>';
+                } else if (shifts.length === 0) {
                     barsHtml = '<div class="v39b-no-shift">축 변화 < 0.05 — 평소와 거의 동일</div>';
                 } else {
                     barsHtml = shifts.map(shiftBar).join('');

@@ -10197,33 +10197,36 @@ function softmax(scores, temperature = STATE_TEMPERATURE) {
 //   normal 은 baseline (axes) 그대로. 나머지 4 상황은 stimulus[key].shifted 사용.
 //   v3.9.89: identity 를 synthesized simAxes 에서 computeServerIdentity 로 재계산
 //   (이전엔 null 이라 UI 가 엉뚱한 타입 표시).
-function _synthesizeSituationalEntry(sim, situationKey) {
+function _synthesizeSituationalEntry(sim, situationKey, baselineIdentity) {
   if (!sim) return null;
   let simAxes;
   if (situationKey === 'normal') {
     const ax = sim.axes;
     if (!ax) return null;
     simAxes = { emotion: ax.emotion, drive: ax.drive, cognition: ax.cognition, boundary: ax.boundary, resilience: ax.resilience };
-  } else {
-    const stim = sim.stimulus?.[situationKey];
-    if (!stim?.shifted) return null;
-    const sh = stim.shifted;
-    simAxes = { emotion: sh.E, drive: sh.C, cognition: sh.T, boundary: sh.O, resilience: sh.X };
-  }
-  // synthesized identity — simAxes 를 intensity 로 치환하여 6축 identity 재판정
-  //   (simAxes 의 emotion/drive/... 가 intensity A1~A5 와 1:1 매핑 가정)
-  let synthIdentity = null;
-  try {
-    // fake intensity shape: A1~A6 있으면 computeServerIdentity 가 돌아감
-    const fakeIntensity = {
-      A1: simAxes.emotion, A2: 1 - Math.abs(simAxes.emotion - 0.5) * 2,
-      A3: simAxes.emotion, A4: simAxes.drive, A5: simAxes.drive, A6: simAxes.cognition
+    // v3.9.91: normal 은 baseline 그대로 → identity 도 baseline 재사용 (fake mapping 금지)
+    return {
+      simAxes,
+      defense: sim.defense || null,
+      identity: baselineIdentity || null,  // 평소 = 기본 정체성
+      sessionCount: 0,
+      _synthesized: true,
     };
-    synthIdentity = computeServerIdentity({ intensity: fakeIntensity, structural: {} });
-    if (synthIdentity) {
-      synthIdentity.name = (synthIdentity.name || '추정 정체') + ' (추정)';
-    }
-  } catch (e) { /* 재판정 실패 시 null 유지 */ }
+  }
+  const stim = sim.stimulus?.[situationKey];
+  if (!stim?.shifted) return null;
+  const sh = stim.shifted;
+  simAxes = { emotion: sh.E, drive: sh.C, cognition: sh.T, boundary: sh.O, resilience: sh.X };
+  // v3.9.91: synthesized identity 재계산 제거. 대신 baseline 의 이름에 "(상황별 추정)"
+  //   접미사만 붙임. fake intensity 로 computeServerIdentity 하면 loss 커서 원본과 동떨어진
+  //   타입 나옴 (ex: 전장의 전략가 → 돌파형 리더 (추정)).
+  //   실제 상황별 정체성은 aggregateBySituation(measured) 에서만 판정 가능.
+  const situationLabel = { stress:'스트레스', intimacy:'친밀감', conflict:'갈등', loss:'상실' }[situationKey] || situationKey;
+  const synthIdentity = baselineIdentity ? {
+    ...baselineIdentity,
+    name: (baselineIdentity.name || '기본') + ' — ' + situationLabel + ' 추정',
+    _synthesized: true,
+  } : null;
   return {
     simAxes,
     defense: sim.defense || null,
@@ -10244,12 +10247,15 @@ function computeCrossSituational(simA, simB) {
     // v3.9.87: measured 없을 때 합성 스냅샷 생성 → SIT 5탭이 "데이터 부족"
     //   대신 Before/After 카드 노출 (synthesized 명시).
     let synthesizedA = false, synthesizedB = false;
+    // v3.9.91: baseline identity 추출 — 개인 분석 시 계산된 top-level identity 재사용
+    const baseIdA = simA?._baselineIdentity || null;
+    const baseIdB = simB?._baselineIdentity || null;
     if (!sA?.simAxes) {
-      const synth = _synthesizeSituationalEntry(simA, key);
+      const synth = _synthesizeSituationalEntry(simA, key, baseIdA);
       if (synth) { sA = synth; synthesizedA = true; }
     }
     if (!sB?.simAxes) {
-      const synth = _synthesizeSituationalEntry(simB, key);
+      const synth = _synthesizeSituationalEntry(simB, key, baseIdB);
       if (synth) { sB = synth; synthesizedB = true; }
     }
 
