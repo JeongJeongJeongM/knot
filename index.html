@@ -4779,6 +4779,7 @@
         .v39-sit-tab.on.conflict{background:var(--sit-conflict);border-color:var(--sit-conflict);color:#fff;box-shadow:0 0 14px rgba(249,115,22,0.25);font-weight:600}
         .v39-sit-tab.on.loss{background:var(--sit-loss);border-color:var(--sit-loss);color:#fff;box-shadow:0 0 14px rgba(107,114,128,0.25);font-weight:600}
         .v39-sit-tab.dim{opacity:0.3;cursor:not-allowed}
+        .v39-sit-tab.partial{opacity:0.7;border-style:dashed}
         .v39-sit-panel{padding:var(--sp-4);background:var(--sf-1);border:1px solid var(--sf-2);border-radius:var(--r-md)}
         .v39-sit-synopsis{padding:var(--sp-3) var(--sp-4);background:var(--af-1);border:1px dashed var(--af-2);border-radius:var(--r-sm);font-size:var(--fs-xs);color:rgba(255,255,255,0.78);margin-bottom:var(--sp-3);line-height:var(--lh-loose)}
         .v39-sit-identities{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-bottom:var(--sp-4)}
@@ -12251,26 +12252,28 @@ function displayResult() {
             var wrap = document.getElementById('v39SitWrap');
             var empty = document.getElementById('v39SitEmpty');
             if (!wrap || !empty) return;
+            // v3.9.46: 필터 완화 — cs[k] 존재만으로 탭 활성. dataMode!=='measured' 는 dim 처리만.
+            //   기존엔 교차 measured 없으면 탭 전체 사라짐 → 한쪽만 감지된 경우 사용자 혼란.
             if (!cs || typeof cs !== 'object') {
-                wrap.style.display = 'none'; empty.style.display = 'block'; return;
+                _v39SitShowEmpty(ctx, '상황별 교차 데이터가 없습니다.'); return;
             }
-            var available = _V39_SIT_ORDER.filter(function(k){
-                return cs[k] && cs[k].dataMode === 'measured';
-            });
+            var available = _V39_SIT_ORDER.filter(function(k){ return cs[k]; });
+            var measured  = _V39_SIT_ORDER.filter(function(k){ return cs[k] && cs[k].dataMode === 'measured'; });
             if (!available.length) {
-                wrap.style.display = 'none'; empty.style.display = 'block'; return;
+                _v39SitShowEmpty(ctx, '상황별 교차 데이터가 생성되지 않았습니다.'); return;
             }
             _v39SitData = cs;
-            _v39SitActive = available[0];
+            _v39SitActive = measured[0] || available[0];
 
             var tabsEl = document.getElementById('v39SitTabs');
             if (tabsEl) {
                 tabsEl.innerHTML = _V39_SIT_ORDER.map(function(k){
                     var m = _V39_SIT_META[k];
-                    var ok = available.indexOf(k) >= 0;
+                    var hasData = available.indexOf(k) >= 0;
+                    var isMeasured = measured.indexOf(k) >= 0;
                     var active = k === _v39SitActive;
-                    return '<div class="v39-sit-tab ' + k + (active?' on':'') + (ok?'':' dim') + '" ' +
-                        (ok?('onclick="selectV39SitTab(\'' + k + '\')"'):'') +
+                    return '<div class="v39-sit-tab ' + k + (active?' on':'') + (hasData?'':' dim') + (hasData && !isMeasured?' partial':'') + '" ' +
+                        (hasData?('onclick="selectV39SitTab(\'' + k + '\')"'):'') +
                         ' data-sit="' + k + '">' +
                         '<span>' + m.icon + '</span><span>' + m.label + '</span>' +
                         '</div>';
@@ -12279,6 +12282,32 @@ function displayResult() {
             _renderV39SitPanel(_v39SitActive);
             wrap.style.display = 'block';
             empty.style.display = 'none';
+        }
+        // v3.9.46: 상황 없을 때 안내 메시지 — A/B 각자 감지 상황 나열해서 투명하게
+        function _v39SitShowEmpty(ctx, baseMsg){
+            var wrap = document.getElementById('v39SitWrap');
+            var empty = document.getElementById('v39SitEmpty');
+            if (wrap) wrap.style.display = 'none';
+            if (!empty) return;
+            var simA = ctx.simulationA || {}, simB = ctx.simulationB || {};
+            var sitA = (simA.situational && typeof simA.situational === 'object') ? Object.keys(simA.situational).filter(function(k){
+                var s = simA.situational[k]; return s && (s.sessionCount || s.trajectoryCount);
+            }) : [];
+            var sitB = (simB.situational && typeof simB.situational === 'object') ? Object.keys(simB.situational).filter(function(k){
+                var s = simB.situational[k]; return s && (s.sessionCount || s.trajectoryCount);
+            }) : [];
+            var KO = { normal:'평소', stress:'스트레스', intimacy:'친밀감', conflict:'갈등', loss:'상실' };
+            function fmt(arr){ return arr.map(function(k){ return KO[k] || k; }).join('·'); }
+            var hint = '';
+            if (sitA.length || sitB.length) {
+                hint = '<div style="margin-top:6px;font-size:11px;color:rgba(255,255,255,0.45);font-family:\'JetBrains Mono\',monospace">' +
+                    (sitA.length ? 'A 감지: <b style="color:var(--side-a)">' + fmt(sitA) + '</b>' : 'A 감지: 없음') +
+                    ' · ' +
+                    (sitB.length ? 'B 감지: <b style="color:var(--side-b)">' + fmt(sitB) + '</b>' : 'B 감지: 없음') +
+                    '</div>';
+            }
+            empty.innerHTML = baseMsg + '<div style="margin-top:6px;font-size:11px;color:rgba(255,255,255,0.5)">두 사람 카톡에서 동일 상황이 감지돼야 상세 비교 가능.</div>' + hint;
+            empty.style.display = 'block';
         }
 
         function selectV39SitTab(key){
