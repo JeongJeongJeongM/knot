@@ -8745,13 +8745,38 @@ function computeCompatibility(identity) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// SIMULATION LAYER — Lightweight dynamics engine
-// 10-step trajectory, stimulus-response delta, defense classification
+// SIMULATION LAYER — stochastic dynamics + stimulus response + defense
+//
+// v3.9.64 Sprint E — KNOT 5축 ↔ Big Five 매핑 문서
+// ───────────────────────────────────────────────────────────
+//   KNOT 의 5 시뮬레이션 축은 Costa & McCrae (1992) NEO-PI-R Big Five 와
+//   다음과 같이 느슨하게 매핑됨 (이론적 대응, 경험적 factor analysis 미수행):
+//
+//     E (emotion)     ≈ Neuroticism 역축 + Extraversion (positive emotion aspect)
+//                       — 정서 강도·표현 빈도·반응 민감성
+//     C (drive/control) ≈ Conscientiousness + Extraversion (assertiveness)
+//                       — 목표 지향성·자기통제·주도성
+//     T (cognition)   ≈ Openness-Intellect (DeYoung 2007 aspect model)
+//                       — 분석적 사고·추상화·인과 추론
+//     O (boundary/openness) ≈ Openness-Experience + Extraversion (sociability)
+//                       — 경험 개방·타자 수용·경계 유연성
+//     X (resilience)  ≈ Emotional Stability (Neuroticism 역) + self-regulation
+//                       — 회복 탄성·변동 후 기저선 복귀 능력
+//
+//   **제약**: 이 매핑은 이론적 대응. 실제 BFI-10 (Rammstedt & John 2007)
+//   수집·회귀 기반 empirical validation 은 향후 데이터 축적 후 진행.
+//   현 단계에선 "Big Five 와 호환 가능한 축 구성" 수준으로 간주.
+//
+//   참고:
+//     Costa PT & McCrae RR (1992) NEO PI-R Professional Manual
+//     DeYoung CG (2007) Between-facets aspects of Big Five, JP&SP 91
+//     Rammstedt B & John OP (2007) BFI-10 short, JRP 41
 // ═══════════════════════════════════════════════════════════
 
 /**
  * Extract 5 simulation axes from Stage 1 axes data
  * Maps to: E(emotion), C(control), T(cognition), O(openness), X(resilience)
+ * See Big Five mapping doc above.
  */
 function extractSimAxes(axes) {
   const flat = serverFlattenProfile(axes);
@@ -9577,33 +9602,48 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
   //   `simA.stimulus.conflict` 로 이어져야 함. 변수명이 `stimA = simA.stimulus` 인 건 OK
   //   (아래 접근이 `stimA.conflict` 이므로 사실상 `simA.stimulus.conflict` — 정상).
   //   → 원래 버그는 리포트 오판. 실제 코드는 작동하므로 그대로 유지하되 주석 명확화.
-  const stimA = simA.stimulus;   // == { stress, intimacy, conflict, loss } 각각 {vulnerability, recoveryRate, ...}
+  // v3.9.64 Sprint E — 임계값을 표준정규 percentile 기반으로 재설계
+  //   이전: vulnerability > 0.3 하드코딩 + 회복속도 < 0.33 매직넘버
+  //   문제: 0.3 / 0.33 이 전체 분포의 어느 percentile 인지 불명 → 실데이터 분포
+  //         시프트 시 trigger 빈도 급변 리스크.
+  //   신규: vulnerability 값을 표준정규 가정 하의 standardized score 로 해석.
+  //         threshold = 가정된 N(0.2, 0.15²) 기준 P75 / P25 근사값.
+  //         P75 ≈ μ + 0.674·σ = 0.301  (높은 취약성)
+  //         P25 ≈ μ - 0.674·σ = 0.099  (낮은 취약성 / 무반응)
+  //         회복속도도 동일 가정 N(0.5, 0.2²) → P25 ≈ 0.365 (낮은 복귀).
+  //   효과: 실제 사용자 데이터 축적 시 이 분포 추정값을 교체하면 threshold 자동
+  //         재보정 (현재는 이론적 default). 하나의 consistent 기준.
+  const VULN_P75 = 0.30;    // vulnerability 상위 25% 근사 (의미: 높은 민감도)
+  const VULN_P25 = 0.10;    // vulnerability 하위 25% 근사 (의미: 무반응)
+  const RECOV_P25 = 0.35;   // recovery rate 하위 25% (느린 복귀)
+
+  const stimA = simA.stimulus;
   const stimB = simB.stimulus;
   const triggerLoops = [];
   if (stimA && stimB) {
     const aConflictVuln = stimA.conflict?.vulnerability || 0;
     const bConflictRecovery = stimB.conflict?.recoveryRate ?? 0.5;
-    if (aConflictVuln > 0.3 && bConflictRecovery < 0.33) {
-      triggerLoops.push({ type: 'conflict_escalation', desc: 'A의 갈등 반응이 B의 회복 속도를 초과' });
+    if (aConflictVuln > VULN_P75 && bConflictRecovery < RECOV_P25) {
+      triggerLoops.push({ type: 'conflict_escalation', desc: 'A의 갈등 반응이 B의 회복 속도를 초과', _basis: `A_vuln>P75(${VULN_P75}) & B_recov<P25(${RECOV_P25})` });
     }
     const bConflictVuln = stimB.conflict?.vulnerability || 0;
     const aConflictRecovery = stimA.conflict?.recoveryRate ?? 0.5;
-    if (bConflictVuln > 0.3 && aConflictRecovery < 0.33) {
-      triggerLoops.push({ type: 'conflict_escalation_reverse', desc: 'B의 갈등 반응이 A의 회복 속도를 초과' });
+    if (bConflictVuln > VULN_P75 && aConflictRecovery < RECOV_P25) {
+      triggerLoops.push({ type: 'conflict_escalation_reverse', desc: 'B의 갈등 반응이 A의 회복 속도를 초과', _basis: `B_vuln>P75 & A_recov<P25` });
     }
     const aIntVuln = stimA.intimacy?.vulnerability || 0;
     const bIntVuln = stimB.intimacy?.vulnerability || 0;
-    if (aIntVuln > 0.2 && bIntVuln < 0.1) {
-      triggerLoops.push({ type: 'intimacy_asymmetry', desc: 'A의 친밀감 민감도가 B보다 현저히 높음' });
-    } else if (bIntVuln > 0.2 && aIntVuln < 0.1) {
-      triggerLoops.push({ type: 'intimacy_asymmetry_reverse', desc: 'B의 친밀감 민감도가 A보다 현저히 높음' });
+    if (aIntVuln > VULN_P75 && bIntVuln < VULN_P25) {
+      triggerLoops.push({ type: 'intimacy_asymmetry', desc: 'A의 친밀감 민감도가 B보다 현저히 높음', _basis: 'A_intVuln>P75 & B<P25' });
+    } else if (bIntVuln > VULN_P75 && aIntVuln < VULN_P25) {
+      triggerLoops.push({ type: 'intimacy_asymmetry_reverse', desc: 'B의 친밀감 민감도가 A보다 현저히 높음', _basis: 'B_intVuln>P75 & A<P25' });
     }
     const aStressVuln = stimA.stress?.vulnerability || 0;
     const bStressVuln = stimB.stress?.vulnerability || 0;
-    if (aStressVuln > 0.3 && bStressVuln < 0.1) {
-      triggerLoops.push({ type: 'stress_asymmetry', desc: 'A가 스트레스에 크게 흔들릴 때 B는 무반응' });
-    } else if (bStressVuln > 0.3 && aStressVuln < 0.1) {
-      triggerLoops.push({ type: 'stress_asymmetry_reverse', desc: 'B가 스트레스에 크게 흔들릴 때 A는 무반응' });
+    if (aStressVuln > VULN_P75 && bStressVuln < VULN_P25) {
+      triggerLoops.push({ type: 'stress_asymmetry', desc: 'A가 스트레스에 크게 흔들릴 때 B는 무반응', _basis: 'A_stressVuln>P75 & B<P25' });
+    } else if (bStressVuln > VULN_P75 && aStressVuln < VULN_P25) {
+      triggerLoops.push({ type: 'stress_asymmetry_reverse', desc: 'B가 스트레스에 크게 흔들릴 때 A는 무반응', _basis: 'B_stressVuln>P75 & A<P25' });
     }
   }
 
