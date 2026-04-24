@@ -8294,7 +8294,12 @@
                         ratesMetaA: extractRatesMeta(profileA),
                         ratesMetaB: extractRatesMeta(profileB),
                         raw_messages_a: profileA.messages || null,
-                        raw_messages_b: profileB.messages || null
+                        raw_messages_b: profileB.messages || null,
+                        // v3.9.79: clearSensitiveData 가 messages 지웠을 때 이미 계산된
+                        //   simulation (situational 포함) 을 서버로 전달해 재계산 불가 보완.
+                        //   서버는 raw_messages 로 재계산 시도 → 실패하면 이 값을 polish 해 사용.
+                        simulationA: profileA.simulation || null,
+                        simulationB: profileB.simulation || null
                     })
                 });
                 if (!response.ok) {

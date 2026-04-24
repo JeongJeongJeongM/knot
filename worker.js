@@ -13981,12 +13981,28 @@ function switchTab(id, el) {
         // ═══ Run simulations for both profiles ═══
         //   messagesA/B 와 prismA/B 를 runSimulation 에 전달해야
         //   simA.situational / simB.situational 이 생성됨 → crossSituational 계산 가능.
+        //   v3.9.79: clearSensitiveData 가 프론트 messages 를 지우는 경우가 많아
+        //   messagesA/B 가 null 인 매칭이 빈번. 이 경우 body.simulationA/B 에 개인 분석
+        //   시 미리 만들어진 simulation (situational 포함) 이 오면 그걸 사용.
         let simA = null, simB = null, crossSim = null, crossSituational = null;
         try {
           const axesA = profileA.axes || profileA;
           const axesB = profileB.axes || profileB;
-          simA = runSimulation(axesA, anchorA, messagesA, prismA);
-          simB = runSimulation(axesB, anchorB, messagesB, prismB);
+          // messagesA 있으면 재계산, 없으면 client 가 보낸 기존 simulation 사용 (fallback)
+          if (messagesA) {
+            simA = runSimulation(axesA, anchorA, messagesA, prismA);
+          } else if (body.simulationA && typeof body.simulationA === 'object') {
+            simA = body.simulationA;
+          } else {
+            simA = runSimulation(axesA, anchorA, null, prismA); // axes 만으로 부분 계산
+          }
+          if (messagesB) {
+            simB = runSimulation(axesB, anchorB, messagesB, prismB);
+          } else if (body.simulationB && typeof body.simulationB === 'object') {
+            simB = body.simulationB;
+          } else {
+            simB = runSimulation(axesB, anchorB, null, prismB);
+          }
           crossSim = computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB);
           // 상황별 쌍별 정체 매칭 — 설계 문서 1-B 원칙의 매칭 쪽 구현
           crossSituational = computeCrossSituational(simA, simB);
