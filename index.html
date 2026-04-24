@@ -13304,7 +13304,9 @@ function displayResult() {
                 s += '<text x="36" y="186">SECURE</text>';
                 s += '<text x="172" y="186">AVOIDANT</text>';
                 s += '<text x="36" y="46">ANXIOUS</text>';
-                s += '<text x="148" y="46">DISORGAN.</text>';
+                // v3.9.80: DISORGAN. 라벨 x=148 은 좌측 quadrant 경계(x=160) 넘어 들어감.
+                //   AVOIDANT(x=172) 와 동일 시작점으로 맞추고 짧게 DISORG. 로 축약.
+                s += '<text x="172" y="46">DISORG.</text>';
                 s += '</g>';
                 s += '<g font-family="Inter" font-size="10" fill="rgba(255,255,255,0.35)">';
                 s += '<text x="36" y="200">안정형</text>';
