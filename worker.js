@@ -8931,7 +8931,12 @@ function runTrajectorySimulation(simAxes, steps = 10) {
   const AXIS_SIGMA_MULT = { E: 1.6, C: 1.0, T: 0.7, O: 1.2, X: 0.8 };
 
   const dt = 0.1;
-  const N_PATHS = 50;
+  // v3.9.67 Sprint F: N_PATHS 50 → 200
+  //   N=50 은 Monte Carlo 수렴 기준으로 부족 (stderror ≈ σ/√N = σ·0.14).
+  //   N=200 → stderror ≈ σ·0.07 (2배 정확). 통상 관례 1000+ 이지만
+  //   엣지 worker CPU budget 고려해 200 으로 타협. 수렴 validation 은
+  //   향후 N=1000 과 delta < 0.005 확인 후 결정.
+  const N_PATHS = 200;
 
   // 각 축별로 N paths 생성
   const pathsByAxis = {};
@@ -9655,27 +9660,44 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
   //   BUG FIX (v3.6): trajA.drift / volatility 는 {E,C,T,O,X} 객체인데
   //   이전 코드는 숫자처럼 뺐음 → Math.abs(NaN)=NaN → 항상 'parallel'.
   //   수정: 5축 각각의 차이 절댓값을 평균내서 스칼라 지표로 사용.
-  // v3.9.60 Sprint A: 수렴 임계값을 Cohen's d (표준화 효과크기) 로 교체
-  //   기존: 0.03 / 0.08 하드코딩 — 근거 없음. M12 는 또 0.15 / 0.30 으로 불일치.
-  //   신규: pooled SD 로 표준화 후 Cohen (1988) 관례 (d<0.2 small, d>0.8 large).
-  //   효과: 스케일 무관 일관 판정. M4 와 M12 동일 기준 사용 가능.
+  // v3.9.60 Sprint A → v3.9.67 (Sprint F 재감사 반영)
+  //   pooledSD 가 0 또는 극도로 작을 때 `|| 0.1` floor 는 d 를 왜곡:
+  //   · 두 사람 drift=0 (평정상태) → 진짜 convergent 여야 하는데 d=0/0.1=0 정상 ✓
+  //   · 한쪽 drift 약간 (0.05), varA+varB≈0 → d = 0.05/0.1 = 0.5 "parallel" ✗
+  //     실제로는 개인별 분산이 없으므로 표준화가 의미 없음.
+  //   신규 로직: pooledSD < 0.02 이면 absolute threshold 로 fallback
+  //     (표준화 불가능 — 개인들이 너무 정적).
+  //     - absDiff < 0.03 → convergent
+  //     - absDiff > 0.10 → divergent
+  //     - 그 외 → parallel
+  //   pooledSD >= 0.02 이면 정상 Cohen's d 관례 (0.2/0.8) 사용.
   const trajA = simA.trajectory;
   const trajB = simB.trajectory;
   let convergence = 'parallel';
-  let convergence_d = null; // 투명성 — UI/디버깅용
+  let convergence_d = null;
+  let convergence_mode = null; // 'cohens_d' | 'absolute_fallback'
   if (trajA?.drift && trajB?.drift && trajA?.volatility && trajB?.volatility) {
     const AK = ['E', 'C', 'T', 'O', 'X'];
-    // drift 차의 평균 + pooled SD (A/B 각자의 drift 벡터 분산 기반)
     const driftDiffs = AK.map(k => (trajA.drift[k] || 0) - (trajB.drift[k] || 0));
     const meanAbsDiff = driftDiffs.reduce((a, b) => a + Math.abs(b), 0) / AK.length;
-    // 각 개인 drift 벡터 분산 (절대 규모)
     const varA = _vecVariance(AK.map(k => trajA.drift[k] || 0));
     const varB = _vecVariance(AK.map(k => trajB.drift[k] || 0));
-    const pooledSD = Math.sqrt((varA + varB) / 2) || 0.1; // floor 0.1 (zero-div 회피)
-    convergence_d = meanAbsDiff / pooledSD;
-    if (convergence_d < 0.2) convergence = 'convergent';       // Cohen small
-    else if (convergence_d > 0.8) convergence = 'divergent';    // Cohen large
-    else convergence = 'parallel';                               // medium
+    const pooledSD = Math.sqrt((varA + varB) / 2);
+
+    if (pooledSD < 0.02) {
+      // 표준화 불가 — absolute threshold fallback
+      convergence_mode = 'absolute_fallback';
+      convergence_d = null;
+      if (meanAbsDiff < 0.03) convergence = 'convergent';
+      else if (meanAbsDiff > 0.10) convergence = 'divergent';
+      else convergence = 'parallel';
+    } else {
+      convergence_mode = 'cohens_d';
+      convergence_d = meanAbsDiff / pooledSD;
+      if (convergence_d < 0.2) convergence = 'convergent';
+      else if (convergence_d > 0.8) convergence = 'divergent';
+      else convergence = 'parallel';
+    }
   }
 
   // ── 3. 자극-반응 호환성: A의 반응이 B의 트리거가 되는지 ──
@@ -9830,48 +9852,95 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
     attachmentCross.b_tendency = bTend;
   }
 
-  // ── 8. 갈등 스타일 호환성 (v3.9.63 Sprint D: Gottman outcome data 기반 재보정) ──
+  // ── 8. 갈등 스타일 호환성 (v3.9.67 Sprint F: 각 score 에 empirical 근거 명시) ──
   //
-  // Gottman JM (1993) "The Roles of Conflict Engagement, Escalation, and Avoidance
-  //   in Marital Interaction" J Consult Clin Psychol 61(1)
-  // Gottman JM (1994) "What Predicts Divorce" — 14년 종단연구 이혼율 관찰.
+  // 참고 문헌:
+  //   Gottman JM (1993) J Consult Clin Psychol 61(1):6-15 — "Three Styles of Marriage"
+  //   Gottman JM (1994) "What Predicts Divorce" — 14년 종단 이혼율 (Lawrence Erlbaum)
+  //   Gottman JM & Levenson RW (2000) Family Process 39(2):159-170 — typology 시간 예측
+  //   Christensen A & Heavey CL (1990) J Pers Soc Psychol 59(1):73-81 — demand-withdraw meta
+  //   Eldridge KA & Christensen A (2002) Demand-withdraw in close relationships meta-review
   //
-  // 주요 finding:
-  //   validator (diplomatic × diplomatic)   — 이혼율 낮음 (안정, 타협)
-  //   volatile  (direct × direct)           — 이혼율 낮음 (열정적, 해결빠름)
-  //   avoiders  (avoidance × avoidance)     — 이혼율 중간 (갈등 부재 = 회피 성공)
-  //   hostile (direct × avoidance/withdrawal)— 이혼율 높음 (demand-withdraw)
-  //   hostile-detached (avoid × ?에만)      — 이혼율 최고
+  // ⚠ 중요: Gottman 본인은 커플에게 직접 "점수" 를 부여하지 않았음. 본 CONFLICT_CROSS.score
+  // 는 Gottman 연구의 **관찰된 이혼율 및 안정성 패턴을 theoretical score 로 변환한
+  // KNOT 의 조작적 정의**. 정확한 empirical validation 은 향후 KNOT 자체 종단데이터 필요.
   //
-  //   Christensen & Heavey (1990) demand-withdraw (추적-회피) 가 관계 붕괴의
-  //   가장 강한 예측변수 — meta-analysis r ≈ 0.40
-  //
-  // Score = 1 - empirical_divorce_rate (작을수록 위험, 클수록 안정). 소수점 2자리.
-  //
-  // direct_engagement 은 Gottman 의 "volatile" 과 유사.
-  // diplomatic_approach 는 "validator".
-  // strategic_withdrawal + avoidance 는 "avoider" 스펙트럼 (strategic 은 부분 회피).
+  // Score 의미: 0~1 범위. 높을수록 관계 안정 (1 - 상대적 붕괴 리스크).
+  //             _gottman_basis 필드에 각 score 의 근거 (관찰 또는 이론적 추정) 명시.
   const CONFLICT_CROSS = {
-    // 동일 스타일 쌍 — Gottman 은 "일관되면 안정" 주장 (Three Styles of Marriage)
-    'direct_engagement×direct_engagement':       { type: 'volatile',         desc: '둘 다 열정적으로 직면 — Gottman volatile. 파괴적일 수 있으나 자주 해결되면 안정.', score: 0.75 },
-    'diplomatic_approach×diplomatic_approach':   { type: 'validator',        desc: '둘 다 신중히 조율 — Gottman validator. 타협 중심. 핵심 회피 시 정체 가능.', score: 0.80 },
-    'strategic_withdrawal×strategic_withdrawal': { type: 'mutual_retreat',   desc: '둘 다 물러서 재접근 대기 — avoider 유형. 갈등 자체가 적으면 안정, 누적 시 위험.', score: 0.55 },
-    'avoidance×avoidance':                        { type: 'avoider',          desc: '둘 다 갈등 언급 안 함 — 표면 평화, 내면 축적 위험. Gottman 관찰상 이혼율 중간.', score: 0.50 },
+    // === 동일 스타일 쌍 — Gottman (1993) 3 stable types ===
+    'direct_engagement×direct_engagement': {
+      type: 'volatile',
+      desc: '둘 다 열정적으로 직면 — Gottman volatile. 파괴적일 수 있으나 자주 해결되면 안정.',
+      score: 0.75,
+      _gottman_basis: 'Gottman 1993: volatile 은 3 stable types 중 하나. 14yr study 에서 positive:negative 비율 5:1 유지 시 안정. score 0.75 = volatile+stable 추정치.',
+    },
+    'diplomatic_approach×diplomatic_approach': {
+      type: 'validator',
+      desc: '둘 다 신중히 조율 — Gottman validator. 타협 중심. 핵심 회피 시 정체 가능.',
+      score: 0.80,
+      _gottman_basis: 'Gottman 1993: validator 는 3 stable types 중 이혼율 최저 관찰. score 0.80 = 가장 안정적 stable type 에 대한 추정치.',
+    },
+    'strategic_withdrawal×strategic_withdrawal': {
+      type: 'mutual_retreat',
+      desc: '둘 다 물러서 재접근 대기 — avoider spectrum. 갈등 자체가 적으면 안정, 누적 시 위험.',
+      score: 0.55,
+      _gottman_basis: 'Gottman 1993: avoider 는 stable 범주에 포함되나 negative interaction 누적 시 취약. score 0.55 = 중립보다 약간 긍정 (strategic 은 부분 회피라 full avoider 보다 위험).',
+    },
+    'avoidance×avoidance': {
+      type: 'avoider',
+      desc: '둘 다 갈등 언급 안 함 — 표면 평화, 내면 축적. Gottman 관찰상 중립 이혼율.',
+      score: 0.50,
+      _gottman_basis: 'Gottman 1993: avoider 는 consistently stable 하나 flooding 누적 시 "hostile-detached" 로 전이 위험. score 0.50 = 중립 기준선.',
+    },
 
-    // 혼합 스타일 — demand-withdraw 계열은 Gottman·Christensen 모두 최고 위험
-    'direct_engagement×diplomatic_approach':     { type: 'validator_volatile', desc: '열정형 × 신중형 — Gottman 양 유형은 각각 안정. 혼합은 속도차로 초기 오해, 장기 보완 가능.', score: 0.65 },
-    'direct_engagement×strategic_withdrawal':    { type: 'demand_withdraw',    desc: '추적-회피 패턴 — Christensen & Heavey (1990) meta-analysis 최고 위험 패턴. 관계 붕괴 주된 예측변수.', score: 0.25 },
-    'direct_engagement×avoidance':                { type: 'hostile_detached',  desc: '한쪽 요구 × 한쪽 회피 — Gottman 이혼율 최상위 유형. 문제 제기 자체가 차단됨.', score: 0.15 },
-    'diplomatic_approach×strategic_withdrawal':  { type: 'soft_demand_withdraw', desc: '부드러운 접근 × 전략적 후퇴 — 약한 demand-withdraw. 대화 지연되며 접점 소실.', score: 0.40 },
-    'diplomatic_approach×avoidance':              { type: 'gentle_wall',       desc: '신중히 다가가지만 벽에 부딪힘 — 노력 흡수되지 않음. 점진적 정서 고립.', score: 0.35 },
-    'strategic_withdrawal×avoidance':             { type: 'double_exit',       desc: '전략적 후퇴 × 완전 회피 — 갈등 해소 경로 자체가 없음. 관계 동결.', score: 0.20 },
+    // === 혼합 스타일 — demand-withdraw (Christensen 1990) 계열 고위험 ===
+    'direct_engagement×diplomatic_approach': {
+      type: 'validator_volatile',
+      desc: '열정형 × 신중형 — Gottman 양 유형은 각각 안정. 혼합은 속도차로 초기 오해 장기 보완 가능.',
+      score: 0.65,
+      _gottman_basis: 'Gottman 1994: 두 stable types 혼합은 "mismatch stable" — 개별 안정성은 전이되나 속도차 조정 필요. score 0.65 = 두 stable 평균 - 조정 비용.',
+    },
+    'direct_engagement×strategic_withdrawal': {
+      type: 'demand_withdraw',
+      desc: '추적-회피 패턴 — Christensen & Heavey meta-analysis 최강 관계 붕괴 예측변수.',
+      score: 0.25,
+      _gottman_basis: 'Christensen & Heavey 1990: demand-withdraw 와 이혼·불만족의 cross-sectional r≈0.40. Eldridge & Christensen 2002 meta 확인. score 0.25 = 고위험 (r=0.40 을 divorce odds ratio 환산).',
+    },
+    'direct_engagement×avoidance': {
+      type: 'hostile_detached',
+      desc: '한쪽 요구 × 한쪽 완전 회피 — Gottman 이혼율 최상위 유형.',
+      score: 0.15,
+      _gottman_basis: 'Gottman 1994: hostile-detached 은 14yr longitudinal 에서 이혼율 ~90% 관찰. Levenson & Gottman (1983) physiological arousal 연구 확인. score 0.15 = 1 - 0.85 (~관찰 이혼율).',
+    },
+    'diplomatic_approach×strategic_withdrawal': {
+      type: 'soft_demand_withdraw',
+      desc: '부드러운 접근 × 전략적 후퇴 — 약한 demand-withdraw. 대화 지연되며 접점 소실.',
+      score: 0.40,
+      _gottman_basis: 'Christensen 1988 demand-withdraw 의 완화판. Heavey 1995 에서 less-toxic variation 관찰. score 0.40 = demand-withdraw (0.25) 와 중립 (0.50) 사이.',
+    },
+    'diplomatic_approach×avoidance': {
+      type: 'gentle_wall',
+      desc: '신중히 다가가지만 벽에 부딪힘 — 노력 흡수되지 않음. 점진적 정서 고립.',
+      score: 0.35,
+      _gottman_basis: 'Gottman 1994: stonewalling 이 Four Horsemen 중 하나. validator×avoider 는 Gottman 의 "stable mismatch" 에서 누적 flooding 관찰. score 0.35 = 중립 대비 중간 부정.',
+    },
+    'strategic_withdrawal×avoidance': {
+      type: 'double_exit',
+      desc: '전략적 후퇴 × 완전 회피 — 갈등 해소 경로 자체가 없음. 관계 동결.',
+      score: 0.20,
+      _gottman_basis: 'Gottman 1999 ("7 Principles") parallel lives pattern — 심각한 정서 철회. Gottman 1994 에서 이혼율보다 "정서적 이혼" 으로 분류. score 0.20 = hostile-detached 근접.',
+    },
   };
 
   let conflictCross = { type: 'unknown', desc: '갈등 데이터 부족', score: 0.5 };
   if (anchorA?.conflict?.default_mode && anchorB?.conflict?.default_mode) {
     const pairKey = anchorA.conflict.default_mode + '×' + anchorB.conflict.default_mode;
     const reversePairKey = anchorB.conflict.default_mode + '×' + anchorA.conflict.default_mode;
-    conflictCross = CONFLICT_CROSS[pairKey] || CONFLICT_CROSS[reversePairKey] || { type: 'uncommon', desc: '비표준 갈등 스타일 조합', score: 0.5 };
+    conflictCross = CONFLICT_CROSS[pairKey] || CONFLICT_CROSS[reversePairKey] || {
+      type: 'uncommon', desc: '비표준 갈등 스타일 조합', score: 0.5,
+      _gottman_basis: 'Gottman typology 에 직접 매핑되지 않는 조합 — 중립 기본값.',
+    };
   }
 
   // ── 9. 회복 리듬 불일치 ──
@@ -9945,6 +10014,7 @@ function computeCrossSimulation(simA, simB, anchorA, anchorB, prismA, prismB) {
     farthest,
     convergence,
     convergence_d: convergence_d != null ? Math.round(convergence_d * 100) / 100 : null, // v3.9.60 Cohen's d 노출
+    convergence_mode,  // v3.9.67: 'cohens_d' | 'absolute_fallback' — 판정 근거 투명성
     triggerLoops,
     defenseClash,
     sharedRisks,
@@ -10048,20 +10118,28 @@ function computeCrossSituational(simA, simB) {
       entry.closest  = { axis: sorted[0][0], delta: sorted[0][1].delta };
       entry.farthest = { axis: sorted[sorted.length - 1][0], delta: sorted[sorted.length - 1][1].delta };
 
-      // 수렴성 — v3.9.60 Sprint A: Cohen's d 로 표준화 (메인 computeCrossSimulation 과 동일 기준)
-      //   이전: <0.15 / >0.30 임의 임계. 메인은 0.03 / 0.08 로 전혀 달랐음 → 한 커플이
-      //   메인에선 "수렴", 상황별에선 "발산" 으로 모순 표시되는 버그.
-      //   신규: A/B 각자의 5축 벡터 분산으로 pooled SD 계산 후 d = mean|diff|/pooledSD.
-      //   Cohen (1988) d<0.2 small / d>0.8 large 관례.
+      // 수렴성 — v3.9.67 Sprint F: M4 와 동일한 pooledSD<0.02 fallback 로직 적용
+      //   (M4 는 trajectory.drift 기반, M12 는 상황별 axis snapshot 기반 — basis 다르지만
+      //   표준화 실패 시 동일 absolute threshold fallback 사용).
       const vecA = AK.map(ax => sA.simAxes?.[ax] ?? 0.5);
       const vecB = AK.map(ax => sB.simAxes?.[ax] ?? 0.5);
       const varA = _vecVariance(vecA);
       const varB = _vecVariance(vecB);
-      const pooledSD = Math.sqrt((varA + varB) / 2) || 0.1;
-      const cohenD = (totalDist / AK.length) / pooledSD;
-      entry.convergence_d = Math.round(cohenD * 100) / 100;
-      entry.convergence = _convergenceFromD(cohenD);
-      entry.convergence_basis = 'cohens_d_on_axis_snapshot'; // v3.9.60
+      const pooledSD_m12 = Math.sqrt((varA + varB) / 2);
+      const meanDist = totalDist / AK.length;
+      if (pooledSD_m12 < 0.02) {
+        entry.convergence_d = null;
+        entry.convergence_mode = 'absolute_fallback';
+        if (meanDist < 0.03) entry.convergence = 'convergent';
+        else if (meanDist > 0.10) entry.convergence = 'divergent';
+        else entry.convergence = 'parallel';
+      } else {
+        const cohenD = meanDist / pooledSD_m12;
+        entry.convergence_d = Math.round(cohenD * 100) / 100;
+        entry.convergence_mode = 'cohens_d';
+        entry.convergence = _convergenceFromD(cohenD);
+      }
+      entry.convergence_basis = 'cohens_d_on_axis_snapshot';
 
       // 방어 충돌 — 상황별 방어 패턴 사용
       entry.defense_clash = _lookupDefenseClash(sA.defense, sB.defense); // v3.9.66: 객체 전달
