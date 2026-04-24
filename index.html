@@ -4736,35 +4736,55 @@
         .side-nav-num{display:block;font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.35);letter-spacing:1px;font-weight:700;margin-bottom:1px}
         .side-nav-item.active .side-nav-num{color:#F5A623}
 
-        /* v4 v3.9.41 — DEEP DIVE 해체: 각 섹션 하단 "해석 블록" 컴포넌트
-           · 개인 분석 DYNAMICS 렌즈 패널 톤 계승 (글래스 카드 + 여백 + 14px 본문).
-           · 기존 .v39-dd-sum / .v39-dd-subtitle / .v39-dd-body 폰트 스케일 그대로. */
-        .v39-interp-container{max-width:720px;margin:32px auto 0}
-        .v39-interp-block{background:rgba(12,12,20,0.5);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px 32px;position:relative;overflow:hidden}
-        .v39-interp-block::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,166,35,0.25),transparent);z-index:1}
+        /* v4 v3.9.48 — 해석 블록을 개인 분석 .lens-split 톤으로 재설계
+           · 좌 220px 사이드 탭 (subsection 제목) + 우 패널 (선택된 content)
+           · 긴 wall-of-text 대신 탭 전환식 — 개인 분석 DYNAMICS 패널과 동일 UX
+           · 폰트·색·radius·padding 개인 .lens-* 계승 */
+        .v39-interp-container{max-width:1000px;margin:32px auto 0}
+        .v39-interp-block{margin-top:24px}
         .v39-interp-block + .v39-interp-block{margin-top:16px}
-        .v39-interp-head{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+
+        /* head — 아이콘 + 라벨 상단 (lens-split 밖) */
+        .v39-interp-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:0 4px}
         .v39-interp-icon{width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:rgba(245,166,35,0.12);border-radius:10px;font-size:20px;flex-shrink:0}
         .v39-interp-labels{flex:1;min-width:0}
         .v39-interp-label{font-size:10px;color:#F5A623;font-family:'JetBrains Mono',monospace;letter-spacing:2px;font-weight:600;margin-bottom:3px;text-transform:uppercase}
         .v39-interp-lens{font-size:17px;font-weight:700;color:#fff;letter-spacing:-0.3px;line-height:1.3}
         .v39-interp-lens .lens-code{color:rgba(255,255,255,0.3);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:400;margin-left:8px;letter-spacing:1px;text-transform:uppercase}
-        /* summary — 개인 분석의 summary 박스 톤 (연한 주황 좌보더 + 넉넉한 padding) */
-        .v39-interp-summary{background:rgba(245,166,35,0.06);border-left:3px solid #F5A623;padding:16px 20px;margin-bottom:24px;border-radius:0 10px 10px 0;font-size:14px;line-height:1.85;color:rgba(255,255,255,0.85)}
+
+        /* lens-split 복제 (개인 분석 L2546~) */
+        .v39-interp-split{display:flex;border-radius:18px;border:1px solid var(--glass-border);background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);overflow:hidden}
+        .v39-interp-nav{width:220px;min-width:220px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--glass-border)}
+        .v39-interp-nav-item{padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.04);transition:all 0.25s ease;position:relative;user-select:none;font-size:12.5px;font-weight:500;color:rgba(255,255,255,0.5);line-height:1.35}
+        .v39-interp-nav-item:last-child{border-bottom:none}
+        .v39-interp-nav-item:hover{background:rgba(245,166,35,0.04)}
+        .v39-interp-nav-item.active{background:rgba(245,166,35,0.08);color:#fff;font-weight:600}
+        .v39-interp-nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ac);border-radius:0 3px 3px 0}
+        .v39-interp-nav-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:1px;font-weight:700;flex-shrink:0}
+        .v39-interp-nav-item.active .v39-interp-nav-num{color:var(--ac)}
+        .v39-interp-panel{flex:1;min-width:0;position:relative}
+        .v39-interp-panel-content{padding:32px 34px;animation:v39InterpFadeIn 0.3s ease}
+        @keyframes v39InterpFadeIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
+        /* summary — 개인 .lens-panel-summary 톤 (흰색 3% 배경) */
+        .v39-interp-summary{background:rgba(255,255,255,0.03);border-left:3px solid var(--ac);padding:16px 20px;margin-bottom:24px;border-radius:0 10px 10px 0;font-size:14px;line-height:1.85;color:rgba(255,255,255,0.75)}
         .v39-interp-summary strong,.v39-interp-summary b{color:#fff;font-weight:600}
-        /* subsection 평평한 흐름 + 제목 앞 세로 포인트 */
-        .v39-interp-subs{display:block}
-        .v39-interp-sub{padding:0;background:none;border:none}
-        .v39-interp-sub + .v39-interp-sub{margin-top:0}
-        .v39-interp-sub-title{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#F5A623;letter-spacing:2px;text-transform:uppercase;margin:28px 0 12px;padding-left:12px;position:relative}
-        .v39-interp-sub-title::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:12px;background:#F5A623;border-radius:2px}
-        .v39-interp-sub:first-child .v39-interp-sub-title{margin-top:0}
+        .v39-interp-sub-title{font-size:11px;color:var(--ac);font-weight:600;margin-bottom:14px;font-family:'JetBrains Mono',monospace;letter-spacing:2px;text-transform:uppercase}
         .v39-interp-sub-body{font-size:14px;line-height:1.85;color:rgba(255,255,255,0.75)}
         .v39-interp-sub-body p{margin-bottom:14px}
         .v39-interp-sub-body p:last-child{margin-bottom:0}
         .v39-interp-sub-body strong,.v39-interp-sub-body b{color:#fff;font-weight:600}
-        @media(max-width:600px){
-            .v39-interp-block{padding:22px 20px}
+
+        /* subsection 0개 or 1개: 사이드 탭 숨김, 평면 렌더 */
+        .v39-interp-split.flat .v39-interp-nav{display:none}
+
+        /* 모바일: 좌 탭 → 상단 가로 스크롤 (개인 L3091 동일) */
+        @media(max-width:720px){
+            .v39-interp-split{flex-direction:column}
+            .v39-interp-nav{width:100%;min-width:100%;flex-direction:row;overflow-x:auto;overflow-y:hidden;border-right:none;border-bottom:1px solid var(--glass-border);-webkit-overflow-scrolling:touch;scrollbar-width:none}
+            .v39-interp-nav::-webkit-scrollbar{display:none}
+            .v39-interp-nav-item{flex-shrink:0;border-bottom:none;border-right:1px solid rgba(255,255,255,0.04);white-space:nowrap;padding:12px 14px;font-size:12px}
+            .v39-interp-nav-item.active::before{left:0;right:0;top:auto;bottom:0;width:auto;height:3px;border-radius:3px 3px 0 0}
+            .v39-interp-panel-content{padding:24px 20px 32px}
             .v39-interp-icon{width:32px;height:32px;font-size:17px}
             .v39-interp-lens{font-size:15px}
         }
@@ -12207,6 +12227,11 @@ function displayResult() {
             if (sections && typeof sections === 'object') return sections[key] || null;
             return null;
         }
+        // v3.9.48 — 해석 블록 탭 전환용 상태
+        //   container ID 단위로 현재 활성 subsection idx 저장 → 재렌더(교차 페이지 재진입 등) 시 유지
+        var _v39InterpActive = {};
+        window._v39InterpState = null; // { containerId, blockIdx, subs, summary, meta, lens } 리스트
+
         function renderV39InterpBlock(containerId, lensKeys, sections){
             var el = document.getElementById(containerId);
             if (!el) return;
@@ -12216,40 +12241,147 @@ function displayResult() {
                 if (sec) matched.push({ lens:k, section:sec });
             });
             if (matched.length === 0) { el.innerHTML = ''; el.style.display = 'none'; return; }
-            var html = matched.map(function(m){
+
+            // 상태 컨테이너 (블록별 활성 탭 idx)
+            if (!_v39InterpActive[containerId]) _v39InterpActive[containerId] = {};
+            var activeState = _v39InterpActive[containerId];
+
+            var html = matched.map(function(m, blockIdx){
                 var meta = _V39_LENS_META[m.lens] || {};
                 var sec = m.section;
-                var subs = Array.isArray(sec.subsections) ? sec.subsections : [];
-                var subHtml = subs.map(function(sub){
-                    if (!sub) return '';
-                    var t = sub.title || sub.key || '';
+                var rawSubs = Array.isArray(sec.subsections) ? sec.subsections : [];
+                // 의미 있는 subsection 만 (content 있는 것)
+                var subs = rawSubs.filter(function(sub){
+                    if (!sub) return false;
                     var c = sub.content || sub.text || sub.body || '';
-                    if (!c) return '';
-                    return '<div class="v39-interp-sub">' +
-                        (t ? '<div class="v39-interp-sub-title">' + _v39Safe(t) + '</div>' : '') +
-                        '<div class="v39-interp-sub-body"><p>' + _v39Safe(c).replace(/\n+/g, '</p><p>') + '</p></div>' +
-                        '</div>';
-                }).join('');
+                    return !!c;
+                });
+
                 var summaryHtml = sec.summary
                     ? '<div class="v39-interp-summary">' + _v39Safe(sec.summary).replace(/\n+/g, '<br>') + '</div>'
                     : '';
-                return '<div class="v39-interp-block">' +
-                    '<div class="v39-interp-head">' +
-                        '<div class="v39-interp-icon">' + (meta.icon || '◆') + '</div>' +
-                        '<div class="v39-interp-labels">' +
-                            '<div class="v39-interp-label">LENS · INTERPRETATION</div>' +
-                            '<div class="v39-interp-lens">' + _v39Safe(meta.title || sec.title || m.lens) +
-                                '<span class="lens-code">' + _v39Safe(m.lens.toUpperCase()) + '</span>' +
-                            '</div>' +
+
+                var headHtml = '<div class="v39-interp-head">' +
+                    '<div class="v39-interp-icon">' + (meta.icon || '◆') + '</div>' +
+                    '<div class="v39-interp-labels">' +
+                        '<div class="v39-interp-label">LENS · INTERPRETATION</div>' +
+                        '<div class="v39-interp-lens">' + _v39Safe(meta.title || sec.title || m.lens) +
+                            '<span class="lens-code">' + _v39Safe(m.lens.toUpperCase()) + '</span>' +
                         '</div>' +
                     '</div>' +
-                    summaryHtml +
-                    (subHtml ? '<div class="v39-interp-subs">' + subHtml + '</div>' : '') +
+                '</div>';
+
+                // subsection 0~1개 → flat 렌더 (탭 숨김)
+                if (subs.length <= 1) {
+                    var flatBody = '';
+                    if (subs.length === 1) {
+                        var sub0 = subs[0];
+                        var c0 = sub0.content || sub0.text || sub0.body || '';
+                        flatBody = (sub0.title ? '<div class="v39-interp-sub-title">' + _v39Safe(sub0.title) + '</div>' : '') +
+                            '<div class="v39-interp-sub-body"><p>' + _v39Safe(c0).replace(/\n+/g, '</p><p>') + '</p></div>';
+                    } else if (!summaryHtml) {
+                        flatBody = '<div class="v39-interp-sub-body" style="color:rgba(255,255,255,0.4);font-style:italic">해석 데이터 없음</div>';
+                    }
+                    return '<div class="v39-interp-block">' +
+                        headHtml +
+                        '<div class="v39-interp-split flat">' +
+                            '<div class="v39-interp-panel">' +
+                                '<div class="v39-interp-panel-content">' +
+                                    summaryHtml +
+                                    flatBody +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                }
+
+                // subsection 2개 이상 → 좌 탭 + 우 패널
+                var activeIdx = (typeof activeState[blockIdx] === 'number' && activeState[blockIdx] < subs.length)
+                    ? activeState[blockIdx] : 0;
+                activeState[blockIdx] = activeIdx;
+
+                var navItems = subs.map(function(sub, i){
+                    var t = sub.title || sub.key || ('섹션 ' + (i+1));
+                    var num = String(i+1).padStart(2, '0');
+                    return '<div class="v39-interp-nav-item' + (i === activeIdx ? ' active' : '') + '" ' +
+                        'data-cid="' + containerId + '" data-bidx="' + blockIdx + '" data-sidx="' + i + '" ' +
+                        'onclick="selectV39InterpTab(\'' + containerId + '\',' + blockIdx + ',' + i + ')">' +
+                        '<span class="v39-interp-nav-num">' + num + '</span>' +
+                        '<span>' + _v39Safe(t) + '</span>' +
+                    '</div>';
+                }).join('');
+
+                var activeSub = subs[activeIdx];
+                var activeContent = activeSub.content || activeSub.text || activeSub.body || '';
+                var panelHtml = summaryHtml +
+                    (activeSub.title ? '<div class="v39-interp-sub-title">' + _v39Safe(activeSub.title) + '</div>' : '') +
+                    '<div class="v39-interp-sub-body"><p>' + _v39Safe(activeContent).replace(/\n+/g, '</p><p>') + '</p></div>';
+
+                return '<div class="v39-interp-block" data-cid="' + containerId + '" data-bidx="' + blockIdx + '">' +
+                    headHtml +
+                    '<div class="v39-interp-split">' +
+                        '<div class="v39-interp-nav">' + navItems + '</div>' +
+                        '<div class="v39-interp-panel">' +
+                            '<div class="v39-interp-panel-content">' + panelHtml + '</div>' +
+                        '</div>' +
+                    '</div>' +
                 '</div>';
             }).join('');
             el.innerHTML = html;
             el.style.display = 'block';
+
+            // 탭 재렌더용 원본 보존
+            el._v39InterpMatched = matched;
         }
+
+        // v3.9.48 — 해석 탭 전환 (좌 사이드탭 클릭 핸들러)
+        //   전체 블록 다시 그리지 않고 해당 block 의 nav/active + panel-content 만 갱신
+        function selectV39InterpTab(containerId, blockIdx, subIdx){
+            var el = document.getElementById(containerId);
+            if (!el || !el._v39InterpMatched) return;
+            var matched = el._v39InterpMatched;
+            var m = matched[blockIdx];
+            if (!m) return;
+            var rawSubs = Array.isArray(m.section.subsections) ? m.section.subsections : [];
+            var subs = rawSubs.filter(function(sub){
+                if (!sub) return false;
+                var c = sub.content || sub.text || sub.body || '';
+                return !!c;
+            });
+            if (!subs[subIdx]) return;
+            if (!_v39InterpActive[containerId]) _v39InterpActive[containerId] = {};
+            _v39InterpActive[containerId][blockIdx] = subIdx;
+
+            var block = el.querySelector('.v39-interp-block[data-bidx="' + blockIdx + '"]');
+            if (!block) return;
+
+            // nav active 상태 교체
+            var navItems = block.querySelectorAll('.v39-interp-nav-item');
+            navItems.forEach(function(it){
+                var si = parseInt(it.getAttribute('data-sidx'), 10);
+                it.classList.toggle('active', si === subIdx);
+            });
+
+            // panel content 교체 (summary 유지)
+            var activeSub = subs[subIdx];
+            var activeContent = activeSub.content || activeSub.text || activeSub.body || '';
+            var summary = m.section.summary
+                ? '<div class="v39-interp-summary">' + _v39Safe(m.section.summary).replace(/\n+/g, '<br>') + '</div>'
+                : '';
+            var panelContent = summary +
+                (activeSub.title ? '<div class="v39-interp-sub-title">' + _v39Safe(activeSub.title) + '</div>' : '') +
+                '<div class="v39-interp-sub-body"><p>' + _v39Safe(activeContent).replace(/\n+/g, '</p><p>') + '</p></div>';
+
+            var panel = block.querySelector('.v39-interp-panel-content');
+            if (panel) {
+                panel.innerHTML = panelContent;
+                // fade-in 재생
+                panel.style.animation = 'none';
+                panel.offsetHeight; // reflow
+                panel.style.animation = '';
+            }
+        }
+        window.selectV39InterpTab = selectV39InterpTab;
         function renderV39AllInterpBlocks(ctx){
             var sections = ctx.sections || [];
             Object.keys(_V39_INTERP_MAPPING).forEach(function(containerId){
