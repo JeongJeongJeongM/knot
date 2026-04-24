@@ -13199,6 +13199,35 @@ function switchTab(id, el) {
           } catch {}
         }
 
+        // v3.9.84: 기존 매칭 로드 시 situational 비어있으면 개인 analyses 의 simulation
+        //   에서 꺼내 그 자리에서 재생성. 구 매칭(v3.9.79 이전 저장) 전부 fallback_none
+        //   이라 UX 깨져 있던 것 복구.
+        const crossSitEmpty = !crossSituational || Object.keys(crossSituational || {}).length === 0 ||
+          Object.values(crossSituational || {}).every(v => v?.dataMode === 'fallback_none');
+        if (crossSitEmpty) {
+          try {
+            // 본인 A 의 simulation 을 DB analyses 에서 조회 (authUser 기반)
+            const analysisRow = await env.KNOT_DB.prepare(
+              `SELECT simulation_json FROM analyses WHERE user_id = ? AND status = 'complete'
+               ORDER BY created_at DESC LIMIT 1`
+            ).bind(authUser.sub).first();
+            if (analysisRow?.simulation_json) {
+              const dbSimA = JSON.parse(analysisRow.simulation_json);
+              // B 는 저장된 simulation_b_json 그대로 사용 (상대방 정보)
+              const useSimA = (dbSimA?.situational && Object.keys(dbSimA.situational).length > 0) ? dbSimA : simulationA;
+              const useSimB = simulationB;
+              if (useSimA && useSimB) {
+                const regenerated = computeCrossSituational(useSimA, useSimB);
+                const anyMeasured = Object.values(regenerated || {}).some(v => v?.dataMode === 'measured');
+                if (anyMeasured) {
+                  crossSituational = regenerated;
+                  simulationA = useSimA; // 응답에서도 복구된 simulationA 사용
+                }
+              }
+            }
+          } catch (e) { console.error('[my-match-result] SIT regen:', e.message); }
+        }
+
         return jsonResponse({
           found: true,
           status: 'complete',
