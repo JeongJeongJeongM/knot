@@ -12652,13 +12652,16 @@ export default {
             let anchorB = null; try { anchorB = r.anchor_b_json ? JSON.parse(r.anchor_b_json) : null; } catch {}
             let simulationA = null; try { simulationA = r.simulation_a_json ? JSON.parse(r.simulation_a_json) : null; } catch {}
             let simulationB = null; try { simulationB = r.simulation_b_json ? JSON.parse(r.simulation_b_json) : null; } catch {}
-            // v3.9.85: crossSituational 빈 경우 즉석 재생성 (my-match-result 와 동일 로직)
+            // v3.9.85→v3.9.88: crossSituational 빈 경우 즉석 재생성
+            //   v3.9.87 synthesized 모드 결과도 수용 (measured 아니어도 데이터 있으면 교체).
             const _sitEmpty = !crossSituational ||
               Object.values(crossSituational || {}).every(v => v?.dataMode === 'fallback_none');
             if (_sitEmpty && _userSimA && simulationB) {
               try {
                 const regen = computeCrossSituational(_userSimA, simulationB);
-                if (Object.values(regen || {}).some(v => v?.dataMode === 'measured')) {
+                const hasData = Object.values(regen || {}).some(v =>
+                  v?.dataMode === 'measured' || v?.dataMode === 'synthesized');
+                if (hasData) {
                   crossSituational = regen;
                   simulationA = _userSimA;
                 }
@@ -13300,8 +13303,10 @@ function switchTab(id, el) {
               const useSimB = simulationB;
               if (useSimA && useSimB) {
                 const regenerated = computeCrossSituational(useSimA, useSimB);
-                const anyMeasured = Object.values(regenerated || {}).some(v => v?.dataMode === 'measured');
-                if (anyMeasured) {
+                // v3.9.88: synthesized 도 수용 (measured 아니어도 데이터 있으면)
+                const hasData = Object.values(regenerated || {}).some(v =>
+                  v?.dataMode === 'measured' || v?.dataMode === 'synthesized');
+                if (hasData) {
                   crossSituational = regenerated;
                   simulationA = useSimA; // 응답에서도 복구된 simulationA 사용
                 }
