@@ -4851,6 +4851,48 @@
         .v39-sit-tab.partial{opacity:0.7;border-style:dashed}
 
         /* v3.9.47 — SIT 상세 Before/After 구조 (CASE 1 FULL) */
+        /* v3.9.90 Sprint I: SIT 상세 Alt B "쌍둥이 스냅샷" 디자인 */
+        .v39b-wrap{padding:24px 20px;background:rgba(6,6,11,0.45);border:1px solid var(--sf-2);border-radius:14px;position:relative}
+        .v39b-quality{position:absolute;top:12px;right:14px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;padding:3px 8px;border-radius:10px;font-weight:600}
+        .v39b-quality.measured{background:rgba(52,211,153,0.15);color:var(--state-growth)}
+        .v39b-quality.synth{background:rgba(245,166,35,0.15);color:var(--ac)}
+        .v39b-twin{display:grid;grid-template-columns:1fr 1px 1fr;gap:16px;margin-bottom:18px;margin-top:8px}
+        .v39b-divider{background:var(--sf-3);width:1px;align-self:stretch}
+        .v39b-person{padding:8px 4px}
+        .v39b-p-role{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.8px;font-weight:700;margin-bottom:8px}
+        .v39b-person.a .v39b-p-role{color:var(--side-a)}
+        .v39b-person.b .v39b-p-role{color:var(--side-b)}
+        .v39b-p-headline{font-size:13.5px;line-height:1.6;color:rgba(255,255,255,0.85);margin-bottom:14px;min-height:42px}
+        .v39b-p-headline b{font-weight:700}
+        .v39b-person.a .v39b-p-headline b{color:var(--side-a)}
+        .v39b-person.b .v39b-p-headline b{color:var(--side-b)}
+        .v39b-shifts{display:flex;flex-direction:column;gap:6px}
+        .v39b-shift-bar{display:grid;grid-template-columns:44px 1fr 48px;gap:8px;align-items:center;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:6px}
+        .v39b-shift-axis{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.5);font-weight:700;letter-spacing:0.5px}
+        .v39b-shift-visual{position:relative;height:6px;background:var(--sf-3);border-radius:3px;overflow:hidden}
+        .v39b-shift-center{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.25)}
+        .v39b-shift-fill{position:absolute;top:0;bottom:0;border-radius:3px}
+        .v39b-shift-fill.pos{background:var(--state-growth)}
+        .v39b-shift-fill.neg{background:var(--state-risk)}
+        .v39b-shift-val{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;text-align:right}
+        .v39b-shift-val.pos{color:var(--state-growth)}
+        .v39b-shift-val.neg{color:var(--state-risk)}
+        .v39b-no-shift{font-size:11px;color:rgba(255,255,255,0.4);font-style:italic;padding:8px 4px}
+        .v39b-relation{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border-radius:10px;background:rgba(245,166,35,0.06);border-left:3px solid var(--ac)}
+        .v39b-relation.conv-convergent{background:rgba(52,211,153,0.06);border-color:var(--state-growth)}
+        .v39b-relation.conv-divergent{background:rgba(239,68,68,0.06);border-color:var(--state-risk)}
+        .v39b-rel-icon{font-size:24px;line-height:1;flex-shrink:0}
+        .v39b-rel-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;font-weight:700;color:var(--ac);margin-bottom:4px;text-transform:uppercase}
+        .v39b-relation.conv-convergent .v39b-rel-label{color:var(--state-growth)}
+        .v39b-relation.conv-divergent .v39b-rel-label{color:var(--state-risk)}
+        .v39b-rel-text{font-size:13px;line-height:1.65;color:rgba(255,255,255,0.8)}
+        @media(max-width:600px){
+            .v39b-twin{grid-template-columns:1fr;gap:12px}
+            .v39b-divider{display:none}
+            .v39b-wrap{padding:20px 14px}
+            .v39b-quality{position:static;display:inline-block;margin-bottom:8px}
+        }
+
         .v39-sit-ba-wrap{padding:var(--sp-4);background:rgba(6,6,11,0.4);border:1px solid var(--sf-2);border-radius:var(--r-md)}
         .v39-sit-ba-side{margin-bottom:var(--sp-4)}
         .v39-sit-ba-side:last-of-type{margin-bottom:var(--sp-3)}
@@ -12665,97 +12707,136 @@ function displayResult() {
                 return;
             }
 
+            // v3.9.90 Sprint I: Alt B "쌍둥이 스냅샷" 디자인.
+            //   좌우 대칭 A/B + 축 shift 막대 (baseline 기준 좌우 밀림) + 중앙 관계 카드.
             var ctx = _v39SitCtx || {};
             var baseA = ctx.idA || {}, baseB = ctx.idB || {};
             var aI = e.a_identity || {}, bI = e.b_identity || {};
             var conv = e.convergence || 'parallel';
-            var convLabel = {convergent:'가까워짐', parallel:'PARALLEL', divergent:'멀어짐'}[conv] || conv;
+            var convLabel = {convergent:'가까워짐', parallel:'나란히 움직임', divergent:'멀어짐'}[conv] || conv;
             var sitLabel = _V39_SIT_META[key].label;
             var isMeasured = e.dataMode === 'measured';
+            var isSynthesized = e.dataMode === 'synthesized';
             var axisNames = { emotion:'정서', drive:'추진', cognition:'인지', boundary:'개방', resilience:'회복' };
-            var axisColors = { emotion:'#EF4444', drive:'#22D3EE', cognition:'#60A5FA', boundary:'#A78BFA', resilience:'#34D399' };
 
-            // 축 Δ 요약: entry.axis_deltas 에서 큰 변화 2개 추출
-            function buildDeltaText(shift, sessionCount){
-                var deltas = [];
-                if (e.axis_deltas) {
-                    Object.keys(e.axis_deltas).forEach(function(k){
-                        var d = e.axis_deltas[k];
-                        if (d && typeof d.delta === 'number') deltas.push({ key:k, delta:d.delta });
-                    });
-                }
-                deltas.sort(function(a,b){ return Math.abs(b.delta) - Math.abs(a.delta); });
-                var top2 = deltas.slice(0, 2).filter(function(d){ return Math.abs(d.delta) >= 0.05; });
-                if (!top2.length) return '주요 축 변화 없음';
-                return top2.map(function(d){
-                    var sign = d.delta >= 0 ? '+' : '−';
-                    var cls = d.delta >= 0 ? 'up' : 'down';
-                    var color = axisColors[d.key] || '#fff';
-                    return '<span class="axis" style="color:' + color + '">' + (axisNames[d.key] || d.key) + '</span> ' +
-                        '<span class="' + cls + '">' + sign + Math.abs(d.delta).toFixed(2) + '</span>';
-                }).join(' · ');
+            // baseline axes (개인 분석 5축) vs 상황 simAxes 로 per-person shift 계산
+            var simA = ctx.simulationA || {}, simB = ctx.simulationB || {};
+            var baselineA = simA.axes || {}, baselineB = simB.axes || {};
+            var sitA = (simA.situational && simA.situational[key]) || null;
+            var sitB = (simB.situational && simB.situational[key]) || null;
+            var curAxesA = sitA && sitA.simAxes ? sitA.simAxes : null;
+            var curAxesB = sitB && sitB.simAxes ? sitB.simAxes : null;
+
+            // 각 축별 shift = 상황 값 - baseline 값. 없으면 e.axis_deltas 로 대체 (상대값이므로 방향 주의).
+            function personShifts(base, cur){
+                if (!base || !cur) return [];
+                var AXES = ['emotion','drive','cognition','boundary','resilience'];
+                return AXES.map(function(ax){
+                    var b = typeof base[ax] === 'number' ? base[ax] : 0.5;
+                    var c = typeof cur[ax] === 'number' ? cur[ax] : b;
+                    return { key: ax, delta: Math.round((c - b) * 100) / 100 };
+                });
             }
-            var aSessionCount = typeof e.a_sessionCount === 'number' ? e.a_sessionCount : null;
-            var bSessionCount = typeof e.b_sessionCount === 'number' ? e.b_sessionCount : null;
-            var aDeltaTxt = buildDeltaText(e.a_shift, aSessionCount);
-            var bDeltaTxt = buildDeltaText(e.b_shift, bSessionCount);
+            var shiftsA = personShifts(baselineA, curAxesA);
+            var shiftsB = personShifts(baselineB, curAxesB);
 
-            // 방어 변화 (a_shift / b_shift 에 포함된 defense 필드 또는 e.defense_clash 활용)
-            var aDefTxt = (e.a_shift && e.a_shift.defense) || '';
-            var bDefTxt = (e.b_shift && e.b_shift.defense) || '';
+            // 상위 3 변화만 (절댓값 기준, >= 0.05)
+            function topShifts(arr){
+                return arr.filter(function(s){ return Math.abs(s.delta) >= 0.05; })
+                    .sort(function(a,b){ return Math.abs(b.delta) - Math.abs(a.delta); })
+                    .slice(0, 3);
+            }
+            var topA = topShifts(shiftsA);
+            var topB = topShifts(shiftsB);
 
-            // 상호작용: synopsis 우선, 없으면 convergence + defense_clash 조합
-            var synopsis = e.synopsis ? _v39Safe(e.synopsis) : '';
-            var defense = e.defense_clash;
-            var defenseTxt = defense ? (defense.desc || defense.type || '') : '';
-            var interactTxt = synopsis || defenseTxt;
+            // headline: baseline 타입 → 상황 타입 변화 1문장
+            function buildHeadline(base, cur, shifts){
+                var baseName = (base && (base.name || base.code)) || '이 사람';
+                var curName = (cur && (cur.name || cur.code)) || null;
+                if (curName && curName !== baseName) {
+                    return '평소 <b>' + _v39Safe(baseName) + '</b> 이(가) <b>' + _v39Safe(curName) + '</b> 쪽으로 이동.';
+                }
+                // 타입 변화 없으면 축 shift 기반 서술
+                if (shifts.length === 0) return '이 상황에서 큰 변화 없음.';
+                var top = shifts[0];
+                var axName = axisNames[top.key] || top.key;
+                var dir = top.delta > 0 ? '상승' : '하락';
+                return '이 상황에서 <b>' + axName + ' ' + dir + '</b> 이 가장 두드러짐.';
+            }
 
-            function renderSide(side, base, curr, deltaTxt, defTxt, sessionCount){
-                var baseEmoji = _v39Safe(base.emoji || '◆');
-                var baseName = _v39Safe(base.name || base.code || '—');
-                var baseCode = _v39Safe(base.code || '');
-                var currEmoji = _v39Safe(curr.emoji || baseEmoji);
-                var currName = _v39Safe(curr.name || curr.code || baseName);
-                var currCode = _v39Safe(curr.code || '');
-                var badge = isMeasured && sessionCount != null
-                    ? '<span class="v39-sit-ba-badge">MEASURED · ' + sessionCount + '</span>'
-                    : '';
-                return '<div class="v39-sit-ba-side ' + side + '">' +
-                    '<div class="v39-sit-ba-role">' + side.toUpperCase() + ' · ' + _v39Safe(sitLabel) + ' 상황에서의 변화' + badge + '</div>' +
-                    '<div class="v39-sit-ba-flow">' +
-                        '<div class="v39-sit-ba-state">' +
-                            '<div class="st-lbl">평소</div>' +
-                            '<span class="st-emoji">' + baseEmoji + '</span>' +
-                            '<div class="st-name">' + baseName + '</div>' +
-                            (baseCode ? '<div class="st-code">' + baseCode + '</div>' : '') +
-                        '</div>' +
-                        '<div class="v39-sit-ba-arrow">→</div>' +
-                        '<div class="v39-sit-ba-state now">' +
-                            '<div class="st-lbl">' + _v39Safe(sitLabel) + '</div>' +
-                            '<span class="st-emoji">' + currEmoji + '</span>' +
-                            '<div class="st-name">' + currName + '</div>' +
-                            (currCode ? '<div class="st-code">' + currCode + '</div>' : '') +
-                        '</div>' +
+            // 축 shift 막대 (중앙 기준 좌우 밀림). delta 범위 가정 ±0.5 → 최대 50% bar.
+            function shiftBar(shift){
+                var d = shift.delta;
+                var pct = Math.min(Math.abs(d) / 0.5, 1) * 50; // 0~50%
+                var side = d >= 0 ? 'pos' : 'neg';
+                var sign = d >= 0 ? '+' : '−';
+                var leftPct = d >= 0 ? 50 : (50 - pct);
+                return '<div class="v39b-shift-bar">' +
+                    '<div class="v39b-shift-axis">' + (axisNames[shift.key] || shift.key) + '</div>' +
+                    '<div class="v39b-shift-visual">' +
+                        '<div class="v39b-shift-center"></div>' +
+                        '<div class="v39b-shift-fill ' + side + '" style="left:' + leftPct + '%;width:' + pct + '%"></div>' +
                     '</div>' +
-                    '<div class="v39-sit-ba-delta">' +
-                        '<span class="k">AXIS Δ</span>' + deltaTxt +
-                        (defTxt ? ' · 방어 <strong>' + _v39Safe(defTxt) + '</strong>' : '') +
+                    '<div class="v39b-shift-val ' + side + '">' + sign + Math.abs(d).toFixed(2) + '</div>' +
+                '</div>';
+            }
+
+            // 한 사람 사이드 렌더
+            function renderPerson(side, base, cur, shifts){
+                var roleLabel = side.toUpperCase() + ' · ' + _v39Safe(sitLabel) + ' 상황에서';
+                var headline = buildHeadline(base, cur, shifts);
+                var barsHtml = '';
+                if (shifts.length === 0) {
+                    barsHtml = '<div class="v39b-no-shift">축 변화 < 0.05 — 평소와 거의 동일</div>';
+                } else {
+                    barsHtml = shifts.map(shiftBar).join('');
+                }
+                return '<div class="v39b-person ' + side + '">' +
+                    '<div class="v39b-p-role">' + roleLabel + '</div>' +
+                    '<div class="v39b-p-headline">' + headline + '</div>' +
+                    '<div class="v39b-shifts">' + barsHtml + '</div>' +
+                '</div>';
+            }
+
+            // 중앙 관계 카드 — defense clash 기반 iconized
+            function relationCard(){
+                var defense = e.defense_clash || {};
+                var friendlyPhrase = defense.type ? _v39FriendlyPhrase(defense.type) : null;
+                var phrase = friendlyPhrase || defense.desc || '';
+                var label = defense.type ? _v39FriendlyLabel(defense.type) : null;
+                var convIcon = { convergent:'🤝', parallel:'🚶', divergent:'🌊' }[conv] || '◆';
+                var convCls = 'conv-' + conv;
+                if (!phrase && !label) {
+                    phrase = '두 사람 간 특별한 상호작용 패턴 없음.';
+                    label = convLabel;
+                }
+                return '<div class="v39b-relation ' + convCls + '">' +
+                    '<div class="v39b-rel-icon">' + convIcon + '</div>' +
+                    '<div class="v39b-rel-body">' +
+                        '<div class="v39b-rel-label">둘이 만나면 · ' + _v39Safe(label || convLabel) + '</div>' +
+                        '<div class="v39b-rel-text">' + _v39Safe(phrase) + '</div>' +
                     '</div>' +
                 '</div>';
             }
 
-            var interactHtml = '';
-            if (interactTxt) {
-                var convCls = 'conv-' + conv;
-                var convPrefix = '<strong>' + _v39Safe(convLabel) + ':</strong> ';
-                interactHtml = '<div class="v39-sit-ba-interact ' + convCls + '">' + convPrefix + _v39Safe(interactTxt) + '</div>';
+            // 데이터 품질 뱃지 (상단 우측 작게)
+            var qualityBadge = '';
+            if (isSynthesized) {
+                qualityBadge = '<div class="v39b-quality synth">추정치 — 상황별 카톡 세션 수 부족</div>';
+            } else if (isMeasured) {
+                var sc = (e.a_sessionCount || 0) + (e.b_sessionCount || 0);
+                qualityBadge = '<div class="v39b-quality measured">측정치 · 세션 ' + sc + '</div>';
             }
 
             panelEl.innerHTML =
-                '<div class="v39-sit-ba-wrap">' +
-                    renderSide('a', baseA, aI, aDeltaTxt, aDefTxt, aSessionCount) +
-                    renderSide('b', baseB, bI, bDeltaTxt, bDefTxt, bSessionCount) +
-                    interactHtml +
+                '<div class="v39b-wrap">' +
+                    qualityBadge +
+                    '<div class="v39b-twin">' +
+                        renderPerson('a', baseA, aI, topA) +
+                        '<div class="v39b-divider"></div>' +
+                        renderPerson('b', baseB, bI, topB) +
+                    '</div>' +
+                    relationCard() +
                 '</div>';
         }
 
