@@ -13826,6 +13826,34 @@ function displayResult() {
                     titleEl.style.display = 'none';
                 }
             }
+
+            // v4 M1: essay + growth/risk zones (있으면 표시, 없으면 숨김)
+            // v3.9.86 buy fix: 이 블록이 v3.9.74 edit 시 _v39BuildOneLineTitle 함수
+            //   내부로 잘못 들어가서 return 뒤 unreachable 됐던 것 복원.
+            var essayEl = document.getElementById('v39MiEssay');
+            if (essayEl) {
+                var essay = mi.essay || '';
+                if (essay) {
+                    essayEl.innerHTML = _v39Safe(essay).replace(/\n/g, '<br>');
+                    essayEl.style.display = 'block';
+                } else {
+                    essayEl.style.display = 'none';
+                }
+            }
+            var zonesEl = document.getElementById('v39MiZones');
+            var growthZones = Array.isArray(mi.growth_zones) ? mi.growth_zones : [];
+            var riskZones = Array.isArray(mi.risk_zones) ? mi.risk_zones : [];
+            if (zonesEl) {
+                if (growthZones.length > 0 || riskZones.length > 0) {
+                    var gEl = document.getElementById('v39MiGrowth');
+                    var rEl = document.getElementById('v39MiRisk');
+                    if (gEl) gEl.innerHTML = growthZones.map(function(g){ return '<li>' + _v39Safe(g) + '</li>'; }).join('');
+                    if (rEl) rEl.innerHTML = riskZones.map(function(r){ return '<li>' + _v39Safe(r) + '</li>'; }).join('');
+                    zonesEl.style.display = 'grid';
+                } else {
+                    zonesEl.style.display = 'none';
+                }
+            }
         }
 
         // v3.9.74: 관계 한 문장 생성기 — template 기반 (LLM 없음)
@@ -13861,32 +13889,6 @@ function displayResult() {
             // 연결: "— 설명. 설명." 형태
             if (parts.length === 1) return parts[0] + '.';
             return parts[0] + ' — ' + parts.slice(1).join('. ') + '.';
-
-            // v4 M1: essay + growth/risk zones (있으면 표시, 없으면 숨김)
-            var essayEl = document.getElementById('v39MiEssay');
-            if (essayEl) {
-                var essay = mi.essay || '';
-                if (essay) {
-                    essayEl.innerHTML = _v39Safe(essay).replace(/\n/g, '<br>');
-                    essayEl.style.display = 'block';
-                } else {
-                    essayEl.style.display = 'none';
-                }
-            }
-            var zonesEl = document.getElementById('v39MiZones');
-            var growthZones = Array.isArray(mi.growth_zones) ? mi.growth_zones : [];
-            var riskZones = Array.isArray(mi.risk_zones) ? mi.risk_zones : [];
-            if (zonesEl) {
-                if (growthZones.length > 0 || riskZones.length > 0) {
-                    var gEl = document.getElementById('v39MiGrowth');
-                    var rEl = document.getElementById('v39MiRisk');
-                    if (gEl) gEl.innerHTML = growthZones.map(function(g){ return '<li>' + _v39Safe(g) + '</li>'; }).join('');
-                    if (rEl) rEl.innerHTML = riskZones.map(function(r){ return '<li>' + _v39Safe(r) + '</li>'; }).join('');
-                    zonesEl.style.display = 'grid';
-                } else {
-                    zonesEl.style.display = 'none';
-                }
-            }
         }
 
         // ── 02 · THE MAP ──
