@@ -13420,16 +13420,14 @@ function displayResult() {
             var rLine = document.getElementById('v39RarityLine');
             if (rLine) rLine.textContent = rarityTxt;
 
-            // Archetype name — highlight first word if two tokens
+            // Archetype name — 전체를 오렌지 강조.
+            //   v3.9.51: 기존엔 whitespace 로 split 해 첫 토큰만 .em 처리 → "두 개의 불꽃"
+            //   같은 3-어절 한글 이름에서 "두" 만 칠해지고 "개의 불꽃" 하얗게 남는 버그.
+            //   한글 관계 이름은 어절 분리 의미가 적으므로 전체 강조로 통일.
             var arch = document.getElementById('v39Archetype');
             if (arch) {
                 var nm = mi.name || '관계 분석';
-                var parts = nm.split(/\s+/);
-                if (parts.length >= 2) {
-                    arch.innerHTML = '<span class="em">' + _v39Safe(parts[0]) + '</span> ' + _v39Safe(parts.slice(1).join(' '));
-                } else {
-                    arch.innerHTML = '<span class="em">' + _v39Safe(nm) + '</span>';
-                }
+                arch.innerHTML = '<span class="em">' + _v39Safe(nm) + '</span>';
             }
 
             // Sentence — tagline
