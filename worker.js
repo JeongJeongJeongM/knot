@@ -8699,113 +8699,137 @@ function sigmoid(x) {
 }
 
 /**
- * 10-step trajectory simulation
- * Models how the 5 axes evolve over time given their interaction dynamics
+ * v3.9.62 Sprint C — Ornstein-Uhlenbeck stochastic trajectory simulation
  *
- * Interaction terms (simplified):
- * - drive(C) suppresses emotion(E) volatility: high control dampens emotional swings
- * - boundary(O) amplifies emotion(E): openness allows emotional expression
- * - resilience(X) dampens all oscillation: acts as global stabilizer
- * - cognition(T) moderates drive(C): analytical thinking refines control
+ * 기존: 임의 결정론적 ODE + 15+ magic coefficient. 모든 커플 동일 dynamics 가정.
+ * 신규: OU process (Uhlenbeck & Ornstein 1930; Kuppens et al. 2010 J Abnorm Psychol)
+ *       — 심리 상태의 mean-reversion + noise 를 stochastic 으로 modeling.
+ *
+ *   dX_t = θ (μ - X_t) dt + σ dW_t
+ *
+ *     · μ: individual baseline (현재 axes 값)
+ *     · θ: mean reversion strength (resilience 에서 추정)
+ *     · σ: volatility / noise (cognition 역수로 추정 — 통제력 낮으면 noise 큼)
+ *     · dW_t: Wiener noise ~ N(0, dt)
+ *
+ * 출력: Monte Carlo N=50 paths 의 mean trajectory + 16/84 percentile band (±~1SD).
+ * drift·volatility 필드는 기존 schema 유지 (다운스트림 convergence 판정 호환).
  */
+
+// Box-Muller: uniform → standard normal
+function _boxMuller() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+// 단일 OU path 샘플링
+function _simulateOUPath(x0, mu, theta, sigma, steps, dt) {
+  const path = [x0];
+  let x = x0;
+  for (let i = 1; i <= steps; i++) {
+    const dW = _boxMuller() * Math.sqrt(dt);
+    const dx = theta * (mu - x) * dt + sigma * dW;
+    x = Math.max(0, Math.min(1, x + dx));
+    path.push(x);
+  }
+  return path;
+}
+
+// percentile from sorted ascending array
+function _percentile(sortedArr, p) {
+  if (!sortedArr.length) return 0;
+  const idx = Math.max(0, Math.min(sortedArr.length - 1, Math.floor(p * sortedArr.length)));
+  return sortedArr[idx];
+}
+
 function runTrajectorySimulation(simAxes, steps = 10) {
   const { emotion: E0, drive: C0, cognition: T0, boundary: O0, resilience: X0 } = simAxes;
+  const AXES = ['E', 'C', 'T', 'O', 'X'];
+  const baselines = { E: E0, C: C0, T: T0, O: O0, X: X0 };
 
-  const trajectory = [{ step: 0, E: E0, C: C0, T: T0, O: O0, X: X0 }];
+  // OU 파라미터 개인화 (이론적 근거):
+  //   θ (mean reversion): 높은 resilience → 강한 복귀. 범위 0.2 ~ 0.6
+  //   σ (volatility):      낮은 cognition → 큰 noise. 범위 0.03 ~ 0.12
+  //     단, emotion 축은 σ 배가 (정서가 본질적으로 변동 큼)
+  const theta_base = 0.2 + 0.4 * X0;         // resilience 기반
+  const sigma_base = 0.03 + 0.09 * (1 - T0);  // cognition 역수 기반
+  const AXIS_SIGMA_MULT = { E: 1.6, C: 1.0, T: 0.7, O: 1.2, X: 0.8 };
 
-  let E = E0, C = C0, T = T0, O = O0, X = X0;
+  const dt = 0.1;
+  const N_PATHS = 50;
 
-  // Interaction coefficients (kept minimal: only key relationships)
-  const dt = 0.15; // time step size
-
-  for (let i = 1; i <= steps; i++) {
-    // Compute deltas based on axis interactions
-    // v3.6: 두 당김점(0.5, 0.3) 이 서로 다른 고정점이라 해석 불명 → baseline E0 로 통일.
-    //   O 항은 "emotion 을 E0 기저선 쪽으로 감쇠 없이 자유 허용" 의미로 재설계.
-    const dE = dt * (
-      -0.3 * C * (E - E0)       // control 이 E 를 baseline 으로 복귀
-      + 0.2 * O * (E - E0)      // openness 는 emotion 자유도 확보 (baseline 기준)
-      - 0.15 * X * (E - E0)     // resilience pulls back to baseline
-    );
-
-    const dC = dt * (
-      0.1 * T * (C - 0.4)       // cognition reinforces control
-      - 0.1 * E * (1 - C)       // high emotion erodes control
-      - 0.1 * X * (C - C0)      // resilience stabilizes
-    );
-
-    const dT = dt * (
-      -0.05 * E * (1 - T)       // emotional flooding slightly impairs cognition
-      + 0.05 * C * T             // control supports analytical thinking
-    );
-
-    // v3.6: 복귀점 0.5 → baseline O0. 모든 사용자 O 가 0.5 중앙 회귀하던 편향 제거.
-    const dO = dt * (
-      -0.15 * (1 - X) * (O - O0)  // low resilience closes boundaries (baseline 기준)
-      + 0.1 * E * (1 - O)          // emotion pushes for openness
-    );
-
-    // 이전 공식은 세 항 중 두 항이 항상 ≤0 이라 구조적 하방 편향.
-    // → 대부분 사용자에서 resilience erosion 패턴이 자동 감지되고
-    //   risk model 의 규칙 3,4(drift.X < -0.05)가 과트리거됐음.
-    // 수정: (1) 변동성 drain 에 threshold 도입, (2) 기저선 복귀항 추가,
-    //       (3) T·X 보강은 유지. 이로써 정상 범위에서 ±0 근처로 평형.
-    const volatilityE = Math.abs(E - E0);
-    const volatilityC = Math.abs(C - C0);
-    const dX = dt * (
-      -0.10 * Math.max(0, volatilityE - 0.10)  // 큰 변동(>0.1)만 resilience 소진
-      - 0.05 * Math.max(0, volatilityC - 0.10)
-      + 0.08 * T * X                            // 인지 × 탄성 상호 강화
-      + 0.06 * (X0 - X)                         // 기저선 복귀 (음·양 양방향)
-    );
-
-    E = Math.max(0, Math.min(1, E + dE));
-    C = Math.max(0, Math.min(1, C + dC));
-    T = Math.max(0, Math.min(1, T + dT));
-    O = Math.max(0, Math.min(1, O + dO));
-    X = Math.max(0, Math.min(1, X + dX));
-
-    trajectory.push({
-      step: i,
-      E: Math.round(E * 1000) / 1000,
-      C: Math.round(C * 1000) / 1000,
-      T: Math.round(T * 1000) / 1000,
-      O: Math.round(O * 1000) / 1000,
-      X: Math.round(X * 1000) / 1000,
-    });
-  }
-
-  // Compute trajectory summary metrics
-  const final = trajectory[trajectory.length - 1];
-  const drift = {
-    E: Math.round((final.E - E0) * 1000) / 1000,
-    C: Math.round((final.C - C0) * 1000) / 1000,
-    T: Math.round((final.T - T0) * 1000) / 1000,
-    O: Math.round((final.O - O0) * 1000) / 1000,
-    X: Math.round((final.X - X0) * 1000) / 1000,
-  };
-
-  // Volatility: average step-to-step change per axis
-  const volatility = { E: 0, C: 0, T: 0, O: 0, X: 0 };
-  for (let i = 1; i < trajectory.length; i++) {
-    for (const k of ['E', 'C', 'T', 'O', 'X']) {
-      volatility[k] += Math.abs(trajectory[i][k] - trajectory[i - 1][k]);
+  // 각 축별로 N paths 생성
+  const pathsByAxis = {};
+  for (const k of AXES) {
+    pathsByAxis[k] = [];
+    const sigma_k = sigma_base * AXIS_SIGMA_MULT[k];
+    for (let n = 0; n < N_PATHS; n++) {
+      pathsByAxis[k].push(_simulateOUPath(baselines[k], baselines[k], theta_base, sigma_k, steps, dt));
     }
   }
-  for (const k of ['E', 'C', 'T', 'O', 'X']) {
-    volatility[k] = Math.round((volatility[k] / steps) * 1000) / 1000;
+
+  // 각 step 별 mean + p16/p84 (대략 ±1SD) 집계
+  const trajectory = [];
+  const band_lo = [];
+  const band_hi = [];
+  for (let i = 0; i <= steps; i++) {
+    const point = { step: i };
+    const lo = { step: i };
+    const hi = { step: i };
+    for (const k of AXES) {
+      const vals = pathsByAxis[k].map(p => p[i]).sort((a, b) => a - b);
+      const meanVal = vals.reduce((a, b) => a + b, 0) / vals.length;
+      point[k] = Math.round(meanVal * 1000) / 1000;
+      lo[k]    = Math.round(_percentile(vals, 0.16) * 1000) / 1000;
+      hi[k]    = Math.round(_percentile(vals, 0.84) * 1000) / 1000;
+    }
+    trajectory.push(point);
+    band_lo.push(lo);
+    band_hi.push(hi);
   }
 
-  // Dominant pattern detection
-  const patterns = [];
-  if (drift.E > 0.05 && drift.C < -0.03) patterns.push('emotional_escalation');
-  if (drift.C > 0.05 && drift.E < -0.03) patterns.push('control_tightening');
-  if (drift.X < -0.05) patterns.push('resilience_erosion');
-  if (drift.O < -0.05) patterns.push('boundary_closure');
-  if (Math.abs(drift.E) < 0.02 && Math.abs(drift.C) < 0.02) patterns.push('stable_equilibrium');
-  if (drift.E > 0.03 && drift.O > 0.03) patterns.push('emotional_opening');
+  // Drift: 최종 mean - initial (OU 는 장기 μ 로 회귀하므로 drift 는 작을 것)
+  const final = trajectory[trajectory.length - 1];
+  const drift = {};
+  for (const k of AXES) drift[k] = Math.round((final[k] - baselines[k]) * 1000) / 1000;
 
-  return { trajectory, drift, volatility, patterns, initial: simAxes, final: { E: final.E, C: final.C, T: final.T, O: final.O, X: final.X } };
+  // Volatility: 각 path 내 step-to-step 절댓값 변화 평균, 그 평균을 다시 N paths 평균
+  const volatility = {};
+  for (const k of AXES) {
+    let sum = 0;
+    for (const path of pathsByAxis[k]) {
+      for (let i = 1; i < path.length; i++) sum += Math.abs(path[i] - path[i - 1]);
+    }
+    volatility[k] = Math.round((sum / (N_PATHS * steps)) * 1000) / 1000;
+  }
+
+  // Pattern detection — 기존 규칙 유지 (하류 호환), 단 drift 스케일 작아진 점 고려해 임계 1/2
+  const patterns = [];
+  if (drift.E > 0.025 && drift.C < -0.015) patterns.push('emotional_escalation');
+  if (drift.C > 0.025 && drift.E < -0.015) patterns.push('control_tightening');
+  if (drift.X < -0.025) patterns.push('resilience_erosion');
+  if (drift.O < -0.025) patterns.push('boundary_closure');
+  if (Math.abs(drift.E) < 0.01 && Math.abs(drift.C) < 0.01) patterns.push('stable_equilibrium');
+  if (drift.E > 0.015 && drift.O > 0.015) patterns.push('emotional_opening');
+
+  return {
+    trajectory,               // mean path
+    band_lo, band_hi,         // v3.9.62: 16/84 percentile (±~1SD 신뢰구간)
+    drift,
+    volatility,
+    patterns,
+    initial: simAxes,
+    final: { E: final.E, C: final.C, T: final.T, O: final.O, X: final.X },
+    // 투명성 — OU 파라미터 공개
+    _ou_params: {
+      theta: Math.round(theta_base * 100) / 100,
+      sigma_base: Math.round(sigma_base * 100) / 100,
+      n_paths: N_PATHS,
+      model: 'ornstein_uhlenbeck_mc',
+    },
+  };
 }
 
 /**
