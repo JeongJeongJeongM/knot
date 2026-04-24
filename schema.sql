@@ -134,12 +134,34 @@ CREATE TABLE matches (
   profile_a_json  TEXT,                                   -- A 프로필 스냅샷
   profile_b_json  TEXT,                                   -- B 프로필 스냅샷
 
+  -- v3.8.6+ 누락됐던 컬럼들 (운영 D1 은 ALTER 로 추가됨, fresh deploy 대비)
+  cross_situational_json TEXT,                            -- v3.8.6: 5상황별 교차 스냅샷
+  prism_a_json        TEXT,                               -- v3.8.8: A PRISM snapshot
+  prism_b_json        TEXT,                               -- v3.8.8: B PRISM snapshot
+  anchor_a_json       TEXT,                               -- v3.8.8: A ANCHOR snapshot
+  anchor_b_json       TEXT,                               -- v3.8.8: B ANCHOR snapshot
+  simulation_a_json   TEXT,                               -- v3.8.8: A simulation (situational 포함)
+  simulation_b_json   TEXT,                               -- v3.8.8: B simulation (situational 포함)
+
   status          TEXT DEFAULT 'processing',              -- processing → complete / error
   created_at      TEXT DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_matches_user ON matches(user_id);
 CREATE INDEX idx_matches_date ON matches(created_at);
+
+-- ============================================================
+-- matches 테이블 migration 쿼리 (기존 DB 업그레이드용, 이미 적용 완료)
+-- fresh deploy 는 위 CREATE 에 포함되므로 이 ALTER 는 skip 됨.
+-- 아래 쿼리는 worker.js 의 /migrate-match-* 엔드포인트에서 idempotent 하게 실행.
+-- ============================================================
+-- ALTER TABLE matches ADD COLUMN cross_situational_json TEXT;  -- v3.8.6
+-- ALTER TABLE matches ADD COLUMN prism_a_json TEXT;            -- v3.8.8
+-- ALTER TABLE matches ADD COLUMN prism_b_json TEXT;
+-- ALTER TABLE matches ADD COLUMN anchor_a_json TEXT;
+-- ALTER TABLE matches ADD COLUMN anchor_b_json TEXT;
+-- ALTER TABLE matches ADD COLUMN simulation_a_json TEXT;
+-- ALTER TABLE matches ADD COLUMN simulation_b_json TEXT;
 
 -- ============================================================
 -- 6. feedback — 유저 피드백
