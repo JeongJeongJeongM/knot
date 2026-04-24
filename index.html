@@ -4700,12 +4700,23 @@
             .v39-risk-matrix .cell{font-size:12px}
         }
 
-        /* v4 v3.9.43 Phase 2 — MAP+CONV 통합 (part 구분 헤더) */
+        /* v4 v3.9.43 Phase 2 — MAP+CONV 통합 (part 구분 헤더)
+           v3.9.45: MAP+CONV 2-col split 지원 (목업 의도) */
+        .v39-mapconv-split{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px}
+        @media(max-width:820px){.v39-mapconv-split{grid-template-columns:1fr;gap:20px}}
+        .v39-mapconv-split > .v39-mapconv-part{margin-bottom:0}
         .v39-mapconv-part{margin-bottom:32px}
         .v39-mapconv-part:last-child{margin-bottom:0}
         .v39-mapconv-head{font-family:'JetBrains Mono',monospace;font-size:11px;color:#F5A623;letter-spacing:2px;font-weight:600;margin-bottom:6px;padding-left:12px;position:relative;text-transform:uppercase}
         .v39-mapconv-head::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:14px;background:#F5A623;border-radius:2px}
         .v39-mapconv-sub{font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:14px;padding-left:12px}
+
+        /* split 안에서 Tornado/Convergence grid 축소 반응형 */
+        .v39-mapconv-split .v39-trow{grid-template-columns:36px 1fr 56px 1fr 36px;gap:6px}
+        @media(max-width:500px){.v39-mapconv-split .v39-trow{grid-template-columns:32px 1fr 44px 1fr 32px}}
+        .v39-mapconv-split .v39-conv-grid{grid-template-columns:1fr 1fr}
+        @media(max-width:500px){.v39-mapconv-split .v39-conv-grid{grid-template-columns:1fr}}
+        .v39-mapconv-split .v39-map-meta{grid-template-columns:1fr 1fr;font-size:10px;gap:var(--sp-1) var(--sp-3)}
 
         /* v4 v3.9.42 — 5 챕터 라벨 (매칭 페이지 그룹화) */
         .v39-chapter{display:flex;align-items:center;gap:16px;max-width:800px;margin:60px auto 20px;padding:20px 24px;background:linear-gradient(90deg,rgba(245,166,35,0.08) 0%,transparent 80%);border-left:4px solid #F5A623;border-radius:0 10px 10px 0;scroll-margin-top:20px}
@@ -5632,36 +5643,39 @@
                     <h2 class="v39-title">축 공간에서 두 사람이 어디 있고 어디로 가는가</h2>
                     <p class="v39-subtitle">현재 위치(축 거리) + 10단계 시뮬레이션의 움직임. 정·동 두 뷰.</p>
 
-                    <!-- Part 1: 축 거리 (기존 MAP 의 Tornado) -->
-                    <div class="v39-mapconv-part">
-                        <div class="v39-mapconv-head">// 축 거리 · 현재 위치</div>
-                        <div class="v39-tier1" id="v39MapTier1">축 데이터 로딩 중…</div>
-                        <div class="v39-tornado">
-                            <div class="v39-thead">
-                                <div class="l" id="v39MapHeadA">◀ A</div>
-                                <div class="c">AXIS</div>
-                                <div class="r" id="v39MapHeadB">B ▶</div>
-                            </div>
-                            <div id="v39TornadoRows"></div>
-                            <div class="v39-tcap" id="v39TornadoCap"></div>
-                            <div class="v39-map-meta" id="v39MapMeta">
-                                <span>평균 격차 <b id="v39MapMetaAvg">—</b></span>
-                                <span>가장 가까운 축 <b id="v39MapMetaClosest">—</b></span>
-                                <span>가장 먼 축 <b id="v39MapMetaFarthest">—</b></span>
-                                <span>총 격차 <b id="v39MapMetaTotal">—</b></span>
+                    <!-- v3.9.45: Part 1 + Part 2 를 2-col split (목업 의도) -->
+                    <div class="v39-mapconv-split">
+                        <!-- Part 1: 축 거리 (기존 MAP 의 Tornado) -->
+                        <div class="v39-mapconv-part">
+                            <div class="v39-mapconv-head">// 축 거리 · 현재 위치</div>
+                            <div class="v39-tier1" id="v39MapTier1">축 데이터 로딩 중…</div>
+                            <div class="v39-tornado">
+                                <div class="v39-thead">
+                                    <div class="l" id="v39MapHeadA">◀ A</div>
+                                    <div class="c">AXIS</div>
+                                    <div class="r" id="v39MapHeadB">B ▶</div>
+                                </div>
+                                <div id="v39TornadoRows"></div>
+                                <div class="v39-tcap" id="v39TornadoCap"></div>
+                                <div class="v39-map-meta" id="v39MapMeta">
+                                    <span>평균 격차 <b id="v39MapMetaAvg">—</b></span>
+                                    <span>가까운 축 <b id="v39MapMetaClosest">—</b></span>
+                                    <span>먼 축 <b id="v39MapMetaFarthest">—</b></span>
+                                    <span>총 격차 <b id="v39MapMetaTotal">—</b></span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Part 2: 10-STEP 궤적 (기존 CONVERGENCE) -->
-                    <div class="v39-mapconv-part">
-                        <div class="v39-mapconv-head">// 10-STEP 궤적 · 움직임</div>
-                        <div class="v39-mapconv-sub">5축 각각 A 실선 · B 점선 · 가까워짐 / PARALLEL / 멀어짐</div>
-                        <div class="v39-conv-wrap" id="v39ConvWrap" style="display:none">
-                            <div class="v39-conv-grid" id="v39ConvGrid"></div>
-                            <div class="v39-conv-judgment" id="v39ConvJudgment"></div>
+                        <!-- Part 2: 10-STEP 궤적 (기존 CONVERGENCE) -->
+                        <div class="v39-mapconv-part">
+                            <div class="v39-mapconv-head">// 10-STEP 궤적 · 움직임</div>
+                            <div class="v39-mapconv-sub">A 실선 · B 점선 · 가까워짐 / PARALLEL / 멀어짐</div>
+                            <div class="v39-conv-wrap" id="v39ConvWrap" style="display:none">
+                                <div class="v39-conv-grid" id="v39ConvGrid"></div>
+                                <div class="v39-conv-judgment" id="v39ConvJudgment"></div>
+                            </div>
+                            <div class="v39-cross-empty" id="v39ConvEmpty">10단계 시뮬레이션 데이터가 부족합니다.</div>
                         </div>
-                        <div class="v39-cross-empty" id="v39ConvEmpty">10단계 시뮬레이션 데이터가 부족합니다.</div>
                     </div>
 
                     <!-- Part 3: Attachment (MAP 고유 · 유지) -->
