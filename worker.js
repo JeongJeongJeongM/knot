@@ -12555,6 +12555,18 @@ export default {
              ORDER BY created_at DESC
              LIMIT 20`
           ).bind(auth.user.sub).all();
+          // v3.9.85: 사용자 본인 최신 analyses simulation 1 회 미리 조회 (SIT 재생성용)
+          let _userSimA = null;
+          try {
+            const ar = await db.prepare(
+              `SELECT simulation_json FROM analyses WHERE user_id = ? AND status = 'complete'
+               ORDER BY created_at DESC LIMIT 1`
+            ).bind(auth.user.sub).first();
+            if (ar?.simulation_json) {
+              const p = JSON.parse(ar.simulation_json);
+              if (p?.situational && Object.keys(p.situational).length > 0) _userSimA = p;
+            }
+          } catch {}
           const matches = (rows.results || []).map(r => {
             let matchIdentity = null;
             try { matchIdentity = r.match_identity_json ? JSON.parse(r.match_identity_json) : null; } catch {}
@@ -12582,6 +12594,18 @@ export default {
             let anchorB = null; try { anchorB = r.anchor_b_json ? JSON.parse(r.anchor_b_json) : null; } catch {}
             let simulationA = null; try { simulationA = r.simulation_a_json ? JSON.parse(r.simulation_a_json) : null; } catch {}
             let simulationB = null; try { simulationB = r.simulation_b_json ? JSON.parse(r.simulation_b_json) : null; } catch {}
+            // v3.9.85: crossSituational 빈 경우 즉석 재생성 (my-match-result 와 동일 로직)
+            const _sitEmpty = !crossSituational ||
+              Object.values(crossSituational || {}).every(v => v?.dataMode === 'fallback_none');
+            if (_sitEmpty && _userSimA && simulationB) {
+              try {
+                const regen = computeCrossSituational(_userSimA, simulationB);
+                if (Object.values(regen || {}).some(v => v?.dataMode === 'measured')) {
+                  crossSituational = regen;
+                  simulationA = _userSimA;
+                }
+              } catch {}
+            }
             return {
               id: r.id,
               name_a: r.name_a,
