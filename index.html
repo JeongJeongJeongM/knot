@@ -6467,8 +6467,10 @@
 
         function computeMatchIdentity(axesA, axesB, identityA, identityB) {
             // 매칭 조합 이름·태그라인은 서버 /match 응답이 제공. 여기는 fallback.
+            // v3.9.65: 서버가 IPC 4-분류 (similar/complementary/contrast/mixed) 반환.
+            //   fallback 은 '혼합 프로필' 로 안전 기본값.
             return {
-                name: "교차하는 궤도", tagline: "복합적 역학의 관계",
+                name: "혼합 프로필", tagline: "복합적 역학의 관계",
                 emoji_a: (identityA && identityA.emoji) || "❓", emoji_b: (identityB && identityB.emoji) || "❓",
                 code: ((identityA && identityA.code) || "?") + " × " + ((identityB && identityB.code) || "?"),
                 compatibility: 50, tension: "보통", growth: "보통"
@@ -13134,7 +13136,21 @@ function displayResult() {
             avoidance:'회피형',
             suppression:'억제형'
         };
+        // v3.9.65: Sprint D (v3.9.63) Gottman 기반 신규 타입 10개 + 레거시 병기.
+        //   좌표는 "x=직설도(0=완곡, 1=직설), y=속도(0=지연, 1=즉각)" 기반.
         var _V39_CONFLICT_TYPE_DEFAULT = {
+            // 신규 (Gottman 기반)
+            volatile:               [{x:0.22,y:0.18},{x:0.20,y:0.22}], // 둘 다 직설·즉각
+            validator:              [{x:0.75,y:0.40},{x:0.78,y:0.42}], // 둘 다 완곡·중간
+            mutual_retreat:         [{x:0.55,y:0.80},{x:0.60,y:0.82}], // 둘 다 지연
+            avoider:                [{x:0.80,y:0.85},{x:0.82,y:0.88}], // 둘 다 완곡·지연
+            validator_volatile:     [{x:0.20,y:0.20},{x:0.78,y:0.45}], // 직설 × 신중
+            demand_withdraw:        [{x:0.20,y:0.22},{x:0.55,y:0.80}], // 직설 × 후퇴
+            hostile_detached:       [{x:0.18,y:0.18},{x:0.82,y:0.85}], // 직설 × 완전회피
+            soft_demand_withdraw:   [{x:0.70,y:0.35},{x:0.55,y:0.80}], // 완곡직면 × 후퇴
+            gentle_wall:            [{x:0.70,y:0.35},{x:0.82,y:0.80}], // 완곡 × 회피
+            double_exit:            [{x:0.55,y:0.80},{x:0.82,y:0.88}], // 후퇴 × 완전회피
+            // 레거시 (구 DB / share 호환)
             head_on:         [{x:0.18,y:0.18},{x:0.22,y:0.22}],
             speed_gap:       [{x:0.22,y:0.22},{x:0.78,y:0.78}],
             soft_wall:       [{x:0.75,y:0.7},{x:0.82,y:0.78}],
@@ -13684,11 +13700,19 @@ function displayResult() {
             var pSub = '';
             // v3.9.9: backend 실제 type 키 (CONFLICT_CROSS L9410, ATTACHMENT_CROSS L9376) 기반 Korean 매핑
             if (cross.conflictCross && cross.conflictCross.type) {
+                // v3.9.65: Sprint D (v3.9.63) Gottman 기반 신규 타입 10개 + 레거시 10개 병기
                 var cmap = {
+                    // 신규 (Gottman 2-style 기반)
+                    volatile: '격동형 (둘 다 직면)', validator: '검증자형 (둘 다 신중)',
+                    mutual_retreat: '상호 후퇴', avoider: '회피자형',
+                    validator_volatile: '신중 × 열정', demand_withdraw: '요구-회피',
+                    hostile_detached: '적대-단절', soft_demand_withdraw: '부드러운 요구-회피',
+                    gentle_wall: '부드러운 벽', double_exit: '이중 탈출',
+                    // 레거시 (구 데이터/share 호환)
                     head_on: '정면 충돌', speed_gap: '속도 격차', chase_retreat: '추적 - 후퇴',
                     wall_punch: '벽치기', polite_loop: '정중한 루프', gentle_fade: '천천한 소멸',
-                    soft_wall: '부드러운 벽', mutual_retreat: '상호 철수', double_exit: '이중 탈출',
-                    frozen_conflict: '동결된 갈등', unknown: '갈등 데이터 부족', uncommon: '비정형 조합'
+                    soft_wall: '부드러운 벽', frozen_conflict: '동결된 갈등',
+                    unknown: '갈등 데이터 부족', uncommon: '비정형 조합'
                 };
                 pName = cmap[cross.conflictCross.type] || '갈등 패턴';
                 pSub = cross.conflictCross.desc || '';
