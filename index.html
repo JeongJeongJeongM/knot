@@ -4393,8 +4393,12 @@
         /* v3.9.74 Sprint H-4: 관계 한 문장 타이틀 — 친근 문장 template */
         .v39-rel-title{font-size:15.5px;line-height:1.7;color:rgba(255,255,255,0.88);max-width:620px;margin:-32px auto 48px;padding:14px 20px;background:rgba(245,166,35,0.06);border-left:3px solid var(--ac);border-radius:0 10px 10px 0;font-weight:500;text-align:left}
         @media(max-width:600px){.v39-rel-title{font-size:14px;padding:12px 16px;margin:-20px 8px 32px}}
-        /* v3.9.74 Sprint H-3: Tier 3 "근거 보기" 토글 */
-        .v39-tech-toggle{position:fixed;bottom:18px;left:18px;z-index:9998;background:rgba(12,12,20,0.85);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;padding:8px 14px;border-radius:20px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:all 0.2s}
+        /* v3.9.77 Sprint H-3: Tier 3 "근거 보기" 토글 — 결과 화면에서만 노출
+           이전 v3.9.74: 랜딩 포함 모든 화면에 노출됐음 + 가로 full-width 로 뻗음 (전역 button
+           style width:100% 에 눌림). 이번엔 기본 display:none + body.v39-match-active
+           클래스일 때만 inline-block. width:auto 강제. */
+        .v39-tech-toggle{display:none;position:fixed;bottom:18px;left:18px;z-index:9998;background:rgba(12,12,20,0.85);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;padding:8px 14px;border-radius:20px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:all 0.2s;width:auto;max-width:200px}
+        body.v39-match-active .v39-tech-toggle{display:inline-flex;align-items:center;gap:4px}
         .v39-tech-toggle:hover{background:rgba(245,166,35,0.15);color:#fff;border-color:rgba(245,166,35,0.4)}
         body.v39-tech-on .v39-tech-toggle{background:rgba(245,166,35,0.2);color:#F5A623;border-color:rgba(245,166,35,0.5)}
         /* .tier3 요소 — 기본 숨김, 근거 보기 on 시만 노출 */
@@ -14586,6 +14590,8 @@ function displayResult() {
             if (v39Sticky && name !== 'match') v39Sticky.classList.remove('visible');
             const matchProgressBar = document.getElementById('matchScrollProgress');
             if (matchProgressBar) matchProgressBar.style.display = (name === 'match') ? 'block' : 'none';
+            // v3.9.77: 근거 보기 토글 버튼 스코프 제한 — 결과 화면에서만 노출
+            document.body.classList.toggle('v39-match-active', name === 'match' || name === 'result');
         }
 
         function updateProgress(stage) {
