@@ -9277,6 +9277,8 @@ function classifyDefensePattern(simAxes, anchor) {
     mas2d: {
       hyperactivation: Math.round(mas.hyperactivation * 100) / 100,
       deactivation:    Math.round(mas.deactivation * 100) / 100,
+      // v3.9.70 Phase 2 QA: _calibration_status 가 wrap 시 손실되던 버그 수정
+      _calibration_status: mas._calibration_status || 'theoretical_unvalidated',
     },
     quadrant: legacy.quadrant,
     all_matches: [{ code: legacy.code, name: legacy.name, desc: legacy.desc }],
